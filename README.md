@@ -8,5 +8,5 @@
 | Name                   | Role                | Contact                          |
 |------------------------|---------------------|----------------------------------|
 | **Esha Vigneswaran**   | Tech Lead           | eshavigneswaran@gmail.com        |
-| **Samarth Kolanupaka** | Tech Lead           | samarth212@gmail.com             |
+| **Samarth Kolanupaka** | Tech Lead           | samarthkolanupaka@gmail.com             |
 
