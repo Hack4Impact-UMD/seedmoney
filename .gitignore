@@ -1,5 +1,13 @@
 # See https://help.github.com/articles/ignoring-files/ for more about ignoring files.
 
+# Firebase build and deployment files
+/firebase-debug.log
+/firebase-debug.*.log
+/firestore-debug.log
+/firestore-debug.*.log
+/pubsub-debug.log
+/database-debug.log
+
 # dependencies
 /node_modules
 /.pnp
