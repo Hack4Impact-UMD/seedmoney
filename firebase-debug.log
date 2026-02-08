@@ -1,0 +1,113 @@
+[debug] [2026-02-08T16:40:34.852Z] ----------------------------------------------------------------------
+[debug] [2026-02-08T16:40:34.853Z] Command:       /opt/homebrew/Cellar/node/24.6.0/bin/node /opt/homebrew/bin/firebase init emulators
+[debug] [2026-02-08T16:40:34.853Z] CLI Version:   15.5.1
+[debug] [2026-02-08T16:40:34.853Z] Platform:      darwin
+[debug] [2026-02-08T16:40:34.853Z] Node Version:  v24.6.0
+[debug] [2026-02-08T16:40:34.853Z] Time:          Sun Feb 08 2026 11:40:34 GMT-0500 (Eastern Standard Time)
+[debug] [2026-02-08T16:40:34.853Z] ----------------------------------------------------------------------
+[debug] 
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /Users/samarth/Desktop/seedmoney
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] 
+[debug] [2026-02-08T16:40:35.382Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-08T16:40:35.382Z] > authorizing via signed-in user (samarthkolanupaka@gmail.com)
+[debug] [2026-02-08T16:40:35.382Z] Checked if tokens are valid: true, expires at: 1770572274371
+[debug] [2026-02-08T16:40:35.382Z] Checked if tokens are valid: true, expires at: 1770572274371
+[debug] [2026-02-08T16:40:35.382Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/seedmoney-15f8e [none]
+[debug] [2026-02-08T16:40:35.590Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/seedmoney-15f8e 200
+[debug] [2026-02-08T16:40:35.590Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/seedmoney-15f8e {"projectId":"seedmoney-15f8e","projectNumber":"355412621161","displayName":"seedmoney","name":"projects/seedmoney-15f8e","resources":{"hostingSite":"seedmoney-15f8e"},"state":"ACTIVE","etag":"1_58a6f723-e9dc-4f85-8558-1a1019b64586"}
+[info] i  Using project seedmoney-15f8e (seedmoney) . 
+[info] 
+=== Emulators Setup
+[debug] [2026-02-08T16:52:11.995Z] ----------------------------------------------------------------------
+[debug] [2026-02-08T16:52:11.999Z] Command:       /opt/homebrew/Cellar/node/24.6.0/bin/node /opt/homebrew/bin/firebase init functions
+[debug] [2026-02-08T16:52:11.999Z] CLI Version:   15.5.1
+[debug] [2026-02-08T16:52:11.999Z] Platform:      darwin
+[debug] [2026-02-08T16:52:11.999Z] Node Version:  v24.6.0
+[debug] [2026-02-08T16:52:11.999Z] Time:          Sun Feb 08 2026 11:52:11 GMT-0500 (Eastern Standard Time)
+[debug] [2026-02-08T16:52:11.999Z] ----------------------------------------------------------------------
+[debug] 
+[info] 
+     ######## #### ########  ######## ########     ###     ######  ########
+     ##        ##  ##     ## ##       ##     ##  ##   ##  ##       ##
+     ######    ##  ########  ######   ########  #########  ######  ######
+     ##        ##  ##    ##  ##       ##     ## ##     ##       ## ##
+     ##       #### ##     ## ######## ########  ##     ##  ######  ########
+
+You're about to initialize a Firebase project in this directory:
+
+  /Users/samarth/Desktop/seedmoney
+
+Before we get started, keep in mind:
+
+  * You are initializing within an existing Firebase project directory
+
+[info] 
+=== Project Setup
+[info] 
+[info] First, let's associate this project directory with a Firebase project.
+[info] You can create multiple project aliases by running firebase use --add, 
+[info] 
+[debug] [2026-02-08T16:52:12.506Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-08T16:52:12.506Z] > authorizing via signed-in user (samarthkolanupaka@gmail.com)
+[debug] [2026-02-08T16:52:12.507Z] Checked if tokens are valid: true, expires at: 1770572274371
+[debug] [2026-02-08T16:52:12.507Z] Checked if tokens are valid: true, expires at: 1770572274371
+[debug] [2026-02-08T16:52:12.507Z] >>> [apiv2][query] GET https://firebase.googleapis.com/v1beta1/projects/seedmoney-15f8e [none]
+[debug] [2026-02-08T16:52:12.832Z] <<< [apiv2][status] GET https://firebase.googleapis.com/v1beta1/projects/seedmoney-15f8e 200
+[debug] [2026-02-08T16:52:12.833Z] <<< [apiv2][body] GET https://firebase.googleapis.com/v1beta1/projects/seedmoney-15f8e {"projectId":"seedmoney-15f8e","projectNumber":"355412621161","displayName":"seedmoney","name":"projects/seedmoney-15f8e","resources":{"hostingSite":"seedmoney-15f8e"},"state":"ACTIVE","etag":"1_58a6f723-e9dc-4f85-8558-1a1019b64586"}
+[info] i  Using project seedmoney-15f8e (seedmoney) . 
+[info] 
+=== Functions Setup
+[debug] [2026-02-08T16:52:12.843Z] > command requires scopes: ["email","openid","https://www.googleapis.com/auth/cloudplatformprojects.readonly","https://www.googleapis.com/auth/firebase","https://www.googleapis.com/auth/cloud-platform"]
+[debug] [2026-02-08T16:52:12.843Z] > authorizing via signed-in user (samarthkolanupaka@gmail.com)
+[debug] [2026-02-08T16:52:12.843Z] [iam] checking project seedmoney-15f8e for permissions ["firebase.projects.get"]
+[debug] [2026-02-08T16:52:12.843Z] Checked if tokens are valid: true, expires at: 1770572274371
+[debug] [2026-02-08T16:52:12.843Z] Checked if tokens are valid: true, expires at: 1770572274371
+[debug] [2026-02-08T16:52:12.843Z] >>> [apiv2][query] POST https://cloudresourcemanager.googleapis.com/v1/projects/seedmoney-15f8e:testIamPermissions [none]
+[debug] [2026-02-08T16:52:12.843Z] >>> [apiv2][(partial)header] POST https://cloudresourcemanager.googleapis.com/v1/projects/seedmoney-15f8e:testIamPermissions  x-goog-user-project=seedmoney-15f8e
+[debug] [2026-02-08T16:52:12.843Z] >>> [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/seedmoney-15f8e:testIamPermissions {"permissions":["firebase.projects.get"]}
+[debug] [2026-02-08T16:52:13.410Z] <<< [apiv2][status] POST https://cloudresourcemanager.googleapis.com/v1/projects/seedmoney-15f8e:testIamPermissions 200
+[debug] [2026-02-08T16:52:13.410Z] <<< [apiv2][body] POST https://cloudresourcemanager.googleapis.com/v1/projects/seedmoney-15f8e:testIamPermissions {"permissions":["firebase.projects.get"]}
+[info] 
+Detected existing codebase(s): default
+
+[info] Let's create a new codebase for your functions.
+[info] A directory corresponding to the codebase will be created in your project
+[info] with sample code pre-configured.
+
+[info] See https://firebase.google.com/docs/functions/organize-functions for
+[info] more information on organizing your functions using codebases.
+
+[info] Functions can be deployed with firebase deploy.
+
+[debug] [2026-02-08T16:52:29.339Z] ExitPromptError: User force closed the prompt with SIGINT
+    at Interface.sigint (/opt/homebrew/lib/node_modules/firebase-tools/node_modules/@inquirer/core/dist/commonjs/lib/create-prompt.js:101:37)
+    at Interface.emit (node:events:508:28)
+    at [_ttyWrite] [as _ttyWrite] (node:internal/readline/interface:1315:18)
+    at ReadStream.onkeypress (node:internal/readline/interface:284:20)
+    at ReadStream.emit (node:events:520:35)
+    at emitKeys (node:internal/readline/utils:371:14)
+    at emitKeys.next (<anonymous>)
+    at ReadStream.onData (node:internal/readline/emitKeypressEvents:64:36)
+    at ReadStream.emit (node:events:508:28)
+    at addChunk (node:internal/streams/readable:559:12)
+[error] 
+[error] Error: An unexpected error has occurred.
