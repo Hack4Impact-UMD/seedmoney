@@ -11,6 +11,7 @@ import { useAuthState } from "react-firebase-hooks/auth";
 import { auth, googleProvider } from "@/firebase/firebase.config";
 
 export default function Home() {
+  const usingEmulators = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -90,6 +91,9 @@ export default function Home() {
       <section className="mx-auto w-full max-w-md rounded-2xl bg-white p-8 shadow-sm">
         <h1 className="text-2xl font-semibold">Firebase Auth</h1>
         <p className="mt-2 text-sm text-slate-600">Email/password + Google sign-in</p>
+        <p className="mt-1 text-xs text-slate-500">
+          {usingEmulators ? "Connected to Firebase emulators" : "Connected to live Firebase project"}
+        </p>
 
         {authError && <p className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{authError.message}</p>}
         {errorMessage && <p className="mt-4 rounded-md bg-red-50 p-3 text-sm text-red-700">{errorMessage}</p>}
