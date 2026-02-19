@@ -1,5 +1,91 @@
-export default function Home() {
-  return(
-    <h1>Home</h1>
-  )
+"use client";
+import { useState } from "react";
+import { Button, TextField } from "@mui/material";
+import StarIcon from "@mui/icons-material/Star";
+import Link from "next/link";
+import Image from "next/image";
+import seedMoneyTeam from "../public/seedmoneyTeam.png";
+
+export default function LoginPage() {
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  return (
+    <div className="flex min-h-screen w-full">
+      <div className="relative hidden w-1/2 lg:block">
+        <Image
+          src={seedMoneyTeam}
+          alt="Login Background"
+          fill
+          className="object-cover"
+        />
+      </div>
+      <div className="flex w-full lg:w-1/2 items-center justify-center">
+        <div className="flex flex-col items-center gap-3 w-full max-w-[20rem]">
+          <div className="self-start gap-0 mb-1">
+            <h1 className="text-2xl">Welcome to SeedMoney</h1>
+            <p className="text-sm text-[rgba(0,0,0,0.6)]">
+              Please log in or sign up below.
+            </p>
+          </div>
+          <TextField
+            label="Email"
+            variant="standard"
+            type="email"
+            placeholder="name@email.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+            className="w-full"
+          />
+          <TextField
+            label="Password"
+            variant="standard"
+            type="password"
+            placeholder="Password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            slotProps={{
+              inputLabel: {
+                shrink: true,
+              },
+            }}
+            className="w-full"
+          />
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            size="large"
+            className="bg-[#5ABC61]! w-full"
+          >
+            Log in
+          </Button>
+          <Button
+            type="submit"
+            variant="contained"
+            color="primary"
+            size="large"
+            className="bg-[#E0E0E0]! text-black! w-full"
+          >
+            <StarIcon className="text-[rgba(0,0,0,0.6)] mr-1" /> Log in with
+            Google
+          </Button>
+          <p className="text-[rgba(0,0,0,0.6)] text-sm">
+            Don&apos;t have an account?{" "}
+            <Link href="/signup" className="text-[#1976D2] underline font-bold">
+              Sign up here
+            </Link>
+          </p>
+          <p className="text-[rgba(0,0,0,0.6)] text-sm">
+            Forgot Password / Activate Account
+          </p>
+        </div>
+      </div>
+    </div>
+  );
 }
