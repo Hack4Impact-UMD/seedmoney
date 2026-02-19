@@ -3,6 +3,7 @@ import { Box, Container, Typography, Link, Divider, Stack} from '@mui/material';
 import StarIcon from '@mui/icons-material/Star';
 import { Lato } from 'next/font/google';
 
+// eslint-disable-next-line @typescript-eslint/no-unused-vars
 const lato = Lato({
   weight: ['400', '700'],
   subsets: ['latin'],
