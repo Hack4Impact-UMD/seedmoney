@@ -25,7 +25,12 @@ export default function Loading() {
                     </Box>
                 </Box>
                 {/*MUI spinner progress thingy*/}
-                <Box className = "mt-8 mb-10 text-[#00A63E]">
+                <Box
+                    className = "mt-8 mb-10 text-[#00A63E]"
+                    role="status"
+                    aria-label="Loading"
+                    aria-live="polite"
+                >
                     <CircularProgress size = {100} thickness = {3} color = "inherit" />
                 </Box>
                 

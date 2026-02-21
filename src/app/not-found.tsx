@@ -1,4 +1,4 @@
-"use client"; //used onClick so we need this line
+"use client"; //MUI components require a client context
 
 import { Box, Stack, Button } from "@mui/material";
 import Image from "next/image"; //next's better image component
