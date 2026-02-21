@@ -1,15 +1,10 @@
 "use client";
-import { useState } from "react";
-import { Button, TextField } from "@mui/material";
-import StarIcon from "@mui/icons-material/Star";
 import Link from "next/link";
 import Image from "next/image";
 import seedMoneyTeam from "../public/seedmoneyTeam.png";
+import LoginForm from "@/components/LoginForm";
 
 export default function LoginPage() {
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-
   return (
     <div className="flex min-h-screen w-full">
       <div className="relative hidden w-1/2 lg:block">
@@ -28,53 +23,7 @@ export default function LoginPage() {
               Please log in or sign up below.
             </p>
           </div>
-          <TextField
-            label="Email"
-            variant="standard"
-            type="email"
-            placeholder="name@email.com"
-            value={email}
-            onChange={(e) => setEmail(e.target.value)}
-            slotProps={{
-              inputLabel: {
-                shrink: true,
-              },
-            }}
-            className="w-full"
-          />
-          <TextField
-            label="Password"
-            variant="standard"
-            type="password"
-            placeholder="Password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            slotProps={{
-              inputLabel: {
-                shrink: true,
-              },
-            }}
-            className="w-full"
-          />
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            size="large"
-            className="bg-[#5ABC61]! w-full"
-          >
-            Log in
-          </Button>
-          <Button
-            type="submit"
-            variant="contained"
-            color="primary"
-            size="large"
-            className="bg-[#E0E0E0]! text-black! w-full"
-          >
-            <StarIcon className="text-[rgba(0,0,0,0.6)] mr-1" /> Log in with
-            Google
-          </Button>
+          <LoginForm />
           <p className="text-[rgba(0,0,0,0.6)] text-sm">
             Don&apos;t have an account?{" "}
             <Link href="/signup" className="text-[#1976D2] underline font-bold">
