@@ -38,7 +38,7 @@ export default function NotFound() {
                     component = "p"
                     className = {`${lato.className} mt-3 text-center text-[34px] leading-[48px] tracking-[0.12px] font-semibold text-[#00A63E]`}
                 >
-                    Oops! This Page Not found
+                    Oops! This Page Not Found
                 </Box>
 
                 <Box
