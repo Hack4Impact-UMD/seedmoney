@@ -1,11 +1,10 @@
-import type { CampaignExistence, CampaignStatus } from './enums';
+import type { Existence, Status } from './enums';
 
-/** Row shape for the `campaign` table (DB columns, snake_case). */
-export type DbCampaignRow = {
+export type Campaign = {
   campaign_id: number;
   name: string;
-  givebutter_link: string;
-  status: CampaignStatus;
+  givebutterLink: string;
+  status: Status;
   date_created: string;
   street: string;
   city: string;
@@ -14,7 +13,7 @@ export type DbCampaignRow = {
   zipcode: string;
   project_category: string;
   project_beneficiaries: string[];
-  existence: CampaignExistence;
+  existence: Existence;
   impact: number;
   size: number;
   goal: number;

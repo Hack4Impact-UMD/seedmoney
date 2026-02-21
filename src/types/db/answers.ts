@@ -1,5 +1,4 @@
-/** Row shape for the `answers` table (DB columns, snake_case). */
-export type DbAnswerRow = {
+export type Answers = {
   answer_id: number;
   campaign_id: number;
   question_id: number;

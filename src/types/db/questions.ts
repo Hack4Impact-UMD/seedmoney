@@ -1,5 +1,4 @@
-/** Row shape for the `questions` table (DB columns, snake_case). */
-export type DbQuestionRow = {
+export type Questions = {
   id: number;
   question: string;
   is_active: boolean;
