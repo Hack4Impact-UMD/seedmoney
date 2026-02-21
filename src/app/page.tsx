@@ -2,7 +2,7 @@
 import Link from "next/link";
 import Image from "next/image";
 import seedMoneyTeam from "../public/seedmoneyTeam.png";
-import LoginForm from "@/components/LoginForm";
+import LoginForm from "@/src/components/LoginForm";
 
 export default function LoginPage() {
   return (

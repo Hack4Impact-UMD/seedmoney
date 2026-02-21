@@ -1,14 +1,13 @@
 import React, { useState } from "react";
 import { TextField, Button } from "@mui/material";
 import StarIcon from "@mui/icons-material/Star";
-
+import Form from "next/form";
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e: React.SubmitEvent<HTMLFormElement>) => {
+  const handleSubmit = () => {
     // TODO: implement submit logic
-    e.preventDefault();
     console.log("Logging in with email/password...");
   };
 
@@ -18,7 +17,7 @@ const LoginForm = () => {
   };
 
   return (
-    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
+    <Form action={handleSubmit} className="flex flex-col gap-4 w-full">
       <TextField
         label="Email"
         variant="standard"
@@ -66,7 +65,7 @@ const LoginForm = () => {
       >
         <StarIcon className="text-[rgba(0,0,0,0.6)] mr-1" /> Log in with Google
       </Button>
-    </form>
+    </Form>
   );
 };
 
