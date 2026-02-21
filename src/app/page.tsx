@@ -25,7 +25,7 @@ export default function LoginPage() {
           </div>
           <LoginForm />
           <p className="text-[rgba(0,0,0,0.6)] text-sm">
-            Don&apos;t have an account?{" "}
+            Don't have an account?{" "}
             <Link href="/signup" className="text-[#1976D2] underline font-bold">
               Sign up here
             </Link>
