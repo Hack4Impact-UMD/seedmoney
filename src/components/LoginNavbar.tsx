@@ -10,9 +10,9 @@ export default function LoginNavbar() {
           {/*logo */}
           <Link href="/" className="flex items-center">
             <Image
-              src={logo.src}
+              src={logo}
               alt="SeedMoney Logo"
-              className="h-8 select-none"
+              className="h-8 w-auto select-none"
               draggable={false}
               priority
             />
