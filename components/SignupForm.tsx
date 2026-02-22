@@ -34,7 +34,7 @@ export default function SignupForm() {
                 <TextField required variant="standard" type="password" fullWidth label="Password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}/>
                 <TextField required variant="standard" type="password" fullWidth label="Confirm Password" placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}/>
                 <FormControlLabel control={<Checkbox checked={agreeToTerms} onChange={(e) => setAgreeToTerms(e.target.checked)} />}
-                                  label={<span>By checking this box, I agree to the <span className="text-sky-600">Terms of Service</span> & <span className="text-sky-600">Privacy Statement</span>.</span>}/>
+                                  label={<span>By checking this box, I agree to the <Link href="/terms" className="text-sky-600">Terms of Service</Link> & <Link href="/privacy" className="text-sky-600">Privacy Statement</Link>.</span>}
                 <Button variant="outlined" color="inherit" startIcon={<Google />} onClick={signupWithGoogle}>Sign Up With Google</Button>
                 <Button type="submit" variant="contained" color="inherit" className="bg-[#5ABC61]! text-white!">Create An Account</Button>
             </Stack>
