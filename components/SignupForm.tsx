@@ -30,7 +30,7 @@ export default function SignupForm() {
             <Stack direction="column" spacing={2}>
                 <TextField required variant="standard" type="text" fullWidth label="First Name" placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)}/>
                 <TextField required variant="standard" type="text" fullWidth label="Last Name" placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)}/>
-                <TextField required variant="standard" type="email" fullWidth label="Email" placeholder="name@email.com" value={email} onChange={(e) => setEmail(e.target.value)} error={!!email && !EMAIL_REGEX.test(email)}/>
+                <TextField required variant="standard" type="email" fullWidth label="Email" placeholder="name@email.com" value={email} onChange={(e) => setEmail(e.target.value)} error={!!email && !EMAIL_REGEX.test(email)} helperText={!!email && !EMAIL_REGEX.test(email) ? 'Please enter a valid email address.' : ''}/>
                 <TextField required variant="standard" type="password" fullWidth label="Password" placeholder="Password" value={password} onChange={(e) => setPassword(e.target.value)}/>
                 <TextField required variant="standard" type="password" fullWidth label="Confirm Password" placeholder="Confirm password" value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)}/>
                 <FormControlLabel control={<Checkbox checked={agreeToTerms} onChange={(e) => setAgreeToTerms(e.target.checked)} />}
