@@ -1,5 +1,6 @@
 import logo from "../public/logoWithText.png";
 import Link from "next/link";
+import Image from "next/image";
 
 export default function LoginNavbar() {
   return (
@@ -8,11 +9,12 @@ export default function LoginNavbar() {
         <div className="flex justify-between px-4 h-14">
           {/*logo */}
           <a href="/" className="flex items-center">
-            <img
+            <Image
               src={logo.src}
               alt="SeedMoney Logo"
               className="h-8 select-none"
               draggable={false}
+              priority
             />
           </a>
           {/* auth links */}
