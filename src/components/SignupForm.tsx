@@ -17,6 +17,8 @@ const SignupForm = () => {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
 
   const handleSubmit = () => {
+    if (password !== confirmPassword) return;
+    if (!agreeToTerms) return;
     console.log("Signing up...", {
       firstName,
       lastName,
@@ -33,9 +35,9 @@ const SignupForm = () => {
 
   return (
     <Form action={handleSubmit} className="flex flex-col gap-4 w-full">
-      
       <TextField
         label="First Name"
+        required
         variant="standard"
         type="text"
         placeholder="First name"
@@ -47,6 +49,7 @@ const SignupForm = () => {
 
       <TextField
         label="Last Name"
+        required
         variant="standard"
         type="text"
         placeholder="Last name"
@@ -58,6 +61,7 @@ const SignupForm = () => {
 
       <TextField
         label="Email"
+        required
         variant="standard"
         type="email"
         placeholder="name@email.com"
@@ -75,6 +79,7 @@ const SignupForm = () => {
 
       <TextField
         label="Password"
+        required
         variant="standard"
         type="password"
         placeholder="Password"
@@ -86,6 +91,7 @@ const SignupForm = () => {
 
       <TextField
         label="Confirm Password"
+        required
         variant="standard"
         type="password"
         placeholder="Confirm password"
@@ -96,6 +102,7 @@ const SignupForm = () => {
       />
 
       <FormControlLabel
+        required
         control={
           <Checkbox
             checked={agreeToTerms}
