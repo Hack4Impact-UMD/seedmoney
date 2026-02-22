@@ -8,13 +8,20 @@ import SignupForm from "@/components/SignupForm";
 
 export default function Page() {
     return (
-        <Grid container columns={2}>
-            <Grid size={{ xs: 0, xl: 1, }}>
-                <Box>
-                    <Image src={signupImage} alt="SeedMoney" height={800} />
+        <Grid container columns={2} className="min-h-screen">
+            <Grid size={{ xs: 0, xl: 1 }} className="hidden xl:block">
+                <Box className="relative min-h-screen w-full">
+                    <Image
+                        src={signupImage}
+                        alt="SeedMoney"
+                        fill
+                        priority
+                        sizes="(min-width: 1280px) 50vw, 100vw"
+                        className="object-cover"
+                    />
                 </Box>
             </Grid>
-            <Grid size={{ xs: 2, xl: 1 }} alignItems="center">
+            <Grid size={{ xs: 2, xl: 1 }} className="flex min-h-screen items-center">
                 <Card elevation={0} className="w-full py-10">
                     <CardContent>
                         <Container maxWidth="xs">

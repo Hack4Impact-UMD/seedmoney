@@ -1,6 +1,5 @@
 'use client';
 import React, {useState} from 'react';
-import Form from "next/form";
 import Link from "next/link";
 import {Button, Checkbox, FormControlLabel, Stack, TextField} from "@mui/material";
 import { Google } from "@mui/icons-material";
@@ -21,13 +20,14 @@ export default function SignupForm() {
         console.log('Sign up with Google');
     }
 
-    const handleSubmit = () => {
+    const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+        event.preventDefault();
         // TODO: Implement form submission logic
         console.log('Form submitted:', { firstName, lastName, email, password, confirmPassword, agreeToTerms });
     }
 
     return (
-        <Form action={handleSubmit}>
+        <form onSubmit={handleSubmit}>
             <Stack direction="column" spacing={2}>
                 <TextField required variant="standard" type="text" fullWidth label="First Name" placeholder="First name" value={firstName} onChange={(e) => setFirstName(e.target.value)}/>
                 <TextField required variant="standard" type="text" fullWidth label="Last Name" placeholder="Last name" value={lastName} onChange={(e) => setLastName(e.target.value)}/>
@@ -42,9 +42,9 @@ export default function SignupForm() {
                         </span>
                     }
                 />
-                <Button variant="outlined" color="inherit" startIcon={<Google />} onClick={signupWithGoogle}>Sign Up With Google</Button>
+                <Button type="button" variant="outlined" color="inherit" startIcon={<Google />} onClick={signupWithGoogle}>Sign Up With Google</Button>
                 <Button type="submit" variant="contained" color="inherit" className="bg-[#5ABC61]! text-white!">Create An Account</Button>
             </Stack>
-        </Form>
+        </form>
     );
 }
