@@ -5,9 +5,14 @@ import Image from "next/image";
 import signupImage from '@/src/public/signup_bg.png';
 import Link from "next/link";
 import SignupForm from "@/components/SignupForm";
+import LoginNavbar from "@/src/components/LoginNavbar";
+
 
 export default function Page() {
     return (
+      
+        <LoginNavbar />;
+      
         <Grid container columns={2} className="min-h-screen">
             <Grid size={{ xs: 0, xl: 1 }} className="hidden xl:block">
                 <Box className="relative min-h-screen w-full">
