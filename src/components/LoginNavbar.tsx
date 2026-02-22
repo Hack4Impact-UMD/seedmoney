@@ -8,7 +8,7 @@ export default function LoginNavbar() {
       <nav className="w-full bg-[#333333] text-white">
         <div className="flex justify-between px-4 h-14">
           {/*logo */}
-          <a href="/" className="flex items-center">
+          <Link href="/" className="flex items-center">
             <Image
               src={logo.src}
               alt="SeedMoney Logo"
@@ -16,7 +16,7 @@ export default function LoginNavbar() {
               draggable={false}
               priority
             />
-          </a>
+          </Link>
           {/* auth links */}
           <div className="flex items-center gap-6 text-sm font-medium">
             <Link
