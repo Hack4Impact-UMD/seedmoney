@@ -9,7 +9,7 @@ export default function LoginPage() {
   return (
     <>
       <LoginNavbar />
-      <div className="flex min-h-screen w-full pt-14">
+      <div className="flex min-h-screen w-full">
         <div className="relative hidden w-1/2 lg:block">
           <Image
             src={seedMoneyTeam}
