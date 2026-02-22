@@ -4,7 +4,7 @@ import Image from "next/image";
 
 export default function LoginNavbar() {
   return (
-    <div className="fixed top-0 left-0 z-50 w-full">
+    <div className="w-full">
       <nav className="w-full bg-[#333333] text-white">
         <div className="flex justify-between px-4 h-14">
           {/*logo */}
