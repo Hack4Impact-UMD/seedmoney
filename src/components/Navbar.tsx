@@ -11,7 +11,6 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import AddIcon from "@mui/icons-material/Add";
 import LogoutIcon from "@mui/icons-material/Logout";
 import Image from "next/image";
-import logo from "@/src/public/seedMoneyLogo.png";
 
 type SidebarProps = {
   campaigns: Array<{ id: string; name: string }>;
@@ -58,7 +57,7 @@ export default function Navbar({
             }`}
           >
             <Image
-              src={logo}
+              src="/seedMoneyLogo.png"
               alt="SeedMoney"
               width={isCollapsed ? 32 : 44}
               height={isCollapsed ? 32 : 44}

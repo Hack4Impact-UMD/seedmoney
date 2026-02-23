@@ -1,4 +1,3 @@
-import logo from "../public/logoWithText.png";
 import Link from "next/link";
 import Image from "next/image";
 
@@ -10,8 +9,10 @@ export default function LoginNavbar() {
           {/*logo */}
           <Link href="/" className="flex items-center">
             <Image
-              src={logo}
+              src="/logoWithText.png"
               alt="SeedMoney Logo"
+              width={160}
+              height={32}
               className="h-8 w-auto select-none"
               draggable={false}
               priority

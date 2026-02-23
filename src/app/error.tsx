@@ -3,11 +3,6 @@
 import { Button } from "@mui/material"; 
 import Image from "next/image"; //next's better image component
 import Link from "next/link"; //next's client side nav
-import homeIconGreen from "../public/icons/icon-home-green.svg";
-import homeIconWhite from "../public/icons/icon-home-white.svg";
-import retryIconGreen from "../public/icons/icon-retry-green.svg";
-import retryIconWhite from "../public/icons/icon-retry-white.svg";
-import logo from "../public/seedmoneyLogo.png"; //seedmoney logo
 
 //define shape of props passed in
 type ErrorProps = {
@@ -22,7 +17,7 @@ export default function Error({ reset }: ErrorProps) {
                 {/*seedmoney logo*/}
                 <div className = "w-36 h-36 mb-8 rounded-full bg-white border-[3px] border-[#00A63E] flex items-center justify-center">
                     <div className = "relative w-[92px] h-[92px] translate-y-[3px]">
-                        <Image src = {logo} alt = "Logo" fill className = "object-contain object-center block"/>
+                        <Image src = "/seedMoneyLogo.png" alt = "Logo" fill className = "object-contain object-center block"/>
                     </div>
                 </div>
 
@@ -45,8 +40,8 @@ export default function Error({ reset }: ErrorProps) {
                     >
                         <span className = "inline-flex items-center gap-2">
                             <span aria-hidden = "true" className = "relative inline-block w-5 h-5">
-                                <Image src = {retryIconWhite} alt = "" width = {20} height = {20} className = "block group-hover:hidden" />
-                                <Image src = {retryIconGreen} alt = "" width = {20} height = {20} className = "hidden group-hover:block" />
+                                <Image src = "/icons/icon-retry-white.svg" alt = "" width = {20} height = {20} className = "block group-hover:hidden" />
+                                <Image src = "/icons/icon-retry-green.svg" alt = "" width = {20} height = {20} className = "hidden group-hover:block" />
                             </span>
                             Try Again
                         </span>
@@ -60,8 +55,8 @@ export default function Error({ reset }: ErrorProps) {
                     >
                         <span className = "inline-flex items-center gap-2">
                             <span aria-hidden = "true" className = "relative inline-block w-5 h-5">
-                                <Image src = {homeIconWhite} alt = "" width = {20} height = {20} className = "block group-hover:hidden" />
-                                <Image src = {homeIconGreen} alt = "" width = {20} height = {20} className = "hidden group-hover:block" />
+                                <Image src = "/icons/icon-home-white.svg" alt = "" width = {20} height = {20} className = "block group-hover:hidden" />
+                                <Image src = "/icons/icon-home-green.svg" alt = "" width = {20} height = {20} className = "hidden group-hover:block" />
                             </span>
                             Go Home
                         </span> 
