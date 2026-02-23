@@ -139,6 +139,7 @@ export default function Navbar({
         <Button
           onClick={handleLogout}
           fullWidth
+          aria-label="Logout"
           className={`!text-white !uppercase !underline !font-medium !tracking-[1.5px] !text-[0.85rem] ${
             isCollapsed ? "!justify-center" : "!justify-start"
           }`}
