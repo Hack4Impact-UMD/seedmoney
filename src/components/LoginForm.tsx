@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import { useState } from "react";
 import { TextField, Button } from "@mui/material";
-import StarIcon from "@mui/icons-material/Star";
+import { Google } from "@mui/icons-material";
 import Form from "next/form";
+
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -63,7 +64,7 @@ const LoginForm = () => {
         size="large"
         className="bg-[#E0E0E0]! text-black! w-full"
       >
-        <StarIcon className="text-[rgba(0,0,0,0.6)] mr-1" /> Log in with Google
+        <Google className="text-[rgba(0,0,0,0.6)] mr-1" /> Log in with Google
       </Button>
     </Form>
   );

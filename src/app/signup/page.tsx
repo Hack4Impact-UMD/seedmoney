@@ -1,41 +1,62 @@
-'use client';
-import React from 'react';
-import {Box, Card, CardContent, Container, Grid, Typography} from "@mui/material";
-import Image from "next/image";
-import signupImage from '@/src/public/signup_bg.png';
+"use client";
+
 import Link from "next/link";
-import SignupForm from "@/components/SignupForm";
+import Image from "next/image";
+import seedMoneyTeam from "../../public/seedmoneyTeam.png";
+import SignupForm from "@/src/components/SignupForm";
+import LoginNavbar from "@/src/components/LoginNavbar";
 
-export default function Page() {
-    return (
-        <Grid container columns={2} className="min-h-screen">
-            <Grid size={{ xs: 0, xl: 1 }} className="hidden xl:block">
-                <Box className="relative min-h-screen w-full">
-                    <Image
-                        src={signupImage}
-                        alt="SeedMoney"
-                        fill
-                        priority
-                        sizes="(min-width: 1280px) 50vw, 100vw"
-                        className="object-cover"
-                    />
-                </Box>
-            </Grid>
-            <Grid size={{ xs: 2, xl: 1 }} className="flex min-h-screen items-center">
-                <Card elevation={0} className="w-full py-10">
-                    <CardContent>
-                        <Container maxWidth="xs">
-                            <Typography variant="h5">New to SeedMoney?</Typography>
-                            <Typography color="rgba(0, 0, 0, 0.6)">Create an account so you can get started setting up your fundraising campaign.</Typography>
-                            <Box className="py-4">
-                                <SignupForm />
-                            </Box>
-                            <Typography color="rgba(0, 0, 0, 0.6)" textAlign="center">Already have an account? <Link href="/" className="font-bold text-sky-600">Log in here</Link>.</Typography>
-                        </Container>
-                    </CardContent>
-                </Card>
-            </Grid>
+export default function SignupPage() {
+  return (
+    <>
+      <LoginNavbar />
+      <main>
+        <div className="flex min-h-screen w-full">
 
-        </Grid>
-    );
+          {/* LEFT IMAGE */}
+          <div className="relative hidden w-1/2 xl:block">
+            <Image
+              src={seedMoneyTeam}
+              alt="Signup Background"
+              fill
+              priority
+              className="object-cover"
+            />
+          </div>
+
+          {/* RIGHT CONTENT */}
+          <div className="flex w-full xl:w-1/2 items-center justify-center">
+            <div className="flex flex-col items-center gap-3 w-full max-w-[20rem]">
+
+              <div className="self-start mb-1">
+                <h1 className="text-2xl">
+                  New to SeedMoney?
+                </h1>
+
+                <p className="text-sm text-[rgba(0,0,0,0.6)]">
+                  Create an account so you can get started setting up your fundraising campaign.
+                </p>
+              </div>
+
+              <SignupForm />
+
+              <p className="text-[rgba(0,0,0,0.6)] text-sm">
+                Already have an account?{" "}
+                <Link
+                  href="/"
+                  className="text-[#1976D2] underline font-bold"
+                >
+                  Log in here
+                </Link>
+              </p>
+
+            </div>
+          </div>
+
+        </div>
+      </main>
+
+    </>
+
+  );
 }
