@@ -2,7 +2,6 @@
 
 import { Button } from "@mui/material";
 import Image from "next/image"; //next's better image component
-import Link from "next/link"; //next's client side nav
 import homeIconGreen from "../public/icon-home-green.svg";
 import homeIconWhite from "../public/icon-home-white.svg";
 import logo from "../public/1e091ff252f77230.png"; //seedmoney logo
@@ -31,7 +30,6 @@ export default function NotFound() {
                 {/*! in front of tailwind code makes it override MUI default styling*/}
                 <div className = "mt-9">
                     <Button
-                        component = {Link}
                         href = "/" //home page
                         disableElevation //remove default MUI effects
                         className = "group !normal-case !rounded-[10px] !px-6 !py-3 !text-[16px] !leading-none !font-semibold !border-2 !border-[#00A63E] !bg-[#00A63E] !text-white transition-all duration-200 hover:!bg-white hover:!text-[#00A63E] hover:shadow-[0_6px_14px_rgba(0,166,62,0.18)]"

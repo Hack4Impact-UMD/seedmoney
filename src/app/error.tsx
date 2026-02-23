@@ -33,7 +33,7 @@ export default function Error({ reset }: ErrorProps) {
                 </h1>
 
                 <p className = "mt-4 text-center text-[19px] leading-[28px] tracking-[-0.1px] font-normal text-[#00A63E]">
-                    We&apos;re having trouble loading this page. Please try again.
+                    We're having trouble loading this page. Please try again.
                 </p>
 
                 {/*! in front of tailwind code makes it override MUI default styling*/}
@@ -41,7 +41,7 @@ export default function Error({ reset }: ErrorProps) {
                     <Button
                         onClick = {reset} //tells next to retry rendering
                         disableElevation //remove default MUI effects
-                        className = "group !normal-case !rounded-[10px] !px-6 !py-3 !text-[16px] !leading-none !font-semibold !border-2 !border-[#00A63E] !bg-[#00A63E] !text-white transition-all duration-200 hover:!bg-white hover:!text-[#00A63E] hover:shadow-[0_6px_14px_rgba(0,166,62,0.18)]"
+                        className = "group normal-case! rounded-[10px]! px-6! py-3! text-[16px]! leading-none! font-semibold! border-2! border-[#00A63E]! bg-[#00A63E]! text-white! transition-all duration-200 hover:bg-white! hover:text-[#00A63E]! hover:shadow-[0_6px_14px_rgba(0,166,62,0.18)]"
                     >
                         <span className = "inline-flex items-center gap-2">
                             <span aria-hidden = "true" className = "relative inline-block w-5 h-5">
