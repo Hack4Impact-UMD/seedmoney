@@ -7,7 +7,7 @@ import homeIconGreen from "../public/icons/icon-home-green.svg";
 import homeIconWhite from "../public/icons/icon-home-white.svg";
 import retryIconGreen from "../public/icons/icon-retry-green.svg";
 import retryIconWhite from "../public/icons/icon-retry-white.svg";
-import logo from "../public/1e091ff252f77230.png"; //seedmoney logo
+import logo from "../public/seedmoneyLogo.png"; //seedmoney logo
 
 //define shape of props passed in
 type ErrorProps = {

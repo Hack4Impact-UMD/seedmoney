@@ -1,6 +1,6 @@
 import { CircularProgress } from "@mui/material"; 
 import Image from "next/image"; //next's better image component
-import logo from "../public/1e091ff252f77230.png"; //seedmoney logo
+import logo from "../public/seedmoneyLogo.png"; //seedmoney logo
 
 export default function Loading() {
     return (
