@@ -2,9 +2,9 @@
 
 import { Button } from "@mui/material";
 import Image from "next/image"; //next's better image component
-import homeIconGreen from "../public/icon-home-green.svg";
-import homeIconWhite from "../public/icon-home-white.svg";
-import logo from "../public/1e091ff252f77230.png"; //seedmoney logo
+import homeIconGreen from "../public/icons/icon-home-green.svg";
+import homeIconWhite from "../public/icons/icon-home-white.svg";
+import logo from "../public/seedmoneyLogo.png"; //seedmoney logo
 
 export default function NotFound() {
     return (
