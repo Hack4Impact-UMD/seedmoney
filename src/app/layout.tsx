@@ -1,27 +1,67 @@
-import { Geist, Geist_Mono, Lato } from "next/font/google";
+import localFont from "next/font/local";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
-  subsets: ["latin"],
-});
+const lato = localFont({
+  src: [
+    {
+      path: "../fonts/Lato/Lato-Black.ttf",
+      weight: "900",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Lato/Lato-BlackItalic.ttf",
+      weight: "900",
+      style: "italic",
+    },
+    {
+      path: "../fonts/Lato/Lato-Bold.ttf",
+      weight: "700",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Lato/Lato-BoldItalic.ttf",
+      weight: "700",
+      style: "italic",
+    },
+    {
+      path: "../fonts/Lato/Lato-Italic.ttf",
+      weight: "400",
+      style: "italic",
+    },
+    {
+      path: "../fonts/Lato/Lato-Light.ttf",
+      weight: "300",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Lato/Lato-LightItalic.ttf",
+      weight: "300",
+      style: "italic",
+    },
+    {
+      path: "../fonts/Lato/Lato-Regular.ttf",
+      weight: "400",
+      style: "normal",
+    },
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
-  subsets: ["latin"],
+    {
+      path: "../fonts/Lato/Lato-Thin.ttf",
+      weight: "100",
+      style: "normal",
+    },
+    {
+      path: "../fonts/Lato/Lato-ThinItalic.ttf",
+      weight: "100",
+      style: "italic",
+    },
+  ],
+  variable: "--font-Lato",
 });
 
 export const metadata = {
   title: "SeedMoney",
   description: "SeedMoney's Grant Application/Campaign Generator Application",
 };
-
-const lato = Lato({
-  weight: ['400', '700'],
-  subsets: ['latin'],
-  display: 'swap',
-  variable: '--font-lato',
-});
 
 export default function RootLayout({
   children,
@@ -31,7 +71,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} ${lato.variable} antialiased`}
+        className={`${lato.className} antialiased`}
       >
         {children}
       </body>
