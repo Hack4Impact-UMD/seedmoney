@@ -9,21 +9,24 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import AddIcon from "@mui/icons-material/Add";
 import LogoutIcon from "@mui/icons-material/Logout";
 import Image from "next/image";
-import logo from "@/src/public/1e091ff252f77230.png";
+import logo from "@/src/public/seedMoneyLogo.png";
 
 type SidebarProps = {
   campaigns: Array<{ id: string; name: string }>;
   selectedCampaignId: string;
+  onCampaignSelect: (id: string) => void;
 };
 
 export default function Navbar({
   campaigns,
   selectedCampaignId,
+  onCampaignSelect,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const handleCampaignClick = (id: string) => {
-    // TODO: implement click campaign logic
+    // TODO: implement campaign click logic
+    onCampaignSelect(id);
     console.log(`Navigate -> /campaigns/${id}`);
   };
 
