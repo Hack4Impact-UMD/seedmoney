@@ -3,10 +3,10 @@
 import { Button } from "@mui/material"; 
 import Image from "next/image"; //next's better image component
 import Link from "next/link"; //next's client side nav
-import homeIconGreen from "../public/icon-home-green.svg";
-import homeIconWhite from "../public/icon-home-white.svg";
-import retryIconGreen from "../public/icon-retry-green.svg";
-import retryIconWhite from "../public/icon-retry-white.svg";
+import homeIconGreen from "../public/icons/icon-home-green.svg";
+import homeIconWhite from "../public/icons/icon-home-white.svg";
+import retryIconGreen from "../public/icons/icon-retry-green.svg";
+import retryIconWhite from "../public/icons/icon-retry-white.svg";
 import logo from "../public/1e091ff252f77230.png"; //seedmoney logo
 
 //define shape of props passed in
