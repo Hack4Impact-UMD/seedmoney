@@ -95,6 +95,7 @@ export default function Navbar({
               <ListItemButton
                 key={campaign.id}
                 onClick={() => handleCampaignClick(campaign.id)}
+                aria-label={campaign.name}
                 className={`!min-h-12 !py-3 ${
                   isSelected
                     ? "!bg-black/25 hover:!bg-black/20"
