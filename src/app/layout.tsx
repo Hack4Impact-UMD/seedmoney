@@ -1,4 +1,4 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Geist, Geist_Mono, Lato } from "next/font/google";
 import "./globals.css";
 
 const geistSans = Geist({
@@ -16,6 +16,13 @@ export const metadata = {
   description: "SeedMoney's Grant Application/Campaign Generator Application",
 };
 
+const lato = Lato({
+  weight: ['400', '700'],
+  subsets: ['latin'],
+  display: 'swap',
+  variable: '--font-lato',
+});
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -24,7 +31,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${geistSans.variable} ${geistMono.variable} ${lato.variable} antialiased`}
       >
         {children}
       </body>
