@@ -2,6 +2,7 @@
 .branches
 .temp
 migrations
+snippets
 
 # dotenvx
 .env.keys
