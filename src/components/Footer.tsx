@@ -5,7 +5,7 @@ import StarIcon from '@mui/icons-material/Star';
 export default function Footer() {
 
   return (
-    <Box component="footer" className="bg-[#333333] text-[#EEEEEE] font-[family-name:var(--font-lato)]">
+    <Box component="footer" className="bg-[#333333] text-[#EEEEEE]">
       <Container>
         <Divider className="pt-8 before:border before:border-[#525252] after:border after:border-[#525252]"> <StarIcon fontSize='small' /> </Divider>
 

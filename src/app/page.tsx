@@ -4,7 +4,6 @@ import Image from "next/image";
 import seedMoneyTeam from "../public/seedmoneyTeam.png";
 import LoginForm from "@/src/components/LoginForm";
 import LoginNavbar from "@/src/components/LoginNavbar";
-import Footer from "@/components/Footer";
 
 export default function LoginPage() {
   return (
@@ -43,7 +42,6 @@ export default function LoginPage() {
           </div>
         </div>
       </div>
-      <Footer />
     </>
   );
 }
