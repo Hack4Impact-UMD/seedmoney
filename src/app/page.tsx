@@ -1,7 +1,6 @@
 "use client";
 import Link from "next/link";
 import Image from "next/image";
-import seedMoneyTeam from "../public/seedmoneyTeam.png";
 import LoginForm from "@/src/components/LoginForm";
 import LoginNavbar from "@/src/components/LoginNavbar";
 
@@ -12,7 +11,7 @@ export default function LoginPage() {
       <div className="flex min-h-screen w-full">
         <div className="relative hidden w-1/2 lg:block">
           <Image
-            src={seedMoneyTeam}
+            src="/seedmoneyTeam.png"
             alt="Login Background"
             fill
             className="object-cover"

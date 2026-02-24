@@ -1,6 +1,5 @@
 import { CircularProgress } from "@mui/material"; 
 import Image from "next/image"; //next's better image component
-import logo from "../public/seedmoneyLogo.png"; //seedmoney logo
 
 export default function Loading() {
     return (
@@ -9,7 +8,7 @@ export default function Loading() {
                 {/*seedmoney logo*/}
                 <div className = "w-32 h-32 mb-5 -translate-y-4 rounded-full bg-white border-[3px] border-[#00A63E] flex items-center justify-center">
                     <div className = "relative w-[82px] h-[82px] translate-y-[3px]">
-                        <Image src = {logo} alt = "Logo" fill className = "object-contain object-center block"/>
+                        <Image src = "/seedMoneyLogo.png" alt = "Logo" fill className = "object-contain object-center block"/>
                     </div>
                 </div>
                 {/*MUI spinner progress thingy*/}

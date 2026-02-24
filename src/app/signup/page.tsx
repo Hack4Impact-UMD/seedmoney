@@ -2,7 +2,6 @@
 
 import Link from "next/link";
 import Image from "next/image";
-import seedMoneyTeam from "../../public/seedmoneyTeam.png";
 import SignupForm from "@/src/components/SignupForm";
 import LoginNavbar from "@/src/components/LoginNavbar";
 
@@ -16,7 +15,7 @@ export default function SignupPage() {
           {/* LEFT IMAGE */}
           <div className="relative hidden w-1/2 xl:block">
             <Image
-              src={seedMoneyTeam}
+              src="/seedmoneyTeam.png"
               alt="Signup Background"
               fill
               priority

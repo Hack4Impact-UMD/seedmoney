@@ -2,9 +2,6 @@
 
 import { Button } from "@mui/material";
 import Image from "next/image"; //next's better image component
-import homeIconGreen from "../public/icons/icon-home-green.svg";
-import homeIconWhite from "../public/icons/icon-home-white.svg";
-import logo from "../public/seedmoneyLogo.png"; //seedmoney logo
 
 export default function NotFound() {
     return (
@@ -12,7 +9,7 @@ export default function NotFound() {
             <div className = "flex flex-col items-center">
                 <div className = "w-36 h-36 mb-8 rounded-full bg-white border-[3px] border-[#00A63E] flex items-center justify-center">
                     <div className = "relative w-[92px] h-[92px] translate-y-[3px]">
-                        <Image src = {logo} alt = "Logo" fill className = "object-contain object-center block"/>
+                        <Image src = "/seedMoneyLogo.png" alt = "Logo" fill className = "object-contain object-center block"/>
                     </div>
                 </div>
 
@@ -36,8 +33,8 @@ export default function NotFound() {
                     >
                         <span className = "inline-flex items-center gap-2">
                             <span aria-hidden = "true" className = "relative inline-block w-5 h-5">
-                                <Image src = {homeIconWhite} alt = "" width = {20} height = {20} className = "block group-hover:hidden" />
-                                <Image src = {homeIconGreen} alt = "" width = {20} height = {20} className = "hidden group-hover:block" />
+                                <Image src = "/icons/icon-home-white.svg" alt = "" width = {20} height = {20} className = "block group-hover:hidden" />
+                                <Image src = "/icons/icon-home-green.svg" alt = "" width = {20} height = {20} className = "hidden group-hover:block" />
                             </span>
                             Go Home
                         </span>
