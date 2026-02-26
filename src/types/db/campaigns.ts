@@ -69,3 +69,19 @@ export type GivebutterCampaignPayload = {
     updated_at: string;
   };
 };
+
+export type GivebutterCampaignUpdatePayload = Partial<
+  Pick<
+    GivebutterCampaignPayload,
+    | "title"
+    | "subtitle"
+    | "description"
+    | "goal"
+    | "status"
+    | "end_at"
+    | "timezone"
+    | "cover"
+    | "slug"
+    | "settings"
+  >
+>;
