@@ -17,8 +17,8 @@ export default function NotFound() {
                     404
                 </h1>
 
-                <p className = "mt-3 text-center text-[34px] leading-[48px] tracking-[0.12px] font-semibold text-[#008832]">
-                    Oops! This Page Not Found
+                <p className = "mt-3 text-center text-[34px] leading-[48px] tracking-[0.12px] font-semibold text-[`#008832`]">
+                    Oops! Page Not Found
                 </p>
 
                 <p className = "mt-3 text-center text-[19px] leading-[28px] tracking-[-0.1px] font-normal text-[#008832]">
