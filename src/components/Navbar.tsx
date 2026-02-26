@@ -43,7 +43,7 @@ export default function Navbar({
 
   return (
     <nav
-      className={`relative flex flex-col h-screen bg-[#00A63E] shrink-0 overflow-visible transition-width duration-300 ease-in-out ${
+      className={`relative flex flex-col h-screen bg-[#00A63E] shrink-0 overflow-visible transition-[width] duration-300 ease-in-out ${
         isCollapsed ? "w-[105px]" : "w-[280px] xl:w-[360px]"
       }`}
     >
@@ -78,7 +78,7 @@ export default function Navbar({
         onClick={() => setIsCollapsed((prev) => !prev)}
         size="small"
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-className="!absolute !top-[75px] !right-0 !translate-x-1/2 !z-50 !border-2 !border-[`#00A63E`] !text-[`#00A63E`] !bg-white !w-9 !h-9 hover:!bg-gray-100"
+        className="!absolute !top-[75px] !right-0 !translate-x-1/2 !z-50 !border-2 !border-[`#00A63E`] !text-[`#00A63E`] !bg-white !w-9 !h-9 hover:!bg-gray-100"
       >
         {isCollapsed ? (
           <ChevronRightIcon fontSize="small" />
@@ -133,7 +133,7 @@ className="!absolute !top-[75px] !right-0 !translate-x-1/2 !z-50 !border-2 !bord
 
       <div className="px-4 pb-6 flex flex-col gap-3">
         <Button
-        size="large"
+          size="large"
           variant="contained"
           startIcon={!isCollapsed && <AddIcon />}
           onClick={handleNewCampaign}
