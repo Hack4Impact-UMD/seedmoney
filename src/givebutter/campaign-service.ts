@@ -1,4 +1,7 @@
-import type { GivebutterCampaignPayload } from "@/src/types/db/campaigns";
+import type {
+  GivebutterCampaignPayload,
+  GivebutterCampaignUpdatePayload,
+} from "@/src/types/db/campaigns";
 
 const getGivebutterEnv = () => {
   const key = process.env.NEXT_GIVEBUTTER_API_KEY;
@@ -87,7 +90,7 @@ export const getCampaign = async (campaign: number) => {
 
 export const updateCampaign = async (
   campaignId: number,
-  updates: Partial<GivebutterCampaignPayload>,
+  updates: GivebutterCampaignUpdatePayload,
 ) => {
   const key = getGivebutterEnv().key;
 
