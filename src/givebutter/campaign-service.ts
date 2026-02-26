@@ -15,8 +15,8 @@ const getGivebutterEnv = () => {
 export const addCampaign = async (payload: GivebutterCampaignPayload) => {
   const key = getGivebutterEnv().key;
   const response = await fetch("https://api.givebutter.com/v1/campaigns", {
+    method: "POST",
     headers: {
-      method: "POST",
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
@@ -67,6 +67,34 @@ export const getCampaign = async (campaign: number) => {
   const response = await fetch(url, {
     headers: {
       Authorization: `Bearer ${key}`,
+    },
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+        `Givebutter API error: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  return data;
+};
+
+export const updateCampaign = async (
+  campaignId: number,
+  updates: Partial<GivebutterCampaignPayload>,
+) => {
+  const key = getGivebutterEnv().key;
+
+  const url = `https://api.givebutter.com/v1/campaigns/${campaignId}`;
+
+  const response = await fetch(url, {
+    method: "PUT",
+    headers: {
+      Authorization: `Bearer ${key}`,
+      "Content-Type": "application/json",
     },
   });
 
