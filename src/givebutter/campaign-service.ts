@@ -14,7 +14,8 @@ const getGivebutterEnv = () => {
 
 export const addCampaign = async (payload: GivebutterCampaignPayload) => {
   const key = getGivebutterEnv().key;
-  const response = await fetch("https://api.givebutter.com/v1/campaigns", {
+  const url = "https://api.givebutter.com/v1/campaigns";
+  const response = await fetch(url, {
     method: "POST",
     headers: {
       Authorization: `Bearer ${key}`,
@@ -42,6 +43,7 @@ export const listCampaigns = async (scope?: string) => {
   if (scope) url.searchParams.set("scope", scope);
 
   const response = await fetch(url, {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${key}`,
     },
@@ -65,6 +67,7 @@ export const getCampaign = async (campaign: number) => {
   const url = `https://api.givebutter.com/v1/campaigns/${campaign}`;
 
   const response = await fetch(url, {
+    method: "GET",
     headers: {
       Authorization: `Bearer ${key}`,
     },
@@ -95,6 +98,30 @@ export const updateCampaign = async (
     headers: {
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
+    },
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+        `Givebutter API error: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  return data;
+};
+
+export const deleteCampaign = async (campaignId: number) => {
+  const key = getGivebutterEnv().key;
+
+  const url = `https://api.givebutter.com/v1/campaigns/${campaignId}`;
+
+  const response = await fetch(url, {
+    method: "DELETE",
+    headers: {
+      Authorization: `Bearer ${key}`,
     },
   });
 
