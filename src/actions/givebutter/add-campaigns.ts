@@ -22,4 +22,15 @@ export const addCampaign = async () => {
     },
     body: JSON.stringify(payload),
   });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+        `Givebutter API error: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  return data;
 };
