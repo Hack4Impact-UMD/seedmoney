@@ -11,9 +11,10 @@ const getGivebutterEnv = () => {
 };
 
 export const addCampaign = async () => {
+  const key = getGivebutterEnv().key;
   const response = await fetch("https://api.givebutter.com/v1/campaigns", {
     headers: {
-      Authorization: "Bearer YOUR_API_KEY",
+      Authorization: `Bearer ${key}`,
     },
   });
 };
