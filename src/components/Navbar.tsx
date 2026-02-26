@@ -43,7 +43,7 @@ export default function Navbar({
 
   return (
     <nav
-      className={`relative flex flex-col h-screen bg-[#00A63E] shrink-0 overflow-visible [transition:width_0.3s_ease] ${
+      className={`relative flex flex-col h-screen bg-[#00A63E] shrink-0 overflow-visible transition-width duration-300 ease-in-out ${
         isCollapsed ? "w-[105px]" : "w-[280px] xl:w-[360px]"
       }`}
     >
@@ -103,8 +103,8 @@ className="!absolute !top-[75px] !right-0 !translate-x-1/2 !z-50 !border-2 !bord
                 aria-label={campaign.name}
                 className={`!min-h-12 !py-3 ${
                   isSelected
-                    ? "!bg-black/25 hover:!bg-black/20"
-                    : "!bg-transparent hover:!bg-white/[0.08]"
+                    ? "!bg-[#008030] hover:!bg-black/30"
+                    : "!bg-transparent hover:!bg-[#43B45D]"
                 } ${
                   isCollapsed ? "!justify-center !px-0" : "!justify-start !px-6"
                 }`}
@@ -133,11 +133,12 @@ className="!absolute !top-[75px] !right-0 !translate-x-1/2 !z-50 !border-2 !bord
 
       <div className="px-4 pb-6 flex flex-col gap-3">
         <Button
+        size="large"
           variant="contained"
           startIcon={!isCollapsed && <AddIcon />}
           onClick={handleNewCampaign}
           fullWidth
-          className="!bg-white !text-[#00A63E] !rounded-xl !normal-case !font-semibold !text-base !py-2.5 !shadow-none hover:!bg-gray-100 hover:!shadow-none"
+          className="!bg-white !text-[#00A63E] !rounded-lg !normal-case !font-semibold !text-base !py-2.5 !shadow-none hover:!bg-gray-100 hover:!shadow-none"
         >
           {isCollapsed ? <AddIcon /> : "New Campaign"}
         </Button>
@@ -146,12 +147,12 @@ className="!absolute !top-[75px] !right-0 !translate-x-1/2 !z-50 !border-2 !bord
           onClick={handleLogout}
           fullWidth
           aria-label="Logout"
-          className={`!text-white !uppercase !underline !font-medium !tracking-[1.5px] !text-[0.85rem] ${
+          className={`!text-white !uppercase !no-underline hover:!underline !font-medium !tracking-[1.5px] !text-[0.85rem] ${
             isCollapsed ? "!justify-center" : "!justify-start"
           }`}
         >
           <LogoutIcon className="!text-[28px]" />
-          {!isCollapsed && <span className="ml-2">LOGOUT</span>}
+          {!isCollapsed && <span className="ml-2">LOG OUT</span>}
         </Button>
       </div>
     </nav>
