@@ -58,3 +58,26 @@ export const listCampaigns = async (scope?: string) => {
 
   return data;
 };
+
+export const getCampaign = async (campaign: number) => {
+  const key = getGivebutterEnv().key;
+
+  const url = `https://api.givebutter.com/v1/campaigns/${campaign}`;
+
+  const response = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${key}`,
+    },
+  });
+
+  const data = await response.json().catch(() => null);
+
+  if (!response.ok) {
+    throw new Error(
+      data?.message ||
+        `Givebutter API error: ${response.status} ${response.statusText}`,
+    );
+  }
+
+  return data;
+};
