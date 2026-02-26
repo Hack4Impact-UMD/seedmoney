@@ -1,4 +1,4 @@
-import { GivebutterCampaignPayload } from "../../types/db/campaigns";
+import type { GivebutterCampaignPayload } from "@/src/types/db/campaigns";
 
 const getGivebutterEnv = () => {
   const key = process.env.NEXT_GIVEBUTTER_API_KEY;
