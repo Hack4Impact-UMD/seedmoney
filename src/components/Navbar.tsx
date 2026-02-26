@@ -44,7 +44,7 @@ export default function Navbar({
   return (
     <nav
       className={`relative flex flex-col h-screen bg-[#00A63E] shrink-0 overflow-visible [transition:width_0.3s_ease] ${
-        isCollapsed ? "w-[105px]" : "w-[438px]"
+        isCollapsed ? "w-[105px]" : "w-[280px] xl:w-[360px]"
       }`}
     >
       <div className="flex items-center px-5 pt-6 pb-4">
