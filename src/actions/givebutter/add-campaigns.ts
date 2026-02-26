@@ -1,3 +1,5 @@
+import { Campaign } from "../../types/db/campaigns";
+
 const getGivebutterEnv = () => {
   const key = process.env.NEXT_GIVEBUTTER_API_KEY;
 
@@ -10,9 +12,7 @@ const getGivebutterEnv = () => {
   return { key };
 };
 
-const payload = {};
-
-export const addCampaign = async () => {
+export const addCampaign = async (payload: Campaign) => {
   const key = getGivebutterEnv().key;
   const response = await fetch("https://api.givebutter.com/v1/campaigns", {
     headers: {
