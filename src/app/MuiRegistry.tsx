@@ -6,13 +6,6 @@ import createCache from '@emotion/cache';
 import type { EmotionCache } from '@emotion/cache';
 import { CacheProvider } from '@emotion/react';
 import { useServerInsertedHTML } from 'next/navigation';
-import { ThemeProvider, createTheme } from '@mui/material/styles';
-
-const theme = createTheme({
-  typography: {
-    fontFamily: 'inherit',
-  },
-});
 
 type MuiRegistryProps = {
   children: ReactNode;
@@ -62,10 +55,6 @@ export default function MuiRegistry({ children }: MuiRegistryProps) {
     );
   });
 
-  return (
-    <CacheProvider value={cache as EmotionCache}>
-      <ThemeProvider theme={theme}>{children}</ThemeProvider>
-    </CacheProvider>
-  );
+  return <CacheProvider value={cache as EmotionCache}>{children}</CacheProvider>;
 }
 

@@ -1,6 +1,5 @@
 import localFont from "next/font/local";
 import "./globals.css";
-import MuiRegistry from "./MuiRegistry";
 
 const lato = localFont({
   src: [
@@ -74,7 +73,7 @@ export default function RootLayout({
       <body
         className={`${lato.className} antialiased`}
       >
-        <MuiRegistry>{children}</MuiRegistry>
+        {children}
       </body>
     </html>
   );
