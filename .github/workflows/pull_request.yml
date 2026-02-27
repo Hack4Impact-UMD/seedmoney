@@ -4,10 +4,7 @@ on:
   pull_request:
 
 permissions:
-  checks: write
   contents: read
-  pull-requests: write
-
 jobs:
   verify:
     name: Lint and Build
