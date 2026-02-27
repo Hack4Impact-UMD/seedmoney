@@ -4,7 +4,7 @@ import { useState } from "react";
 import Navbar from "@/src/components/Navbar";
 
 const sampleCampaigns = [
-  { id: "1", name: "Save the Ocean Campaign" },
+  { id: "1", name: "Save the Ocean" },
   { id: "2", name: "Community Garden Project" },
   { id: "3", name: "Save the Garden" },
 ];
@@ -20,10 +20,9 @@ export default function DashboardPage() {
         onCampaignSelect={setSelectedId}
       />
       <div className="flex-1 bg-gray-50 p-10">
-        <h1 className="text-2xl font-bold text-gray-800">Dashboard</h1>
-        <p className="mt-2 text-gray-500">
-          Selected campaign: {sampleCampaigns.find((c) => c.id === selectedId)?.name}
-        </p>
+        <h3 className="text-4xl font-bold text-[#096B2E]">
+          {sampleCampaigns.find((c) => c.id === selectedId)?.name}
+        </h3>
       </div>
     </div>
   );
