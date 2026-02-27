@@ -4,13 +4,19 @@ on:
   pull_request:
 
 permissions:
+  checks: write
   contents: read
+  pull-requests: write
 
 jobs:
   verify:
     name: Lint and Build
+    if: ${{ github.event.pull_request.head.repo.full_name == github.repository }}
     runs-on: ubuntu-latest
-
+    env:
+      NEXT_PUBLIC_SUPABASE_URL: ${{ secrets. NEXT_PUBLIC_SUPABASE_URL }}
+      NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets. NEXT_PUBLIC_SUPABASE_ANON_KEY }}
+      NEXT_GIVEBUTTER_API_KEY: ${{ secrets. NEXT_GIVEBUTTER_API_KEY }}
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
