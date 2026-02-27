@@ -102,6 +102,7 @@ export const updateCampaign = async (
       Authorization: `Bearer ${key}`,
       "Content-Type": "application/json",
     },
+    body: JSON.stringify(updates),
   });
 
   const data = await response.json().catch(() => null);
