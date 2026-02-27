@@ -305,7 +305,7 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1
         FROM pg_constraint
-        WHERE conname = 'campaign_members_pkey'
+        WHERE contype = 'p'
           AND conrelid = 'public.campaign_members'::regclass
     ) THEN
         ALTER TABLE ONLY "public"."campaign_members"
@@ -321,7 +321,7 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1
         FROM pg_constraint
-        WHERE conname = 'campaigns_pkey'
+        WHERE contype = 'p'
           AND conrelid = 'public.campaigns'::regclass
     ) THEN
         ALTER TABLE ONLY "public"."campaigns"
@@ -337,7 +337,7 @@ BEGIN
     IF NOT EXISTS (
         SELECT 1
         FROM pg_constraint
-        WHERE conname = 'users_pkey'
+        WHERE contype = 'p'
           AND conrelid = 'public.users'::regclass
     ) THEN
         ALTER TABLE ONLY "public"."users"
