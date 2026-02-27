@@ -78,7 +78,7 @@ export default function Navbar({
         onClick={() => setIsCollapsed((prev) => !prev)}
         size="small"
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="!absolute !top-[75px] !right-0 !translate-x-1/2 !z-50 !border-2 !border-[`#00A63E`] !text-[`#00A63E`] !bg-white !w-9 !h-9 hover:!bg-gray-100"
+        className="!absolute !top-[100px] !right-0 !translate-x-1/2 !z-50 !border-2 !border-[`#00A63E`] !text-[`#00A63E`] !bg-white !w-9 !h-9 hover:!bg-gray-100"
       >
         {isCollapsed ? (
           <ChevronRightIcon fontSize="small" />
