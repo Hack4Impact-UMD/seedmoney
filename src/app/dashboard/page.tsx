@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname, useRouter } from "next/navigation";
 import Navbar from "@/src/components/Navbar";
+import DashboardTabs from "@/src/components/dashboard/DashboardTabs";
 
 const sampleCampaigns = [
   { id: "1", name: "Save the Ocean" },
@@ -11,6 +13,29 @@ const sampleCampaigns = [
 
 export default function DashboardPage() {
   const [selectedId, setSelectedId] = useState("1");
+  const router = useRouter();
+  const pathname = usePathname();
+
+  const selectedTab =
+    pathname === "/dashboard/donors"
+      ? "Donors"
+      : pathname === "/dashboard/analytics"
+        ? "Analytics"
+        : "Overview";
+
+  const handleTabChange = (newValue: string) => {
+    if (newValue === "Donors") {
+      router.push("/dashboard/donors");
+      return;
+    }
+
+    if (newValue === "Analytics") {
+      router.push("/dashboard/analytics");
+      return;
+    }
+
+    router.push("/dashboard");
+  };
 
   return (
     <div className="flex min-h-screen">
@@ -23,6 +48,10 @@ export default function DashboardPage() {
         <h3 className="text-4xl font-bold text-[#096B2E]">
           {sampleCampaigns.find((c) => c.id === selectedId)?.name}
         </h3>
+        <DashboardTabs
+          selectedTab={selectedTab}
+          onChange={handleTabChange}
+        />
       </div>
     </div>
   );
