@@ -1,5 +1,8 @@
 import localFont from "next/font/local";
 import "./globals.css";
+import Providers from "../components/Providers";
+
+
 
 const lato = localFont({
   src: [
@@ -63,6 +66,7 @@ export const metadata = {
   description: "SeedMoney's Grant Application/Campaign Generator Application",
 };
 
+
 export default function RootLayout({
   children,
 }: Readonly<{
@@ -70,10 +74,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body
-        className={`${lato.className} antialiased`}
-      >
-        {children}
+      <body className={`${lato.className} antialiased`}>
+          <Providers>
+            {children}
+          </Providers>
       </body>
     </html>
   );
