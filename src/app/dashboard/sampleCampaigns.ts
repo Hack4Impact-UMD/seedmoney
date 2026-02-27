@@ -1,5 +1,5 @@
 export const sampleCampaigns = [
-  { id: "1", name: "Save the Ocean" },
+  { id: "1", name: "Save the Ocean Campaign" },
   { id: "2", name: "Community Garden Project" },
   { id: "3", name: "Save the Garden" },
 ];
