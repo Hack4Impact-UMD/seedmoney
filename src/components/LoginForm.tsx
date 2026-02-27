@@ -1,6 +1,8 @@
 import { useState } from "react";
 import { TextField, Button } from "@mui/material";
 import { Google } from "@mui/icons-material";
+import LogoutIcon from "@mui/icons-material/Logout";
+
 import Form from "next/form";
 
 const LoginForm = () => {
@@ -51,21 +53,21 @@ const LoginForm = () => {
       <Button
         type="submit"
         variant="contained"
+        startIcon={<LogoutIcon />}
         color="primary"
-        size="large"
-        className="bg-[#5ABC61]! w-full"
+        size="medium"
       >
         Log in
       </Button>
       <Button
         type="button"
         onClick={handleGoogleLogin}
-        variant="contained"
+        startIcon={<Google className="text-[rgba(0,0,0,0.6)]" />}
+        variant="outlined"
         color="primary"
-        size="large"
-        className="bg-[#E0E0E0]! text-black! w-full"
+        size="medium"
       >
-        <Google className="text-[rgba(0,0,0,0.6)] mr-1" /> Log in with Google
+        Log in with Google
       </Button>
     </Form>
   );

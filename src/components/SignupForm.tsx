@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 import { TextField, Button, Checkbox, FormControlLabel } from "@mui/material";
+import LogoutIcon from "@mui/icons-material/Logout";
 import { Google } from "@mui/icons-material";
 import Form from "next/form";
 import Link from "next/link";
@@ -127,8 +128,9 @@ const SignupForm = () => {
       <Button
         type="submit"
         variant="contained"
-        size="large"
-        className="bg-[#5ABC61]! w-full"
+        size="medium"
+        startIcon={<LogoutIcon />}
+
       >
         Create An Account
       </Button>
@@ -136,9 +138,8 @@ const SignupForm = () => {
       <Button
         type="button"
         onClick={signupWithGoogle}
-        variant="contained"
-        size="large"
-        className="bg-[#E0E0E0]! text-black! w-full"
+        variant="outlined"
+        size="medium"
         startIcon={<Google className="text-[rgba(0,0,0,0.6)]" />}
       >
         Sign Up with Google
