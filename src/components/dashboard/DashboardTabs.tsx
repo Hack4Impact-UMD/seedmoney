@@ -24,7 +24,7 @@ export default function DashboardTabs({
       value={selectedTab}
       onChange={handleChange}
       aria-label="Dashboard tabs"
-      className="w-fit [&_.MuiTabs-indicator]:!h-[3px] [&_.MuiTabs-indicator]:!bg-[#008832]"
+      className="w-fit [&_.MuiTabs-indicator]:!h-[3px] [&_.MuiTabs-indicator]:!bg-[#008832] mt-5 mb-5"
       variant="standard"
     >
       {tabOptions.map((tab) => (
@@ -33,7 +33,7 @@ export default function DashboardTabs({
           disableRipple
           value={tab}
           label={tab}
-          className="!min-w-0 !min-h-[38px] !px-5 !py-2 !normal-case !font-semibold !text-sm !leading-[1.25] !text-black/60 [&.Mui-selected]:!text-[#008832]"
+          className="!min-w-0 !min-h-[38px] !px-5  !normal-case !font-semibold !text-sm !leading-[1.25] !text-black/60 [&.Mui-selected]:!text-[#008832]"
         />
       ))}
     </Tabs>
