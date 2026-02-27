@@ -44,16 +44,6 @@ export default function DashboardLayout({
   };
 
   const handleCampaignChange = (newCampaignId: string) => {
-    if (selectedTab === "Donors") {
-      router.push(`/dashboard/${newCampaignId}/donors`);
-      return;
-    }
-
-    if (selectedTab === "Analytics") {
-      router.push(`/dashboard/${newCampaignId}/analytics`);
-      return;
-    }
-
     router.push(`/dashboard/${newCampaignId}`);
   };
 
