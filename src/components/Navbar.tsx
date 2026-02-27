@@ -132,23 +132,22 @@ export default function Navbar({
       <div className="px-4 pb-6 flex flex-col gap-3">
         <Button
           size="large"
-          variant="contained"
+          variant="outlined"
           startIcon={!isCollapsed && <AddIcon />}
           onClick={handleNewCampaign}
           fullWidth
-          className="!bg-white !text-[#00A63E] !rounded-lg !normal-case !font-semibold !text-base !py-2.5 !shadow-none hover:!bg-gray-100 hover:!shadow-none"
+          className = "hover:!bg-gray-100"
         >
           {isCollapsed ? <AddIcon /> : "New Campaign"}
         </Button>
 
         <Button
           onClick={handleLogout}
-          fullWidth
+          size="medium"
+          variant="text"
           aria-label="Logout"
-          className={clsx(
-            "!text-white !uppercase !no-underline hover:!underline !font-medium !tracking-[1.5px] !text-[0.85rem]",
-            isCollapsed ? "!justify-center" : "!justify-start"
-          )}
+          className = "!flex !justify-start !text-white"
+
         >
           <LogoutIcon className="!text-[28px]" />
           {!isCollapsed && <span className="ml-2">LOG OUT</span>}
