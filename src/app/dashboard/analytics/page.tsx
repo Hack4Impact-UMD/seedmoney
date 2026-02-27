@@ -11,7 +11,7 @@ const sampleCampaigns = [
   { id: "3", name: "Save the Garden" },
 ];
 
-export default function DashboardPage() {
+export default function AnalyticsDashboardPage() {
   const [selectedId, setSelectedId] = useState("1");
   const router = useRouter();
   const pathname = usePathname();
