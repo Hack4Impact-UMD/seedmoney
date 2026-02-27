@@ -1,6 +1,6 @@
 "use client";
 
-import { SyntheticEvent } from "react";
+import type { SyntheticEvent } from "react";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 
