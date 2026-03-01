@@ -9,5 +9,7 @@ export type Users = {
   created_at: string;
 };
 
-export type NewUser = Omit<Users, "id" | "created_at"> &
-  Partial<Pick<Users, "id" | "created_at">>;
+export type NewUser = Omit<Users, "id" | "created_at" | "is_admin">;
+
+// Optional: internal/admin-only creation shape (not for untrusted input)
+export type NewUserInternal = NewUser & Partial<Pick<Users, "is_admin">>;
