@@ -1,7 +1,7 @@
-import { Users } from "@/src/types";
+import type { NewUser, Users } from "@/src/types";
 import { supabase } from "@/src/lib/supabase-client";
 
-export async function createUser(user: Users) {
+export async function createUser(user: NewUser) {
   const { error } = await supabase.from("users").insert(user);
 
   if (error) {
@@ -10,11 +10,11 @@ export async function createUser(user: Users) {
   }
 }
 
-export async function readUser(user_id: number): Promise<Users | null> {
+export async function readUser(userId: number): Promise<Users | null> {
   const { data, error } = await supabase
     .from("users")
     .select("*")
-    .eq("user_id", user_id)
+    .eq("id", userId)
     .single();
 
   if (error) {
@@ -25,11 +25,11 @@ export async function readUser(user_id: number): Promise<Users | null> {
   return data;
 }
 
-export async function updateUser(user_id: number, updatedUser: Partial<Users>) {
+export async function updateUser(userId: number, updatedUser: Partial<Users>) {
   const { error } = await supabase
     .from("users")
     .update(updatedUser)
-    .eq("user_id", user_id);
+    .eq("id", userId);
 
   if (error) {
     console.error("Error updating user:", error.message);
@@ -37,11 +37,11 @@ export async function updateUser(user_id: number, updatedUser: Partial<Users>) {
   }
 }
 
-export async function deleteUser(user_id: number) {
+export async function deleteUser(userId: number) {
   const { error } = await supabase
     .from("users")
     .delete()
-    .eq("user_id", user_id);
+    .eq("id", userId);
 
   if (error) {
     console.error("Error deleting user:", error.message);
