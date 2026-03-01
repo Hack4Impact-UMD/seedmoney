@@ -15,7 +15,7 @@ export async function readUser(userId: number): Promise<Users | null> {
     .from("users")
     .select("*")
     .eq("id", userId)
-    .single();
+    .maybeSingle();
 
   if (error) {
     console.error("Error reading user:", error.message);
