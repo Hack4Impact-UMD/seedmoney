@@ -2,7 +2,6 @@
 import Link from "next/link";
 import Image from "next/image";
 import LoginForm from "@/src/components/LoginForm";
-
 import LoginNavbar from "@/src/components/LoginNavbar";
 
 export default function LoginPage() {
