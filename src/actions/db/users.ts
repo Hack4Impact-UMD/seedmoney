@@ -8,8 +8,6 @@ export async function createUser(user: Users) {
         console.error("Error creating user:", error.message);
         return;
     }
-    }
-
 }
 
 export async function readUser(id: number): Promise<Users | null> {
