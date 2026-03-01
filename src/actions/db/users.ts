@@ -5,8 +5,9 @@ export async function createUser(user: Users) {
     const { error } = await supabase.from("users").insert(user);
 
     if (error) {
-        console.error("Error creating user:", error);
+        console.error("Error creating user:", error.message);
         return;
+    }
     }
 
 }
