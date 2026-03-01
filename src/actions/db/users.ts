@@ -13,7 +13,7 @@ export async function createUser(user: Users) {
 }
 
 export async function readUser(id: number): Promise<Users | null> {
-    const { data, error } = await supabase.from("users").select("*").eq("id", id).single();
+    const { data, error } = await supabase.from("users").select("*").eq("user_id", id).single();
 
     if (error) {
         console.error("Error reading user:", error);
