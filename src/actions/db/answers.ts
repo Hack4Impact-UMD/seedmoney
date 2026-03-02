@@ -1,4 +1,4 @@
-import type { NewAnswer, Answer } from "@/src/types";
+import type { NewAnswer, Answers } from "@/src/types";
 import { supabase } from "@/src/lib/supabase-client";
 
 
@@ -13,7 +13,7 @@ export async function createAnswer(data: NewAnswer){
   }
 }
 
-export async function readAnswer(id: number): Promise<Answer | null> {
+export async function readAnswer(id: number): Promise<Answers | null> {
   const { data, error } = await supabase
     .from("answers")
     .select() // select all columns of answer
@@ -28,7 +28,7 @@ export async function readAnswer(id: number): Promise<Answer | null> {
     return data;
 }
 
-export async function updateAnswer(id: number, data: Partial<Answer>) {
+export async function updateAnswer(id: number, data: Partial<Answers>) {
   const { error } = await supabase
     .from("answers")
     .update(data)
