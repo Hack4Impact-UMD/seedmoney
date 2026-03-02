@@ -10,7 +10,7 @@ export async function createUser(user: NewUser) {
   }
 }
 
-export async function readUser(userId: number): Promise<Users | null> {
+export async function readUser(userId: string): Promise<Users | null> {
   const { data, error } = await supabase
     .from("users")
     .select("*")
@@ -25,7 +25,7 @@ export async function readUser(userId: number): Promise<Users | null> {
   return data;
 }
 
-export async function updateUser(userId: number, updatedUser: Partial<Users>) {
+export async function updateUser(userId: string, updatedUser: Partial<Users>) {
   const { error } = await supabase
     .from("users")
     .update(updatedUser)
@@ -37,11 +37,8 @@ export async function updateUser(userId: number, updatedUser: Partial<Users>) {
   }
 }
 
-export async function deleteUser(userId: number) {
-  const { error } = await supabase
-    .from("users")
-    .delete()
-    .eq("id", userId);
+export async function deleteUser(userId: string) {
+  const { error } = await supabase.from("users").delete().eq("id", userId);
 
   if (error) {
     console.error("Error deleting user:", error.message);
