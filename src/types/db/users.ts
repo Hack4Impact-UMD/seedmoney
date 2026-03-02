@@ -1,10 +1,15 @@
 export type Users = {
-  user_id: number;
-  firstName: string;
-  middleName?: string | null;
-  lastName: string;
+  id: number;
+  first_name: string;
+  middle_name?: string | null;
+  last_name: string;
   email: string;
-  phoneNumber?: string | null;
+  phone_number?: string | null;
   is_admin: boolean;
   created_at: string;
 };
+
+export type NewUser = Omit<Users, "id" | "created_at" | "is_admin">;
+
+// Optional: internal/admin-only creation shape (not for untrusted input)
+export type NewUserInternal = NewUser & Partial<Pick<Users, "is_admin">>;
