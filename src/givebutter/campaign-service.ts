@@ -4,7 +4,7 @@ import type {
 } from "@/src/types/db/campaigns";
 
 const getGivebutterEnv = () => {
-  const key = process.env.NEXT_GIVEBUTTER_API_KEY;
+  const key = process.env.GIVEBUTTER_API_KEY;
 
   if (!key) {
     throw new Error(
