@@ -6,3 +6,6 @@ export type Answers = {
   ai_answer: string;
   final_answer: string;
 };
+
+
+export type NewAnswer = Omit<Answers, "answer_id">;
