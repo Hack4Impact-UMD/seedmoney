@@ -2,15 +2,18 @@ import type { NewAnswer, Answers } from "@/src/types";
 import { supabase } from "@/src/lib/supabase-client";
 
 
-export async function createAnswer(data: NewAnswer){
-  const { error } = await supabase
+export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
+  const { data: insertedData, error} = await supabase
     .from("answers")
-    .insert(data);
+    .insert(data)
+    .select()
+    .single();
   
   if (error) {
     console.error("Error creating answer:", error.message);
-    return;
+    return null;
   }
+  return insertedData as Answers; // ensures returning data from the query
 }
 
 export async function readAnswer(id: number): Promise<Answers | null> {
@@ -25,29 +28,35 @@ export async function readAnswer(id: number): Promise<Answers | null> {
       return null;
     }
 
-    return data;
+    return data as Answers;
 }
 
-export async function updateAnswer(id: number, data: Partial<Answers>) {
-  const { error } = await supabase
+export async function updateAnswer(id: number, data: Partial<NewAnswer>): Promise<Answers | null> {
+  const { data: updatedData, error } = await supabase
     .from("answers")
     .update(data)
-    .eq("answer_id", id);
+    .eq("answer_id", id)
+    .select()
+    .single();
 
     if (error) {
       console.error("Error updating answer: ", error.message);
-      return;
+      return null;
     }
+
+    return updatedData as Answers;
 }
 
-export async function deleteAnswer(id: number) {
+export async function deleteAnswer(id: number): Promise<boolean> {
   const { error } = await supabase
     .from("answers")
     .delete()
-    .eq("answer_id", id)
+    .eq("answer_id", id);
 
   if (error) {
     console.error("Error deleting answer: ", error.message)
-    return;
+    return false;
   }
+
+  return true;
 }
