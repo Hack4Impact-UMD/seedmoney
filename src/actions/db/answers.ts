@@ -21,7 +21,7 @@ export async function readAnswer(id: number): Promise<Answer | null> {
     .maybeSingle();
 
     if (error) {
-      console.error("Error fetching answer:", error.message);
+      console.error("Error fetching answer: ", error.message);
       return null;
     }
 
@@ -35,7 +35,19 @@ export async function updateAnswer(id: number, data: Partial<Answer>) {
     .eq("answer_id", id);
 
     if (error) {
-      console.error("Error updating answer:", error.message);
+      console.error("Error updating answer: ", error.message);
       return;
     }
+}
+
+export async function deleteAnswer(id: number) {
+  const { error } = await supabase
+    .from("answers")
+    .delete()
+    .eq("answer_id", id)
+
+  if (error) {
+    console.error("Error deleting answer: ", error.message)
+    return;
+  }
 }
