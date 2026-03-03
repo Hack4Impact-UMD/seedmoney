@@ -13,9 +13,7 @@ const LoginForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-
     const supabase = await createBrowserClient();
-
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
