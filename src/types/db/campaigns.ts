@@ -25,6 +25,8 @@ export type Campaign = {
   mailing_zipcode: string;
 };
 
+export type NewCampaign = Omit<Campaign, "campaign_id" | "date_created">;
+
 export type GivebutterCampaignPayload = {
   id: string;
   code: string;

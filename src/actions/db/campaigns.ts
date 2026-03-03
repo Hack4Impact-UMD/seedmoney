@@ -1,0 +1,19 @@
+import type { Campaign, NewCampaign} from "@/src/types";
+import { createServerClient } from "@/src/lib/supabase-client";
+
+const supabase = await createServerClient();
+
+export async function createCampaign(data: NewCampaign): Promise<Campaign | null> {
+  const { data: insertedData, error } = await supabase
+    .from("campaigns")
+    .insert(data)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating campaign:", error.message);
+    return null;
+  }
+
+  return insertedData as Campaign;
+}
