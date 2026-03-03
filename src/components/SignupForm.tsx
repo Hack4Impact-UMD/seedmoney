@@ -8,7 +8,6 @@ import Link from "next/link";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { useRouter } from "next/navigation";
 
-
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const SignupForm = () => {
@@ -24,7 +23,7 @@ const SignupForm = () => {
 
   const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setErrorMsg(null);
 
@@ -153,7 +152,6 @@ const SignupForm = () => {
         variant="contained"
         size="medium"
         startIcon={<LogoutIcon />}
-
       >
         Create An Account
       </Button>
