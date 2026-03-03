@@ -2,16 +2,32 @@ import { useState } from "react";
 import { TextField, Button } from "@mui/material";
 import { Google } from "@mui/icons-material";
 import LogoutIcon from "@mui/icons-material/Logout";
-
-import Form from "next/form";
+import { createBrowserClient } from "@/src/lib/supabase-client";
+import { redirect } from "next/navigation";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    // TODO: implement submit logic
-    console.log("Logging in with email/password...");
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+
+    const supabase = await createBrowserClient();
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (error) {
+      setErrorMsg(error.message);
+      return { success: false, error: error.message };
+    }
+
+    redirect("/dashboard");
+
   };
 
   const handleGoogleLogin = () => {
@@ -21,7 +37,7 @@ const LoginForm = () => {
 
 
   return (
-    <Form action={handleSubmit} className="flex flex-col gap-4 w-full">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
       <TextField
         label="Email"
         variant="standard"
@@ -69,7 +85,9 @@ const LoginForm = () => {
       >
         Log in with Google
       </Button>
-    </Form>
+
+      {errorMsg && <p className="text-red-500">{errorMsg}</p>}
+    </form>
   );
 };
 
