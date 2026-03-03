@@ -20,11 +20,54 @@ export async function createCampaign(
   return insertedData as Campaign;
 }
 
-export async function updateCampaign(id: number, data: Partial<NewCampaign>) {
-  const { error } = await supabase
+export async function readCampaign(
+  ids?: number | number[],
+): Promise<Campaign | Campaign[] | null> {
+  
+  // Return ALL campaigns
+  if (ids === undefined) {
+    const { data, error } = await supabase.from("campaigns").select("*");
+
+    if (error) {
+      console.error("Error fetching campaigns:", error.message);
+      return null;
+    }
+
+    return data as Campaign[];
+  }
+
+  // Return a SINGLE campaign by ID
+  if (typeof ids === "number") {
+    const { data, error } = await supabase
+      .from("campaigns")
+      .select("*")
+      .eq("campaign_id", ids)
+      .maybeSingle();
+
+    if (error) {
+      console.error("Error reading campaign:", error.message);
+      return null;
+    }
+
+    return data as Campaign;
+  }
+
+  // Return MULTIPLE campaigns by array of IDs
+  const { data, error } = await supabase
     .from("campaigns")
-    .update(data)
-    .eq("id", id);
+    .select("*")
+    .in("campaign_id", ids);
+
+  if (error) {
+    console.error("Error reading campaigns:", error.message);
+    return null;
+  }
+
+  return data as Campaign[];
+}
+
+export async function updateCampaign(id: number, data: Partial<NewCampaign>) {
+  const { error } = await supabase.from("campaigns").update(data).eq("id", id);
 
   if (error) {
     console.error("Error updating campaign:", error.message);
@@ -42,5 +85,4 @@ export async function deleteCampaign(id: number) {
     console.error("Error deleting campaign:", error.message);
     return;
   }
-
 }
