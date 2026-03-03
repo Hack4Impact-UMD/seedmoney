@@ -1,5 +1,7 @@
 import type { NewUser, Users } from "@/src/types";
-import { supabase } from "@/src/lib/supabase-client";
+import { createServerClient } from "@/src/lib/supabase-client";
+
+const supabase = await createServerClient();
 
 export async function createUser(user: NewUser) {
   const { error } = await supabase.from("users").insert(user);

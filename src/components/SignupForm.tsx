@@ -4,30 +4,53 @@ import { useState } from "react";
 import { TextField, Button, Checkbox, FormControlLabel } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Google } from "@mui/icons-material";
-import Form from "next/form";
 import Link from "next/link";
+import { createBrowserClient } from "@/src/lib/supabase-client";
+import { useRouter } from "next/navigation";
+
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const SignupForm = () => {
   const [firstName, setFirstName] = useState("");
+  const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
+  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
-  const handleSubmit = () => {
-    if (password !== confirmPassword) return;
-    if (!agreeToTerms) return;
-    console.log("Signing up...", {
-      firstName,
-      lastName,
+  const router = useRouter();
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setErrorMsg(null);
+
+    const supabase = await createBrowserClient();
+
+    const { error } = await supabase.auth.signUp({
       email,
       password,
-      confirmPassword,
-      agreeToTerms,
+      options: {
+        data: {
+          first_name: firstName,
+          middle_name: middleName,
+          last_name: lastName,
+          phone_number: phone,
+          is_admin: false,
+        },
+      },
     });
+
+    if (error) {
+      setErrorMsg(error.message);
+      return;
+    }
+
+    router.push("/dashboard");
+    router.refresh();
   };
 
   const signupWithGoogle = () => {
@@ -35,7 +58,7 @@ const SignupForm = () => {
   };
 
   return (
-    <Form action={handleSubmit} className="flex flex-col gap-4 w-full">
+    <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
       <TextField
         label="First Name"
         required
@@ -144,7 +167,9 @@ const SignupForm = () => {
       >
         Sign Up with Google
       </Button>
-    </Form>
+
+      {errorMsg && <div className="text-red-500">{errorMsg}</div>}
+    </form>
   );
 };
 
