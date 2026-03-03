@@ -1,6 +1,7 @@
 import type { NewAnswer, Answers } from "@/src/types";
-import { supabase } from "@/src/lib/supabase-client";
+import { createServerClient } from "@/src/lib/supabase-client";
 
+export const supabase = await createServerClient();
 
 export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
   const { data: insertedData, error} = await supabase
