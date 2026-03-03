@@ -46,8 +46,3 @@ export const createServerClient = async () => {
     },
   });
 };
-
-export const supabase = createClient(
-  getSupabaseEnv().url,
-  getSupabaseEnv().anonKey,
-);

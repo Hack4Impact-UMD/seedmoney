@@ -12,6 +12,8 @@ import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import AddIcon from "@mui/icons-material/Add";
 import LogoutIcon from "@mui/icons-material/Logout";
 import Image from "next/image";
+import { createBrowserClient } from "@/src/lib/supabase-client";
+import { useRouter } from "next/navigation";
 
 type SidebarProps = {
   campaigns: Array<{ id: string; name: string }>;
@@ -26,13 +28,19 @@ export default function Navbar({
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
+  const router = useRouter();
+
   const handleCampaignClick = (id: string) => {
     onCampaignSelect(id);
     console.log(`Navigate -> /campaigns/${id}`);
   };
 
   const handleNewCampaign = () => console.log("Navigate -> /campaigns/new");
-  const handleLogout = () => console.log("Navigate -> /logout");
+  const handleLogout = () => {
+    const supabase = createBrowserClient();
+    supabase.auth.signOut();
+    router.push("/");
+  }
 
   return (
     <nav
