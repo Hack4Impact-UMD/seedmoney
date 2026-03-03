@@ -20,7 +20,19 @@ export async function createCampaign(
   return insertedData as Campaign;
 }
 
-export async function deleteCampaign(id: number): Promise<boolean> {
+export async function updateCampaign(id: number, data: Partial<NewCampaign>) {
+  const { error } = await supabase
+    .from("campaigns")
+    .update(data)
+    .eq("id", id);
+
+  if (error) {
+    console.error("Error updating campaign:", error.message);
+    return;
+  }
+}
+
+export async function deleteCampaign(id: number) {
   const { error } = await supabase
     .from("campaigns")
     .delete()
@@ -28,8 +40,7 @@ export async function deleteCampaign(id: number): Promise<boolean> {
 
   if (error) {
     console.error("Error deleting campaign:", error.message);
-    return false;
+    return;
   }
 
-  return true;
 }
