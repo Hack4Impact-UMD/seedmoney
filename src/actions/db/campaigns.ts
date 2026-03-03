@@ -1,9 +1,11 @@
-import type { Campaign, NewCampaign} from "@/src/types";
+import type { Campaign, NewCampaign } from "@/src/types";
 import { createServerClient } from "@/src/lib/supabase-client";
 
 const supabase = await createServerClient();
 
-export async function createCampaign(data: NewCampaign): Promise<Campaign | null> {
+export async function createCampaign(
+  data: NewCampaign,
+): Promise<Campaign | null> {
   const { data: insertedData, error } = await supabase
     .from("campaigns")
     .insert(data)
@@ -16,4 +18,18 @@ export async function createCampaign(data: NewCampaign): Promise<Campaign | null
   }
 
   return insertedData as Campaign;
+}
+
+export async function deleteCampaign(id: number): Promise<boolean> {
+  const { error } = await supabase
+    .from("campaigns")
+    .delete()
+    .eq("campaign_id", id);
+
+  if (error) {
+    console.error("Error deleting campaign:", error.message);
+    return false;
+  }
+
+  return true;
 }
