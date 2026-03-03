@@ -1,10 +1,12 @@
 "use client";
+
 import Link from "next/link";
 import Image from "next/image";
 import LoginForm from "@/src/components/LoginForm";
 import LoginNavbar from "@/src/components/LoginNavbar";
 
 export default function LoginPage() {
+
   return (
     <>
       <LoginNavbar />
@@ -25,16 +27,16 @@ export default function LoginPage() {
                 Please log in or sign up below.
               </p>
             </div>
+
             <LoginForm />
+
             <p className="text-[rgba(0,0,0,0.6)] text-sm">
               Don&apos;t have an account?{" "}
-              <Link
-                href="/signup"
-                className="text-[#1976D2] underline font-bold"
-              >
+              <Link href="/signup" className="text-[#1976D2] underline font-bold">
                 Sign up here
               </Link>
             </p>
+
             <p className="text-[rgba(0,0,0,0.6)] text-sm">
               Forgot Password / Activate Account
             </p>
