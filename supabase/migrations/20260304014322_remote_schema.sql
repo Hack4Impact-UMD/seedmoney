@@ -23,8 +23,7 @@ begin
     middle_name  = excluded.middle_name,
     last_name    = excluded.last_name,
     email        = excluded.email,
-    phone_number = excluded.phone_number,
-    is_admin     = excluded.is_admin;
+    phone_number = excluded.phone_number;
   
   return new;
 end;
