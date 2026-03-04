@@ -1,5 +1,7 @@
 import { Campaign_Member } from "@/src/types";
-import { supabase } from "@/src/lib/supabase-client";
+import { createServerClient } from "@/src/lib/supabase-client";
+
+const supabase = await createServerClient();
 
 export async function createCampaignMember(
   data: Campaign_Member,

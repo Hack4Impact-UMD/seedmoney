@@ -1,5 +1,7 @@
 import { NewQuestions, Questions } from "@/src/types";
-import { supabase } from "@/src/lib/supabase-client";
+import { createServerClient } from "@/src/lib/supabase-client";
+
+const supabase = await createServerClient();
 
 export async function createQuestion(
   question: NewQuestions,
