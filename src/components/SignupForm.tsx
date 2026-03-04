@@ -28,6 +28,13 @@ const SignupForm = () => {
     e.preventDefault();
     setErrorMsg(null);
 
+    const passwordError = validatePassword(password, confirmPassword);
+
+    if (passwordError) {
+      setErrorMsg(passwordError);
+      return;
+    }
+
     const supabase = await createBrowserClient();
 
     const { error } = await supabase.auth.signUp({
@@ -69,6 +76,38 @@ const SignupForm = () => {
       return { error: "Unexpected server error" };
     }
   };
+
+  const validatePassword = (password: string, confirmPassword: string) => {
+    // add in strong password validation: (something like must be atleast 8 characters, have a number and capital letter and special symbol)
+
+    if (!password || !confirmPassword) {
+      return null;
+    }
+
+    if (password.length < 8) {
+      return "Password must be at least 8 characters.";
+    }
+
+    if (!/[A-Z]/.test(password)) {
+      return "Password must include at least one capital letter.";
+    }
+
+    if (!/\d/.test(password)) {
+      return "Password must include at least one number.";
+    }
+
+    if (!/[^A-Za-z0-9]/.test(password)) {
+      return "Password must include at least one special character.";
+    }
+
+    if (password !== confirmPassword) {
+      return "Passwords do not match.";
+    }
+
+    return null;
+  };
+
+  const passwordError = validatePassword(password, confirmPassword);
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
@@ -122,6 +161,12 @@ const SignupForm = () => {
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
+        error={!!passwordError}
+        helperText={
+          passwordError && password !== confirmPassword
+            ? ""
+            : passwordError || ""
+        }
         slotProps={{ inputLabel: { shrink: true } }}
         className="w-full"
       />
@@ -134,6 +179,10 @@ const SignupForm = () => {
         placeholder="Confirm password"
         value={confirmPassword}
         onChange={(e) => setConfirmPassword(e.target.value)}
+        error={!!passwordError && password !== confirmPassword}
+        helperText={
+          passwordError && password !== confirmPassword ? passwordError : ""
+        }
         slotProps={{ inputLabel: { shrink: true } }}
         className="w-full"
       />
