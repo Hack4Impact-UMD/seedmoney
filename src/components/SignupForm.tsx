@@ -6,6 +6,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { Google } from "@mui/icons-material";
 import Link from "next/link";
 import { createBrowserClient } from "@/src/lib/supabase-client";
+import { signInWithGoogle as startGoogleSignIn } from "@/src/lib/google-auth";
 import { useRouter } from "next/navigation";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -56,26 +57,12 @@ const SignupForm = () => {
     setErrorMsg(null);
 
     try {
-      const supabase = await createBrowserClient();
-
-      const { data, error } = await supabase.auth.signInWithOAuth({
-        provider: "google",
-        options: {
-          redirectTo: `${window.location.origin}/callback`,
-        },
-      });
+      const { error } = await startGoogleSignIn();
 
       if (error) {
-        setErrorMsg(error.message);
-        return { error: error.message };
+        setErrorMsg(error);
+        return { error };
       }
-
-      if (!data?.url) {
-        setErrorMsg("No redirect URL returned from Supabase.");
-        return { error: "No redirect URL returned from Supabase." };
-      }
-
-      window.location.assign(data.url);
     } catch (err) {
       console.error("Unexpected sign-in error:", err);
       setErrorMsg("Unexpected server error");
