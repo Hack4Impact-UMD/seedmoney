@@ -52,37 +52,33 @@ const SignupForm = () => {
     router.refresh();
   };
 
-  const signInWithGoogle = async (): Promise<
-    { url: string } | { error: string }
-  > => {
+  const signInWithGoogle = async () => {
+    setErrorMsg(null);
+
     try {
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL;
-
-      if (!siteUrl) {
-        throw new Error("NEXT_PUBLIC_SITE_URL is not defined");
-      }
-
       const supabase = await createBrowserClient();
 
       const { data, error } = await supabase.auth.signInWithOAuth({
         provider: "google",
         options: {
-          redirectTo: `${siteUrl}/auth/callback`,
+          redirectTo: `${window.location.origin}/callback`,
         },
       });
 
       if (error) {
-        console.error("Google sign-in error:", error.message);
+        setErrorMsg(error.message);
         return { error: error.message };
       }
 
       if (!data?.url) {
-        return { error: "No redirect URL returned from Supabase" };
+        setErrorMsg("No redirect URL returned from Supabase.");
+        return { error: "No redirect URL returned from Supabase." };
       }
 
-      return { url: data.url };
+      window.location.assign(data.url);
     } catch (err) {
       console.error("Unexpected sign-in error:", err);
+      setErrorMsg("Unexpected server error");
       return { error: "Unexpected server error" };
     }
   };
@@ -189,7 +185,7 @@ const SignupForm = () => {
 
       <Button
         type="button"
-        onClick={signupWithGoogle}
+        onClick={signInWithGoogle}
         variant="outlined"
         size="medium"
         startIcon={<Google className="text-[rgba(0,0,0,0.6)]" />}
