@@ -1,7 +1,7 @@
-import type { Role } from './enums';
+import type { Role } from "./enums";
 
-export type Campaign_Member = {
-  user_id: number;
+export type CampaignMember = {
+  user_id: string;
   campaign_id: number;
-  role: Role;
+  role: Role | null;
 };
