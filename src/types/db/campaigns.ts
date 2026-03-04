@@ -3,7 +3,7 @@ import type { Existence, Status } from "./enums";
 export type Campaign = {
   campaign_id: number;
   name: string;
-  givebutterLink: string;
+  givebutterlink: string;
   status: Status;
   date_created: string;
   street: string;
