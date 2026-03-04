@@ -1,11 +1,11 @@
-import { CampaignMember } from "@/src/types";
+import type { CampaignMember } from "@/src/types";
 import { createServerClient } from "@/src/lib/supabase-client";
-
-const supabase = await createServerClient();
 
 export async function createCampaignMember(
   data: CampaignMember,
 ): Promise<CampaignMember | null> {
+  const supabase = await createServerClient();
+
   const { data: insertedData, error } = await supabase
     .from("campaign_members")
     .insert(data)
@@ -24,6 +24,8 @@ export async function readCampaignMember(
   campaign_id: number,
   user_id: string,
 ): Promise<CampaignMember | null> {
+  const supabase = await createServerClient();
+
   const { data, error } = await supabase
     .from("campaign_members")
     .select()
@@ -44,7 +46,9 @@ export async function updateCampaignMember(
   user_id: string,
   data: Pick<CampaignMember, "role">,
 ): Promise<CampaignMember | null> {
-  const { data: insertedData, error } = await supabase
+  const supabase = await createServerClient();
+
+  const { data: updatedData, error } = await supabase
     .from("campaign_members")
     .update(data)
     .eq("campaign_id", campaign_id)
@@ -57,13 +61,15 @@ export async function updateCampaignMember(
     return null;
   }
 
-  return insertedData as CampaignMember;
+  return updatedData as CampaignMember;
 }
 
 export async function deleteCampaignMember(
   campaign_id: number,
   user_id: string,
 ): Promise<boolean> {
+  const supabase = await createServerClient();
+
   const { error } = await supabase
     .from("campaign_members")
     .delete()
