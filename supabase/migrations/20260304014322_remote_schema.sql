@@ -4,6 +4,7 @@ CREATE OR REPLACE FUNCTION public.handle_new_user()
  RETURNS trigger
  LANGUAGE plpgsql
  SECURITY DEFINER
+ SET search_path = public
 AS $function$
 begin
   insert into public.users (id, created_at, first_name, middle_name, last_name, email, phone_number, is_admin)
