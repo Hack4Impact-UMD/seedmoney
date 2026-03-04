@@ -45,7 +45,7 @@ const SignupForm = () => {
 
     if (error) {
       setErrorMsg(error.message);
-      return { error: error.message };
+      return;
     }
 
     router.push("/dashboard");
