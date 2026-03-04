@@ -1,15 +1,26 @@
-import type { NewUser, Users } from "@/src/types";
+import type { NewUser, NewUserInternal, Users } from "@/src/types";
 import { createServerClient } from "@/src/lib/supabase-client";
 
-export async function createUser(user: NewUser) {
+export async function createUser(user: NewUser): Promise<Users | null> {
   const supabase = await createServerClient();
 
-  const { error } = await supabase.from("users").insert(user);
+  const { data, error } = await supabase
+    .from("users")
+    .insert(user)
+    .select("*")
+    .maybeSingle();
 
   if (error) {
     console.error("Error creating user:", error.message);
-    return;
+    return null;
   }
+
+  if (!data) {
+    console.warn("User was not created.");
+    return null;
+  }
+
+  return data as Users;
 }
 
 export async function readUser(userId: string): Promise<Users | null> {
@@ -29,27 +40,50 @@ export async function readUser(userId: string): Promise<Users | null> {
   return data;
 }
 
-export async function updateUser(userId: string, updatedUser: Partial<Users>) {
+export async function updateUser(
+  userId: string,
+  updatedUser: Partial<NewUserInternal>,
+): Promise<Users | null> {
   const supabase = await createServerClient();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("users")
     .update(updatedUser)
-    .eq("id", userId);
+    .eq("id", userId)
+    .select("*")
+    .maybeSingle();
 
   if (error) {
     console.error("Error updating user:", error.message);
-    return;
+    return null;
   }
+
+  if (!data) {
+    console.warn("User not found for update:", userId);
+    return null;
+  }
+
+  return data as Users;
 }
 
-export async function deleteUser(userId: string) {
+export async function deleteUser(userId: string): Promise<boolean> {
   const supabase = await createServerClient();
 
-  const { error } = await supabase.from("users").delete().eq("id", userId);
+  const { data, error } = await supabase
+    .from("users")
+    .delete()
+    .eq("id", userId)
+    .select("id");
 
   if (error) {
     console.error("Error deleting user:", error.message);
-    return;
+    return false;
   }
+
+  if (!data || data.length === 0) {
+    console.warn("User not found for deletion:", userId);
+    return false;
+  }
+
+  return true;
 }
