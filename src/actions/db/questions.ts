@@ -61,13 +61,19 @@ export async function updateQuestion(
 export async function deleteQuestion(id: number): Promise<boolean> {
   const supabase = await createServerClient();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("questions")
     .delete()
-    .eq("question_id", id);
+    .eq("question_id", id)
+    .select("question_id");
 
   if (error) {
     console.error("Error deleting question: ", error.message);
+    return false;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("Question not found for deletion:", id);
     return false;
   }
 

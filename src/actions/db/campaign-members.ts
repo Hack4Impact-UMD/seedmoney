@@ -70,14 +70,23 @@ export async function deleteCampaignMember(
 ): Promise<boolean> {
   const supabase = await createServerClient();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("campaign_members")
     .delete()
     .eq("campaign_id", campaign_id)
-    .eq("user_id", user_id);
+    .eq("user_id", user_id)
+    .select("campaign_id,user_id");
 
   if (error) {
     console.error("Error deleting campaign member: ", error.message);
+    return false;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("Campaign member not found for deletion:", {
+      campaign_id,
+      user_id,
+    });
     return false;
   }
 
