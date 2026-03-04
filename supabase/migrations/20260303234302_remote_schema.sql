@@ -1,5 +1,7 @@
 alter table "public"."campaign_members" drop constraint "campaign_members_user_id_fkey";
 
+drop trigger if exists "on_auth_user_created" on "auth"."users";
+
 drop function if exists "public"."handle_new_user"();
 
 alter table "public"."campaign_members" drop constraint "campaign_members_pkey";
@@ -13,7 +15,4 @@ alter table "public"."campaign_members" add constraint "campaign_members_pkey" P
 alter table "public"."campaign_members" add constraint "campaign_members_user_id_fkey" FOREIGN KEY (user_id) REFERENCES public.users(id) ON UPDATE CASCADE ON DELETE CASCADE not valid;
 
 alter table "public"."campaign_members" validate constraint "campaign_members_user_id_fkey";
-
-drop trigger if exists "on_auth_user_created" on "auth"."users";
-
 
