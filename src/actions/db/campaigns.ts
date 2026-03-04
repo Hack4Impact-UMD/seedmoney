@@ -1,11 +1,11 @@
 import type { Campaign, NewCampaign } from "@/src/types";
 import { createServerClient } from "@/src/lib/supabase-client";
 
-const supabase = await createServerClient();
-
 export async function createCampaign(
   data: NewCampaign,
 ): Promise<Campaign | null> {
+  const supabase = await createServerClient();
+
   const { data: insertedData, error } = await supabase
     .from("campaigns")
     .insert(data)
@@ -23,7 +23,8 @@ export async function createCampaign(
 export async function readCampaign(
   ids?: number | number[],
 ): Promise<Campaign | Campaign[] | null> {
-  
+  const supabase = await createServerClient();
+
   // Return ALL campaigns
   if (ids === undefined) {
     const { data, error } = await supabase.from("campaigns").select("*");
@@ -67,6 +68,8 @@ export async function readCampaign(
 }
 
 export async function updateCampaign(id: number, data: Partial<NewCampaign>) {
+  const supabase = await createServerClient();
+
   const { error } = await supabase.from("campaigns").update(data).eq("id", id);
 
   if (error) {
@@ -76,6 +79,8 @@ export async function updateCampaign(id: number, data: Partial<NewCampaign>) {
 }
 
 export async function deleteCampaign(id: number) {
+  const supabase = await createServerClient();
+
   const { error } = await supabase
     .from("campaigns")
     .delete()
