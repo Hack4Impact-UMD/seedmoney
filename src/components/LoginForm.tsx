@@ -4,13 +4,26 @@ import { Google } from "@mui/icons-material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { signInWithGoogle } from "@/src/lib/google-auth";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const queryError = searchParams.get("error");
+  let decodedQueryError: string | null = null;
+
+  if (queryError) {
+    try {
+      decodedQueryError = decodeURIComponent(queryError);
+    } catch {
+      decodedQueryError = queryError;
+    }
+  }
+
+  const displayedError = decodedQueryError || errorMsg;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -98,7 +111,7 @@ const LoginForm = () => {
         Log in with Google
       </Button>
 
-      {errorMsg && <p className="text-red-500">{errorMsg}</p>}
+      {displayedError && <p className="text-red-500">{displayedError}</p>}
     </form>
   );
 };
