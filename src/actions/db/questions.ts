@@ -1,11 +1,11 @@
 import { NewQuestions, Questions } from "@/src/types";
 import { createServerClient } from "@/src/lib/supabase-client";
 
-const supabase = await createServerClient();
-
 export async function createQuestion(
   question: NewQuestions,
 ): Promise<Questions | null> {
+  const supabase = await createServerClient();
+
   const { data, error } = await supabase
     .from("questions")
     .insert(question)
@@ -21,6 +21,8 @@ export async function createQuestion(
 }
 
 export async function readQuestion(id: number): Promise<Questions | null> {
+  const supabase = await createServerClient();
+
   const { data, error } = await supabase
     .from("questions")
     .select()
@@ -39,6 +41,8 @@ export async function updateQuestion(
   id: number,
   question: Partial<NewQuestions>,
 ): Promise<Questions | null> {
+  const supabase = await createServerClient();
+
   const { data, error } = await supabase
     .from("questions")
     .update(question)
@@ -55,6 +59,8 @@ export async function updateQuestion(
 }
 
 export async function deleteQuestion(id: number): Promise<boolean> {
+  const supabase = await createServerClient();
+
   const { error } = await supabase
     .from("questions")
     .delete()
