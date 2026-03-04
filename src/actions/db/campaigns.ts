@@ -54,6 +54,10 @@ export async function readCampaign(
   }
 
   // Return MULTIPLE campaigns by array of IDs
+  if (ids.length === 0) {
+    return [];
+  }
+
   const { data, error } = await supabase
     .from("campaigns")
     .select("*")
@@ -67,27 +71,50 @@ export async function readCampaign(
   return data as Campaign[];
 }
 
-export async function updateCampaign(id: number, data: Partial<NewCampaign>) {
+export async function updateCampaign(
+  id: number,
+  campaign: Partial<NewCampaign>,
+): Promise<Campaign | null> {
   const supabase = await createServerClient();
 
-  const { error } = await supabase.from("campaigns").update(data).eq("id", id);
+  const { data, error } = await supabase
+    .from("campaigns")
+    .update(campaign)
+    .eq("campaign_id", id)
+    .select("*")
+    .maybeSingle();
 
   if (error) {
     console.error("Error updating campaign:", error.message);
-    return;
+    return null;
   }
+
+  if (!data) {
+    console.warn("Campaign not found for update:", id);
+    return null;
+  }
+
+  return data as Campaign;
 }
 
-export async function deleteCampaign(id: number) {
+export async function deleteCampaign(id: number): Promise<boolean> {
   const supabase = await createServerClient();
 
-  const { error } = await supabase
+  const { data, error } = await supabase
     .from("campaigns")
     .delete()
-    .eq("campaign_id", id);
+    .eq("campaign_id", id)
+    .select("campaign_id");
 
   if (error) {
     console.error("Error deleting campaign:", error.message);
-    return;
+    return false;
   }
+
+  if (!data || data.length === 0) {
+    console.warn("Campaign not found for deletion:", id);
+    return false;
+  }
+
+  return true;
 }
