@@ -1,6 +1,6 @@
 import type { Role } from "./enums";
 
-export type Campaign_Member = {
+export type CampaignMember = {
   user_id: string;
   campaign_id: number;
   role: Role;

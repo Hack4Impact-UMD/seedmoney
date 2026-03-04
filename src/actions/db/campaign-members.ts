@@ -1,11 +1,11 @@
-import { Campaign_Member } from "@/src/types";
+import { CampaignMember } from "@/src/types";
 import { createServerClient } from "@/src/lib/supabase-client";
 
 const supabase = await createServerClient();
 
 export async function createCampaignMember(
-  data: Campaign_Member,
-): Promise<Campaign_Member | null> {
+  data: CampaignMember,
+): Promise<CampaignMember | null> {
   const { data: insertedData, error } = await supabase
     .from("campaign_members")
     .insert(data)
@@ -17,13 +17,13 @@ export async function createCampaignMember(
     return null;
   }
 
-  return insertedData as Campaign_Member;
+  return insertedData as CampaignMember;
 }
 
 export async function readCampaignMember(
   campaign_id: number,
   user_id: string,
-): Promise<Campaign_Member | null> {
+): Promise<CampaignMember | null> {
   const { data, error } = await supabase
     .from("campaign_members")
     .select()
@@ -36,14 +36,14 @@ export async function readCampaignMember(
     return null;
   }
 
-  return data as Campaign_Member;
+  return data as CampaignMember;
 }
 
 export async function updateCampaignMember(
   campaign_id: number,
   user_id: string,
-  data: Pick<Campaign_Member, "role">,
-): Promise<Campaign_Member | null> {
+  data: Pick<CampaignMember, "role">,
+): Promise<CampaignMember | null> {
   const { data: insertedData, error } = await supabase
     .from("campaign_members")
     .update(data)
@@ -57,7 +57,7 @@ export async function updateCampaignMember(
     return null;
   }
 
-  return insertedData as Campaign_Member;
+  return insertedData as CampaignMember;
 }
 
 export async function deleteCampaignMember(
