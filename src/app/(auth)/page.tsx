@@ -4,11 +4,13 @@ import Link from "next/link";
 import Image from "next/image";
 import LoginForm from "@/src/components/LoginForm";
 import LoginNavbar from "@/src/components/LoginNavbar";
+import DonorsTable from "@/src/components/DonorsTable";
 
 export default function LoginPage() {
 
   return (
     <>
+        <DonorsTable />
       <LoginNavbar />
       <div className="flex min-h-screen w-full">
         <div className="relative hidden w-1/2 lg:block">
