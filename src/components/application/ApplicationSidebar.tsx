@@ -13,9 +13,9 @@ type Step = {
 };
 
 const steps: Step[] = [
-  { label: "Grantee Agreement", status: "completed" },
-  { label: "Campaign Information", status: "current" },
-  { label: "Garden Information", status: "review" },
+  { label: "Grantee Agreement", status: "current" },
+  { label: "Campaign Information", status: "unvisited" },
+  { label: "Garden Information", status: "unvisited" },
   { label: "Garden Story", status: "unvisited" },
   { label: "Contact Information", status: "unvisited" },
   { label: "Review & Submit", status: "unvisited" },
