@@ -4,13 +4,10 @@ import Link from "next/link";
 import Image from "next/image";
 import LoginForm from "@/src/components/LoginForm";
 import LoginNavbar from "@/src/components/LoginNavbar";
-import DonorsTable from "@/src/components/DonorsTable";
 
 export default function LoginPage() {
-
   return (
     <>
-        <DonorsTable />
       <LoginNavbar />
       <div className="flex min-h-screen w-full">
         <div className="relative hidden w-1/2 lg:block">
@@ -34,7 +31,10 @@ export default function LoginPage() {
 
             <p className="text-[rgba(0,0,0,0.6)] text-sm">
               Don&apos;t have an account?{" "}
-              <Link href="/signup" className="text-[#1976D2] underline font-bold">
+              <Link
+                href="/signup"
+                className="text-[#1976D2] underline font-bold"
+              >
                 Sign up here
               </Link>
             </p>
