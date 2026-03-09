@@ -105,10 +105,6 @@ const CampaignsTable = ({ initialData }: Props) => {
     getPaginationRowModel: getPaginationRowModel(),
   });
 
-  if (initialData.length === 0) {
-    return <div className="p-8 text-center text-gray-500">No campaigns available.</div>;
-  }
-
   return (
     <div className="w-full p-4"> 
       <div className="text-[#196d38] text-3xl font-extrabold mb-4 md:mx-auto md:w-[90%] sm:text-left text-center">
@@ -134,72 +130,79 @@ const CampaignsTable = ({ initialData }: Props) => {
           </div>
         </div>
 
-        <table className="w-full">
-          <thead>
-            {table.getHeaderGroups().map(headerGroup => (
-              <tr key={headerGroup.id}>
-                {headerGroup.headers.map(header => (
-                  <th key={header.id} className="text-left px-5 py-4 border-b border-gray-300">
-                    {header.isPlaceholder
-                      ? null
-                      : flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
-                        )}
-                  </th>
-                ))}
-              </tr>
-            ))}
-          </thead>
-          <tbody>
-            {table.getRowModel().rows.map(row => (
-              <tr key={row.id}>
-                {row.getVisibleCells().map(cell => (
-                  <td key={cell.id} className="text-left px-5 py-4 border-b border-gray-300">
-                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                  </td>
-                ))}
-              </tr>
-            ))}
-          </tbody>
-        </table>
+        {initialData.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">No campaigns available.</div>
+        ) : (
+          <>
+          
+          <table className="w-full">
+            <thead>
+              {table.getHeaderGroups().map(headerGroup => (
+                <tr key={headerGroup.id}>
+                  {headerGroup.headers.map(header => (
+                    <th key={header.id} className="text-left px-5 py-4 border-b border-gray-300">
+                      {header.isPlaceholder
+                        ? null
+                        : flexRender(
+                            header.column.columnDef.header,
+                            header.getContext()
+                          )}
+                    </th>
+                  ))}
+                </tr>
+              ))}
+            </thead>
+            <tbody>
+              {table.getRowModel().rows.map(row => (
+                <tr key={row.id}>
+                  {row.getVisibleCells().map(cell => (
+                    <td key={cell.id} className="text-left px-5 py-4 border-b border-gray-300">
+                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                    </td>
+                  ))}
+                </tr>
+              ))}
+            </tbody>
+          </table>
 
-        {/* pagination bar */}
-        <div className="px-6 py-4 flex items-center justify-end gap-6 text-sm text-gray-500 border-t border-gray-100">
-            <div className="flex items-center gap-2">
-              <span>Rows per page:</span>
-              <select 
-                value={table.getState().pagination.pageSize}
-                onChange={e => table.setPageSize(Number(e.target.value))}
-                className="outline-none cursor-pointer font-medium text-gray-700"
-              >
-                {[5, 10, 20].map(size => <option key={size} value={size}>{size}</option>)}
-              </select>
+          {/* pagination */}
+          <div className="px-6 py-4 flex items-center justify-end gap-6 text-sm text-gray-500 border-t border-gray-100">
+              <div className="flex items-center gap-2">
+                <span>Rows per page:</span>
+                <select 
+                  value={table.getState().pagination.pageSize}
+                  onChange={e => table.setPageSize(Number(e.target.value))}
+                  className="outline-none cursor-pointer font-medium text-gray-700"
+                >
+                  {[5, 10, 20].map(size => <option key={size} value={size}>{size}</option>)}
+                </select>
+              </div>
+
+              <span>
+                {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}-
+                {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, initialData.length)} 
+                {' of '} {initialData.length}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button 
+                  onClick={() => table.previousPage()} 
+                  disabled={!table.getCanPreviousPage()}
+                  className="p-1 disabled:opacity-30 text-2xl text-black font-bold"
+                >
+                  &lt;
+                </button>
+                <button 
+                  onClick={() => table.nextPage()} 
+                  disabled={!table.getCanNextPage()}
+                  className="p-1 disabled:opacity-30 text-2xl text-black font-bold"
+                >
+                  &gt;
+                </button>
+              </div>
             </div>
-
-            <span>
-              {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}-
-              {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, initialData.length)} 
-              {' of '} {initialData.length}
-            </span>
-
-            <div className="flex items-center gap-2">
-              <button 
-                onClick={() => table.previousPage()} 
-                disabled={!table.getCanPreviousPage()}
-                className="p-1 disabled:opacity-30 text-2xl text-black font-bold"
-              >
-                &lt;
-              </button>
-              <button 
-                onClick={() => table.nextPage()} 
-                disabled={!table.getCanNextPage()}
-                className="p-1 disabled:opacity-30 text-2xl text-black font-bold"
-              >
-                &gt;
-              </button>
-            </div>
-          </div>
+          </>
+        )}
       </div>
     </div>
   )
