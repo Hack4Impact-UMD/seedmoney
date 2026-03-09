@@ -49,7 +49,7 @@ const CampaignsTable = ({ initialData }: Props) => {
     }, 500);
 
     return () => clearTimeout(delay);
-  }, [campaignSearch, pathname, replace])
+  }, [campaignSearch, pathname, replace, searchParams])
 
   const columnHelper = createColumnHelper<CampaignWithMetaData>();
 
@@ -65,7 +65,7 @@ const CampaignsTable = ({ initialData }: Props) => {
       id: 'leader_name',
       header: 'Campaign Leader',
     }),
-    columnHelper.accessor(row => (row as any).raised || 0, {
+    columnHelper.accessor(row => row.raised || 0, {
       id: 'raised',
       header: 'Raised',
       cell: info => `$${info.getValue().toLocaleString()}`
@@ -75,7 +75,7 @@ const CampaignsTable = ({ initialData }: Props) => {
       cell: info => `$${(info.getValue() || 0).toLocaleString()}`
     }), 
     columnHelper.accessor(row => ({ 
-      raised: (row as any).raised || 0, 
+      raised: row.raised || 0, 
       goal: row.goal || 0 
     }), {
       id: 'status',

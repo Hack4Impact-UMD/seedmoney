@@ -8,11 +8,18 @@ export default async function ViewAllCampaignsPage({ searchParams, }: { searchPa
 
   const normalizedData = Array.isArray(data) ? data : data ? [data] : [];
 
-  const serializedData = JSON.parse(
+  const rawSerializedData = JSON.parse(
     JSON.stringify(normalizedData, (key, value) =>
       typeof value === "bigint" ? value.toString() : value
     )
   );
+
+  const serializedData = rawSerializedData.map((campaign: any) => ({
+    ...campaign,
+    goal: campaign.goal ? Number(campaign.goal) : 0,
+    raised: campaign.raised ? Number(campaign.raised) : 0,
+  }));
+
   return (
     <main className="flex min-h-screen w-full items-center justify-center bg-[#f2faf9]">
       <CampaignsTable initialData={serializedData}/>
