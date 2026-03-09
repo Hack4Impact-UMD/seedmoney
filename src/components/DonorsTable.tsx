@@ -14,21 +14,24 @@ interface Donor {
     name: string;
     email: string;
     card_reference: string;
-    date: Date;
+    date: string;
     status: string;
 }
 
+interface DonorsTableProps {
+    campaignId: number;
+}
 
-export default function DonorsTable() {
+export default function DonorsTable({ campaignId }: DonorsTableProps) {
 
     const [donors, setDonors] = useState<Donor[]>([]);
     const [sorting, setSorting] = useState<SortingState>([]);
     const [searchQuery, setSearchQuery] = useState('');
 
     useEffect(() => {
-        // TODO fetch real data from the backend
+        // TODO fetch real data from the backend using campaignId
         setDonors([]);
-    }, []);
+    }, [campaignId]);
 
     const globalFilterFn = useCallback(
         (row: { original: Donor }, _columnId: string, filterValue: string) => {
@@ -90,7 +93,7 @@ export default function DonorsTable() {
         columnHelper.accessor('date', {
             header: 'Date',
             // YYYY-MM-DD
-            cell: info => info.getValue().toISOString().split('T')[0],
+            cell: info => info.getValue().split('T')[0],
             enableSorting: false,
         }),
         columnHelper.accessor('status', {
