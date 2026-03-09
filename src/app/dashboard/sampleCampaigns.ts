@@ -101,6 +101,6 @@ export const sampleCampaigns: Campaign[] = [
 
 export const getCampaignById = (campaignId: number) => {
   return sampleCampaigns.find(
-    (campaign) => campaign.campaign_id === campaignId
+    (campaign) => campaign.campaign_id === campaignId,
   );
 };

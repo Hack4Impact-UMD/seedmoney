@@ -17,7 +17,11 @@ export default function DashboardIndexPage() {
 
   return (
     <div className="flex min-h-screen">
-      <Navbar campaigns={[]} selectedCampaignId={0} onCampaignSelect={() => {}} />
+      <Navbar
+        campaigns={[]}
+        selectedCampaignId={0}
+        onCampaignSelect={() => {}}
+      />
       <div className="flex-1 bg-gray-50 p-10">
         <h3 className="text-4xl font-bold text-[#096B2E]">Dashboard</h3>
         <div className="flex items-center justify-center mt-10">

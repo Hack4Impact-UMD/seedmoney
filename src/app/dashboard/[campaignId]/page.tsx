@@ -16,14 +16,10 @@ export default function CampaignOverviewPage() {
 
   if (!campaign) {
     throw new Error("Campaign not found");
-  };
+  }
 
   if (campaign.status === "in_progress") {
-    return (
-      <NotComplete
-        onContinueApplication={handleContinueApplication}
-      />
-    );
+    return <NotComplete onContinueApplication={handleContinueApplication} />;
   }
 
   if (campaign.status === "submitted_under_review") {

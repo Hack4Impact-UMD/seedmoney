@@ -42,13 +42,13 @@ export default function Navbar({
     const supabase = createBrowserClient();
     supabase.auth.signOut();
     router.push("/");
-  }
+  };
 
   return (
     <nav
       className={clsx(
         "relative flex flex-col h-screen bg-[#00A63E] shrink-0 overflow-visible transition-[width] duration-300 ease-in-out",
-        isCollapsed ? "w-[105px]" : "w-[280px]! xl:w-[360px]"
+        isCollapsed ? "w-[105px]" : "w-[280px]! xl:w-[360px]",
       )}
     >
       {/* Profile */}
@@ -56,13 +56,13 @@ export default function Navbar({
         <div
           className={clsx(
             "flex items-center gap-4 min-w-0 flex-1",
-            isCollapsed && "justify-center"
+            isCollapsed && "justify-center",
           )}
         >
           <div
             className={clsx(
               "shrink-0 rounded-full bg-white flex items-center justify-center",
-              isCollapsed ? "w-12 h-12" : "w-16 h-16"
+              isCollapsed ? "w-12 h-12" : "w-16 h-16",
             )}
           >
             <Image
@@ -75,7 +75,9 @@ export default function Navbar({
 
           {!isCollapsed && (
             <div className="min-w-0">
-              <h6 className="text-white font-bold leading-[1.3] text-xl">John Doe</h6>
+              <h6 className="text-white font-bold leading-[1.3] text-xl">
+                John Doe
+              </h6>
               <p className="text-white/80 text-sm">Campaign Leader</p>
             </div>
           )}
@@ -89,7 +91,11 @@ export default function Navbar({
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         className="!absolute !top-[100px] !right-0 !translate-x-1/2 !z-50 !border-2 !border-[#00A63E] !text-[#00A63E] !bg-white !w-9 !h-9 hover:!bg-gray-100"
       >
-        {isCollapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+        {isCollapsed ? (
+          <ChevronRightIcon fontSize="small" />
+        ) : (
+          <ChevronLeftIcon fontSize="small" />
+        )}
       </IconButton>
 
       {/* Campaign List */}
@@ -112,14 +118,14 @@ export default function Navbar({
                   isSelected
                     ? "!bg-[#008030] hover:!bg-black/30"
                     : "!bg-transparent hover:!bg-[#43B45D]",
-                  isCollapsed ? "!justify-center !px-0" : "!justify-start"
+                  isCollapsed ? "!justify-center !px-0" : "!justify-start",
                 )}
               >
                 {isCollapsed ? (
                   <div
                     className={clsx(
                       "w-3 h-3 rounded-full",
-                      isSelected ? "bg-white" : "bg-gray-200/50"
+                      isSelected ? "bg-white" : "bg-gray-200/50",
                     )}
                   />
                 ) : (
@@ -127,7 +133,8 @@ export default function Navbar({
                     primary={campaign.name}
                     slotProps={{
                       primary: {
-                        className: "!text-white !font-[700] !text-[24px] !px-[48px] !py-[32px] !leading-[32px]",
+                        className:
+                          "!text-white !font-[700] !text-[24px] !px-[48px] !py-[32px] !leading-[32px]",
                       },
                     }}
                   />
@@ -146,7 +153,7 @@ export default function Navbar({
           startIcon={!isCollapsed && <AddIcon />}
           onClick={handleNewCampaign}
           fullWidth
-          className = "hover:!bg-gray-100"
+          className="hover:!bg-gray-100"
         >
           {isCollapsed ? <AddIcon /> : "New Campaign"}
         </Button>
@@ -156,8 +163,7 @@ export default function Navbar({
           size="medium"
           variant="text"
           aria-label="Logout"
-          className = "!flex !justify-start !text-white"
-
+          className="!flex !justify-start !text-white"
         >
           <LogoutIcon className="!text-[28px]" />
           {!isCollapsed && <span className="ml-2">LOG OUT</span>}
