@@ -11,11 +11,11 @@ export default function Pending() {
         <Image src="/seedMoneyLogo.png" alt="SeedMoney logo" width={48} height={48} />
       </Box>
 
-      <Typography variant="h5" className="!font-semibold !text-gray-800 !mb-2">
+      <Typography className="!text-2xl !font-semibold !text-gray-800 !mb-2">
         Your campaign is under review
       </Typography>
 
-      <Typography variant="body1" className="!text-gray-500 text-center max-w-md">
+      <Typography className="!text-base !text-gray-500 text-center max-w-md">
         We&apos;ll email you once your application is approved.
       </Typography>
     </Box>
