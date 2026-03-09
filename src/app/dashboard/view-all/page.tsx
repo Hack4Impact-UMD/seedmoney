@@ -2,22 +2,28 @@ import { readCampaign, readCampaignsByTitle } from "@/src/actions/db/campaigns";
 import CampaignsTable from "@/src/components/CampaignsTable";
 
 export default async function ViewAllCampaignsPage({ searchParams, }: { searchParams: Promise<{ query?: string }>; }) {
+  // whitespaces queries end up as "query=++++++" so trimming whitespaces before is pointless since it isn't white space
   const query = (await searchParams).query;
 
   const data = query ? await readCampaignsByTitle(query) : await readCampaign();
 
   const normalizedData = Array.isArray(data) ? data : data ? [data] : [];
+  type NormalizedCampaign = (typeof normalizedData)[number];
+  type SerializedCampaign = Omit<NormalizedCampaign, "goal" | "raised"> & {
+    goal?: string | number | null;
+    raised?: string | number | null;
+  };
 
-  const rawSerializedData = JSON.parse(
+  const rawSerializedData: SerializedCampaign[] = JSON.parse(
     JSON.stringify(normalizedData, (key, value) =>
       typeof value === "bigint" ? value.toString() : value
     )
   );
 
-  const serializedData = rawSerializedData.map((campaign: any) => ({
+  const serializedData = rawSerializedData.map((campaign) => ({
     ...campaign,
-    goal: campaign.goal ? Number(campaign.goal) : 0,
-    raised: campaign.raised ? Number(campaign.raised) : 0,
+    goal: Number(campaign.goal ?? 0),
+    raised: Number(campaign.raised ?? 0),
   }));
 
   return (
