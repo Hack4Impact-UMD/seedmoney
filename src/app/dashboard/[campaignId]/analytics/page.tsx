@@ -9,31 +9,6 @@ import { ChartsReferenceLine } from "@mui/x-charts/ChartsReferenceLine";
 
 import { mockAnalyticsData } from "@/src/app/dashboard/mockAnalyticsData";
 
-// ─── gradient defs ───────────────────────────────────────────────────────────
-
-function AreaGradients() {
-  const grad = (id: string, color: string) => (
-    <linearGradient
-      key={id}
-      id={id}
-      x1="0"
-      y1="0"
-      x2="0"
-      y2="1"
-      gradientUnits="objectBoundingBox"
-    >
-      <stop offset="0%" stopColor={color} stopOpacity={0.4} />
-      <stop offset="100%" stopColor={color} stopOpacity={0} />
-    </linearGradient>
-  );
-
-  return (
-    <defs>
-      {grad("dailyGrad", "#10B981")}
-      {grad("totalGrad", "#2410B9")}
-    </defs>
-  );
-}
 
 // ─── helpers ────────────────────────────────────────────────────────────────
 
