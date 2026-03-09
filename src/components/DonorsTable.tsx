@@ -133,7 +133,7 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
                     variant="outlined"
                     size="small"
                     label="Search"
-                    placeholder="Contributor, Amount, etc..."
+                    placeholder="Search by donor, email, ID, or amount"
                     value={searchQuery}
                     slotProps={{
                         inputLabel: {
