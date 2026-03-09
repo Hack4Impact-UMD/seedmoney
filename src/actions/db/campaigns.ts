@@ -71,6 +71,23 @@ export async function readCampaign(
   return data as Campaign[];
 }
 
+// searching functions by title
+export async function readCampaignsByTitle(title: string): Promise<Campaign[]> {
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("*")
+    .ilike("name", `%${title}%`);
+
+  if (error) {
+    console.error("Error reading campaigns:", error.message);
+    return [];
+  } 
+
+  return data as Campaign[];  
+}
+
 export async function updateCampaign(
   id: number,
   campaign: Partial<NewCampaign>,
