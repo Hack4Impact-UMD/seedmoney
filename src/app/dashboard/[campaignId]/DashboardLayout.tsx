@@ -13,7 +13,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   const pathname = usePathname();
   const { campaignId } = useParams<{ campaignId: string }>();
 
-  const selectedCampaignId = campaignId ?? sampleCampaigns[0].id;
+  const selectedCampaignId = Number(campaignId) || sampleCampaigns[0].campaign_id;
   const campaign = getCampaignById(selectedCampaignId);
 
   if (!campaign) notFound();
@@ -32,7 +32,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     router.push(basePath);
   };
 
-  const handleCampaignChange = (newCampaignId: string) => {
+  const handleCampaignChange = (newCampaignId: number) => {
     router.push(`/dashboard/${newCampaignId}`);
   };
 

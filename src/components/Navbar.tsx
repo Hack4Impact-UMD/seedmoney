@@ -15,10 +15,12 @@ import Image from "next/image";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { useRouter } from "next/navigation";
 
+import type { Campaign } from "@/src/types/db/campaigns";
+
 type SidebarProps = {
-  campaigns: Array<{ id: string; name: string }>;
-  selectedCampaignId: string;
-  onCampaignSelect: (id: string) => void;
+  campaigns: Campaign[];
+  selectedCampaignId: number;
+  onCampaignSelect: (id: number) => void;
 };
 
 export default function Navbar({
@@ -30,7 +32,7 @@ export default function Navbar({
 
   const router = useRouter();
 
-  const handleCampaignClick = (id: string) => {
+  const handleCampaignClick = (id: number) => {
     onCampaignSelect(id);
     console.log(`Navigate -> /campaigns/${id}`);
   };
@@ -98,12 +100,12 @@ export default function Navbar({
 
         <List disablePadding>
           {campaigns.map((campaign) => {
-            const isSelected = campaign.id === selectedCampaignId;
+            const isSelected = campaign.campaign_id === selectedCampaignId;
 
             return (
               <ListItemButton
-                key={campaign.id}
-                onClick={() => handleCampaignClick(campaign.id)}
+                key={campaign.campaign_id}
+                onClick={() => handleCampaignClick(campaign.campaign_id)}
                 aria-label={campaign.name}
                 className={clsx(
                   "!p-0 !min-h-12",
