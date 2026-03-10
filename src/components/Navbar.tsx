@@ -45,7 +45,7 @@ export default function Navbar({
   return (
     <nav
       className={clsx(
-        "relative flex flex-col h-screen bg-[#00A63E] shrink-0 overflow-visible transition-[width] duration-300 ease-in-out",
+        "relative flex flex-col h-screen bg-[#2D7A45] shrink-0 overflow-visible transition-[width] duration-300 ease-in-out",
         isCollapsed ? "w-[105px]" : "w-[280px]! xl:w-[360px]"
       )}
     >
@@ -91,7 +91,7 @@ export default function Navbar({
       </IconButton>
 
       {/* Campaign List */}
-      <div className="flex-1 flex flex-col overflow-y-auto mt-5">
+      <div className="flex-1 flex flex-col overflow-y-auto mt-5 scrollbar-hide overscroll-contain">
         <div className="h-7 text-white px-6 mb-2 tracking-[1px] text-[13px] font-normal">
           {!isCollapsed && "2026 Campaign"}
         </div>
@@ -108,7 +108,7 @@ export default function Navbar({
                 className={clsx(
                   "!p-0 !min-h-12",
                   isSelected
-                    ? "!bg-[#008030] hover:!bg-black/30"
+                    ? "!bg-[#1A4A28] hover:!bg-black/30"
                     : "!bg-transparent hover:!bg-[#43B45D]",
                   isCollapsed ? "!justify-center !px-0" : "!justify-start"
                 )}
