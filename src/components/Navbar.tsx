@@ -153,8 +153,8 @@ export default function Navbar({
             <List disablePadding>
               {campaigns.map((campaign) => (
                 <ListItemButton
-                  key={`prev-${campaign.id}`}
-                  onClick={() => handleCampaignClick(campaign.id)}
+                  key={`prev-${campaign.campaign_id}`}
+                  onClick={() => handleCampaignClick(campaign.campaign_id)}
                   aria-label={campaign.name}
                   className="!p-0 !min-h-12 !bg-transparent hover:!bg-[#43B45D]"
                 >
