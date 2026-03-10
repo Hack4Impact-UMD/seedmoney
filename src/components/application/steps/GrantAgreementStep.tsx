@@ -3,6 +3,7 @@
 import { Checkbox, FormControlLabel } from "@mui/material";
 import { Button } from "@mui/material";
 import { useState } from "react";
+import Link from "next/link";
 
 const checkboxStyle = {
   color: "#1976D2",
@@ -75,11 +76,12 @@ export default function GrantAgreementStep() {
 
       {/* BUTTONS */}
       <div className="w-[700px] flex justify-between mt-6">
-        <Button href="/apply" variant="outlined" size="medium">
+        <Button component={Link} href="/apply" variant="outlined" size="medium">
           Previous Step
         </Button>
 
         <Button
+          component={Link}
           href="/apply/campaign"
           variant={allChecked ? "contained" : "text"}
           className={allChecked ? "!px-4" : "!bg-[#E0E0E0] !px-4"}

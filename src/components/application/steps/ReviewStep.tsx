@@ -472,7 +472,12 @@ export default function ReviewSubmitPage() {
       {/* NAV BUTTONS */}
 
       <div className="flex justify-between pt-4">
-        <Button href="/apply/contact" variant="outlined" size="medium">
+        <Button
+          component={Link}
+          href="/apply/contact"
+          variant="outlined"
+          size="medium"
+        >
           Previous Step
         </Button>
 
@@ -484,7 +489,7 @@ export default function ReviewSubmitPage() {
           size="medium"
           disabled={!false}
         >
-          Next Step
+          Submit Application
         </Button>
       </div>
     </div>

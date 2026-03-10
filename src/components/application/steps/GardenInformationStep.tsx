@@ -2,6 +2,7 @@
 
 import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
+import Link from "next/link";
 
 export default function GardenInformationStep() {
   return (
@@ -126,11 +127,20 @@ export default function GardenInformationStep() {
 
       {/* Navigation Buttons */}
       <div className="flex justify-between pt-2">
-        <Button href="/apply/campaign" variant="outlined" size="medium">
+        <Button
+          component={Link}
+          href="/apply/campaign"
+          variant="outlined"
+          size="medium"
+        >
           Previous Step
         </Button>
-
-        <Button href="/apply/story" variant="contained" size="medium">
+        <Button
+          component={Link}
+          href="/apply/story"
+          variant="contained"
+          size="medium"
+        >
           Next Step
         </Button>
       </div>

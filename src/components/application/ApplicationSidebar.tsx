@@ -1,11 +1,7 @@
 "use client";
 import Image from "next/image";
 
-type StepStatus =
-  | "completed"
-  | "current"
-  | "review"
-  | "unvisited";
+type StepStatus = "completed" | "current" | "review" | "unvisited";
 
 type Step = {
   label: string;
@@ -23,72 +19,55 @@ const steps: Step[] = [
 
 export default function ApplicationSidebar() {
   return (
-    <div className="flex flex-col gap-4 w-[260px]">
-
+    <div className="flex flex-col gap-4 w-[260px] m-20">
       {steps.map((step, i) => (
         <div key={step.label} className="flex items-start gap-3">
-
           {/* timeline column */}
           <div className="flex flex-col items-center">
+            {/* dot */}
+            <StepDot status={step.status} />
 
-  {/* dot */}
-  <StepDot status={step.status} />
+            {/* connector line */}
+            {i !== steps.length - 1 && (
+              <div className="flex flex-col items-center h-[35px]">
+                {/* space below dot */}
+                <div className="h-[8px]" />
 
-  {/* connector line */}
-  {i !== steps.length - 1 && (
-    <div className="flex flex-col items-center h-[35px]">
-
-      {/* space below dot */}
-      <div className="h-[8px]" />
-
-      {/* actual connector */}
-      <div className="w-[2px] flex-1 bg-black/10" />
-
-    </div>
-  )}
-
-</div>
+                {/* actual connector */}
+                <div className="w-[2px] flex-1 bg-black/10" />
+              </div>
+            )}
+          </div>
 
           {/* step label */}
           <p
-            className={`text-[14px] leading-[133%] font-normal
-            ${
-              step.status === "review"
-                ? "text-red-600"
-                : "text-black"
-            }`}
+            className={`text-md leading-[133%] font-normal -translate-y-1
+            ${step.status === "review" ? "text-red-600" : "text-black"}`}
           >
             {step.label}
           </p>
-
         </div>
       ))}
 
       {/* autosave indicator */}
       <div className="flex items-center gap-2 text-[#666] text-[14px] mt-3">
-      <Image
-        src="/icons/autosave.svg"
-        alt="Autosave icon"
-        width={20}
-        height={17}
-      />
-
+        <Image
+          src="/icons/autosave.svg"
+          alt="Autosave icon"
+          width={20}
+          height={17}
+        />
         Auto saved at 3:42 PM
       </div>
-
     </div>
   );
 }
 
-
 // dot component handles the different visual states
 
 function StepDot({ status }: { status: StepStatus }) {
-
   if (status === "completed") {
-    return (
-      <div className="w-[12px] h-[12px] rounded-full bg-[#56BD60]" />
-    );
+    return <div className="w-[12px] h-[12px] rounded-full bg-[#56BD60]" />;
   }
 
   if (status === "current") {

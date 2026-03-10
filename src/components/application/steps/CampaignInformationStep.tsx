@@ -1,9 +1,16 @@
 "use client";
 
-import TextField from "@mui/material/TextField";
-import { Button } from "@mui/material";
+import { Button, TextField } from "@mui/material";
+import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import Link from "next/link";
 
 export default function CampaignInformationStep() {
+  const form = useApplicationForm();
+  // we no longer call ``form.register`` – that method doesn't exist in
+  // @tanstack/react-form.  Instead we either use the provided
+  // `form.Field` component or the `useField` hook; here we'll take the
+  // component route via the small helper above.
+
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
       {/* campaign title */}
@@ -18,12 +25,24 @@ export default function CampaignInformationStep() {
           Pleasantville Primary School Garden, Holy Jalapeno Church Garden, etc.
         </p>
 
-        <TextField
-          label="Campaign Title"
-          variant="standard"
-          helperText="60 max characters"
-          fullWidth
-        />
+        <form.Field name="campaignTitle">
+          {(field) => (
+            <TextField
+              label="Campaign Title"
+              value={field.state.value ?? ""}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              error={field.state.meta.errors.length > 0}
+              helperText={
+                field.state.meta.errors.length > 0
+                  ? field.state.meta.errors.join(", ")
+                  : "60 max characters"
+              }
+              fullWidth
+              variant="standard"
+            />
+          )}
+        </form.Field>
       </div>
 
       {/* project details & impact */}
@@ -51,7 +70,7 @@ export default function CampaignInformationStep() {
           <label className="flex items-center gap-3 cursor-pointer group">
             <input
               type="radio"
-              name="gardenType"
+              value="new"
               className="
                 w-6 h-6
                 accent-blue-600
@@ -64,7 +83,7 @@ export default function CampaignInformationStep() {
           <label className="flex items-center gap-3 cursor-pointer group">
             <input
               type="radio"
-              name="gardenType"
+              value="existing"
               className="
                 w-6 h-6
                 accent-blue-600
@@ -95,11 +114,21 @@ export default function CampaignInformationStep() {
 
       {/* buttons */}
       <div className="flex justify-between">
-        <Button href="/apply/terms" variant="outlined" size="medium">
+        <Button
+          component={Link}
+          href="/apply/terms"
+          variant="outlined"
+          size="medium"
+        >
           Previous Step
         </Button>
 
-        <Button href="/apply/garden" variant="contained" size="medium">
+        <Button
+          component={Link}
+          href="/apply/garden"
+          variant="contained"
+          size="medium"
+        >
           Next Step
         </Button>
       </div>

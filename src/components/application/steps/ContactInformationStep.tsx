@@ -4,6 +4,7 @@ import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import { Button } from "@mui/material";
 import { useState } from "react";
+import Link from "next/link";
 
 export default function ContactInformationStep() {
   const [state, setState] = useState("");
@@ -157,11 +158,21 @@ export default function ContactInformationStep() {
 
       {/* Navigation Buttons */}
       <div className="flex justify-between pt-2">
-        <Button href="/apply/story" variant="outlined" size="medium">
+        <Button
+          component={Link}
+          href="/apply/story"
+          variant="outlined"
+          size="medium"
+        >
           Previous Step
         </Button>
 
-        <Button href="/apply/review" variant="contained" size="medium">
+        <Button
+          component={Link}
+          href="/apply/review"
+          variant="contained"
+          size="medium"
+        >
           Next Step
         </Button>
       </div>

@@ -2,6 +2,7 @@
 import Image from "next/image";
 import { Button } from "@mui/material";
 import TextField from "@mui/material/TextField";
+import Link from "next/link";
 
 export default function GardenStoryStep() {
   return (
@@ -108,11 +109,21 @@ export default function GardenStoryStep() {
 
       {/* Navigation Buttons */}
       <div className="flex justify-between pt-2">
-        <Button href="/apply/garden" variant="outlined" size="medium">
+        <Button
+          component={Link}
+          href="/apply/garden"
+          variant="outlined"
+          size="medium"
+        >
           Previous Step
         </Button>
 
-        <Button href="/apply/contact" variant="contained" size="medium">
+        <Button
+          component={Link}
+          href="/apply/contact"
+          variant="contained"
+          size="medium"
+        >
           Next Step
         </Button>
       </div>
