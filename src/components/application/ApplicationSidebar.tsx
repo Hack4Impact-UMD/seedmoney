@@ -1,53 +1,49 @@
 "use client";
+
 import Image from "next/image";
-
-type StepStatus = "completed" | "current" | "review" | "unvisited";
-
-type Step = {
-  label: string;
-  status: StepStatus;
-};
-
-const steps: Step[] = [
-  { label: "Grantee Agreement", status: "current" },
-  { label: "Campaign Information", status: "unvisited" },
-  { label: "Garden Information", status: "unvisited" },
-  { label: "Garden Story", status: "unvisited" },
-  { label: "Contact Information", status: "unvisited" },
-  { label: "Review & Submit", status: "unvisited" },
-];
+import { useApplicationForm } from "./ApplicationFormProvider";
+import { StepStatus } from "@/src/types/form";
 
 export default function ApplicationSidebar() {
+  const { form } = useApplicationForm();
+
   return (
-    <div className="flex flex-col gap-4 w-[260px] m-20">
-      {steps.map((step, i) => (
-        <div key={step.label} className="flex items-start gap-3">
-          {/* timeline column */}
-          <div className="flex flex-col items-center">
-            {/* dot */}
-            <StepDot status={step.status} />
+    <div className="flex flex-col gap-4 w-[260px] mt-20">
+      {/* 1. Wrap the list in form.Subscribe to listen for changes */}
+      <form.Subscribe selector={(state) => state.values.steps}>
+        {(steps) => (
+          <>
+            {steps?.map((step, i) => (
+              <div key={step.label} className="flex items-start gap-3">
+                {/* timeline column */}
+                <div className="flex flex-col items-center">
+                  {/* dot - now receives reactive status */}
+                  <StepDot status={step.status} />
 
-            {/* connector line */}
-            {i !== steps.length - 1 && (
-              <div className="flex flex-col items-center h-[35px]">
-                {/* space below dot */}
-                <div className="h-[8px]" />
+                  {/* connector line */}
+                  {i !== steps.length - 1 && (
+                    <div className="flex flex-col items-center h-[35px]">
+                      {/* space below dot */}
+                      <div className="h-[8px]" />
+                      {/* actual connector */}
+                      <div className="w-[2px] flex-1 bg-black/10" />
+                    </div>
+                  )}
+                </div>
 
-                {/* actual connector */}
-                <div className="w-[2px] flex-1 bg-black/10" />
+                {/* step label */}
+                <p
+                  className={`text-md leading-[133%] font-normal -translate-y-1
+                  ${step.status === "current" ? "text-black" : "text-black"}
+                  ${step.status === "review" ? "text-red-600" : ""}`}
+                >
+                  {step.label}
+                </p>
               </div>
-            )}
-          </div>
-
-          {/* step label */}
-          <p
-            className={`text-md leading-[133%] font-normal -translate-y-1
-            ${step.status === "review" ? "text-red-600" : "text-black"}`}
-          >
-            {step.label}
-          </p>
-        </div>
-      ))}
+            ))}
+          </>
+        )}
+      </form.Subscribe>
 
       {/* autosave indicator */}
       <div className="flex items-center gap-2 text-[#666] text-[14px] mt-3">
@@ -62,7 +58,6 @@ export default function ApplicationSidebar() {
     </div>
   );
 }
-
 // dot component handles the different visual states
 
 function StepDot({ status }: { status: StepStatus }) {

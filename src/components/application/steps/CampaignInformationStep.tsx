@@ -3,9 +3,15 @@
 import { Button, TextField } from "@mui/material";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import Link from "next/link";
+import { useEffect } from "react";
 
 export default function CampaignInformationStep() {
-  const form = useApplicationForm();
+  const { form, updateStepStatus } = useApplicationForm();
+
+  useEffect(() => {
+    updateStepStatus("Campaign Information", "current");
+  }, []);
+
   // we no longer call ``form.register`` – that method doesn't exist in
   // @tanstack/react-form.  Instead we either use the provided
   // `form.Field` component or the `useField` hook; here we'll take the
@@ -29,7 +35,7 @@ export default function CampaignInformationStep() {
           {(field) => (
             <TextField
               label="Campaign Title"
-              value={field.state.value ?? ""}
+              value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
               error={field.state.meta.errors.length > 0}
@@ -51,47 +57,65 @@ export default function CampaignInformationStep() {
           Project Details & Impact <span className="text-orange-500">*</span>
         </h2>
 
-        <TextField
-          label="About how many people will benefit from this garden this year?"
-          variant="standard"
-          fullWidth
-        />
+        <form.Field name="beneficiaryCount">
+          {(field) => (
+            <TextField
+              label="About how many people will benefit from this garden this year?"
+              variant="standard"
+              fullWidth
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              type="number"
+            />
+          )}
+        </form.Field>
 
-        <TextField
-          label="Approximate garden size or scope"
-          helperText="Examples: one raised bed, multiple sites, two-acre farm."
-          variant="standard"
-          fullWidth
-        />
+        <form.Field name="gardenSize">
+          {(field) => (
+            <TextField
+              label="Approximate garden size or scope"
+              helperText="Examples: one raised bed, multiple sites, two-acre farm."
+              variant="standard"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
         <p className="text-sm pt-2">Is this a new or existing garden?</p>
 
         <div className="flex flex-col gap-3">
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="radio"
-              value="new"
-              className="
-                w-6 h-6
-                accent-blue-600
-                cursor-pointer
-              "
-            />
-            <span className="text-sm">New garden</span>
-          </label>
+          <form.Field name="gardenStatus">
+            {(field) => (
+              <div className="flex flex-col gap-4">
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="gardenStatus"
+                    value="new"
+                    checked={field.state.value === "new"}
+                    onChange={() => field.handleChange("new")}
+                    className="w-6 h-6 accent-blue-600 cursor-pointer"
+                  />
+                  <span className="text-sm">New garden</span>
+                </label>
 
-          <label className="flex items-center gap-3 cursor-pointer group">
-            <input
-              type="radio"
-              value="existing"
-              className="
-                w-6 h-6
-                accent-blue-600
-                cursor-pointer
-              "
-            />
-            <span className="text-sm ">Existing garden</span>
-          </label>
+                <label className="flex items-center gap-3 cursor-pointer group">
+                  <input
+                    type="radio"
+                    name="gardenStatus"
+                    value="existing"
+                    checked={field.state.value === "existing"}
+                    onChange={() => field.handleChange("existing")}
+                    className="w-6 h-6 accent-blue-600 cursor-pointer"
+                  />
+                  <span className="text-sm">Existing garden</span>
+                </label>
+              </div>
+            )}
+          </form.Field>
         </div>
       </div>
 
@@ -105,11 +129,18 @@ export default function CampaignInformationStep() {
           Most SeedMoney projects set goals between $500 and $5,000
         </p>
 
-        <TextField
-          label="Fundraising Goal (USD)"
-          variant="standard"
-          fullWidth
-        />
+        <form.Field name="fundraisingGoal">
+          {(field) => (
+            <TextField
+              label="Fundraising Goal (USD)"
+              variant="standard"
+              fullWidth
+              type="number"
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
       </div>
 
       {/* buttons */}

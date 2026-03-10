@@ -6,7 +6,7 @@ export default function StepsLayout({
   children: React.ReactNode;
 }) {
   return (
-    <div className="flex">
+    <div className="flex w-full px-6 md:px-12 lg:px-20">
       <div className="sticky top-0 left-0 h-screen overflow-y-auto overflow-x-hidden ml-20">
         <ApplicationSidebar />
       </div>

@@ -3,8 +3,11 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@mui/material";
+import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 
 export default function ReviewSubmitPage() {
+  const { form, updateStepStatus } = useApplicationForm();
+
   return (
     <div className="w-[700px] flex flex-col gap-6 pb-20 m-15">
       {/* ---------------- CAMPAIGN INFORMATION ---------------- */}
@@ -488,6 +491,7 @@ export default function ReviewSubmitPage() {
           className={false ? "px-4!" : "bg-[#E0E0E0]! px-4!"}
           size="medium"
           disabled={!false}
+          onClick={() => form.handleSubmit()}
         >
           Submit Application
         </Button>
