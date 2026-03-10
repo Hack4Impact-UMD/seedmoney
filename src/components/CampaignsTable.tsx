@@ -154,8 +154,8 @@ const CampaignsTable = ({ initialData }: Props) => {
 
               <span>
                 {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}-
-                {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, initialData.length)} 
-                {' of '} {initialData.length}
+                {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, filteredData.length)} 
+                {' of '} {filteredData.length}
               </span>
 
               <div className="flex items-center gap-2">
