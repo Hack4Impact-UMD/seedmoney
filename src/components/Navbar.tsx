@@ -139,7 +139,7 @@ export default function Navbar({
         {!isCollapsed && (
           <>
             <div className="h-7 text-white/70 px-6 mt-4 mb-2 tracking-[1px] text-[13px] font-normal">
-              Previous Campaign
+              Previous Campaigns
             </div>
 
             <List disablePadding>
