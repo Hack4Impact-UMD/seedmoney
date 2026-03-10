@@ -10,12 +10,22 @@ export default function CampaignInformationStep() {
 
   useEffect(() => {
     updateStepStatus("Campaign Information", "current");
-  }, []);
 
-  // we no longer call ``form.register`` – that method doesn't exist in
-  // @tanstack/react-form.  Instead we either use the provided
-  // `form.Field` component or the `useField` hook; here we'll take the
-  // component route via the small helper above.
+    return () => {
+      const values = form.state.values;
+      const isComplete =
+        values.campaignTitle?.trim().length > 0 &&
+        values.fundraisingGoal?.trim().length > 0 &&
+        values.beneficiaryCount?.trim().length > 0 &&
+        values.gardenStatus?.trim().length > 0;
+
+      if (isComplete) {
+        updateStepStatus("Campaign Information", "completed");
+      } else {
+        updateStepStatus("Campaign Information", "review");
+      }
+    };
+  }, [form, updateStepStatus]);
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
