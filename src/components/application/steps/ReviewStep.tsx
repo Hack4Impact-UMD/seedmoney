@@ -2,11 +2,11 @@
 
 import Image from "next/image";
 import Link from "next/link";
+import { Button } from "@mui/material";
 
 export default function ReviewSubmitPage() {
   return (
-    <div className="w-[700px] flex flex-col gap-6 pb-20">
-
+    <div className="w-[700px] flex flex-col gap-6 pb-20 m-15">
       {/* ---------------- CAMPAIGN INFORMATION ---------------- */}
 
       <h2 className="text-xl font-semibold">Campaign Information</h2>
@@ -14,9 +14,8 @@ export default function ReviewSubmitPage() {
       {/* Campaign Title */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-
         <div>
-          <h3 className="text-lg font-semibold">
+          <h3 className="text-lg font-medium">
             Campaign Title <span className="text-orange-500">*</span>
           </h3>
 
@@ -31,14 +30,12 @@ export default function ReviewSubmitPage() {
           <p>Fully Belly Community Garden</p>
           <div className="border-b border-gray-300"></div>
         </div>
-
       </div>
 
       {/* Project Details */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
-
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-medium">
           Project Details & Impact <span className="text-orange-500">*</span>
         </h3>
 
@@ -51,17 +48,14 @@ export default function ReviewSubmitPage() {
           <div className="border-b border-gray-300"></div>
         </div>
 
-
         {/* RADIO UI */}
 
         <div className="flex flex-col gap-2">
-
           <label className="text-sm text-gray-500">
             Is this a new or existing garden?
           </label>
 
           <div className="flex flex-col gap-2">
-
             <div className="flex items-center gap-2">
               <div className="w-4 h-4 border rounded-full border-gray-400"></div>
               <span>New garden</span>
@@ -73,31 +67,23 @@ export default function ReviewSubmitPage() {
               </div>
               <span>Existing garden</span>
             </div>
-
           </div>
-
         </div>
 
-
         <div className="flex flex-col gap-1">
-
           <label className="text-sm text-gray-500">
             Approximate garden size or scope
           </label>
 
           <p>2000</p>
           <div className="border-b border-gray-300"></div>
-
         </div>
-
       </div>
-
 
       {/* Fundraising Goal */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-medium">
           Fundraising Goal <span className="text-orange-500">*</span>
         </h3>
 
@@ -106,60 +92,40 @@ export default function ReviewSubmitPage() {
         </p>
 
         <div className="flex flex-col gap-1">
-          <label className="text-sm text-gray-500">Fundraising Goal (USD)</label>
+          <label className="text-sm text-gray-500">
+            Fundraising Goal (USD)
+          </label>
           <p>600</p>
           <div className="border-b border-gray-300"></div>
         </div>
-
       </div>
-
 
       {/* ---------------- GARDEN INFORMATION ---------------- */}
 
       <h2 className="text-xl font-semibold">Garden Information</h2>
 
-
       {/* Error Banner */}
 
       <div className="flex justify-between items-center bg-[#FDECEA] text-[#5F2120] px-4 py-3 rounded-md text-sm">
-
         <div className="flex items-center gap-2">
-
-          <Image
-            src="/icons/error.svg"
-            width={18}
-            height={18}
-            alt="error"
-          />
+          <Image src="/icons/error.svg" width={18} height={18} alt="error" />
 
           <span>Please complete garden location</span>
-
         </div>
 
         <Link
           href="/apply/garden"
           className="flex items-center gap-2 text-[#D32F2F] font-medium"
         >
-
-          <Image
-            src="/icons/pencil.svg"
-            width={16}
-            height={16}
-            alt="edit"
-          />
-
+          <Image src="/icons/pencil.svg" width={16} height={16} alt="edit" />
           EDIT
-
         </Link>
-
       </div>
-
 
       {/* Garden Location */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
-
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-medium">
           Garden Location <span className="text-orange-500">*</span>
         </h3>
 
@@ -181,176 +147,146 @@ export default function ReviewSubmitPage() {
           <p>United States</p>
           <div className="border-b border-gray-300"></div>
         </div>
-
       </div>
-
 
       {/* Category */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-2">
-
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-medium">
           Primary Project Category <span className="text-orange-500">*</span>
         </h3>
 
         <p>Community Garden</p>
-
       </div>
-
 
       {/* Beneficiaries */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-2">
-
-        <h3 className="text-lg font-semibold">
-          Beneficiary Populations Served <span className="text-orange-500">*</span>
+        <h3 className="text-lg font-medium">
+          Beneficiary Populations Served{" "}
+          <span className="text-orange-500">*</span>
         </h3>
 
         <p>Food insecure people</p>
-
       </div>
-
 
       {/* ---------------- GARDEN STORY ---------------- */}
 
       <h2 className="text-xl font-semibold">Garden Story</h2>
 
-
       <div className="flex justify-between items-center bg-[#FDECEA] text-[#5F2120] px-4 py-3 rounded-md text-sm">
-
         <div className="flex items-center gap-2">
-
-          <Image
-            src="/icons/error.svg"
-            width={18}
-            height={18}
-            alt="error"
-          />
+          <Image src="/icons/error.svg" width={18} height={18} alt="error" />
 
           <span>Please complete garden story and main photo</span>
-
         </div>
 
         <Link
           href="/apply/story"
           className="flex items-center gap-2 text-[#D32F2F]"
         >
-
-          <Image
-            src="/icons/pencil.svg"
-            width={16}
-            height={16}
-            alt="edit"
-          />
-
+          <Image src="/icons/pencil.svg" width={16} height={16} alt="edit" />
           EDIT
-
         </Link>
-
       </div>
-
 
       {/* Garden Story Card */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
-
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-medium">
           Garden Story <span className="text-orange-500">*</span>
         </h3>
 
-        <p className="text-sm">
-          2–3 sentences each
-        </p>
-
+        <p className="text-sm">2–3 sentences each</p>
 
         {/* Q1 */}
 
         <div className="flex flex-col gap-1">
-
           <label className="text-sm text-gray-500">
             Where is your garden, and who does it serve?
           </label>
 
           <p>
-          The Full Belly Community Garden in Scarborough, Maine, provides over 300 pounds of organic produce annually to local food-insecure families and seniors. Beyond its harvest, it serves as an educational hub for at-risk youth and neighbors through nature exploration and hands-on gardening workshops.
+            The Full Belly Community Garden in Scarborough, Maine, provides over
+            300 pounds of organic produce annually to local food-insecure
+            families and seniors. Beyond its harvest, it serves as an
+            educational hub for at-risk youth and neighbors through nature
+            exploration and hands-on gardening workshops.
           </p>
 
           <div className="border-b border-gray-300"></div>
-
         </div>
-
 
         {/* Q2 */}
 
         <div className="flex flex-col gap-1">
-
           <label className="text-sm text-gray-500">
-            What challenge does your garden help address, and why does it matter locally?
+            What challenge does your garden help address, and why does it matter
+            locally?
           </label>
 
           <p>
-          The Full Belly Community Garden addresses the challenge of food insecurity, specifically the difficulty many local families and seniors face in accessing fresh, affordable organic produce.
+            The Full Belly Community Garden addresses the challenge of food
+            insecurity, specifically the difficulty many local families and
+            seniors face in accessing fresh, affordable organic produce.
           </p>
 
           <div className="border-b border-gray-300"></div>
-
         </div>
-
 
         {/* Q3 */}
 
         <div className="flex flex-col gap-1">
-
           <label className="text-sm text-gray-500">
             What happens in the garden during the growing season?
           </label>
 
           <p>
-          During the growing season, it serves as a "vibrant oasis" where volunteers host monthly workshops to teach gardening skills and provide a safe space for at-risk youth to explore nature.
+            During the growing season, it serves as a &quot;vibrant oasis&quot;
+            where volunteers host monthly workshops to teach gardening skills
+            and provide a safe space for at-risk youth to explore nature.
           </p>
 
           <div className="border-b border-gray-300"></div>
-
         </div>
-
 
         {/* Q4 */}
 
         <div className="flex flex-col gap-1">
-
           <label className="text-sm text-gray-500">
-            What will this year's SeedMoney campaign make possible?
+            What will this year&apos;s SeedMoney campaign make possible?
           </label>
 
           <p>
-          These contributions allow the garden to continue its mission of providing over 300 pounds of organic food to local food-insecure families and seniors at the Elm Street Senior Center.
+            These contributions allow the garden to continue its mission of
+            providing over 300 pounds of organic food to local food-insecure
+            families and seniors at the Elm Street Senior Center.
           </p>
 
           <div className="border-b border-gray-300"></div>
-
         </div>
-
       </div>
-
 
       {/* ---------------- MAIN PHOTO ---------------- */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-medium">
           Main Photo <span className="text-orange-500">*</span>
         </h3>
 
         <p className="text-sm text-gray-600">
-          Upload one clear, high-quality photo that best represents your project.
-          This photo will appear at the top of your campaign page.
+          Upload one clear, high-quality photo that best represents your
+          project. This photo will appear at the top of your campaign page.
         </p>
 
         <div className="flex items-center justify-between">
-
           <div className="flex items-center gap-3 text-[#D32F2F]">
-
-            <div style={{ filter: 'invert(27%) sepia(80%) saturate(800%) hue-rotate(330deg) brightness(85%)' }}>
+            <div
+              style={{
+                filter:
+                  "invert(27%) sepia(80%) saturate(800%) hue-rotate(330deg) brightness(85%)",
+              }}
+            >
               <Image
                 src="/icons/upload-icon.svg"
                 width={20}
@@ -363,7 +299,6 @@ export default function ReviewSubmitPage() {
               <p>Upload failed.</p>
               <p className="text-sm">File too large • Failed</p>
             </div>
-
           </div>
 
           <Image
@@ -372,31 +307,31 @@ export default function ReviewSubmitPage() {
             height={16}
             alt="delete"
           />
-
         </div>
-
       </div>
-
 
       {/* ---------------- SUPPORTING PHOTOS ---------------- */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
-
-        <h3 className="text-lg font-semibold">Supporting Photos</h3>
+        <h3 className="text-lg font-medium">Supporting Photos</h3>
 
         <p className="text-sm text-gray-600">
-          You may upload up to five additional photos that help tell your garden’s story.
-          <br />*Please choose real, authentic photos of your project — for example, people working in the garden,
-          harvesting food, learning together, or the garden space itself.
-          <br />*Do not upload logos, flyers, graphics, or AI-generated images. These photos should reflect real people
-          and real places connected to your project.
+          You may upload up to five additional photos that help tell your
+          garden’s story.
+          <br />
+          *Please choose real, authentic photos of your project — for example,
+          people working in the garden, harvesting food, learning together, or
+          the garden space itself.
+          <br />
+          *Do not upload logos, flyers, graphics, or AI-generated images. These
+          photos should reflect real people and real places connected to your
+          project.
         </p>
 
         {/* Uploaded file items */}
 
         {[1, 2, 3].map((i) => (
           <div key={i} className="flex items-center justify-between">
-
             <div className="flex items-center gap-3">
               <Image
                 src="/icons/upload-icon.svg"
@@ -424,23 +359,18 @@ export default function ReviewSubmitPage() {
                 alt="complete"
               />
             </div>
-
           </div>
         ))}
-
       </div>
-
 
       {/* ---------------- CONTACT INFORMATION ---------------- */}
 
       <h2 className="text-xl font-semibold">Contact Information</h2>
 
-
       {/* Organization */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-medium">
           Organization Information <span className="text-orange-500">*</span>
         </h3>
 
@@ -451,7 +381,6 @@ export default function ReviewSubmitPage() {
 
           <p>Fully Belly Community Garden</p>
           <div className="border-b border-gray-300"></div>
-
         </div>
 
         <div className="flex flex-col gap-1">
@@ -461,18 +390,15 @@ export default function ReviewSubmitPage() {
 
           <p>Fully Belly Community Garden</p>
           <div className="border-b border-gray-300"></div>
-
         </div>
-
       </div>
-
 
       {/* Mailing Address */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-
-        <h3 className="text-lg font-semibold">
-          Beneficiary Organization Mailing Address <span className="text-orange-500">*</span>
+        <h3 className="text-lg font-medium">
+          Beneficiary Organization Mailing Address{" "}
+          <span className="text-orange-500">*</span>
         </h3>
 
         <div className="flex flex-col gap-1">
@@ -509,15 +435,12 @@ export default function ReviewSubmitPage() {
           <p>United States</p>
           <div className="border-b border-gray-300"></div>
         </div>
-
       </div>
-
 
       {/* Contact */}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-
-        <h3 className="text-lg font-semibold">
+        <h3 className="text-lg font-medium">
           Primary Contact Information <span className="text-orange-500">*</span>
         </h3>
 
@@ -544,24 +467,26 @@ export default function ReviewSubmitPage() {
           <p>Director</p>
           <div className="border-b border-gray-300"></div>
         </div>
-
       </div>
-
 
       {/* NAV BUTTONS */}
 
       <div className="flex justify-between pt-4">
+        <Button href="/apply/contact" variant="outlined" size="medium">
+          Previous Step
+        </Button>
 
-        <button className="border border-[#2D7A45] text-[#2D7A45] px-6 py-2 rounded-md font-medium transition-colors hover:bg-[#2D7A45]/10">
-          PREVIOUS STEP
-        </button>
-
-        <button className="bg-[#E0E0E0] text-[#9E9E9E] px-6 py-2 rounded-md font-medium cursor-not-allowed" disabled>
-          SUBMIT APPLICATION
-        </button>
-
+        {/* TODO: Implement submit functionality */}
+        <Button
+          href="/apply/submit"
+          variant={false ? "contained" : "text"}
+          className={false ? "px-4!" : "bg-[#E0E0E0]! px-4!"}
+          size="medium"
+          disabled={!false}
+        >
+          Next Step
+        </Button>
       </div>
-
     </div>
   );
 }

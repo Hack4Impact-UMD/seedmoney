@@ -1,11 +1,11 @@
 "use client";
 
 import TextField from "@mui/material/TextField";
+import { Button } from "@mui/material";
 
 export default function CampaignInformationStep() {
   return (
-    <div className="flex flex-col gap-6 w-[700px]">
-
+    <div className="flex flex-col gap-6 w-[700px] m-15">
       {/* campaign title */}
       <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-medium">
@@ -13,8 +13,9 @@ export default function CampaignInformationStep() {
         </h2>
 
         <p className="text-sm text-gray-600">
-          This will be the public title of your fundraising campaign. Choose something clear and recognizable, e.g.
-          Fairview Community Garden, Pleasantville Primary School Garden, Holy Jalapeno Church Garden, etc.
+          This will be the public title of your fundraising campaign. Choose
+          something clear and recognizable, e.g. Fairview Community Garden,
+          Pleasantville Primary School Garden, Holy Jalapeno Church Garden, etc.
         </p>
 
         <TextField
@@ -44,12 +45,9 @@ export default function CampaignInformationStep() {
           fullWidth
         />
 
-        <p className="text-sm pt-2">
-          Is this a new or existing garden?
-        </p>
+        <p className="text-sm pt-2">Is this a new or existing garden?</p>
 
         <div className="flex flex-col gap-3">
-
           <label className="flex items-center gap-3 cursor-pointer group">
             <input
               type="radio"
@@ -60,9 +58,7 @@ export default function CampaignInformationStep() {
                 cursor-pointer
               "
             />
-            <span className="text-sm">
-              New garden
-            </span>
+            <span className="text-sm">New garden</span>
           </label>
 
           <label className="flex items-center gap-3 cursor-pointer group">
@@ -75,11 +71,8 @@ export default function CampaignInformationStep() {
                 cursor-pointer
               "
             />
-            <span className="text-sm ">
-              Existing garden
-            </span>
+            <span className="text-sm ">Existing garden</span>
           </label>
-
         </div>
       </div>
 
@@ -101,40 +94,15 @@ export default function CampaignInformationStep() {
       </div>
 
       {/* buttons */}
-      <div className="flex justify-between pt-2">
+      <div className="flex justify-between">
+        <Button href="/apply/terms" variant="outlined" size="medium">
+          Previous Step
+        </Button>
 
-        <button
-          className="
-            border border-green-700
-            text-green-700
-            px-6 py-2
-            min-w-[140px]
-            rounded-md
-            font-medium
-            transition
-            hover:bg-green-50
-          "
-        >
-          PREVIOUS STEP
-        </button>
-
-        <button
-          className="
-            bg-green-700
-            text-white
-            px-6 py-2
-            min-w-[140px]
-            rounded-md
-            font-medium
-            transition
-            hover:bg-green-800
-          "
-        >
-          NEXT STEP
-        </button>
-
+        <Button href="/apply/garden" variant="contained" size="medium">
+          Next Step
+        </Button>
       </div>
-
     </div>
   );
 }

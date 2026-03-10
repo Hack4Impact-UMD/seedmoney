@@ -1,28 +1,20 @@
 "use client";
 
 import TextField from "@mui/material/TextField";
+import { Button } from "@mui/material";
 
 export default function GardenInformationStep() {
   return (
-    <div className="flex flex-col gap-6 w-[700px]">
-
+    <div className="flex flex-col gap-6 w-[700px] m-15">
       {/* Garden Location */}
       <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-medium">
           Garden Location <span className="text-orange-500">*</span>
         </h2>
 
-        <TextField
-          label="City"
-          variant="standard"
-          fullWidth
-        />
+        <TextField label="City" variant="standard" fullWidth />
 
-        <TextField
-          label="State / Province"
-          variant="standard"
-          fullWidth
-        />
+        <TextField label="State / Province" variant="standard" fullWidth />
 
         <TextField
           label="Country"
@@ -32,10 +24,8 @@ export default function GardenInformationStep() {
         />
       </div>
 
-
       {/* Primary Project Category */}
       <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
-
         <h2 className="text-[20px] font-medium">
           Primary Project Category <span className="text-orange-500">*</span>
         </h2>
@@ -43,7 +33,6 @@ export default function GardenInformationStep() {
         <p className="text-sm">Select one:</p>
 
         <div className="flex flex-col gap-3">
-
           {[
             "Community Garden",
             "School or Youth Garden",
@@ -80,22 +69,19 @@ export default function GardenInformationStep() {
               </span>
             </label>
           ))}
-
         </div>
       </div>
 
-
       {/* Beneficiary Populations Served */}
       <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
-
         <h2 className="text-[20px] font-medium">
-          Beneficiary Populations Served <span className="text-orange-500">*</span>
+          Beneficiary Populations Served{" "}
+          <span className="text-orange-500">*</span>
         </h2>
 
         <p className="text-sm">Select all that apply:</p>
 
         <div className="flex flex-col gap-3">
-
           {[
             "Children (ages 0–12)",
             "Youth / Adolescents (ages 13–18)",
@@ -135,46 +121,19 @@ export default function GardenInformationStep() {
               </span>
             </label>
           ))}
-
         </div>
       </div>
 
-
       {/* Navigation Buttons */}
       <div className="flex justify-between pt-2">
+        <Button href="/apply/campaign" variant="outlined" size="medium">
+          Previous Step
+        </Button>
 
-        <button
-          className="
-            border border-green-700
-            text-green-700
-            px-6 py-2
-            min-w-[140px]
-            rounded-md
-            font-medium
-            transition
-            hover:bg-green-50
-          "
-        >
-          PREVIOUS STEP
-        </button>
-
-        <button
-          className="
-            bg-green-700
-            text-white
-            px-6 py-2
-            min-w-[140px]
-            rounded-md
-            font-medium
-            transition
-            hover:bg-green-800
-          "
-        >
-          NEXT STEP
-        </button>
-
+        <Button href="/apply/story" variant="contained" size="medium">
+          Next Step
+        </Button>
       </div>
-
     </div>
   );
 }
