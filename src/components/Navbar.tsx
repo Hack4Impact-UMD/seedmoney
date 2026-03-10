@@ -92,8 +92,8 @@ export default function Navbar({
 
       {/* Campaign List */}
       <div className="flex-1 flex flex-col overflow-y-auto mt-5">
-        <div className="h-7 text-white px-6 mb-2 tracking-[1px] text-[16px] font-normal">
-          {!isCollapsed && "Your Campaigns"}
+        <div className="h-7 text-white px-6 mb-2 tracking-[1px] text-[13px] font-normal">
+          {!isCollapsed && "2026 Campaign"}
         </div>
 
         <List disablePadding>
@@ -125,7 +125,7 @@ export default function Navbar({
                     primary={campaign.name}
                     slotProps={{
                       primary: {
-                        className: "!text-white !font-[700] !text-[24px] !px-[48px] !py-[32px] !leading-[32px]",
+                        className: "!text-white !font-[600] !text-[16px] !px-[48px] !py-[20px] !leading-[24px]",
                       },
                     }}
                   />
@@ -134,6 +134,42 @@ export default function Navbar({
             );
           })}
         </List>
+
+        {/* Previous Campaigns */}
+        {!isCollapsed && (
+          <>
+            <div className="h-7 text-white/70 px-6 mt-4 mb-2 tracking-[1px] text-[13px] font-normal">
+              Previous Campaign
+            </div>
+
+            <List disablePadding>
+              {campaigns.map((campaign) => (
+                <ListItemButton
+                  key={`prev-${campaign.id}`}
+                  onClick={() => handleCampaignClick(campaign.id)}
+                  aria-label={campaign.name}
+                  className="!p-0 !min-h-12 !bg-transparent hover:!bg-[#43B45D]"
+                >
+                  <ListItemText
+                    primary={campaign.name}
+                    slotProps={{
+                      primary: {
+                        className: "!text-white !font-[600] !text-[16px] !px-[48px] !py-[20px] !leading-[24px]",
+                      },
+                    }}
+                  />
+                </ListItemButton>
+              ))}
+            </List>
+
+            <button
+              className="text-white font-[600] text-[16px] px-[48px] py-[20px] mt-2 text-left hover:bg-[#43B45D]"
+              onClick={() => router.push("/dashboard/view-all")}
+            >
+              View all
+            </button>
+          </>
+        )}
       </div>
 
       {/* Bottom Actions */}
