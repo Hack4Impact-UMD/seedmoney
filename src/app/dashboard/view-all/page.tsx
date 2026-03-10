@@ -1,34 +1,33 @@
-import { readCampaign, readCampaignsByTitle } from "@/src/actions/db/campaigns";
 import CampaignsTable from "@/src/components/CampaignsTable";
 
-export default async function ViewAllCampaignsPage({ searchParams, }: { searchParams: Promise<{ query?: string }>; }) {
-  // whitespaces queries end up as "query=++++++" so trimming whitespaces before is pointless since it isn't white space
-  const query = (await searchParams).query;
-
-  const data = query ? await readCampaignsByTitle(query) : await readCampaign();
-
-  const normalizedData = Array.isArray(data) ? data : data ? [data] : [];
-  type NormalizedCampaign = (typeof normalizedData)[number];
-  type SerializedCampaign = Omit<NormalizedCampaign, "goal" | "raised"> & {
-    goal?: string | number | null;
-    raised?: string | number | null;
-  };
-
-  const rawSerializedData: SerializedCampaign[] = JSON.parse(
-    JSON.stringify(normalizedData, (key, value) =>
-      typeof value === "bigint" ? value.toString() : value
-    )
-  );
-
-  const serializedData = rawSerializedData.map((campaign) => ({
-    ...campaign,
-    goal: Number(campaign.goal ?? 0),
-    raised: Number(campaign.raised ?? 0),
-  }));
+export default async function ViewAllCampaignsPage() {
+  const mockCampaignData = [
+    {
+    name: "Save the Oceans",
+    campaign_leader: "Sarah Lee",
+    raised: 5000,
+    goal: 20000,
+    percentage: 25,
+    },
+    {
+    name: "Feed the Children",
+    campaign_leader: "John Smith",
+    raised: 12000,
+    goal: 15000,
+    percentage: 80,
+    },
+    {
+    name: "Plant More Trees",
+    campaign_leader: "Emily Chen",
+    raised: 3000,
+    goal: 10000,
+    percentage: 30,
+    },
+  ];
 
   return (
     <main className="flex min-h-screen w-full items-center justify-center bg-[#f2faf9]">
-      <CampaignsTable initialData={serializedData}/>
+      <CampaignsTable initialData={mockCampaignData}/>
     </main>
   );
 }

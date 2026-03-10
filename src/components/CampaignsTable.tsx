@@ -1,5 +1,5 @@
 'use client';
-import React, { useEffect, useState } from 'react';
+import React, { useMemo, useState } from 'react';
 import { 
   flexRender, 
   useReactTable, 
@@ -8,90 +8,64 @@ import {
   getPaginationRowModel 
 } from '@tanstack/react-table';
 
-import { Campaign } from '../types/db/campaigns';
-import { usePathname, useRouter, useSearchParams } from 'next/navigation';
-
-interface CampaignWithMetaData extends Campaign {
-  campaign_members?: {
-    role: string;
-    users: {
-      first_name: string;
-      last_name: string;
-    };
-  }[];
-  raised?: number;
+interface CampaignMock {
+  name: string;
+  campaign_leader: string;
+  raised: number;
+  goal: number;
+  percentage: number;
 }
 
 interface Props {
-  initialData: CampaignWithMetaData[];
+  initialData: CampaignMock[];
 }
 
 const CampaignsTable = ({ initialData }: Props) => {
   const [campaignSearch, setCampaignSearch] = useState('');
-  const searchParams = useSearchParams();
-  const pathname = usePathname();
-  const { replace } = useRouter();
 
-  useEffect( () => {
-    // if search input is empty and no query in search url, do nothing
-    const currentQuery = searchParams.get('query') || '';
-    if (campaignSearch === currentQuery) return;
+  const filteredData = useMemo(() => {
+    return initialData.filter(campaign => 
+      campaign.name.toLowerCase().includes(campaignSearch.toLowerCase()) || 
+      campaign.campaign_leader.toLowerCase().includes(campaignSearch.toLowerCase())
+    );
+  }, [campaignSearch, initialData]);
 
-    const delay = setTimeout(() => {
-      const params = new URLSearchParams(searchParams);
-      if (campaignSearch) {
-        params.set('query', campaignSearch);
-      } else {
-        params.delete('query');
-      }
-      replace(`${pathname}?${params.toString()}`, { scroll: false });
-
-    }, 500);
-
-    return () => clearTimeout(delay);
-  }, [campaignSearch, pathname, replace, searchParams])
-
-  const columnHelper = createColumnHelper<CampaignWithMetaData>();
+  const columnHelper = createColumnHelper<CampaignMock>();
 
   const columns = [
     columnHelper.accessor('name', {
       header: 'Campaign Title',
       cell: info => <span className="font-medium text-gray-700">{info.getValue()}</span>
     }),
-    columnHelper.accessor(row => {
-      const leader = row.campaign_members?.[0]?.users;
-      return leader ? `${leader.first_name} ${leader.last_name}` : "N/A";
-    }, {
-      id: 'leader_name',
+    columnHelper.accessor('campaign_leader', {
       header: 'Campaign Leader',
+      cell: info => info.getValue()
     }),
-    columnHelper.accessor(row => row.raised || 0, {
-      id: 'raised',
+    columnHelper.accessor('raised', {
       header: 'Raised',
       cell: info => `$${info.getValue().toLocaleString()}`
     }),
     columnHelper.accessor('goal', {
       header: 'Goal',
-      cell: info => `$${(info.getValue() || 0).toLocaleString()}`
+      cell: info => `$${info.getValue().toLocaleString()}`
     }), 
     columnHelper.accessor(row => ({ 
-      raised: row.raised || 0, 
-      goal: row.goal || 0 
+      percentage: row.percentage 
     }), {
       id: 'status',
       header: 'Goal Status',
       cell: info => {
-        const { raised, goal } = info.getValue();
-        const percentage = goal > 0 ? Math.min(Math.round((raised / goal) * 100), 100) : 0;
+        const { percentage } = info.getValue();
+        const displayPercentage = Math.min(percentage, 100);
         return (
           <div className="flex items-center gap-3 w-full max-w-[150px]">
             <div className="w-full bg-blue-100 rounded-full h-2">
               <div 
                 className="bg-blue-600 h-2 rounded-full" 
-                style={{ width: `${percentage}%` }}
+                style={{ width: `${displayPercentage}%` }}
               ></div>
             </div>
-            <span className="text-sm text-gray-600">{percentage}%</span>
+            <span className="text-sm text-gray-600">{displayPercentage}%</span>
           </div>
         );
       }
@@ -99,7 +73,7 @@ const CampaignsTable = ({ initialData }: Props) => {
   ];
 
   const table = useReactTable({
-    data: initialData,
+    data: filteredData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -130,7 +104,7 @@ const CampaignsTable = ({ initialData }: Props) => {
           </div>
         </div>
 
-        {initialData.length === 0 ? (
+        {filteredData.length === 0 ? (
           <div className="p-8 text-center text-gray-500">No campaigns available.</div>
         ) : (
           <>
