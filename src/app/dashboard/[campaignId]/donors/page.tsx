@@ -13,7 +13,6 @@ export default async function CampaignDonorsPage({
 
   return (
     <>
-      <h1>Donors</h1>
       <DonorsTable campaignId={Number(campaignId)} />
     </>
   );

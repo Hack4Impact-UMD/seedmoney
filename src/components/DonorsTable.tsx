@@ -1,228 +1,280 @@
-'use client';
-import React, {useCallback, useEffect, useState} from 'react';
-import {createColumnHelper, getCoreRowModel, getFilteredRowModel, getPaginationRowModel, getSortedRowModel, SortingState} from "@tanstack/table-core";
-import {flexRender, useReactTable} from "@tanstack/react-table";
+"use client";
+
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import {
-    Box, Chip, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TablePagination,
-    TablePaginationActions, TableRow, TableSortLabel, TextField, Typography
-} from "@mui/material";
+  createColumnHelper,
+  getCoreRowModel,
+  getFilteredRowModel,
+  getPaginationRowModel,
+} from "@tanstack/table-core";
+import { flexRender, useReactTable } from "@tanstack/react-table";
 
 interface Donor {
-    id: number;
-    reward: string;
-    amount: number;
-    name: string;
-    email: string;
-    card_reference: string;
-    date: string;
-    status: string;
+  id: number;
+  reward: string;
+  amount: number;
+  name: string;
+  email: string;
+  card_reference: string;
+  date: string;
+  status: string;
 }
 
 interface DonorsTableProps {
-    campaignId: number;
+  campaignId: number;
 }
 
 export default function DonorsTable({ campaignId }: DonorsTableProps) {
+  const [donors, setDonors] = useState<Donor[]>([]);
+  const [searchQuery, setSearchQuery] = useState("");
 
-    const [donors, setDonors] = useState<Donor[]>([]);
-    const [sorting, setSorting] = useState<SortingState>([]);
-    const [searchQuery, setSearchQuery] = useState('');
+  useEffect(() => {
+    // TODO fetch real data from backend using campaignId
+    setDonors([
+      {
+        id: 1001,
+        reward: "Sticker Pack",
+        amount: 25,
+        name: "Sarah Lee",
+        email: "sarahlee@example.com",
+        card_reference: "1234567812345678",
+        date: "2026-03-01T10:30:00",
+        status: "Paid",
+      },
+      {
+        id: 1002,
+        reward: "T-Shirt",
+        amount: 50,
+        name: "John Smith",
+        email: "johnsmith@example.com",
+        card_reference: "9876543212345678",
+        date: "2026-03-02T14:20:00",
+        status: "Paid",
+      },
+      {
+        id: 1003,
+        reward: "Thank You Note",
+        amount: 15,
+        name: "Emily Chen",
+        email: "emilychen@example.com",
+        card_reference: "4567123412349999",
+        date: "2026-03-05T09:15:00",
+        status: "Pending",
+      },
+    ]);
+  }, [campaignId]);
 
-    useEffect(() => {
-        // TODO fetch real data from the backend using campaignId
-        setDonors([]);
-    }, [campaignId]);
+  const filteredData = useMemo(() => {
+    const query = searchQuery.toLowerCase().trim();
 
-    const globalFilterFn = useCallback(
-        (row: { original: Donor }, _columnId: string, filterValue: string) => {
-            const query = filterValue.toLowerCase().trim();
-            if (!query) return true;
+    if (!query) return donors;
 
-            const donor = row.original;
+    return donors.filter((donor) => {
+      const numericQuery = Number(query);
 
-            const numericQuery = parseFloat(query);
-            if (!isNaN(numericQuery) && numericQuery === donor.amount) {
-                return true;
-            }
+      if (!Number.isNaN(numericQuery) && donor.amount === numericQuery) {
+        return true;
+      }
 
-            const id = String(donor.id).toLowerCase();
-            const name = donor.name.toLowerCase();
-            const email = donor.email.toLowerCase();
-
-            return id.includes(query) || name.toLowerCase().includes(query) || email.toLowerCase().includes(query);
-        },
-        [],
-    );
-
-    const columnHelper = createColumnHelper<Donor>();
-
-    const columns = [
-        columnHelper.accessor('id', {
-            header: 'ID',
-            cell: info => info.getValue(),
-        }),
-        columnHelper.accessor('reward', {
-            header: 'Reward',
-            cell: info => info.getValue(),
-        }),
-        columnHelper.accessor('amount', {
-            header: 'Amount',
-            cell: info => `$${info.getValue().toFixed(2)}`,
-            enableSorting: false,
-        }),
-        columnHelper.accessor('name', {
-            header: 'Contributor Name',
-            cell: info => info.getValue(),
-            enableSorting: false,
-        }),
-        columnHelper.accessor('email', {
-            header: 'Contributor Email',
-            cell: info => info.getValue(),
-            enableSorting: false,
-        }),
-        columnHelper.accessor('card_reference', {
-            header: 'Card/Reference Number',
-            cell: info => {
-                const value = info.getValue();
-                // Credit card numbers would also need to be redacted on the server side for security,
-                // but for this test data we can just redact them in the frontend
-                return '•••• •••• •••• ' + value.slice(-4);
-            },
-            enableSorting: false,
-        }),
-        columnHelper.accessor('date', {
-            header: 'Date',
-            // YYYY-MM-DD
-            cell: info => info.getValue().split('T')[0],
-            enableSorting: false,
-        }),
-        columnHelper.accessor('status', {
-            header: 'Status',
-            cell: info => <Chip label={info.getValue()} variant="outlined" size="small" color="success" />,
-            enableSorting: false,
-        }),
-    ]
-
-    const table = useReactTable({
-        columns,
-        data: donors,
-        state: {
-            sorting,
-            globalFilter: searchQuery,
-        },
-        onSortingChange: setSorting,
-        onGlobalFilterChange: setSearchQuery,
-        globalFilterFn,
-        getCoreRowModel: getCoreRowModel(),
-        getSortedRowModel: getSortedRowModel(),
-        getFilteredRowModel: getFilteredRowModel(),
-        getPaginationRowModel: getPaginationRowModel(),
+      return (
+        String(donor.id).includes(query) ||
+        donor.name.toLowerCase().includes(query) ||
+        donor.email.toLowerCase().includes(query) ||
+        donor.reward.toLowerCase().includes(query) ||
+        donor.status.toLowerCase().includes(query)
+      );
     });
+  }, [donors, searchQuery]);
 
-    const { pageSize, pageIndex } = table.getState().pagination
+  const columnHelper = createColumnHelper<Donor>();
 
-    return (
-        <Stack direction="column" spacing={2} className="mt-4">
-            <Box>
-                <Typography variant="h6">Donors List</Typography>
-                <Typography variant="subtitle2" color="textSecondary">{donors.length} donor{donors.length === 1 ? '' : 's'}</Typography>
-            </Box>
-            <Box className="px-2">
-                <TextField
-                    fullWidth
-                    variant="outlined"
-                    size="small"
-                    label="Search"
-                    placeholder="Search by donor, email, ID, or amount"
-                    value={searchQuery}
-                    slotProps={{
-                        inputLabel: {
-                            shrink: true,
-                        },
-                    }}
-                    onChange={(e) => setSearchQuery(e.target.value)} />
-            </Box>
-            <TableContainer component={Paper}>
-                <Table className="min-w-[650px]">
-                    <TableHead>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                            <TableRow key={headerGroup.id}>
-                                {headerGroup.headers.map((header) => {
-                                    return (
-                                        <TableCell key={header.id} colSpan={header.colSpan} sortDirection={
-                                            header.column.getIsSorted() || false
-                                        }>
-                                            {header.isPlaceholder ? null : header.column.getCanSort() ? (
-                                                <TableSortLabel
-                                                    active={!!header.column.getIsSorted()}
-                                                    direction={header.column.getIsSorted() || 'asc'}
-                                                    onClick={header.column.getToggleSortingHandler()}
-                                                    sx={{ fontWeight: 'bold' }}
-                                                >
-                                                    {flexRender(
-                                                        header.column.columnDef.header,
-                                                        header.getContext(),
-                                                    )}
-                                                </TableSortLabel>
-                                            ) : (
-                                                <Box component="span" sx={{ fontWeight: 'bold' }}>
-                                                    {flexRender(
-                                                        header.column.columnDef.header,
-                                                        header.getContext(),
-                                                    )}
-                                                </Box>
-                                            )}
-                                        </TableCell>
-                                    )
-                                })}
-                            </TableRow>
-                        ))}
-                    </TableHead>
-                    <TableBody>
-                        {table.getRowModel().rows.length === 0 ? (
-                            <TableRow>
-                                <TableCell colSpan={columns.length} align="center" sx={{ py: 4 }}>
-                                    <Typography variant="body1" color="textSecondary">
-                                        No results found
-                                    </Typography>
-                                </TableCell>
-                            </TableRow>
-                        ) : (
-                            table.getRowModel().rows.map((row) => {
-                                return (
-                                    <TableRow key={row.id}>
-                                        {row.getVisibleCells().map((cell) => {
-                                            return (
-                                                <TableCell key={cell.id}>
-                                                    {flexRender(
-                                                        cell.column.columnDef.cell,
-                                                        cell.getContext(),
-                                                    )}
-                                                </TableCell>
-                                            )
-                                        })}
-                                    </TableRow>
-                                )
-                            })
+  const columns = [
+    columnHelper.accessor("id", {
+      header: "ID",
+      cell: (info) => (
+        <span className="font-medium text-gray-700">{info.getValue()}</span>
+      ),
+    }),
+    columnHelper.accessor("reward", {
+      header: "Reward",
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor("amount", {
+      header: "Amount",
+      cell: (info) => `$${info.getValue().toFixed(2)}`,
+    }),
+    columnHelper.accessor("name", {
+      header: "Contributor Name",
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor("email", {
+      header: "Contributor Email",
+      cell: (info) => info.getValue(),
+    }),
+    columnHelper.accessor("card_reference", {
+      header: "Card/Reference Number",
+      cell: (info) => {
+        const value = info.getValue();
+        return `•••• •••• •••• ${value.slice(-4)}`;
+      },
+    }),
+    columnHelper.accessor("date", {
+      header: "Date",
+      cell: (info) => info.getValue().split("T")[0],
+    }),
+    columnHelper.accessor("status", {
+      header: "Status",
+      cell: (info) => {
+        const status = info.getValue();
+        const isPaid = status.toLowerCase() === "paid";
+
+        return (
+          <span
+            className={[
+              "inline-flex rounded-full px-3 py-1 text-sm font-medium",
+              isPaid
+                ? "bg-green-100 text-green-700"
+                : "bg-yellow-100 text-yellow-700",
+            ].join(" ")}
+          >
+            {status}
+          </span>
+        );
+      },
+    }),
+  ];
+
+  const table = useReactTable({
+    data: filteredData,
+    columns,
+    state: {
+      globalFilter: searchQuery,
+    },
+    onGlobalFilterChange: setSearchQuery,
+    globalFilterFn: useCallback(() => true, []),
+    getCoreRowModel: getCoreRowModel(),
+    getFilteredRowModel: getFilteredRowModel(),
+    getPaginationRowModel: getPaginationRowModel(),
+  });
+
+  return (
+    <div className="w-full">
+      <div className="overflow-x-auto rounded-xl bg-white md:mx-auto md:w-full">
+        <div className="px-5 pt-8">
+          <h2 className="text-center text-black sm:text-left">Donors List</h2>
+          <p className="text-center text-sm text-gray-500 sm:text-left">
+            {filteredData.length} donor{filteredData.length === 1 ? "" : "s"}
+          </p>
+
+          <div className="relative my-6">
+            <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs text-gray-400">
+              Search
+            </label>
+            <div className="flex items-center rounded-lg border border-gray-200 px-3 py-2.5 transition-colors focus-within:border-blue-500">
+              <input
+                type="text"
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                placeholder="Search by donor, email, ID, reward, or amount"
+                className="w-full overflow-x-auto bg-transparent p-1 text-md outline-none"
+              />
+            </div>
+          </div>
+        </div>
+
+        {filteredData.length === 0 ? (
+          <div className="p-8 text-center text-gray-500">No donors available.</div>
+        ) : (
+          <>
+            <table className="w-full">
+              <thead>
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map((header) => (
+                      <th
+                        key={header.id}
+                        className="border-b border-gray-300 px-5 py-4 text-left"
+                      >
+                        {header.isPlaceholder
+                          ? null
+                          : flexRender(
+                              header.column.columnDef.header,
+                              header.getContext(),
+                            )}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+
+              <tbody>
+                {table.getRowModel().rows.map((row) => (
+                  <tr key={row.id}>
+                    {row.getVisibleCells().map((cell) => (
+                      <td
+                        key={cell.id}
+                        className="border-b border-gray-300 px-5 py-4 text-left"
+                      >
+                        {flexRender(
+                          cell.column.columnDef.cell,
+                          cell.getContext(),
                         )}
-                    </TableBody>
-                </Table>
-            </TableContainer>
-            <TablePagination
-                rowsPerPageOptions={[5, 10, 25, { label: 'All', value: donors.length }]}
-                component="div"
-                count={table.getFilteredRowModel().rows.length}
-                rowsPerPage={pageSize}
-                page={pageIndex}
-                onPageChange={(_, page) => {
-                    table.setPageIndex(page)
-                }}
-                onRowsPerPageChange={(e) => {
-                    const size = e.target.value ? Number(e.target.value) : 10
-                    table.setPageSize(size)
-                }}
-                ActionsComponent={TablePaginationActions}
-            />
-        </Stack>
-    );
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+
+            <div className="flex items-center justify-end gap-6 border-t border-gray-100 px-6 py-4 text-sm text-gray-500">
+              <div className="flex items-center gap-2">
+                <span>Rows per page:</span>
+                <select
+                  value={table.getState().pagination.pageSize}
+                  onChange={(e) => table.setPageSize(Number(e.target.value))}
+                  className="cursor-pointer font-medium text-gray-700 outline-none"
+                >
+                  {[5, 10, 20].map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
+                </select>
+              </div>
+
+              <span>
+                {table.getState().pagination.pageIndex *
+                  table.getState().pagination.pageSize +
+                  1}
+                -
+                {Math.min(
+                  (table.getState().pagination.pageIndex + 1) *
+                    table.getState().pagination.pageSize,
+                  filteredData.length,
+                )}{" "}
+                of {filteredData.length}
+              </span>
+
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                  className="p-1 text-2xl font-bold text-black disabled:opacity-30"
+                >
+                  &lt;
+                </button>
+                <button
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                  className="p-1 text-2xl font-bold text-black disabled:opacity-30"
+                >
+                  &gt;
+                </button>
+              </div>
+            </div>
+          </>
+        )}
+      </div>
+    </div>
+  );
 }

@@ -80,11 +80,9 @@ const CampaignsTable = ({ initialData }: Props) => {
   });
 
   return (
-    <div className="w-full p-4"> 
-      <div className="text-[#196d38] text-3xl font-extrabold mb-4 md:mx-auto md:w-[90%] sm:text-left text-center">
-        All Previous Campaigns
-      </div>
-      <div className="md:w-[90%] md:mx-auto bg-white rounded-xl overflow-x-auto">
+    <div className="w-full"> 
+
+      <div className="md:w-full md:mx-auto bg-white rounded-xl overflow-x-auto">
         {/* header section */}
         <div className="pt-8 px-5">
           <h2 className="text-black sm:text-left text-center">Full Campaign List</h2>
