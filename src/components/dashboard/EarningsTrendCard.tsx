@@ -2,24 +2,10 @@
 
 import { LineChart } from "@mui/x-charts/LineChart";
 import { ChartsReferenceLine } from "@mui/x-charts/ChartsReferenceLine";
+import moment from "moment";
 
-function formatUSD(value: number) {
-  return `$${value.toLocaleString()}`;
-}
-
-// Parses "YYYY-MM-DD" into a local-midnight Date so toLocaleDateString
-// displays the correct day. new Date(iso) would treat the string as UTC
-// midnight, shifting the displayed date back by one day in UTC-behind zones.
-function parseLocalDate(iso: string) {
-  const [year, month, day] = iso.split("-").map(Number);
-  return new Date(year, month - 1, day);
-}
-
-function formatDate(iso: string) {
-  return parseLocalDate(iso).toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
+function formatDate(date: string) {
+  return moment(date, "YYYY-MM-DD").format("MMM D");
 }
 
 export function EarningsTrendCard({
@@ -45,6 +31,7 @@ export function EarningsTrendCard({
             Your earnings over the campaign
           </p>
         </div>
+
         {/* Custom legend */}
         <div className="flex gap-6 items-center mt-1">
           <div className="flex items-center gap-2">
@@ -95,7 +82,6 @@ export function EarningsTrendCard({
         hideLegend={true}
         grid={{ vertical: true, horizontal: true }}
         sx={{
-          // sx required here — these are internal MUI X Charts class selectors
           "& .MuiAreaElement-root": { fillOpacity: 0.15 },
           "& .MuiChartsAxis-line": { strokeWidth: 1 },
           "& .MuiChartsAxis-tick": { strokeWidth: 1 },
@@ -115,6 +101,7 @@ export function EarningsTrendCard({
           labelAlign="start"
           labelStyle={{ fill: "#6B7280", fontSize: 11, fontWeight: 500 }}
         />
+
         <ChartsReferenceLine
           y={campaignGoal}
           lineStyle={{
@@ -122,7 +109,7 @@ export function EarningsTrendCard({
             strokeDasharray: "4 4",
             strokeWidth: 1.5,
           }}
-          label={`Your Goal: ${formatUSD(campaignGoal)}`}
+          label={`Your Goal: $${campaignGoal}`}
           labelAlign="end"
           labelStyle={{ fill: "#56BD60", fontSize: 12, fontWeight: "bolder" }}
         />
