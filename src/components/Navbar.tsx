@@ -98,8 +98,8 @@ export default function Navbar({
   return (
     <nav
       className={clsx(
-        "relative flex h-screen flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
-        isCollapsed ? "w-![105px]" : "w-![300px] xl:w-![360px]",
+        "sticky! top-0! flex h-screen flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
+        isCollapsed ? "!w-[105px]" : "!w-[300px] xl:!w-[300px]",
       )}
     >
       <div className="flex items-center px-5 pb-4 pt-6">
