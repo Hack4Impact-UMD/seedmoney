@@ -193,7 +193,7 @@ export default function CampaignOverviewPage() {
             </div>
 
             <div className="space-y-2">
-              <label htmlFor="help-details"className="block text-sm font-bold text-slate-700">Tell us more</label>
+              <label htmlFor="help-details" className="block text-sm font-bold text-slate-700">Tell us more</label>
               <input 
                 id="help-details"
                 type="text" 
