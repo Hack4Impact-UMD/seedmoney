@@ -1,5 +1,7 @@
 "use client";
 
+import { SubmitEvent } from "react";
+
 import {
   Accordion,
   AccordionSummary,
@@ -38,9 +40,9 @@ const FAQ_DATA = [
 
 export default function CampaignOverviewPage() {
   const campaign = MOCK_CAMPAIGN;
-  const progress = (campaign.raised / campaign.goal) * 100;
+  const progress = campaign.goal > 0 ? Math.min((campaign.raised / campaign.goal) * 100, 100) : 0;
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: SubmitEvent) => {
     e.preventDefault();
     console.log("Form submitted");
   }
@@ -130,7 +132,7 @@ export default function CampaignOverviewPage() {
               <div>
                 <span className="text-md text-[#3a3a3a]">Days Remaining</span>
                 <div className="text-4xl font-bold text-[#0f1828] mt-2">{campaign.days_remaining}</div>
-                <div className="text-sm text=[#6a7282] font-medium">days until campaign ends</div>
+                <div className="text-sm text-[#6a7282] font-medium">days until campaign ends</div>
               </div>
               <TrendingUpIcon className="!text-[#666666] !text-3xl" />
             </div>
@@ -198,7 +200,7 @@ export default function CampaignOverviewPage() {
               />
             </div>
 
-            <button type="submit"className="flex items-center gap-2 bg-[#2c7a45] text-white px-4 py-2 rounded-md font-bold text-sm uppercase hover:bg-[#2d5a43] transition">
+            <button type="submit" className="flex items-center gap-2 bg-[#2c7a45] text-white px-4 py-2 rounded-md font-bold text-sm uppercase hover:bg-[#2d5a43] transition">
               <LogoutIcon className="!text-md" />
               Submit Request
             </button>
