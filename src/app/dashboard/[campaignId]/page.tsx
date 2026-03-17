@@ -89,7 +89,7 @@ export default function CampaignOverviewPage() {
               </div>
               
               <div className="relative pt-1 mb-8">
-                <div className="overflow-hidden h-25 text-xs flex rounded-full bg-[#bce5bf]">
+                <div className="overflow-hidden h-24 text-xs flex rounded-full bg-[#bce5bf]">
                   <div 
                     style={{ width: `${progress}%` }}
                     className="shadow-none flex flex-col text-center whitespace-nowrap text-white justify-center bg-[#56bd61] font-bold text-sm"
@@ -176,8 +176,9 @@ export default function CampaignOverviewPage() {
           
           <form className="space-y-10 max-w-full" onSubmit={handleSubmit}>
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-[#212121]">What do you need help with?</label>
+              <label htmlFor="help-topic" className="block text-sm font-bold text-[#212121]">What do you need help with?</label>
               <Select
+                id="help-topic"
                 fullWidth
                 variant="standard"
                 defaultValue=""
@@ -192,8 +193,9 @@ export default function CampaignOverviewPage() {
             </div>
 
             <div className="space-y-2">
-              <label className="block text-sm font-bold text-slate-700">Tell us more</label>
+              <label htmlFor="help-details"className="block text-sm font-bold text-slate-700">Tell us more</label>
               <input 
+                id="help-details"
                 type="text" 
                 placeholder="Describe what you need, the more detail, the faster we can help"
                 className="w-full border-b border-[#949494] py-2 focus:outline-none transition placeholder:text-[#9e9e9e] text-sm"
