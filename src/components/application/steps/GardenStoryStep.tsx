@@ -3,8 +3,33 @@ import Image from "next/image";
 import { Button } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 
 export default function GardenStoryStep() {
+  const { form, setCurrentStep, updateStepStatus } = useApplicationForm();
+
+  useEffect(() => {
+    const computeIsComplete = () => {
+      const values = form.getFieldValue;
+      return (
+        values("storyLocationAndAudience").trim().length > 0 &&
+        values("storyChallenge").trim().length > 0 &&
+        values("storySeasonActivity").trim().length > 0 &&
+        values("storyCampaignImpact").trim().length > 0
+      );
+    };
+
+    setCurrentStep("Garden Story");
+
+    return () => {
+      updateStepStatus(
+        "Garden Story",
+        computeIsComplete() ? "completed" : "review",
+      );
+    };
+  }, [form, setCurrentStep, updateStepStatus]);
+
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
       {/* Garden Story */}
@@ -15,29 +40,57 @@ export default function GardenStoryStep() {
 
         <p className="text-sm text-gray-600">2-3 sentences each</p>
 
-        <TextField
-          variant="standard"
-          placeholder="Where is your garden, and who does it serve?"
-          fullWidth
-        />
+        <form.Field name="storyLocationAndAudience">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="Where is your garden, and who does it serve?"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField
-          variant="standard"
-          placeholder="What challenge does your garden help address, and why does it matter locally?"
-          fullWidth
-        />
+        <form.Field name="storyChallenge">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="What challenge does your garden help address, and why does it matter locally?"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField
-          variant="standard"
-          placeholder="What happens in the garden during the growing season?"
-          fullWidth
-        />
+        <form.Field name="storySeasonActivity">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="What happens in the garden during the growing season?"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField
-          variant="standard"
-          placeholder="What will this year’s SeedMoney campaign make possible?"
-          fullWidth
-        />
+        <form.Field name="storyCampaignImpact">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="What will this year’s SeedMoney campaign make possible?"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
       </div>
 
       {/* Main Photo */}

@@ -3,8 +3,68 @@
 import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
 import Link from "next/link";
+import { useEffect } from "react";
+import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+
+const categoryOptions = [
+  "Community Garden",
+  "School or Youth Garden",
+  "Food Pantry or Food Bank Garden",
+  "Urban Farm",
+  "Refugee or Immigrant Garden",
+  "Tribal or Indigenous Garden Project",
+  "Shelter or Transitional Housing Garden",
+  "Therapeutic or Healing Garden",
+  "Job Training or Vocational Garden",
+  "Demonstration or Education Garden",
+  "Multi-Site Garden Program",
+  "Other (please specify)",
+];
+
+const beneficiaryOptions = [
+  "Children (ages 0–12)",
+  "Youth / Adolescents (ages 13–18)",
+  "Families",
+  "Seniors / Older adults",
+  "Low-income individuals or households",
+  "Food-insecure individuals or households",
+  "Immigrants and refugees",
+  "Indigenous / Native communities",
+  "People with disabilities",
+  "Veterans and military families",
+  "People experiencing homelessness or housing insecurity",
+  "Unemployed or underemployed individuals",
+  "Justice-involved individuals",
+  "Rural communities",
+  "Urban communities",
+  "Other (please specify)",
+];
 
 export default function GardenInformationStep() {
+  const { form, setCurrentStep, updateStepStatus } = useApplicationForm();
+
+  useEffect(() => {
+    const computeIsComplete = () => {
+      const values = form.getFieldValue;
+      return (
+        values("gardenCity").trim().length > 0 &&
+        values("gardenState").trim().length > 0 &&
+        values("gardenCountry").trim().length > 0 &&
+        values("gardenCategory").trim().length > 0 &&
+        values("gardenBeneficiaries").length > 0
+      );
+    };
+
+    setCurrentStep("Garden Information");
+
+    return () => {
+      updateStepStatus(
+        "Garden Information",
+        computeIsComplete() ? "completed" : "review",
+      );
+    };
+  }, [form, setCurrentStep, updateStepStatus]);
+
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
       {/* Garden Location */}
@@ -13,16 +73,44 @@ export default function GardenInformationStep() {
           Garden Location <span className="text-orange-500">*</span>
         </h2>
 
-        <TextField label="City" variant="standard" fullWidth />
+        <form.Field name="gardenCity">
+          {(field) => (
+            <TextField
+              label="City"
+              variant="standard"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField label="State / Province" variant="standard" fullWidth />
+        <form.Field name="gardenState">
+          {(field) => (
+            <TextField
+              label="State / Province"
+              variant="standard"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField
-          label="Country"
-          variant="standard"
-          defaultValue="United States"
-          fullWidth
-        />
+        <form.Field name="gardenCountry">
+          {(field) => (
+            <TextField
+              label="Country"
+              variant="standard"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
       </div>
 
       {/* Primary Project Category */}
@@ -33,44 +121,37 @@ export default function GardenInformationStep() {
 
         <p className="text-sm">Select one:</p>
 
-        <div className="flex flex-col gap-3">
-          {[
-            "Community Garden",
-            "School or Youth Garden",
-            "Food Pantry or Food Bank Garden",
-            "Urban Farm",
-            "Refugee or Immigrant Garden",
-            "Tribal or Indigenous Garden Project",
-            "Shelter or Transitional Housing Garden",
-            "Therapeutic or Healing Garden",
-            "Job Training or Vocational Garden",
-            "Demonstration or Education Garden",
-            "Multi-Site Garden Program",
-            "Other (please specify)",
-          ].map((option) => (
-            <label
-              key={option}
-              className="flex items-center gap-3 cursor-pointer group"
-            >
-              <input
-                type="radio"
-                name="category"
-                className="
-                  w-[20px] h-[20px]
-                  accent-blue-600
-                  cursor-pointer
-                  transition-transform
-                  duration-150
-                  group-hover:scale-105
-                "
-              />
+        <form.Field name="gardenCategory">
+          {(field) => (
+            <div className="flex flex-col gap-3">
+              {categoryOptions.map((option) => (
+                <label
+                  key={option}
+                  className="flex items-center gap-3 cursor-pointer group"
+                >
+                  <input
+                    type="radio"
+                    name="gardenCategory"
+                    checked={field.state.value === option}
+                    onChange={() => field.handleChange(option)}
+                    className="
+                      w-[20px] h-[20px]
+                      accent-blue-600
+                      cursor-pointer
+                      transition-transform
+                      duration-150
+                      group-hover:scale-105
+                    "
+                  />
 
-              <span className="text-sm group-hover:text-gray-900">
-                {option}
-              </span>
-            </label>
-          ))}
-        </div>
+                  <span className="text-sm group-hover:text-gray-900">
+                    {option}
+                  </span>
+                </label>
+              ))}
+            </div>
+          )}
+        </form.Field>
       </div>
 
       {/* Beneficiary Populations Served */}
@@ -82,47 +163,49 @@ export default function GardenInformationStep() {
 
         <p className="text-sm">Select all that apply:</p>
 
-        <div className="flex flex-col gap-3">
-          {[
-            "Children (ages 0–12)",
-            "Youth / Adolescents (ages 13–18)",
-            "Families",
-            "Seniors / Older adults",
-            "Low-income individuals or households",
-            "Food-insecure individuals or households",
-            "Immigrants and refugees",
-            "Indigenous / Native communities",
-            "People with disabilities",
-            "Veterans and military families",
-            "People experiencing homelessness or housing insecurity",
-            "Unemployed or underemployed individuals",
-            "Justice-involved individuals",
-            "Rural communities",
-            "Urban communities",
-            "Other (please specify)",
-          ].map((option) => (
-            <label
-              key={option}
-              className="flex items-center gap-3 cursor-pointer group"
-            >
-              <input
-                type="checkbox"
-                className="
-                  w-[18px] h-[18px]
-                  accent-blue-600
-                  cursor-pointer
-                  transition-transform
-                  duration-150
-                  group-hover:scale-105
-                "
-              />
+        <form.Field name="gardenBeneficiaries">
+          {(field) => (
+            <div className="flex flex-col gap-3">
+              {beneficiaryOptions.map((option) => {
+                const isChecked = field.state.value.includes(option);
 
-              <span className="text-sm group-hover:text-gray-900">
-                {option}
-              </span>
-            </label>
-          ))}
-        </div>
+                return (
+                  <label
+                    key={option}
+                    className="flex items-center gap-3 cursor-pointer group"
+                  >
+                    <input
+                      type="checkbox"
+                      checked={isChecked}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          field.handleChange([...field.state.value, option]);
+                          return;
+                        }
+
+                        field.handleChange(
+                          field.state.value.filter((item) => item !== option),
+                        );
+                      }}
+                      className="
+                        w-[18px] h-[18px]
+                        accent-blue-600
+                        cursor-pointer
+                        transition-transform
+                        duration-150
+                        group-hover:scale-105
+                      "
+                    />
+
+                    <span className="text-sm group-hover:text-gray-900">
+                      {option}
+                    </span>
+                  </label>
+                );
+              })}
+            </div>
+          )}
+        </form.Field>
       </div>
 
       {/* Navigation Buttons */}

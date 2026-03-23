@@ -46,8 +46,9 @@ const INITIAL_STEPS: Step[] = [
 ];
 
 interface ApplicationFormContextValue {
-  form: FormApi<ApplicationFormData, any>;
+  form: FormApi<ApplicationFormData>;
   updateStepStatus: (label: string, newStatus: StepStatus) => void;
+  setCurrentStep: (label: string) => void;
 }
 
 const ApplicationFormContext =
@@ -65,6 +66,27 @@ export const ApplicationFormProvider = ({
       gardenSize: "",
       gardenStatus: "",
       fundraisingGoal: "",
+      gardenCity: "",
+      gardenState: "",
+      gardenCountry: "United States",
+      gardenCategory: "",
+      gardenBeneficiaries: [],
+      storyLocationAndAudience: "",
+      storyChallenge: "",
+      storySeasonActivity: "",
+      storyCampaignImpact: "",
+      organizationName: "",
+      organizationIdentifier: "",
+      mailingStreet1: "",
+      mailingStreet2: "",
+      mailingCity: "",
+      mailingState: "",
+      mailingZip: "",
+      mailingCountry: "US",
+      contactFirstName: "",
+      contactLastName: "",
+      contactEmail: "",
+      contactRole: "",
       steps: INITIAL_STEPS,
     },
     onSubmit: async ({ value }) => {
@@ -73,19 +95,49 @@ export const ApplicationFormProvider = ({
   });
 
   const updateStepStatus = (label: string, newStatus: StepStatus) => {
-    // Get the current steps from the form state
     const currentSteps = form.getFieldValue("steps");
 
     const updatedSteps = currentSteps.map((step) =>
       step.label === label ? { ...step, status: newStatus } : step,
     );
 
-    // Update the form state with the new steps array
+    form.setFieldValue("steps", updatedSteps);
+  };
+
+  const setCurrentStep = (label: string) => {
+    const currentSteps = form.getFieldValue("steps");
+    const targetIndex = currentSteps.findIndex((step) => step.label === label);
+
+    if (targetIndex === -1) {
+      return;
+    }
+
+    const updatedSteps = currentSteps.map((step, index) => {
+      if (index < targetIndex) {
+        return {
+          ...step,
+          status: step.status === "completed" ? "completed" : "review",
+        };
+      }
+
+      if (index === targetIndex) {
+        return { ...step, status: "current" };
+      }
+
+      if (step.status === "current") {
+        return { ...step, status: "unvisited" };
+      }
+
+      return step;
+    });
+
     form.setFieldValue("steps", updatedSteps);
   };
 
   return (
-    <ApplicationFormContext.Provider value={{ form, updateStepStatus }}>
+    <ApplicationFormContext.Provider
+      value={{ form, updateStepStatus, setCurrentStep }}
+    >
       {children}
     </ApplicationFormContext.Provider>
   );

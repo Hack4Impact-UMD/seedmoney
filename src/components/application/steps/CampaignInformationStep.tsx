@@ -6,10 +6,10 @@ import Link from "next/link";
 import { useEffect } from "react";
 
 export default function CampaignInformationStep() {
-  const { form, updateStepStatus } = useApplicationForm();
+  const { form, setCurrentStep, updateStepStatus } = useApplicationForm();
 
   useEffect(() => {
-    updateStepStatus("Campaign Information", "current");
+    setCurrentStep("Campaign Information");
 
     return () => {
       const values = form.state.values;
@@ -25,7 +25,7 @@ export default function CampaignInformationStep() {
         updateStepStatus("Campaign Information", "review");
       }
     };
-  }, [form, updateStepStatus]);
+  }, [form, setCurrentStep, updateStepStatus]);
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">

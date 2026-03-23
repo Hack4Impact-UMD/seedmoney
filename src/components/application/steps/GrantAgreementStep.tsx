@@ -2,8 +2,9 @@
 
 import { Checkbox, FormControlLabel } from "@mui/material";
 import { Button } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
+import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 
 const checkboxStyle = {
   color: "#1976D2",
@@ -24,11 +25,27 @@ const items = [
 ];
 
 export default function GrantAgreementStep() {
+  const { setCurrentStep, updateStepStatus } = useApplicationForm();
   const [checked, setChecked] = useState<boolean[]>(() =>
     items.map(() => false),
   );
-
   const allChecked = checked.every(Boolean);
+  const allCheckedRef = useRef(allChecked);
+
+  useEffect(() => {
+    allCheckedRef.current = allChecked;
+  }, [allChecked]);
+
+  useEffect(() => {
+    setCurrentStep("Grantee Agreement");
+
+    return () => {
+      updateStepStatus(
+        "Grantee Agreement",
+        allCheckedRef.current ? "completed" : "review",
+      );
+    };
+  }, [setCurrentStep, updateStepStatus]);
 
   const toggle = (index: number) => {
     setChecked((prev) => prev.map((v, i) => (i === index ? !v : v)));
@@ -50,7 +67,9 @@ export default function GrantAgreementStep() {
         </p>
 
         {/* SECTION HEADER */}
-        <p className="text-red-500 font-medium">I confirm that:</p>
+        <p className={`font-medium ${allChecked ? "text-black" : "text-red-500"}`}>
+          I confirm that:
+        </p>
 
         {items.map((label, i) => (
           <FormControlLabel

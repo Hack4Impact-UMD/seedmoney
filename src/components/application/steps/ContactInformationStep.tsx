@@ -3,11 +3,12 @@
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import { Button } from "@mui/material";
-import { useState } from "react";
+import { useEffect } from "react";
 import Link from "next/link";
+import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 
 export default function ContactInformationStep() {
-  const [state, setState] = useState("");
+  const { form, setCurrentStep, updateStepStatus } = useApplicationForm();
   const states = [
     { code: "AL", name: "Alabama" },
     { code: "AK", name: "Alaska" },
@@ -61,6 +62,33 @@ export default function ContactInformationStep() {
     { code: "WY", name: "Wyoming" },
   ];
 
+  useEffect(() => {
+    const computeIsComplete = () => {
+      const values = form.getFieldValue;
+      return (
+        values("organizationName").trim().length > 0 &&
+        values("organizationIdentifier").trim().length > 0 &&
+        values("mailingStreet1").trim().length > 0 &&
+        values("mailingCity").trim().length > 0 &&
+        values("mailingState").trim().length > 0 &&
+        values("mailingZip").trim().length > 0 &&
+        values("mailingCountry").trim().length > 0 &&
+        values("contactFirstName").trim().length > 0 &&
+        values("contactLastName").trim().length > 0 &&
+        values("contactEmail").trim().length > 0
+      );
+    };
+
+    setCurrentStep("Contact Information");
+
+    return () => {
+      updateStepStatus(
+        "Contact Information",
+        computeIsComplete() ? "completed" : "review",
+      );
+    };
+  }, [form, setCurrentStep, updateStepStatus]);
+
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
       {/* Organization Information */}
@@ -69,17 +97,31 @@ export default function ContactInformationStep() {
           Organization Information <span className="text-orange-500">*</span>
         </h2>
 
-        <TextField
-          variant="standard"
-          placeholder="Legal Name of Beneficiary Organization*"
-          fullWidth
-        />
+        <form.Field name="organizationName">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="Legal Name of Beneficiary Organization*"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField
-          variant="standard"
-          placeholder="EIN or Public-Sector Identifier*"
-          fullWidth
-        />
+        <form.Field name="organizationIdentifier">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="EIN or Public-Sector Identifier*"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
       </div>
 
       {/* Mailing Address */}
@@ -89,56 +131,107 @@ export default function ContactInformationStep() {
           <span className="text-orange-500">*</span>
         </h2>
 
-        <TextField variant="standard" placeholder="Street 1" fullWidth />
+        <form.Field name="mailingStreet1">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="Street 1"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField variant="standard" placeholder="Street 2" fullWidth />
+        <form.Field name="mailingStreet2">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="Street 2"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField variant="standard" placeholder="City*" fullWidth />
+        <form.Field name="mailingCity">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="City*"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
         {/* State / Province */}
-        <TextField
-          select
-          variant="standard"
-          fullWidth
-          value={state}
-          onChange={(e) => setState(e.target.value as string)}
-          SelectProps={{
-            displayEmpty: true,
-            renderValue: (selected) => {
-              if (!selected) {
-                return <span className="text-gray-400">State / Province*</span>;
-              }
-              return String(selected);
-            },
-          }}
-        >
-          <MenuItem value="">
-            <em>None</em>
-          </MenuItem>
+        <form.Field name="mailingState">
+          {(field) => (
+            <TextField
+              select
+              variant="standard"
+              fullWidth
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (selected) => {
+                  if (!selected) {
+                    return (
+                      <span className="text-gray-400">State / Province*</span>
+                    );
+                  }
+                  return String(selected);
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
 
-          {states.map((s) => (
-            <MenuItem key={s.code} value={s.code}>
-              {s.name}
-            </MenuItem>
-          ))}
-        </TextField>
+              {states.map((s) => (
+                <MenuItem key={s.code} value={s.code}>
+                  {s.name}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        </form.Field>
 
-        <TextField
-          variant="standard"
-          placeholder="ZIP/Postal Code*"
-          fullWidth
-        />
+        <form.Field name="mailingZip">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="ZIP/Postal Code*"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
         {/* Country */}
-        <TextField
-          select
-          variant="standard"
-          defaultValue="US"
-          fullWidth
-          SelectProps={{ displayEmpty: true }}
-        >
-          <MenuItem value="US">United States</MenuItem>
-        </TextField>
+        <form.Field name="mailingCountry">
+          {(field) => (
+            <TextField
+              select
+              variant="standard"
+              fullWidth
+              value={field.state.value}
+              onChange={(e) => field.handleChange(e.target.value)}
+              SelectProps={{ displayEmpty: true }}
+            >
+              <MenuItem value="US">United States</MenuItem>
+            </TextField>
+          )}
+        </form.Field>
       </div>
 
       {/* Primary Contact Information */}
@@ -147,13 +240,57 @@ export default function ContactInformationStep() {
           Primary Contact Information <span className="text-orange-500">*</span>
         </h2>
 
-        <TextField variant="standard" placeholder="First Name*" fullWidth />
+        <form.Field name="contactFirstName">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="First Name*"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField variant="standard" placeholder="Last Name*" fullWidth />
+        <form.Field name="contactLastName">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="Last Name*"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField variant="standard" placeholder="Email*" fullWidth />
+        <form.Field name="contactEmail">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="Email*"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
 
-        <TextField variant="standard" placeholder="Role or Title" fullWidth />
+        <form.Field name="contactRole">
+          {(field) => (
+            <TextField
+              variant="standard"
+              placeholder="Role or Title"
+              fullWidth
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+            />
+          )}
+        </form.Field>
       </div>
 
       {/* Navigation Buttons */}

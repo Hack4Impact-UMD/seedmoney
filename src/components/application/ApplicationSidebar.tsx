@@ -1,8 +1,18 @@
 "use client";
 
 import Image from "next/image";
+import Link from "next/link";
 import { useApplicationForm } from "./ApplicationFormProvider";
 import { StepStatus } from "@/src/types/form";
+
+const stepHrefMap: Record<string, string> = {
+  "Grantee Agreement": "/apply/terms",
+  "Campaign Information": "/apply/campaign",
+  "Garden Information": "/apply/garden",
+  "Garden Story": "/apply/story",
+  "Contact Information": "/apply/contact",
+  "Review & Submit": "/apply/review",
+};
 
 export default function ApplicationSidebar() {
   const { form } = useApplicationForm();
@@ -13,34 +23,55 @@ export default function ApplicationSidebar() {
       <form.Subscribe selector={(state) => state.values.steps}>
         {(steps) => (
           <>
-            {steps?.map((step, i) => (
-              <div key={step.label} className="flex items-start gap-3">
-                {/* timeline column */}
-                <div className="flex flex-col items-center">
-                  {/* dot - now receives reactive status */}
-                  <StepDot status={step.status} />
-
-                  {/* connector line */}
-                  {i !== steps.length - 1 && (
-                    <div className="flex flex-col items-center h-[35px]">
-                      {/* space below dot */}
-                      <div className="h-[8px]" />
-                      {/* actual connector */}
-                      <div className="w-[2px] flex-1 bg-black/10" />
-                    </div>
-                  )}
-                </div>
-
-                {/* step label */}
-                <p
-                  className={`text-md leading-[133%] font-normal -translate-y-1
-                  ${step.status === "current" ? "text-black" : "text-black"}
-                  ${step.status === "review" ? "text-red-600" : ""}`}
+            {steps?.map((step, i) => {
+              const agreementCompleted =
+                steps[0]?.status === "completed";
+              const canNavigate =
+                step.label === "Grantee Agreement" || agreementCompleted;
+              const content = (
+                <div
+                  className={`flex items-start gap-3 ${
+                    canNavigate ? "cursor-pointer" : "cursor-default"
+                  }`}
                 >
-                  {step.label}
-                </p>
-              </div>
-            ))}
+                  <div className="flex flex-col items-center">
+                    <StepDot status={step.status} />
+
+                    {i !== steps.length - 1 && (
+                      <div className="flex flex-col items-center h-[35px]">
+                        <div className="h-[8px]" />
+                        <div
+                          className={`w-[2px] flex-1 ${
+                            steps[i + 1].status === "unvisited"
+                              ? "bg-black/10"
+                              : "bg-[#56BD60]"
+                          }`}
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  <p
+                    className={`text-md leading-[133%] font-normal -translate-y-1
+                    text-black
+                    ${step.status === "review" ? "text-red-600" : ""}
+                    ${canNavigate ? "hover:opacity-80" : "opacity-60"}`}
+                  >
+                    {step.label}
+                  </p>
+                </div>
+              );
+
+              if (!canNavigate) {
+                return <div key={step.label}>{content}</div>;
+              }
+
+              return (
+                <Link key={step.label} href={stepHrefMap[step.label]}>
+                  {content}
+                </Link>
+              );
+            })}
           </>
         )}
       </form.Subscribe>
