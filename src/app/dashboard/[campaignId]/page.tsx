@@ -1,3 +1,5 @@
+"use client";
+
 export default function CampaignOverviewPage() {
-  return <h1>Home</h1>;
+  return null;
 }

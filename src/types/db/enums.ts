@@ -6,4 +6,6 @@ export type Status =
   | 'in_progress'
   | 'submitted_under_review'
   | 'approved'
-  | 'not_approved';
+  | 'not_approved'
+  | 'published'
+  | 'archived';
