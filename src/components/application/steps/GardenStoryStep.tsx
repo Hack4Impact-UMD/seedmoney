@@ -44,11 +44,10 @@ export default function GardenStoryStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="Where is your garden, and who does it serve?"
+              label="Where is your garden, and who does it serve?"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -57,11 +56,10 @@ export default function GardenStoryStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="What challenge does your garden help address, and why does it matter locally?"
+              label="What challenge does your garden help address, and why does it matter locally?"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -70,11 +68,10 @@ export default function GardenStoryStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="What happens in the garden during the growing season?"
+              label="What happens in the garden during the growing season?"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -83,11 +80,10 @@ export default function GardenStoryStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="What will this year’s SeedMoney campaign make possible?"
+              label="What will this year’s SeedMoney campaign make possible?"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>

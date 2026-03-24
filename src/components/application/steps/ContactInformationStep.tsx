@@ -101,11 +101,10 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="Legal Name of Beneficiary Organization*"
+              label="Legal Name of Beneficiary Organization*"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -114,11 +113,10 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="EIN or Public-Sector Identifier*"
+              label="EIN or Public-Sector Identifier*"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -135,11 +133,10 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="Street 1"
+              label="Street 1"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -148,11 +145,10 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="Street 2"
+              label="Street 2"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -161,11 +157,10 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="City*"
+              label="City*"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -208,11 +203,10 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="ZIP/Postal Code*"
+              label="ZIP/Postal Code*"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -244,11 +238,10 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="First Name*"
+              label="First Name*"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -257,11 +250,10 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="Last Name*"
+              label="Last Name*"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -270,11 +262,10 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="Email*"
+              label="Email*"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>
@@ -283,11 +274,10 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              placeholder="Role or Title"
+              label="Role or Title"
               fullWidth
-              value={field.state.value}
-              onBlur={field.handleBlur}
-              onChange={(e) => field.handleChange(e.target.value)}
+              defaultValue={field.state.value}
+              onBlur={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>

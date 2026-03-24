@@ -113,6 +113,12 @@ export default function ReviewSubmitPage() {
   const { form, setCurrentStep } = useApplicationForm();
   const values = form.state.values;
 
+  const campaignComplete =
+    values.campaignTitle?.trim().length > 0 &&
+    values.fundraisingGoal?.trim().length > 0 &&
+    values.beneficiaryCount?.trim().length > 0 &&
+    values.gardenStatus?.trim().length > 0;
+
   const gardenComplete =
     values.gardenCity.trim().length > 0 &&
     values.gardenState.trim().length > 0 &&
@@ -139,7 +145,7 @@ export default function ReviewSubmitPage() {
     values.contactEmail.trim().length > 0;
 
   const canSubmit =
-    values.steps.slice(0, values.steps.length - 1).every((step) => step.status === "completed");
+    values.steps?.slice(0, values.steps.length - 1).every((step) => step.status === "completed");
 
   useEffect(() => {
     setCurrentStep("Review & Submit");
@@ -148,6 +154,13 @@ export default function ReviewSubmitPage() {
   return (
     <div className="w-[700px] flex flex-col gap-6 pb-20 m-15">
       <h2 className="text-xl font-semibold">Campaign Information</h2>
+
+      {!campaignComplete && (
+        <ReviewBanner
+          href="/apply/campaign"
+          message="Please complete campaign information"
+        />
+      )}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
         <div>

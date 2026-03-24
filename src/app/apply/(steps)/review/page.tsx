@@ -1,6 +1,6 @@
 import ReviewSubmitPage from "@/src/components/application/steps/ReviewStep";
 
-export default function ContactPage() {
+export default function ReviewPage() {
   return (
     <div>
       <ReviewSubmitPage />
