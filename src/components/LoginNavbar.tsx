@@ -7,10 +7,10 @@ import type { Session } from "@supabase/supabase-js";
 import { useRouter } from "next/navigation";
 
 interface Props {
-  session: Session | null;
+  session?: Session | null;
 }
 
-export default function LoginNavbar({ session }: Props) {
+export default function LoginNavbar({ session = null }: Props) {
   const router = useRouter();
 
   const handleLogout = async () => {

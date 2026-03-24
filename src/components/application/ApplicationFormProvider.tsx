@@ -33,7 +33,7 @@
 "use client";
 
 import { createContext, useContext, ReactNode } from "react";
-import { useForm, type FormApi } from "@tanstack/react-form";
+import { useForm } from "@tanstack/react-form";
 import { Step, StepStatus, ApplicationFormData } from "@/src/types/form";
 
 const INITIAL_STEPS: Step[] = [
@@ -45,8 +45,48 @@ const INITIAL_STEPS: Step[] = [
   { label: "Review & Submit", status: "unvisited" },
 ];
 
+const INITIAL_FORM_VALUES: ApplicationFormData = {
+  campaignTitle: "",
+  beneficiaryCount: "",
+  gardenSize: "",
+  gardenStatus: "",
+  fundraisingGoal: "",
+  gardenCity: "",
+  gardenState: "",
+  gardenCountry: "United States",
+  gardenCategory: "",
+  gardenBeneficiaries: [],
+  storyLocationAndAudience: "",
+  storyChallenge: "",
+  storySeasonActivity: "",
+  storyCampaignImpact: "",
+  organizationName: "",
+  organizationIdentifier: "",
+  mailingStreet1: "",
+  mailingStreet2: "",
+  mailingCity: "",
+  mailingState: "",
+  mailingZip: "",
+  mailingCountry: "US",
+  contactFirstName: "",
+  contactLastName: "",
+  contactEmail: "",
+  contactRole: "",
+  steps: INITIAL_STEPS,
+};
+
+const useApplicationFormState = () =>
+  useForm({
+    defaultValues: INITIAL_FORM_VALUES,
+    onSubmit: async ({ value }) => {
+      console.log("Submitted:", value);
+    },
+  });
+
+type ApplicationFormApi = ReturnType<typeof useApplicationFormState>;
+
 interface ApplicationFormContextValue {
-  form: FormApi<ApplicationFormData>;
+  form: ApplicationFormApi;
   updateStepStatus: (label: string, newStatus: StepStatus) => void;
   setCurrentStep: (label: string) => void;
 }
@@ -59,45 +99,12 @@ export const ApplicationFormProvider = ({
 }: {
   children: ReactNode;
 }) => {
-  const form = useForm<ApplicationFormData>({
-    defaultValues: {
-      campaignTitle: "",
-      beneficiaryCount: "",
-      gardenSize: "",
-      gardenStatus: "",
-      fundraisingGoal: "",
-      gardenCity: "",
-      gardenState: "",
-      gardenCountry: "United States",
-      gardenCategory: "",
-      gardenBeneficiaries: [],
-      storyLocationAndAudience: "",
-      storyChallenge: "",
-      storySeasonActivity: "",
-      storyCampaignImpact: "",
-      organizationName: "",
-      organizationIdentifier: "",
-      mailingStreet1: "",
-      mailingStreet2: "",
-      mailingCity: "",
-      mailingState: "",
-      mailingZip: "",
-      mailingCountry: "US",
-      contactFirstName: "",
-      contactLastName: "",
-      contactEmail: "",
-      contactRole: "",
-      steps: INITIAL_STEPS,
-    },
-    onSubmit: async ({ value }) => {
-      console.log("Submitted:", value);
-    },
-  });
+  const form = useApplicationFormState();
 
   const updateStepStatus = (label: string, newStatus: StepStatus) => {
     const currentSteps = form.getFieldValue("steps");
 
-    const updatedSteps = currentSteps.map((step) =>
+    const updatedSteps: Step[] = currentSteps.map((step) =>
       step.label === label ? { ...step, status: newStatus } : step,
     );
 
@@ -112,7 +119,7 @@ export const ApplicationFormProvider = ({
       return;
     }
 
-    const updatedSteps = currentSteps.map((step, index) => {
+    const updatedSteps: Step[] = currentSteps.map((step, index) => {
       if (index < targetIndex) {
         return {
           ...step,
