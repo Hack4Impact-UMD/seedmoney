@@ -4,9 +4,13 @@ import { useRouter } from "next/navigation";
 import CampaignsTable from "@/src/components/CampaignsTable";
 import Navbar from "@/src/components/Navbar";
 import { sampleCampaigns } from "../sampleCampaigns";
+import { useAuth } from "@/src/context/AuthProvider";
 
 export default function ViewAllCampaignsPage() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  if (!user) return null;
 
   const mockCampaignData = [
     {
@@ -44,6 +48,7 @@ export default function ViewAllCampaignsPage() {
         campaigns={sampleCampaigns}
         selectedCampaignId={selectedCampaignId}
         onCampaignSelect={handleCampaignChange}
+        name={user.user_metadata?.first_name ?? "User"}
       />
 
       <div className="flex-1 bg-gray-50 p-10">
