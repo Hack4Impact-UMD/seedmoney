@@ -17,25 +17,25 @@ import { createBrowserClient } from "@/src/lib/supabase-client";
 import { usePathname, useRouter } from "next/navigation";
 import moment from "moment";
 import type { Campaign } from "@/src/types/db/campaigns";
+import { Users } from "@/src/types/db/users";
 
 type SidebarProps = {
   campaigns: Campaign[];
   selectedCampaignId: number;
   onCampaignSelect: (id: number) => void;
+  name: string;
 };
 
 export default function Navbar({
   campaigns,
   selectedCampaignId,
   onCampaignSelect,
+  name,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
 
   const router = useRouter();
   const pathname = usePathname();
-
-  
-  
 
   const handleCampaignClick = (id: number) => {
     onCampaignSelect(id);
@@ -126,7 +126,7 @@ export default function Navbar({
           {!isCollapsed && (
             <div className="min-w-0">
               <h6 className="text-xl font-bold leading-[1.3] text-white">
-                John Doe
+                {name}
               </h6>
               <p className="text-sm text-white/80">Campaign Leader</p>
             </div>

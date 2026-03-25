@@ -13,6 +13,7 @@ import { TotalDonorsCard } from "@/src/components/dashboard/TotalDonorsCard";
 import { DaysRemainingCard } from "@/src/components/dashboard/DaysRemainingCard";
 import { mockAnalyticsData } from "@/src/app/dashboard/mockAnalyticsData";
 import { getCampaignById, sampleCampaigns } from "../sampleCampaigns";
+import { useAuth } from "@/src/context/AuthProvider";
 
 type DashboardTab = "Overview" | "Donors" | "Analytics";
 
@@ -30,6 +31,10 @@ export default function DashboardShell({
   const router = useRouter();
   const pathname = usePathname();
   const { campaignId } = useParams<{ campaignId: string }>();
+  const { user } = useAuth();
+
+  if (!user) notFound();
+
 
   const selectedCampaignId = Number(campaignId) || sampleCampaigns[0].campaign_id;
   const campaign = getCampaignById(selectedCampaignId);
@@ -73,6 +78,7 @@ export default function DashboardShell({
           campaigns={sampleCampaigns}
           selectedCampaignId={selectedCampaignId}
           onCampaignSelect={handleCampaignChange}
+          name={user.user_metadata.first_name} 
         />
         <div className="flex-1 bg-gray-50 p-10">
           <h3 className="text-4xl font-bold text-[#096B2E]">{campaign.name}</h3>
@@ -91,6 +97,7 @@ export default function DashboardShell({
           campaigns={sampleCampaigns}
           selectedCampaignId={selectedCampaignId}
           onCampaignSelect={handleCampaignChange}
+          name={user.user_metadata.first_name} 
         />
         <div className="flex-1 bg-gray-50 p-10">
           <h3 className="text-4xl font-bold text-[#096B2E]">{campaign.name}</h3>
@@ -110,6 +117,7 @@ export default function DashboardShell({
         campaigns={sampleCampaigns}
         selectedCampaignId={selectedCampaignId}
         onCampaignSelect={handleCampaignChange}
+        name={user.user_metadata.first_name} 
       />
 
       <div className="flex-1 bg-gray-50 p-10">

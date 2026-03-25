@@ -1,19 +1,31 @@
 "use client";
 
-import { redirect } from "next/navigation";
+import { useEffect } from "react";
+import { useRouter } from "next/navigation";
 import { sampleCampaigns } from "./sampleCampaigns";
 import NotStarted from "@/src/components/dashboard/NotStarted";
 import Navbar from "@/src/components/Navbar";
+import { useAuth } from "@/src/context/AuthProvider";
 
 export default function DashboardIndexPage() {
-  if (sampleCampaigns.length > 0) {
-    redirect(`/dashboard/${sampleCampaigns[0].campaign_id}`);
-  }
+  const { user } = useAuth();
+  const router = useRouter();
+
+  useEffect(() => {
+
+    if (sampleCampaigns.length > 0) {
+      router.replace(`/dashboard/${sampleCampaigns[0].campaign_id}`);
+    }
+  }, [user, router]);
 
   const handleNewCampaign = () => {
-    // TODO: navigate to the new campaign creation flow
     console.log("New campaign clicked");
+    router.push("/dashboard/new");
   };
+
+  if (!user || sampleCampaigns.length > 0) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen">
@@ -21,6 +33,7 @@ export default function DashboardIndexPage() {
         campaigns={[]}
         selectedCampaignId={0}
         onCampaignSelect={() => {}}
+        name={user.user_metadata?.first_name ?? "User"}
       />
       <div className="flex-1 bg-gray-50 p-10">
         <h3 className="text-4xl font-bold text-[#096B2E]">Dashboard</h3>
