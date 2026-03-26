@@ -28,6 +28,8 @@ export default function DashboardIndexPage() {
     router.push("/dashboard/new");
   };
 
+  if (!userData) return null;
+
   return (
     <div className="flex min-h-screen">
       <Navbar
@@ -37,9 +39,16 @@ export default function DashboardIndexPage() {
       />
       <div className="flex-1 bg-gray-50 p-10">
         <h3 className="text-4xl font-bold text-[#096B2E]">Dashboard</h3>
-        <div className="mt-10 flex items-center justify-center">
-          <NotStarted onNewCampaign={handleNewCampaign} />
-        </div>
+
+        {!userData.is_admin && (
+          <>
+            <div className="mt-10 flex items-center justify-center">
+              <NotStarted onNewCampaign={handleNewCampaign} />
+            </div>
+          </>
+          
+        )}
+
       </div>
     </div>
   );
