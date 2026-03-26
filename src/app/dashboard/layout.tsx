@@ -1,7 +1,7 @@
-// app/dashboard/layout.tsx
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/src/lib/supabase-client";
 import AuthProvider from "@/src/context/AuthProvider";
+import QueryProvider from "@/src/providers/QueryProvider";
 
 export default async function DashboardLayout({
   children,
@@ -16,8 +16,10 @@ export default async function DashboardLayout({
   }
 
   return (
-    <AuthProvider initialUser={data.user}>
-      {children}
-    </AuthProvider>
+    <QueryProvider>
+      <AuthProvider initialUser={data.user}>
+        {children}
+      </AuthProvider>
+    </QueryProvider>
   );
 }

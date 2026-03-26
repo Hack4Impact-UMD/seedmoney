@@ -1,8 +1,9 @@
 import type { NewUser, NewUserInternal, Users } from "@/src/types";
-import { createServerClient } from "@/src/lib/supabase-client";
+import { createBrowserClient } from "@/src/lib/supabase-client";
+
 
 export async function createUser(user: NewUser): Promise<Users | null> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
 
   const { data, error } = await supabase
     .from("users")
@@ -24,7 +25,7 @@ export async function createUser(user: NewUser): Promise<Users | null> {
 }
 
 export async function readUser(userId: string): Promise<Users | null> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
 
   const { data, error } = await supabase
     .from("users")
@@ -44,7 +45,7 @@ export async function updateUser(
   userId: string,
   updatedUser: Partial<NewUserInternal>,
 ): Promise<Users | null> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
 
   const { data, error } = await supabase
     .from("users")
@@ -67,7 +68,7 @@ export async function updateUser(
 }
 
 export async function deleteUser(userId: string): Promise<boolean> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
 
   const { data, error } = await supabase
     .from("users")

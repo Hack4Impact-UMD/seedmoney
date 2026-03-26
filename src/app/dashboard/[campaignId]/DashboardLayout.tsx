@@ -78,7 +78,6 @@ export default function DashboardShell({
           campaigns={sampleCampaigns}
           selectedCampaignId={selectedCampaignId}
           onCampaignSelect={handleCampaignChange}
-          name={user.user_metadata.first_name} 
         />
         <div className="flex-1 bg-gray-50 p-10">
           <h3 className="text-4xl font-bold text-[#096B2E]">{campaign.name}</h3>
@@ -97,7 +96,6 @@ export default function DashboardShell({
           campaigns={sampleCampaigns}
           selectedCampaignId={selectedCampaignId}
           onCampaignSelect={handleCampaignChange}
-          name={user.user_metadata.first_name} 
         />
         <div className="flex-1 bg-gray-50 p-10">
           <h3 className="text-4xl font-bold text-[#096B2E]">{campaign.name}</h3>
@@ -117,7 +115,6 @@ export default function DashboardShell({
         campaigns={sampleCampaigns}
         selectedCampaignId={selectedCampaignId}
         onCampaignSelect={handleCampaignChange}
-        name={user.user_metadata.first_name} 
       />
 
       <div className="flex-1 bg-gray-50 p-10">

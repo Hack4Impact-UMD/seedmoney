@@ -33,7 +33,6 @@ export default function DashboardIndexPage() {
         campaigns={[]}
         selectedCampaignId={0}
         onCampaignSelect={() => {}}
-        name={user.user_metadata?.first_name ?? "User"}
       />
       <div className="flex-1 bg-gray-50 p-10">
         <h3 className="text-4xl font-bold text-[#096B2E]">Dashboard</h3>

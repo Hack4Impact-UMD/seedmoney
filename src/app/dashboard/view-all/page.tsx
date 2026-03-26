@@ -48,7 +48,6 @@ export default function ViewAllCampaignsPage() {
         campaigns={sampleCampaigns}
         selectedCampaignId={selectedCampaignId}
         onCampaignSelect={handleCampaignChange}
-        name={user.user_metadata?.first_name ?? "User"}
       />
 
       <div className="flex-1 bg-gray-50 p-10">
