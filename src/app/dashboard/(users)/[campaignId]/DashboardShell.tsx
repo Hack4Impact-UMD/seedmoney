@@ -12,7 +12,7 @@ import { TotalRaisedCard } from "@/src/components/dashboard/TotalRaisedCard";
 import { TotalDonorsCard } from "@/src/components/dashboard/TotalDonorsCard";
 import { DaysRemainingCard } from "@/src/components/dashboard/DaysRemainingCard";
 import { mockAnalyticsData } from "@/src/app/dashboard/mockAnalyticsData";
-import { getCampaignById, sampleCampaigns } from "../sampleCampaigns";
+import { getCampaignById, sampleCampaigns } from "../../sampleCampaigns";
 import { useAuth } from "@/src/context/AuthProvider";
 
 type DashboardTab = "Overview" | "Donors" | "Analytics";

@@ -1,4 +1,4 @@
-import DonorsTable from "../../../../components/DonorsTable";
+import DonorsTable from "../../../../../components/DonorsTable";
 
 interface CampaignDonorsPageProps {
   params: Promise<{
