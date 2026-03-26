@@ -158,7 +158,7 @@ export default function Navbar({
         <div className="scrollbar-hide mt-5 flex flex-1 flex-col overflow-y-auto overscroll-contain">
           <List disablePadding>
             {[
-              { label: "Home", path: "/dashboard/home" },
+              { label: "Home", path: "/dashboard" },
               { label: "Ongoing Campaigns", path: "/dashboard/ongoing-campaigns" },
               { label: "Review Applications", path: "/dashboard/review-applications" },
               { label: "List of Users", path: "/dashboard/users" },
