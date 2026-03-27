@@ -1,0 +1,25 @@
+import { redirect } from "next/navigation";
+import { createServerClient } from "@/src/lib/supabase-client";
+import AuthProvider from "@/src/context/AuthProvider";
+import QueryProvider from "@/src/providers/QueryProvider";
+
+export default async function DashboardLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
+  const supabase = await createServerClient();
+  const { data } = await supabase.auth.getUser();
+
+  if (!data.user) {
+    redirect("/");
+  }
+
+  return (
+    <QueryProvider>
+      <AuthProvider initialUser={data.user}>
+        {children}
+      </AuthProvider>
+    </QueryProvider>
+  );
+}
