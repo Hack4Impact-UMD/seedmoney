@@ -107,6 +107,7 @@ export default function CampaignOverviewPage() {
                   {Math.round(progress)}% of ${campaign.goal.toLocaleString()} goal
                 </div>
               </div>
+              {/* TODO: make growth dynamic */}
               <div className="text-[#00a63e] text-sm font-bold flex items-center mb-1">
                 +12.5% from last week
               </div>
@@ -123,6 +124,7 @@ export default function CampaignOverviewPage() {
               </div>
               <div className="flex flex-col items-end justify-between">
                 <PeopleAltOutlinedIcon className="!text-[#666666] !text-3xl" />
+                {/* TODO: make growth dynamic */}
                 <span className="text-[#00a63e] text-sm font-bold">+12.5% from last week</span>
               </div>
             </div>
@@ -179,6 +181,7 @@ export default function CampaignOverviewPage() {
               <label htmlFor="help-topic" className="block text-sm font-bold text-[#212121]">What do you need help with?</label>
               <Select
                 id="help-topic"
+                name="help-topic"
                 fullWidth
                 variant="standard"
                 defaultValue=""
@@ -196,6 +199,7 @@ export default function CampaignOverviewPage() {
               <label htmlFor="help-details" className="block text-sm font-bold text-slate-700">Tell us more</label>
               <input 
                 id="help-details"
+                name="help-details"
                 type="text" 
                 placeholder="Describe what you need, the more detail, the faster we can help"
                 className="w-full border-b border-[#949494] py-2 focus:outline-none transition placeholder:text-[#9e9e9e] text-sm"
