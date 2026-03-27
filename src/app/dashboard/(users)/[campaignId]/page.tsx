@@ -1,6 +1,6 @@
 "use client";
 
-import { SubmitEvent } from "react";
+import { SubmitEventHandler } from "react";
 
 import {
   Accordion,
@@ -42,7 +42,7 @@ export default function CampaignOverviewPage() {
   const campaign = MOCK_CAMPAIGN;
   const progress = campaign.goal > 0 ? Math.min((campaign.raised / campaign.goal) * 100, 100) : 0;
 
-  const handleSubmit = (e: SubmitEvent) => {
+  const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     console.log("Form submitted");
   }
@@ -102,7 +102,7 @@ export default function CampaignOverviewPage() {
 
             <div className="flex justify-between items-end">
               <div>
-                <div className="text-3xl font-bold text-[#293140]">${campaign.raised}</div>
+                <div className="text-3xl font-bold text-[#293140]">${campaign.raised.toLocaleString()}</div>
                 <div className="text-sm text-[#6a7282] font-medium mt-1">
                   {Math.round(progress)}% of ${campaign.goal.toLocaleString()} goal
                 </div>
