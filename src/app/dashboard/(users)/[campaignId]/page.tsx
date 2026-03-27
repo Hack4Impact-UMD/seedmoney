@@ -53,9 +53,16 @@ export default function CampaignOverviewPage() {
       <div className="max-w-5xl mx-auto flex flex-col md:flex-row md:items-center justify-between gap-4 mb-6">
         <div className="flex items-center gap-6">
           <h1 className="text-3xl font-bold text-[#2d5a43]">{campaign.name}</h1>
-          <div className="h-10 w-[2px] bg-[#2d5a43] hidden md:block"></div>
         </div>
         
+      </div>
+
+      <div className="max-w-5xl mx-auto mb-4 flex flex-col gap-3">
+        <div className="flex gap-5">
+          <button className="pb-1 px-3 border-b-2 border-[#1b76d2] text-[#1b76d2] font-bold text-sm hover:cursor-pointer">Overview</button>
+          <button className="pb-1 px-3 text-[#636464] font-bold text-sm hover:cursor-pointer">Donors</button>
+          <button className="pb-1 px-3 text-[#636464] font-bold text-sm hover:cursor-pointer">Analytics</button>
+        </div>
         <div className="flex flex-wrap gap-3">
           <button className="bg-[#2c7a45] text-white px-4 py-2 rounded-md font-bold text-xs uppercase hover:bg-[#2d5a43] transition">
             View Campaign Site
@@ -67,14 +74,7 @@ export default function CampaignOverviewPage() {
             View Leaderboard
           </button>
         </div>
-      </div>
 
-      <div className="max-w-5xl mx-auto mb-8">
-        <div className="flex gap-5">
-          <button className="pb-1 px-3 border-b-2 border-[#1b76d2] text-[#1b76d2] font-bold text-sm hover:cursor-pointer">Overview</button>
-          <button className="pb-1 px-3 text-[#636464] font-bold text-sm hover:cursor-pointer">Donors</button>
-          <button className="pb-1 px-3 text-[#636464] font-bold text-sm hover:cursor-pointer">Analytics</button>
-        </div>
       </div>
 
       <main className="max-w-5xl mx-auto space-y-10">
