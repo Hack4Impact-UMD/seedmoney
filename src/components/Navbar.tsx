@@ -34,8 +34,12 @@ export default function Navbar({
   onCampaignSelect,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-  const { user } = useAuth();
-  const { data: userData} = useUserByAuthId(user?.id || "");
+  // const { user } = useAuth();
+  // const { data: userData} = useUserByAuthId(user?.id || "");
+  const userData = {
+    first_name: "Test Admin",
+    is_admin: true,
+  }
   const router = useRouter();
   const pathname = usePathname();
 
