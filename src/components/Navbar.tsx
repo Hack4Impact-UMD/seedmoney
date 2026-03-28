@@ -167,7 +167,10 @@ export default function Navbar({
               { label: "Review Applications", path: "/dashboard/review-applications" },
               { label: "List of Users", path: "/dashboard/users" },
             ].map(({ label, path }) => {
-              const isSelected = pathname === path;
+              // readjusted pathname to accommodate /ongoing-campaigns/{id}
+              const isSelected = path === "/dashboard" ?
+                pathname === path :
+                pathname.startsWith(path);
               return (
                 <ListItemButton
                   key={path}
