@@ -1,5 +1,6 @@
 'use client';
 import React, { useMemo, useState } from 'react';
+import Link from 'next/link';
 import { 
   flexRender, 
   useReactTable, 
@@ -7,6 +8,8 @@ import {
   getCoreRowModel, 
   getPaginationRowModel 
 } from '@tanstack/react-table';
+
+import DashboardShell from '../app/dashboard/(users)/[campaignId]/DashboardShell';
 
 interface CampaignMock {
   name: string;
@@ -71,8 +74,10 @@ const CampaignsTable = ({ initialData }: Props) => {
               ></div>
             </div>
             <span className="text-sm text-gray-600">{displayPercentage}%</span>
-            {/* TODO: make onClick open up individual campaign  */}
-            <span className="text-[#2c7a45] font-bold ml-1 text-xl" onClick={() => console.log("clicked")}>&gt;</span>
+            {/* TODO: make link open up individual campaign for each campaign  */}
+            <Link 
+              href="/dashboard/ongoing-campaigns/1" 
+              className="text-[#2c7a45] font-bold ml-1 text-xl hover:pointer-cursor transition-colors">&gt;</Link>
           </div>
         );
       }
