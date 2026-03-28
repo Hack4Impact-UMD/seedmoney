@@ -1,6 +1,6 @@
 'use client';
 import React, { useMemo, useState } from 'react';
-import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import { 
   flexRender, 
   useReactTable, 
@@ -24,7 +24,14 @@ interface Props {
 }
 
 const CampaignsTable = ({ initialData }: Props) => {
+  const router = useRouter();
   const [campaignSearch, setCampaignSearch] = useState('');
+
+  // TODO: function to handle invidiual campaigns (parameter will probably be campaign id)
+  const handleCampaignClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    router.push(`/dashboard/ongoing-campaigns/1`);
+  }
 
   const filteredData = useMemo(() => {
     return initialData.filter(campaign => 
@@ -74,10 +81,10 @@ const CampaignsTable = ({ initialData }: Props) => {
               ></div>
             </div>
             <span className="text-sm text-gray-600">{displayPercentage}%</span>
-            {/* TODO: make link open up individual campaign for each campaign  */}
-            <Link 
-              href="/dashboard/ongoing-campaigns/1" 
-              className="text-[#2c7a45] font-bold ml-1 text-xl hover:pointer-cursor transition-colors">&gt;</Link>
+            {/* TODO: pass in campaign id as function parameter for handleCampaignClick  */}
+            <span 
+              className="text-[#2c7a45] font-bold ml-1 text-xl hover:pointer-cursor transition-colors"
+              onClick={handleCampaignClick}>&gt;</span>
           </div>
         );
       }
