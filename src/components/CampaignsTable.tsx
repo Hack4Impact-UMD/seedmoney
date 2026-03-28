@@ -9,8 +9,6 @@ import {
   getPaginationRowModel 
 } from '@tanstack/react-table';
 
-import DashboardShell from '../app/dashboard/(users)/[campaignId]/DashboardShell';
-
 interface CampaignMock {
   name: string;
   campaign_leader: string;
