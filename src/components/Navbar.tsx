@@ -133,9 +133,11 @@ export default function Navbar({
           {!isCollapsed && (
             <div className="min-w-0">
               <h6 className="text-xl font-bold leading-[1.3] text-white">
-                {userData?.first_name}
+                {userData.first_name}
               </h6>
-              <p className="text-sm text-white/80">{userData?.is_admin ? "Admin" : "Campaign Leader"}</p>
+              <p className="text-sm text-white/80">
+                {userData.is_admin ? "Admin" : "Campaign Leader"}
+              </p>
             </div>
           )}
         </div>

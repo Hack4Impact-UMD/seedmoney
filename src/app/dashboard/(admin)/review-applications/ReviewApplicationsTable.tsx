@@ -4,9 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
-import CloseIcon from "@mui/icons-material/Close";
+import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
+import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
+import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import type {
   ReviewApplication,
   ReviewApplicationStatus,
@@ -185,7 +185,7 @@ export default function ReviewApplicationsTable({
       {toast && (
         <div className="fixed right-8 top-8 z-30 flex justify-end">
           <div className="flex min-w-[300px] max-w-[340px] items-start gap-3 rounded-sm bg-[#f4fbf2] px-4 py-3 text-[#3b5a40] shadow-[0_8px_24px_rgba(74,107,79,0.08)]">
-            <CheckCircleOutlineIcon className="mt-0.5 !h-5 !w-5 text-[#5f9e68]" />
+            <CheckCircleOutlinedIcon className="mt-0.5 !h-5 !w-5 text-[#5f9e68]" />
             <div>
               <p className="text-[14px] font-semibold">
                 {toast.action === "APPROVE"
@@ -369,7 +369,7 @@ export default function ReviewApplicationsTable({
         </div>
 
         <div className="flex flex-col gap-3 px-5 py-2.5 text-[12px] text-[#7b827d] sm:flex-row sm:items-center sm:justify-end sm:px-6">
-          <div className="flex items-center gap-2 self-end">
+          <div className="flex items-center gap-2 self-end sm:self-center">
             <span>Rows per page:</span>
             <div className="relative">
               <select
@@ -383,15 +383,15 @@ export default function ReviewApplicationsTable({
                   </option>
                 ))}
               </select>
-              <KeyboardArrowDownIcon className="pointer-events-none absolute right-0 top-1/2 !h-4 !w-4 -translate-y-1/2 text-[#8f9790]" />
+              <ArrowDropDownIcon className="pointer-events-none absolute right-0 top-1/2 !h-5 !w-5 -translate-y-1/2 text-[#8f9790]" />
             </div>
           </div>
 
-          <span className="min-w-[72px] text-right">
+          <span className="min-w-[72px] self-end text-right sm:self-center">
             {firstRow}-{lastRow} of {filteredApplications.length}
           </span>
 
-          <div className="flex items-center justify-end gap-1">
+          <div className="flex items-center justify-end gap-1 self-end sm:self-center">
             <button
               type="button"
               onClick={handlePreviousPage}
@@ -429,7 +429,7 @@ export default function ReviewApplicationsTable({
                   className="rounded p-1 text-[#7d8480] transition-colors hover:bg-[#f2f4f2]"
                   aria-label="Close dialog"
                 >
-                  <CloseIcon />
+                  <CloseOutlinedIcon />
                 </button>
               </div>
 
