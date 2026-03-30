@@ -11,6 +11,7 @@ import type {
   ReviewApplication,
   ReviewApplicationStatus,
 } from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
+import {useRouter} from "next/navigation";
 
 type ReviewApplicationsTableProps = {
   applications: ReviewApplication[];
@@ -44,6 +45,7 @@ export default function ReviewApplicationsTable({
   const [pageSize, setPageSize] = useState(5);
   const [pendingAction, setPendingAction] = useState<ReviewAction | null>(null);
   const [toast, setToast] = useState<ToastState>(null);
+  const router = useRouter();
 
   const countsByStatus = useMemo(
     () =>
@@ -353,7 +355,7 @@ export default function ReviewApplicationsTable({
                         <button
                           type="button"
                           onClick={() =>
-                            console.log("view application", application.campaignId)
+                            router.push("/dashboard/review-applications/" + application.campaignId)
                           }
                           className="rounded-[10px] border border-[#2D7A45] px-4 py-1.5 text-[13px] font-semibold text-[#2D7A45] transition-colors hover:bg-[#f5faf5]"
                         >
