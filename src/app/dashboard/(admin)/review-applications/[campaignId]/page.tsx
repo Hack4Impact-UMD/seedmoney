@@ -17,6 +17,7 @@ export default async function Page({ params }: { params: Promise<{ campaignId: s
         notFound();
     }
 
+    // TODO: Replace with real data from DB
     return (
         <Stack direction="column" spacing={4} className="p-4">
             <Typography variant="h5" fontWeight="bold">Campaign Information</Typography>
