@@ -199,7 +199,7 @@ export default async function Page({ params }: { params: Promise<{ campaignId: s
                 <CardContent>
                     <Typography variant="h6" fontWeight="bold" gutterBottom>Main Photo</Typography>
                     <Typography variant="subtitle2" className="pb-2">Upload one clear, high-quality photo that best represents your project. This photo will appear at the top of your campaign page.</Typography>
-                    <Typography variant="caption">**DISPLAY MAIN PHOTO HERE**</Typography>
+                    <Typography variant="caption" fontWeight="bold">**DISPLAY MAIN PHOTO HERE**</Typography>
                 </CardContent>
             </Card>
             <Card variant="outlined">
@@ -208,7 +208,7 @@ export default async function Page({ params }: { params: Promise<{ campaignId: s
                     <Typography variant="subtitle2" className="pb-2">You may upload up to five additional photos that help tell your garden’s story.
                         <br/>*Please choose real, authentic photos of your project — for example, people working in the garden, harvesting food, learning together, or the garden space itself.
                         <br/>*Do not upload logos, flyers, graphics, or AI-generated images. These photos should reflect real people and real places connected to your project.</Typography>
-                    <Typography variant="caption">**PHOTOS DISPLAY HERE**</Typography>
+                    <Typography variant="caption" fontWeight="bold">**PHOTOS DISPLAY HERE**</Typography>
                 </CardContent>
             </Card>
             <Typography variant="h5" fontWeight="bold">Contact Information</Typography>
