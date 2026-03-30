@@ -11,15 +11,13 @@ export default async function DashboardLayout({
   const supabase = await createServerClient();
   const { data } = await supabase.auth.getUser();
 
-  // if (!data.user) {
-  //   redirect("/");
-  // }
+  if (!data.user) {
+    redirect("/");
+  }
 
   return (
     <QueryProvider>
-      <AuthProvider initialUser={data.user}>
-        {children}
-      </AuthProvider>
+      <AuthProvider initialUser={data.user}>{children}</AuthProvider>
     </QueryProvider>
   );
 }
