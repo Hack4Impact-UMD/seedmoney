@@ -4,7 +4,7 @@ import {notFound} from "next/navigation";
 import {
     Box, Button,
     Card, CardContent,
-    Checkbox, Chip, FormControl, FormControlLabel, FormLabel, Radio, RadioGroup, Stack, TextField, Typography
+    Checkbox, Chip, FormControl, FormControlLabel, MenuItem, Radio, RadioGroup, Stack, TextField, Typography
 } from "@mui/material";
 
 export default async function Page({ params }: { params: Promise<{ campaignId: string }> }) {
@@ -55,8 +55,12 @@ export default async function Page({ params }: { params: Promise<{ campaignId: s
                     <Typography variant="h6" fontWeight="bold" gutterBottom>Garden Location</Typography>
                     <Stack direction="column" spacing={2}>
                         <TextField fullWidth type="text" variant="standard" label="City" value="Scarborough" />
-                        <TextField fullWidth type="text" variant="standard" label="State / Province" value="Maine" />
-                        <TextField fullWidth type="text" variant="standard" label="Country" value="United States" />
+                        <TextField fullWidth type="text" variant="standard" label="State / Province" value="me" select>
+                            <MenuItem value="me">Maine</MenuItem>
+                        </TextField>
+                        <TextField fullWidth type="text" variant="standard" label="Country" value="us" select>
+                            <MenuItem value="us">United States</MenuItem>
+                        </TextField>
                     </Stack>
                 </CardContent>
             </Card>
@@ -189,7 +193,7 @@ export default async function Page({ params }: { params: Promise<{ campaignId: s
                         </Stack>
                         <Stack alignItems="flex-end">
                             <Box>
-                                <Button variant="outlined" size="small">Save</Button>
+                                <Button disabled variant="outlined" size="small">Save</Button>
                             </Box>
                         </Stack>
                     </Stack>
@@ -228,9 +232,13 @@ export default async function Page({ params }: { params: Promise<{ campaignId: s
                         <TextField fullWidth type="text" variant="standard" label="Street 1" value="123 Scarborough Dr" />
                         <TextField fullWidth type="text" variant="standard" label="Street 2" value="" />
                         <TextField fullWidth type="text" variant="standard" label="City" value="Scarborough" />
-                        <TextField fullWidth type="text" variant="standard" label="State / Province" value="Maine" />
+                        <TextField fullWidth type="text" variant="standard" label="State / Province" value="me" select>
+                            <MenuItem value="me">Maine</MenuItem>
+                        </TextField>
                         <TextField fullWidth type="number" variant="standard" label="ZIP/Postal Code" value="98921" />
-                        <TextField fullWidth type="text" variant="standard" label="Country" value="United States" />
+                        <TextField fullWidth type="text" variant="standard" label="Country" value="us" select>
+                            <MenuItem value="us">United States</MenuItem>
+                        </TextField>
                     </Stack>
                 </CardContent>
             </Card>
