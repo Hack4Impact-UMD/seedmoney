@@ -1,7 +1,7 @@
 import React from 'react';
 import {reviewApplications} from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
 import {notFound} from "next/navigation";
-import {Box, Card, CardContent, Stack, TextField, Typography} from "@mui/material";
+import {Card, CardContent, Stack, TextField, Typography} from "@mui/material";
 
 export default async function Page({ params }: { params: Promise<{ campaignId: string }> }) {
 
