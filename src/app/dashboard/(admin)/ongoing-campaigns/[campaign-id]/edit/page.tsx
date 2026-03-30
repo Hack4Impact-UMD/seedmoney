@@ -19,6 +19,7 @@ import {
   AlertTitle,
 } from "@mui/material";
 import { useState } from "react";
+import type { Campaign } from "@/src/types/db/campaigns";
 import {
   UploadFile,
   Delete,
@@ -218,7 +219,7 @@ export default function EditCampaignPage() {
             name: formData.campaignTitle,
             status: "published",
             date_created: new Date().toISOString(),
-          } as any,
+          } as Campaign,
         ]}
         selectedCampaignId={Number(campaignId)}
         onCampaignSelect={() => {}}
@@ -787,7 +788,7 @@ export default function EditCampaignPage() {
               </h2>
               <p className="text-sm">
                 You may upload up to five additional photos that help tell your
-                garden's story. <br />
+                garden&apos;s story. <br />
                 *Please choose real, authentic photos of your project — for
                 example, people working in the garden, harvesting food, learning
                 together, or the garden space itself.
