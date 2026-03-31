@@ -1,5 +1,5 @@
 "use client";
-import React, { useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   flexRender,
   useReactTable,
@@ -8,34 +8,43 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table";
 import DeleteIcon from "@mui/icons-material/Delete";
+import DeleteUserModal from "@/src/components/DeleteUserModal";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
-import { Avatar, Chip } from "@mui/material";
+import { Avatar, Chip, Snackbar, Alert } from "@mui/material";
 import type {
   MockUser,
-  ApplicationStatus,
+  CampaignStatus,
+  MockCampaign,
 } from "@/src/app/dashboard/(admin)/users/mockUsersData";
 
 interface Props {
   initialData: MockUser[];
 }
 
-const STATUS_LABELS: Record<ApplicationStatus, string> = {
+type AggregateStatus = CampaignStatus | "mixed";
+
+const STATUS_LABELS: Record<AggregateStatus, string> = {
   submitted: "Submitted",
   approved: "Approved",
-  mixed: "Mixed",
   in_progress: "In Progress",
   not_started: "Not Started",
+  mixed: "Mixed",
 };
 
-// chooses which badge to show under application status
-function ApplicationStatusBadge({
+function getAggregateStatus(campaigns: MockCampaign[]): AggregateStatus {
+  const statuses = new Set(campaigns.map((c) => c.status));
+  if (statuses.size === 1) return campaigns[0].status;
+  return "mixed";
+}
+
+function CampaignsSummaryBadge({
   status,
   count,
 }: {
-  status: ApplicationStatus;
+  status: AggregateStatus;
   count: number;
 }) {
-  if (status === "submitted" || status === "approved" || status === "mixed") {
+  if (status === "submitted" || status === "approved") {
     return (
       <Chip
         variant="outlined"
@@ -55,7 +64,27 @@ function ApplicationStatusBadge({
       <Chip
         variant="outlined"
         label={STATUS_LABELS[status]}
-        className="border-[#0288D1]! text-[#0288D1]! font-medium text-sm!"
+        avatar={
+          <Avatar className="bg-[#01579B]! text-white! font-bold! text-xs!">
+            {count}
+          </Avatar>
+        }
+        className="border-[#0288D1]! text-[#0288D1]! font-medium! text-sm!"
+      />
+    );
+  }
+
+  if (status === "mixed") {
+    return (
+      <Chip
+        variant="outlined"
+        label={STATUS_LABELS[status]}
+        avatar={
+          <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
+            {count}
+          </Avatar>
+        }
+        className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm!"
       />
     );
   }
@@ -64,6 +93,11 @@ function ApplicationStatusBadge({
     <Chip
       variant="outlined"
       label={STATUS_LABELS[status]}
+      avatar={
+        <Avatar className="bg-[#757575]! text-white! font-bold! text-xs!">
+          {count}
+        </Avatar>
+      }
       className="border-[#BDBDBD]! text-[#BDBDBD]! font-medium! text-sm!"
     />
   );
@@ -71,56 +105,78 @@ function ApplicationStatusBadge({
 
 const columnHelper = createColumnHelper<MockUser>();
 
-const columns = [
-  columnHelper.accessor("first_name", {
-    header: "First Name",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("last_name", {
-    header: "Last Name",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor("email", {
-    header: "Email",
-    cell: (info) => info.getValue(),
-  }),
-  columnHelper.accessor(
-    (row) => ({ status: row.application_status, count: row.campaign_count }),
-    {
-      id: "application_status",
-      header: "Application Status",
-      cell: (info) => (
-        <ApplicationStatusBadge
-          status={info.getValue().status}
-          count={info.getValue().count}
-        />
-      ),
-    },
-  ),
-  columnHelper.display({
-    id: "delete",
-    header: "",
-    cell: () => (
-      <span className="flex justify-end opacity-0 transition-opacity group-hover:opacity-100">
-        <DeleteIcon className="cursor-pointer text-red-500" fontSize="small" />
-      </span>
-    ),
-  }),
-];
-
 const UsersTable = ({ initialData }: Props) => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<MockUser | null>(null);
+  const [toast, setToast] = useState(false);
+
+  const handleConfirmDelete = useCallback(() => {
+    setDeleteTarget(null);
+    setToast(true);
+    // TOTO: Delete user logic
+  }, []);
+
+  const columns = useMemo(
+    () => [
+      columnHelper.accessor("first_name", {
+        header: "First Name",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("last_name", {
+        header: "Last Name",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.accessor("email", {
+        header: "Email",
+        cell: (info) => info.getValue(),
+      }),
+      columnHelper.display({
+        id: "campaigns",
+        header: "Campaigns",
+        cell: ({ row }) => {
+          const { campaigns } = row.original;
+          if (campaigns.length === 0) {
+            return <span className="text-gray-400 text-sm">None</span>;
+          }
+          const status = getAggregateStatus(campaigns);
+          return (
+            <CampaignsSummaryBadge status={status} count={campaigns.length} />
+          );
+        },
+      }),
+      columnHelper.display({
+        id: "delete",
+        header: "",
+        cell: ({ row }) => (
+          <span
+            className="flex justify-end"
+            onClick={() => setDeleteTarget(row.original)}
+          >
+            <DeleteIcon
+              className="cursor-pointer text-red-500"
+              fontSize="small"
+            />
+          </span>
+        ),
+      }),
+    ],
+    [],
+  );
 
   const filteredData = useMemo(() => {
     const q = search.toLowerCase();
-    return initialData.filter(
-      (user) =>
+    return initialData.filter((user) => {
+      const matchesSearch =
         user.first_name.toLowerCase().includes(q) ||
         user.last_name.toLowerCase().includes(q) ||
-        user.email.toLowerCase().includes(q),
-    );
-  }, [search, initialData]);
+        user.email.toLowerCase().includes(q);
+      const matchesStatus =
+        !statusFilter ||
+        user.campaigns.some((c) => c.status === statusFilter);
+      return matchesSearch && matchesStatus;
+    });
+  }, [search, statusFilter, initialData]);
 
   const table = useReactTable({
     data: filteredData,
@@ -278,6 +334,31 @@ const UsersTable = ({ initialData }: Props) => {
           </>
         )}
       </div>
+
+      {deleteTarget && (
+        <DeleteUserModal
+          firstName={deleteTarget.first_name}
+          lastName={deleteTarget.last_name}
+          onCancel={() => setDeleteTarget(null)}
+          onDelete={handleConfirmDelete}
+        />
+      )}
+
+      <Snackbar
+        open={toast}
+        autoHideDuration={3000}
+        onClose={() => setToast(false)}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => setToast(false)}
+          severity="success"
+          variant="outlined"
+          sx={{ backgroundColor: "#f0fdf4", borderColor: "#bbf7d0", color: "#1B5E20" }}
+        >
+          Account has been deleted!
+        </Alert>
+      </Snackbar>
     </div>
   );
 };
