@@ -5,6 +5,7 @@ import { Button } from "@mui/material";
 import Link from "next/link";
 import { useEffect } from "react";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import { useState } from "react";
 
 const categoryOptions = [
   "Community Garden",
@@ -42,6 +43,8 @@ const beneficiaryOptions = [
 
 export default function GardenInformationStep() {
   const { form, setCurrentStep, updateStepStatus } = useApplicationForm();
+  const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(false);
+  const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] = useState(false);
 
   useEffect(() => {
     const computeIsComplete = () => {
@@ -121,6 +124,7 @@ export default function GardenInformationStep() {
 
         <p className="text-sm">Select one:</p>
 
+
         <form.Field name="gardenCategory">
           {(field) => (
             <div className="flex flex-col gap-3">
@@ -132,16 +136,21 @@ export default function GardenInformationStep() {
                   <input
                     type="radio"
                     name="gardenCategory"
-                    checked={field.state.value === option}
-                    onChange={() => field.handleChange(option)}
-                    className="
-                      w-[20px] h-[20px]
-                      accent-blue-600
-                      cursor-pointer
-                      transition-transform
-                      duration-150
-                      group-hover:scale-105
-                    "
+                    checked={
+                      option === "Other (please specify)"
+                        ? isOtherCategorySelected
+                        : field.state.value === option
+                    }
+                    onChange={() => {
+                      if (option === "Other (please specify)") {
+                        setIsOtherCategorySelected(true);
+                        field.handleChange(""); // user will type value
+                      } else {
+                        setIsOtherCategorySelected(false);
+                        field.handleChange(option);
+                      }
+                    }}
+                    className="w-[20px] h-[20px] accent-blue-600 cursor-pointer transition-transform duration-150 group-hover:scale-105"
                   />
 
                   <span className="text-sm group-hover:text-gray-900">
@@ -149,6 +158,16 @@ export default function GardenInformationStep() {
                   </span>
                 </label>
               ))}
+
+              {isOtherCategorySelected && (
+                <input
+                  type="text"
+                  placeholder="Please specify"
+                  value={field.state.value}
+                  onChange={(e) => field.handleChange(e.target.value)}
+                  className="mt-2 p-2 border border-gray-300 rounded-md text-sm"
+                />
+              )}
             </div>
           )}
         </form.Field>
@@ -164,47 +183,93 @@ export default function GardenInformationStep() {
         <p className="text-sm">Select all that apply:</p>
 
         <form.Field name="gardenBeneficiaries">
-          {(field) => (
-            <div className="flex flex-col gap-3">
-              {beneficiaryOptions.map((option) => {
-                const isChecked = field.state.value.includes(option);
+          {(field) => {
+            const OTHER_OPTION = "Other (please specify)";
 
-                return (
-                  <label
-                    key={option}
-                    className="flex items-center gap-3 cursor-pointer group"
-                  >
-                    <input
-                      type="checkbox"
-                      checked={isChecked}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          field.handleChange([...field.state.value, option]);
-                          return;
-                        }
+            return (
+              <div className="flex flex-col gap-3">
+                {beneficiaryOptions.map((option) => {
+                  const isChecked =
+                    option === OTHER_OPTION
+                      ? isOtherBeneficiarySelected
+                      : field.state.value.includes(option);
 
-                        field.handleChange(
-                          field.state.value.filter((item) => item !== option),
-                        );
-                      }}
-                      className="
-                        w-[18px] h-[18px]
-                        accent-blue-600
-                        cursor-pointer
-                        transition-transform
-                        duration-150
-                        group-hover:scale-105
-                      "
-                    />
+                  return (
+                    <label
+                      key={option}
+                      className="flex items-center gap-3 cursor-pointer group"
+                    >
+                      <input
+                        type="checkbox"
+                        checked={isChecked}
+                        onChange={(e) => {
+                          if (option === OTHER_OPTION) {
+                            if (e.target.checked) {
+                              setIsOtherBeneficiarySelected(true);
+                            } else {
+                              setIsOtherBeneficiarySelected(false);
+                              field.handleChange(
+                                field.state.value.filter((item) =>
+                                  beneficiaryOptions.includes(item)
+                                )
+                              );
+                            }
+                            return;
+                          }
 
-                    <span className="text-sm group-hover:text-gray-900">
-                      {option}
-                    </span>
-                  </label>
-                );
-              })}
-            </div>
-          )}
+                          if (e.target.checked) {
+                            field.handleChange([...field.state.value, option]);
+                            return;
+                          }
+
+                          field.handleChange(
+                            field.state.value.filter((item) => item !== option),
+                          );
+                        }}
+                        className="
+                          w-[18px] h-[18px]
+                          accent-blue-600
+                          cursor-pointer
+                          transition-transform
+                          duration-150
+                          group-hover:scale-105
+                        "
+                      />
+
+                      <span className="text-sm group-hover:text-gray-900">
+                        {option}
+                      </span>
+                    </label>
+                  );
+                })}
+
+                {isOtherBeneficiarySelected && (
+                  <input
+                    type="text"
+                    placeholder="Please specify"
+                    value={
+                      field.state.value.find(
+                        (item) => !beneficiaryOptions.includes(item),
+                      ) || ""
+                    }
+                    onChange={(e) => {
+                      const customValue = e.target.value;
+                      const withoutCustom = field.state.value.filter((item) =>
+                        beneficiaryOptions.includes(item),
+                      );
+
+                      field.handleChange(
+                        customValue
+                          ? [...withoutCustom, customValue]
+                          : withoutCustom,
+                      );
+                    }}
+                    className="mt-2 p-2 border border-gray-300 rounded-md text-sm"
+                  />
+                )}
+              </div>
+            );
+          }}
         </form.Field>
       </div>
 
