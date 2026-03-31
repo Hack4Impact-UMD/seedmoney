@@ -1,18 +1,18 @@
 "use client";
 
-interface DeleteUserModalProps {
+interface DeleteUserPopUpProps {
   firstName: string;
   lastName: string;
   onCancel: () => void;
   onDelete: () => void;
 }
 
-const DeleteUserModal = ({
+const DeleteUserPopUp = ({
   firstName,
   lastName,
   onCancel,
   onDelete,
-}: DeleteUserModalProps) => {
+}: DeleteUserPopUpProps) => {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/40">
       <div className="bg-white rounded-sm shadow-xl max-w-2xl w-full mx-4 p-8">
@@ -45,4 +45,4 @@ const DeleteUserModal = ({
   );
 };
 
-export default DeleteUserModal;
+export default DeleteUserPopUp;

@@ -8,7 +8,8 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table";
 import DeleteIcon from "@mui/icons-material/Delete";
-import DeleteUserModal from "@/src/components/DeleteUserModal";
+import DeleteUserPopUp from "@/src/components/DeleteUserPopUp";
+import ApplicationStatusPopUp from "@/src/components/ApplicationStatusPopUp";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import { Avatar, Chip, Snackbar, Alert } from "@mui/material";
 import type {
@@ -40,66 +41,76 @@ function getAggregateStatus(campaigns: MockCampaign[]): AggregateStatus {
 function CampaignsSummaryBadge({
   status,
   count,
+  onClick,
 }: {
   status: AggregateStatus;
   count: number;
+  onClick?: () => void;
 }) {
   if (status === "submitted" || status === "approved") {
     return (
-      <Chip
-        variant="outlined"
-        label={STATUS_LABELS[status]}
-        avatar={
-          <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
-            {count}
-          </Avatar>
-        }
-        className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm!"
-      />
+      <span onClick={onClick} className="cursor-pointer">
+        <Chip
+          variant="outlined"
+          label={STATUS_LABELS[status]}
+          avatar={
+            <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
+              {count}
+            </Avatar>
+          }
+          className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm! cursor-pointer!"
+        />
+      </span>
     );
   }
 
   if (status === "in_progress") {
     return (
-      <Chip
-        variant="outlined"
-        label={STATUS_LABELS[status]}
-        avatar={
-          <Avatar className="bg-[#01579B]! text-white! font-bold! text-xs!">
-            {count}
-          </Avatar>
-        }
-        className="border-[#0288D1]! text-[#0288D1]! font-medium! text-sm!"
-      />
+      <span onClick={onClick} className="cursor-pointer">
+        <Chip
+          variant="outlined"
+          label={STATUS_LABELS[status]}
+          avatar={
+            <Avatar className="bg-[#01579B]! text-white! font-bold! text-xs!">
+              {count}
+            </Avatar>
+          }
+          className="border-[#0288D1]! text-[#0288D1]! font-medium! text-sm! cursor-pointer!"
+        />
+      </span>
     );
   }
 
   if (status === "mixed") {
     return (
-      <Chip
-        variant="outlined"
-        label={STATUS_LABELS[status]}
-        avatar={
-          <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
-            {count}
-          </Avatar>
-        }
-        className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm!"
-      />
+      <span onClick={onClick} className="cursor-pointer">
+        <Chip
+          variant="outlined"
+          label={STATUS_LABELS[status]}
+          avatar={
+            <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
+              {count}
+            </Avatar>
+          }
+          className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm! cursor-pointer!"
+        />
+      </span>
     );
   }
 
   return (
-    <Chip
-      variant="outlined"
-      label={STATUS_LABELS[status]}
-      avatar={
-        <Avatar className="bg-[#757575]! text-white! font-bold! text-xs!">
-          {count}
-        </Avatar>
-      }
-      className="border-[#BDBDBD]! text-[#BDBDBD]! font-medium! text-sm!"
-    />
+    <span onClick={onClick} className="cursor-pointer">
+      <Chip
+        variant="outlined"
+        label={STATUS_LABELS[status]}
+        avatar={
+          <Avatar className="bg-[#757575]! text-white! font-bold! text-xs!">
+            {count}
+          </Avatar>
+        }
+        className="border-[#BDBDBD]! text-[#BDBDBD]! font-medium! text-sm! cursor-pointer!"
+      />
+    </span>
   );
 }
 
@@ -109,6 +120,7 @@ const UsersTable = ({ initialData }: Props) => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<MockUser | null>(null);
+  const [statusTarget, setStatusTarget] = useState<MockUser | null>(null);
   const [toast, setToast] = useState(false);
 
   const handleConfirmDelete = useCallback(() => {
@@ -141,7 +153,11 @@ const UsersTable = ({ initialData }: Props) => {
           }
           const status = getAggregateStatus(campaigns);
           return (
-            <CampaignsSummaryBadge status={status} count={campaigns.length} />
+            <CampaignsSummaryBadge
+              status={status}
+              count={campaigns.length}
+              onClick={() => setStatusTarget(row.original)}
+            />
           );
         },
       }),
@@ -336,11 +352,18 @@ const UsersTable = ({ initialData }: Props) => {
       </div>
 
       {deleteTarget && (
-        <DeleteUserModal
+        <DeleteUserPopUp
           firstName={deleteTarget.first_name}
           lastName={deleteTarget.last_name}
           onCancel={() => setDeleteTarget(null)}
           onDelete={handleConfirmDelete}
+        />
+      )}
+
+      {statusTarget && (
+        <ApplicationStatusPopUp
+          user={statusTarget}
+          onClose={() => setStatusTarget(null)}
         />
       )}
 
