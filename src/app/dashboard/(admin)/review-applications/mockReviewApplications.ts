@@ -8,6 +8,9 @@ export type ReviewApplication = {
   status: ReviewApplicationStatus;
 };
 
+const REVIEW_APPLICATION_STATUS_KEY = "review-application-statuses";
+const REVIEW_APPLICATION_STATUS_EVENT = "review-application-status-change";
+
 export const reviewApplications: ReviewApplication[] = [
   {
     campaignId: 1,
@@ -104,3 +107,78 @@ export const reviewApplications: ReviewApplication[] = [
 
 export const getReviewApplicationById = (campaignId: number) =>
   reviewApplications.find((application) => application.campaignId === campaignId);
+
+export const getHydratedReviewApplications = (): ReviewApplication[] => {
+  if (typeof window === "undefined") {
+    return reviewApplications;
+  }
+
+  const raw = window.localStorage.getItem(REVIEW_APPLICATION_STATUS_KEY);
+
+  if (!raw) {
+    return reviewApplications;
+  }
+
+  try {
+    const savedStatuses = JSON.parse(raw) as Record<number, ReviewApplicationStatus>;
+
+    return reviewApplications.map((application) => ({
+      ...application,
+      status: savedStatuses[application.campaignId] ?? application.status,
+    }));
+  } catch {
+    return reviewApplications;
+  }
+};
+
+export const updateReviewApplicationStatus = (
+  campaignIds: number[],
+  status: ReviewApplicationStatus,
+) => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  const raw = window.localStorage.getItem(REVIEW_APPLICATION_STATUS_KEY);
+  let savedStatuses: Record<number, ReviewApplicationStatus> = {};
+
+  if (raw) {
+    try {
+      savedStatuses = JSON.parse(raw) as Record<number, ReviewApplicationStatus>;
+    } catch {
+      savedStatuses = {};
+    }
+  }
+
+  campaignIds.forEach((campaignId) => {
+    savedStatuses[campaignId] = status;
+  });
+
+  window.localStorage.setItem(
+    REVIEW_APPLICATION_STATUS_KEY,
+    JSON.stringify(savedStatuses),
+  );
+};
+
+export const notifyReviewApplicationStatusChange = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.dispatchEvent(new CustomEvent(REVIEW_APPLICATION_STATUS_EVENT));
+};
+
+export const subscribeToReviewApplicationStatusChange = (
+  callback: () => void,
+) => {
+  if (typeof window === "undefined") {
+    return () => {};
+  }
+
+  const listener = () => callback();
+  window.addEventListener(REVIEW_APPLICATION_STATUS_EVENT, listener);
+
+  return () => {
+    window.removeEventListener(REVIEW_APPLICATION_STATUS_EVENT, listener);
+  };
+};

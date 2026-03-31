@@ -11,6 +11,12 @@ import type {
   ReviewApplication,
   ReviewApplicationStatus,
 } from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
+import {
+  getHydratedReviewApplications,
+  notifyReviewApplicationStatusChange,
+  subscribeToReviewApplicationStatusChange,
+  updateReviewApplicationStatus,
+} from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
 import {useRouter} from "next/navigation";
 
 type ReviewApplicationsTableProps = {
@@ -100,6 +106,20 @@ export default function ReviewApplicationsTable({
   );
 
   useEffect(() => {
+    const timeoutId = window.setTimeout(() => {
+      setApplicationRows(getHydratedReviewApplications());
+    }, 0);
+
+    return () => window.clearTimeout(timeoutId);
+  }, []);
+
+  useEffect(() => {
+    return subscribeToReviewApplicationStatusChange(() => {
+      setApplicationRows(getHydratedReviewApplications());
+    });
+  }, []);
+
+  useEffect(() => {
     if (!toast) {
       return;
     }
@@ -170,6 +190,8 @@ export default function ReviewApplicationsTable({
           : application,
       ),
     );
+    updateReviewApplicationStatus(selectedIds, nextStatus);
+    notifyReviewApplicationStatusChange();
     setToast({ action: pendingAction, count: selectedIds.length });
     setSelectedIds([]);
     setPendingAction(null);
