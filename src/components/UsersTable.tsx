@@ -7,7 +7,7 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
 } from "@tanstack/react-table";
-import DeleteIcon from "@mui/icons-material/Delete";
+import Image from "next/image";
 import DeleteUserPopUp from "@/src/components/DeleteUserPopUp";
 import ApplicationStatusPopUp from "@/src/components/ApplicationStatusPopUp";
 import FilterAltIcon from "@mui/icons-material/FilterAlt";
@@ -118,6 +118,7 @@ const columnHelper = createColumnHelper<MockUser>();
 
 const UsersTable = ({ initialData }: Props) => {
   const [search, setSearch] = useState("");
+  const [pendingStatus, setPendingStatus] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<MockUser | null>(null);
   const [statusTarget, setStatusTarget] = useState<MockUser | null>(null);
@@ -169,9 +170,12 @@ const UsersTable = ({ initialData }: Props) => {
             className="flex justify-end"
             onClick={() => setDeleteTarget(row.original)}
           >
-            <DeleteIcon
-              className="cursor-pointer text-red-500"
-              fontSize="small"
+            <Image
+              src="/icons/trash.png"
+              alt="Delete"
+              width={20}
+              height={20}
+              className="cursor-pointer"
             />
           </span>
         ),
@@ -238,8 +242,8 @@ const UsersTable = ({ initialData }: Props) => {
                 </label>
                 <div className="flex items-center border border-gray-400 rounded-lg px-3 py-2.5">
                   <select
-                    value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
+                    value={pendingStatus}
+                    onChange={(e) => setPendingStatus(e.target.value)}
                     className="w-full bg-transparent outline-none text-md text-gray-500 cursor-pointer appearance-none"
                   >
                     <option value="">Application Status</option>
@@ -250,7 +254,10 @@ const UsersTable = ({ initialData }: Props) => {
                   </select>
                 </div>
               </div>
-              <button className="text-gray-500 px-3 hover:text-gray-700 transition-colors cursor-pointer">
+              <button
+                onClick={() => setStatusFilter(pendingStatus)}
+                className="text-gray-500 px-3 hover:text-gray-700 transition-colors cursor-pointer"
+              >
                 <FilterAltIcon />
               </button>
             </div>
