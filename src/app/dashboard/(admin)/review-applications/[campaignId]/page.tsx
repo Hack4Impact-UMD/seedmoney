@@ -504,7 +504,7 @@ export default function CampaignReviewPage() {
               <button
                 type="button"
                 onClick={handleBackClick}
-                className="inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-[0.05em] text-[#69736b]"
+                className="inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-[0.05em] text-[#69736b] cursor-pointer"
               >
                 <ArrowBackIcon sx={{ fontSize: 16 }} />
                 Back
