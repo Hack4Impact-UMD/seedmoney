@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import Button from "@mui/material/Button";
 import type {
   MockUser,
@@ -51,6 +52,13 @@ const ApplicationStatusPopUp = ({
   const groups = groupByStatus(user.campaigns);
   const fullName = `${user.first_name} ${user.last_name}`;
 
+  useEffect(() => {
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = "";
+    };
+  }, []);
+
   const handleCampaignAction = (campaign: MockCampaign) => {
     // TODO: Implement campaign action logic
     const action = STATUS_CONFIG[campaign.status].buttonLabel;
@@ -63,7 +71,7 @@ const ApplicationStatusPopUp = ({
       onClick={onClose}
     >
       <div
-        className="bg-white rounded-sm shadow-xl max-w-2xl w-full mx-4 p-8"
+        className="bg-white rounded-sm shadow-xl max-w-2xl w-full mx-4 p-8 max-h-[65vh] flex flex-col"
         onClick={(e) => e.stopPropagation()}
       >
         <h2 className="text-[#1B5E20] text-xl font-bold mb-2">
@@ -71,6 +79,7 @@ const ApplicationStatusPopUp = ({
         </h2>
         <hr className="border-gray-300" />
 
+        <div className="overflow-y-auto flex-1">
         {STATUS_ORDER.filter((status) => groups[status]).map((status) => {
           const campaigns = groups[status]!;
           const config = STATUS_CONFIG[status];
@@ -105,6 +114,7 @@ const ApplicationStatusPopUp = ({
             </div>
           );
         })}
+        </div>
       </div>
     </div>
   );
