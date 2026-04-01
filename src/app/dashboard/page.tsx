@@ -25,7 +25,7 @@ export default function DashboardIndexPage() {
 
   const handleNewCampaign = () => {
     console.log("New campaign clicked");
-    router.push("/dashboard/new");
+    router.push("/apply");
   };
 
   return (
@@ -44,9 +44,7 @@ export default function DashboardIndexPage() {
               <NotStarted onNewCampaign={handleNewCampaign} />
             </div>
           </>
-          
         )}
-
       </div>
     </div>
   );
