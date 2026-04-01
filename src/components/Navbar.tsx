@@ -87,11 +87,7 @@ export default function Navbar({
 
     return { currentYearCampaigns, previousCampaigns };
   }, [campaigns, currentYear]);
-
-  if (!userData) {
-    return null;
-  }
-
+  const isAdmin = userData?.is_admin ?? false;
 
   const getItemClasses = (isSelected: boolean) =>
     clsx(
@@ -133,9 +129,11 @@ export default function Navbar({
           {!isCollapsed && (
             <div className="min-w-0">
               <h6 className="text-xl font-bold leading-[1.3] text-white">
-                {userData?.first_name}
+                {userData?.first_name ?? "SeedMoney"}
               </h6>
-              <p className="text-sm text-white/80">{userData?.is_admin ? "Admin" : "Campaign Leader"}</p>
+              <p className="text-sm text-white/80">
+                {userData ? (isAdmin ? "Admin" : "Campaign Leader") : "Loading profile"}
+              </p>
             </div>
           )}
         </div>
@@ -154,7 +152,7 @@ export default function Navbar({
         )}
       </IconButton>
 
-      {userData.is_admin && (
+      {userData && isAdmin && (
         <div className="scrollbar-hide mt-5 flex flex-1 flex-col overflow-y-auto overscroll-contain">
           <List disablePadding>
             {[
@@ -199,7 +197,7 @@ export default function Navbar({
           </div>
         </div>
       )}
-      {!userData.is_admin && (
+      {userData && !isAdmin && (
         <>
           <div className="scrollbar-hide mt-5 flex flex-1 flex-col overflow-y-auto overscroll-contain">
             {currentYearCampaigns.length > 0 && (
