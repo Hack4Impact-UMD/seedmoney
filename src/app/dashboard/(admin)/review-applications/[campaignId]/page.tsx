@@ -220,7 +220,7 @@ function StoryEditor({
       <Stack spacing={2}>
         {[
           { editable: false, label: "Original Version", value: originalValue },
-          { editable: false, label: "AI Polished Version", value: originalValue },
+          { editable: false, label: "AI Polished Version ", value: originalValue },
           { editable: true, label: "Final Version", value: finalValue },
         ].map((entry) => (
           <Stack
@@ -237,7 +237,7 @@ function StoryEditor({
                 color: "#5a625c",
                 fontSize: 12,
                 height: 30,
-                minWidth: 114,
+                minWidth: 140,
               }}
             />
             <TextField
@@ -486,7 +486,26 @@ export default function CampaignReviewPage() {
             </div>
           )}
 
-          <div className="flex flex-col gap-4 border-b border-[#dce5dc] pb-6 sm:flex-row sm:items-start sm:justify-between">
+          <div className="sticky top-0 z-10 bg-[#f8fbf8] pt-4 pb-4 -mx-6 px-6 sm:-mx-10 sm:px-10 md:-mx-12 md:px-12">
+            <div className="mx-auto max-w-[980px] flex justify-end">
+              <Stack direction="column" spacing={1.5}>
+                <Button
+                  variant="contained"
+                  onClick={() => setActiveModal("approve")}
+                >
+                  APPROVE
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => setActiveModal("deny")}
+                >
+                  DENY
+                </Button>
+              </Stack>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 border-b border-[#dce5dc] pb-6 relative z-20">
             <div>
               <Typography
                 sx={{
@@ -510,40 +529,6 @@ export default function CampaignReviewPage() {
                 Back
               </button>
             </div>
-
-            <Stack direction="column" spacing={1.5} sx={{ pt: { sm: 1 } }}>
-              <Button
-                sx={{
-                  bgcolor: "#2D7A45",
-                  borderRadius: "8px",
-                  color: "white",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  px: 3,
-                  py: 1,
-                  "&:hover": { bgcolor: "#25633a" },
-                }}
-                variant="contained"
-                onClick={() => setActiveModal("approve")}
-              >
-                APPROVE
-              </Button>
-              <Button
-                sx={{
-                  borderColor: "#2D7A45",
-                  borderRadius: "8px",
-                  color: "#2D7A45",
-                  fontSize: 13,
-                  fontWeight: 700,
-                  px: 3,
-                  py: 1,
-                }}
-                variant="outlined"
-                onClick={() => setActiveModal("deny")}
-              >
-                DENY
-              </Button>
-            </Stack>
           </div>
 
           <Stack spacing={5} sx={{ mt: 4 }}>

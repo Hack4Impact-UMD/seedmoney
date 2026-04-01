@@ -325,7 +325,7 @@ export default function ReviewApplicationsTable({
             <thead>
               <tr className="border-b border-[#eef2ee] text-left text-[14px] font-semibold text-[#414644]">
                 <th className="w-8 px-3 py-3 sm:px-4" />
-                <th className="w-[190px] pl-0 pr-2 py-3">Submission Date (MM/D...</th>
+                <th className="w-[190px] pl-0 pr-2 py-3">Submission Date</th>
                 <th className="w-[340px] px-2 py-3">Campaign Title</th>
                 <th className="w-[210px] px-2 py-3">Campaign Leader</th>
                 <th className="w-[210px] px-5 py-3 text-right sm:px-6" />
