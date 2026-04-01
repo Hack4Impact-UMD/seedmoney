@@ -4,8 +4,8 @@ import Button from "@mui/material/Button";
 import type {
   MockUser,
   MockCampaign,
-  CampaignStatus,
 } from "@/src/app/dashboard/(admin)/users/mockUsersData";
+import type { Status } from "@/src/types/db/enums";
 
 interface ApplicationStatusPopUpProps {
   user: MockUser;
@@ -13,24 +13,28 @@ interface ApplicationStatusPopUpProps {
 }
 
 const STATUS_CONFIG: Record<
-  CampaignStatus,
+  Status,
   { label: string; buttonLabel: string }
 > = {
-  submitted: { label: "submitted", buttonLabel: "VIEW APPLICATION" },
-  approved: { label: "approved", buttonLabel: "VIEW CAMPAIGN" },
   in_progress: { label: "in progress", buttonLabel: "REVIEW APPLICATION" },
-  not_started: { label: "not started", buttonLabel: "START APPLICATION" },
+  submitted_under_review: { label: "submitted", buttonLabel: "REVIEW APPLICATION" },
+  approved: { label: "approved", buttonLabel: "VIEW CAMPAIGN" },
+  not_approved: { label: "not approved", buttonLabel: "VIEW APPLICATION" },
+  published: { label: "published", buttonLabel: "VIEW CAMPAIGN" },
+  archived: { label: "archived", buttonLabel: "VIEW CAMPAIGN" },
 };
 
-const STATUS_ORDER: CampaignStatus[] = [
-  "submitted",
+const STATUS_ORDER: Status[] = [
+  "submitted_under_review",
   "approved",
   "in_progress",
-  "not_started",
+  "not_approved",
+  "published",
+  "archived",
 ];
 
 function groupByStatus(campaigns: MockCampaign[]) {
-  const groups: Partial<Record<CampaignStatus, MockCampaign[]>> = {};
+  const groups: Partial<Record<Status, MockCampaign[]>> = {};
   for (const campaign of campaigns) {
     if (!groups[campaign.status]) {
       groups[campaign.status] = [];
@@ -76,25 +80,28 @@ const ApplicationStatusPopUp = ({
               <p className="text-gray-800 mb-3 mt-4">
                 {fullName} has{" "}
                 <span className="font-bold">&lt;{campaigns.length}&gt;</span>{" "}
-                {config.label} application{campaigns.length !== 1 ? "s" : ""}:
+                {config.label} application{campaigns.length !== 1 ? "s" : ""}
+                {status === "in_progress" ? "." : ":"}
               </p>
-              <div className="flex flex-col gap-3 pl-6">
-                {campaigns.map((campaign) => (
-                  <div
-                    key={campaign.campaign_id}
-                    className="flex items-center justify-between"
-                  >
-                    <span className="text-gray-700">{campaign.name}</span>
-                    <Button
-                      variant="contained"
-                      size="medium"
-                      onClick={() => handleCampaignAction(campaign)}
+              {status !== "in_progress" && (
+                <div className="flex flex-col gap-3 pl-6">
+                  {campaigns.map((campaign) => (
+                    <div
+                      key={campaign.campaign_id}
+                      className="flex items-center justify-between"
                     >
-                      {config.buttonLabel}
-                    </Button>
-                  </div>
-                ))}
-              </div>
+                      <span className="text-gray-700">{campaign.name}</span>
+                      <Button
+                        variant="contained"
+                        size="medium"
+                        onClick={() => handleCampaignAction(campaign)}
+                      >
+                        {config.buttonLabel}
+                      </Button>
+                    </div>
+                  ))}
+                </div>
+              )}
             </div>
           );
         })}

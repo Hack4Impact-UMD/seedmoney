@@ -14,21 +14,23 @@ import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import { Avatar, Chip, Snackbar, Alert } from "@mui/material";
 import type {
   MockUser,
-  CampaignStatus,
   MockCampaign,
 } from "@/src/app/dashboard/(admin)/users/mockUsersData";
+import type { Status } from "@/src/types/db/enums";
 
 interface Props {
   initialData: MockUser[];
 }
 
-type AggregateStatus = CampaignStatus | "mixed";
+type AggregateStatus = Status | "mixed";
 
 const STATUS_LABELS: Record<AggregateStatus, string> = {
-  submitted: "Submitted",
-  approved: "Approved",
   in_progress: "In Progress",
-  not_started: "Not Started",
+  submitted_under_review: "Submitted",
+  approved: "Approved",
+  not_approved: "Not Approved",
+  published: "Published",
+  archived: "Archived",
   mixed: "Mixed",
 };
 
@@ -38,27 +40,83 @@ function getAggregateStatus(campaigns: MockCampaign[]): AggregateStatus {
   return "mixed";
 }
 
+const STATUS_PRIORITY: Status[] = [
+  "approved",
+  "published",
+  "submitted_under_review",
+  "in_progress",
+  "not_approved",
+  "archived",
+];
+
+function getBestStatus(campaigns: MockCampaign[]): Status {
+  const statuses = new Set(campaigns.map((c) => c.status));
+  return STATUS_PRIORITY.find((s) => statuses.has(s)) ?? "archived";
+}
+
 function CampaignsSummaryBadge({
   status,
   count,
   onClick,
+  bestStatus,
 }: {
   status: AggregateStatus;
   count: number;
   onClick?: () => void;
+  bestStatus?: Status;
 }) {
-  if (status === "submitted" || status === "approved") {
+  if (status === "approved" || status === "published") {
     return (
       <span onClick={onClick} className="cursor-pointer">
         <Chip
           variant="outlined"
           label={STATUS_LABELS[status]}
-          avatar={
-            <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
-              {count}
-            </Avatar>
-          }
+          {...(count > 1 && {
+            avatar: (
+              <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
+                {count}
+              </Avatar>
+            ),
+          })}
           className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm! cursor-pointer!"
+        />
+      </span>
+    );
+  }
+
+  if (status === "submitted_under_review") {
+    return (
+      <span onClick={onClick} className="cursor-pointer">
+        <Chip
+          variant="outlined"
+          label={STATUS_LABELS[status]}
+          {...(count > 1 && {
+            avatar: (
+              <Avatar className="bg-[#F57F17]! text-white! font-bold! text-xs!">
+                {count}
+              </Avatar>
+            ),
+          })}
+          className="border-[#F9A825]! text-[#F57F17]! font-medium! text-sm! cursor-pointer!"
+        />
+      </span>
+    );
+  }
+
+  if (status === "not_approved") {
+    return (
+      <span onClick={onClick} className="cursor-pointer">
+        <Chip
+          variant="outlined"
+          label={STATUS_LABELS[status]}
+          {...(count > 1 && {
+            avatar: (
+              <Avatar className="bg-[#C62828]! text-white! font-bold! text-xs!">
+                {count}
+              </Avatar>
+            ),
+          })}
+          className="border-[#E53935]! text-[#C62828]! font-medium! text-sm! cursor-pointer!"
         />
       </span>
     );
@@ -70,11 +128,13 @@ function CampaignsSummaryBadge({
         <Chip
           variant="outlined"
           label={STATUS_LABELS[status]}
-          avatar={
-            <Avatar className="bg-[#01579B]! text-white! font-bold! text-xs!">
-              {count}
-            </Avatar>
-          }
+          {...(count > 1 && {
+            avatar: (
+              <Avatar className="bg-[#01579B]! text-white! font-bold! text-xs!">
+                {count}
+              </Avatar>
+            ),
+          })}
           className="border-[#0288D1]! text-[#0288D1]! font-medium! text-sm! cursor-pointer!"
         />
       </span>
@@ -82,17 +142,36 @@ function CampaignsSummaryBadge({
   }
 
   if (status === "mixed") {
+    let avatarBg = "bg-[#757575]!";
+    let chipColors = "border-[#BDBDBD]! text-[#9E9E9E]!";
+
+    if (bestStatus === "approved" || bestStatus === "published") {
+      avatarBg = "bg-[#1B5E20]!";
+      chipColors = "border-[#2E7D32]! text-[#2E7D32]!";
+    } else if (bestStatus === "submitted_under_review") {
+      avatarBg = "bg-[#F57F17]!";
+      chipColors = "border-[#F9A825]! text-[#F57F17]!";
+    } else if (bestStatus === "in_progress") {
+      avatarBg = "bg-[#01579B]!";
+      chipColors = "border-[#0288D1]! text-[#0288D1]!";
+    } else if (bestStatus === "not_approved") {
+      avatarBg = "bg-[#C62828]!";
+      chipColors = "border-[#E53935]! text-[#C62828]!";
+    }
+
     return (
       <span onClick={onClick} className="cursor-pointer">
         <Chip
           variant="outlined"
           label={STATUS_LABELS[status]}
-          avatar={
-            <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
-              {count}
-            </Avatar>
-          }
-          className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm! cursor-pointer!"
+          {...(count > 1 && {
+            avatar: (
+              <Avatar className={`${avatarBg} text-white! font-bold! text-xs!`}>
+                {count}
+              </Avatar>
+            ),
+          })}
+          className={`${chipColors} font-medium! text-sm! cursor-pointer!`}
         />
       </span>
     );
@@ -103,11 +182,13 @@ function CampaignsSummaryBadge({
       <Chip
         variant="outlined"
         label={STATUS_LABELS[status]}
-        avatar={
-          <Avatar className="bg-[#757575]! text-white! font-bold! text-xs!">
-            {count}
-          </Avatar>
-        }
+        {...(count > 1 && {
+          avatar: (
+            <Avatar className="bg-[#757575]! text-white! font-bold! text-xs!">
+              {count}
+            </Avatar>
+          ),
+        })}
         className="border-[#BDBDBD]! text-[#BDBDBD]! font-medium! text-sm! cursor-pointer!"
       />
     </span>
@@ -150,7 +231,13 @@ const UsersTable = ({ initialData }: Props) => {
         cell: ({ row }) => {
           const { campaigns } = row.original;
           if (campaigns.length === 0) {
-            return <span className="text-gray-400 text-sm">None</span>;
+            return (
+              <Chip
+                variant="outlined"
+                label="Not Started"
+                className="border-[#BDBDBD]! text-[#9E9E9E]! font-medium! text-sm!"
+              />
+            );
           }
           const status = getAggregateStatus(campaigns);
           return (
@@ -158,6 +245,7 @@ const UsersTable = ({ initialData }: Props) => {
               status={status}
               count={campaigns.length}
               onClick={() => setStatusTarget(row.original)}
+              {...(status === "mixed" && { bestStatus: getBestStatus(campaigns) })}
             />
           );
         },
@@ -247,10 +335,12 @@ const UsersTable = ({ initialData }: Props) => {
                     className="w-full bg-transparent outline-none text-md text-gray-500 cursor-pointer appearance-none"
                   >
                     <option value="">Application Status</option>
-                    <option value="submitted">Submitted</option>
-                    <option value="approved">Approved</option>
                     <option value="in_progress">In Progress</option>
-                    <option value="not_started">Not Started</option>
+                    <option value="submitted_under_review">Submitted</option>
+                    <option value="approved">Approved</option>
+                    <option value="not_approved">Not Approved</option>
+                    <option value="published">Published</option>
+                    <option value="archived">Archived</option>
                   </select>
                 </div>
               </div>
