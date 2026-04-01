@@ -10,7 +10,6 @@ import {
 import Image from "next/image";
 import DeleteUserPopUp from "@/src/components/DeleteUserPopUp";
 import ApplicationStatusPopUp from "@/src/components/ApplicationStatusPopUp";
-import FilterAltIcon from "@mui/icons-material/FilterAlt";
 import { Avatar, Chip, Snackbar, Alert } from "@mui/material";
 import type {
   MockUser,
@@ -38,6 +37,11 @@ function getAggregateStatus(campaigns: MockCampaign[]): AggregateStatus {
   return "mixed";
 }
 
+function makeAvatar(count: number, className: string) {
+  if (count <= 1) return undefined;
+  return <Avatar className={className}>{count}</Avatar>;
+}
+
 function CampaignsSummaryBadge({
   status,
   count,
@@ -53,11 +57,7 @@ function CampaignsSummaryBadge({
         <Chip
           variant="outlined"
           label={STATUS_LABELS[status]}
-          avatar={
-            <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
-              {count}
-            </Avatar>
-          }
+          avatar={makeAvatar(count, "bg-[#1B5E20]! text-white! font-bold! text-xs!")}
           className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm! cursor-pointer!"
         />
       </span>
@@ -70,11 +70,7 @@ function CampaignsSummaryBadge({
         <Chip
           variant="outlined"
           label={STATUS_LABELS[status]}
-          avatar={
-            <Avatar className="bg-[#01579B]! text-white! font-bold! text-xs!">
-              {count}
-            </Avatar>
-          }
+          avatar={makeAvatar(count, "bg-[#01579B]! text-white! font-bold! text-xs!")}
           className="border-[#0288D1]! text-[#0288D1]! font-medium! text-sm! cursor-pointer!"
         />
       </span>
@@ -87,11 +83,7 @@ function CampaignsSummaryBadge({
         <Chip
           variant="outlined"
           label={STATUS_LABELS[status]}
-          avatar={
-            <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
-              {count}
-            </Avatar>
-          }
+          avatar={makeAvatar(count, "bg-[#1B5E20]! text-white! font-bold! text-xs!")}
           className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm! cursor-pointer!"
         />
       </span>
@@ -103,11 +95,7 @@ function CampaignsSummaryBadge({
       <Chip
         variant="outlined"
         label={STATUS_LABELS[status]}
-        avatar={
-          <Avatar className="bg-[#757575]! text-white! font-bold! text-xs!">
-            {count}
-          </Avatar>
-        }
+        avatar={makeAvatar(count, "bg-[#757575]! text-white! font-bold! text-xs!")}
         className="border-[#BDBDBD]! text-[#BDBDBD]! font-medium! text-sm! cursor-pointer!"
       />
     </span>
@@ -118,7 +106,6 @@ const columnHelper = createColumnHelper<MockUser>();
 
 const UsersTable = ({ initialData }: Props) => {
   const [search, setSearch] = useState("");
-  const [pendingStatus, setPendingStatus] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<MockUser | null>(null);
   const [statusTarget, setStatusTarget] = useState<MockUser | null>(null);
@@ -175,7 +162,7 @@ const UsersTable = ({ initialData }: Props) => {
               alt="Delete"
               width={20}
               height={20}
-              className="cursor-pointer"
+              className="cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
             />
           </span>
         ),
@@ -242,11 +229,11 @@ const UsersTable = ({ initialData }: Props) => {
                 </label>
                 <div className="flex items-center border border-gray-400 rounded-lg px-3 py-2.5">
                   <select
-                    value={pendingStatus}
-                    onChange={(e) => setPendingStatus(e.target.value)}
+                    value={statusFilter}
+                    onChange={(e) => setStatusFilter(e.target.value)}
                     className="w-full bg-transparent outline-none text-md text-gray-500 cursor-pointer appearance-none"
                   >
-                    <option value="">Application Status</option>
+                    <option value="">No Filter</option>
                     <option value="submitted">Submitted</option>
                     <option value="approved">Approved</option>
                     <option value="in_progress">In Progress</option>
@@ -254,12 +241,6 @@ const UsersTable = ({ initialData }: Props) => {
                   </select>
                 </div>
               </div>
-              <button
-                onClick={() => setStatusFilter(pendingStatus)}
-                className="text-gray-500 px-3 hover:text-gray-700 transition-colors cursor-pointer"
-              >
-                <FilterAltIcon />
-              </button>
             </div>
           </div>
         </div>
