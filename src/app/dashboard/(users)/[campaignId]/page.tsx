@@ -1,6 +1,7 @@
 "use client";
 
 import { SubmitEventHandler } from "react";
+import { notFound, useParams, useRouter } from "next/navigation";
 
 import {
   Accordion,
@@ -16,19 +17,14 @@ import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import PeopleAltOutlinedIcon from "@mui/icons-material/PeopleAltOutlined";
 import TrendingUpIcon from '@mui/icons-material/TrendingUp';
 import LogoutIcon from '@mui/icons-material/Logout';
+import { getCampaignById } from "../../sampleCampaigns";
 
-const MOCK_CAMPAIGN = {
-  campaign_id: 1,
-  name: "Save the Ocean",
-  status: "in_progress",
-  project_category: "Environment",
-  goal: 50000,
-  city: "Santa Monica",
-  state: "CA",
-  impact: 500,
-  raised: 10000,
-  donors: 12,
-  days_remaining: 23
+const MOCK_CAMPAIGN_STATS = {
+  1: { raised: 10000, donors: 12, daysRemaining: 23 },
+  2: { raised: 4200, donors: 8, daysRemaining: 16 },
+  3: { raised: 1095, donors: 41, daysRemaining: 0 },
+  4: { raised: 18340, donors: 27, daysRemaining: 11 },
+  5: { raised: 8700, donors: 19, daysRemaining: 31 },
 };
 
 const FAQ_DATA = [
@@ -39,13 +35,47 @@ const FAQ_DATA = [
 ];
 
 export default function CampaignOverviewPage() {
-  const campaign = MOCK_CAMPAIGN;
-  const progress = campaign.goal > 0 ? Math.min((campaign.raised / campaign.goal) * 100, 100) : 0;
+  const router = useRouter();
+  const { campaignId } = useParams<{ campaignId: string }>();
+  const selectedCampaignId = Number(campaignId);
+  const campaign = getCampaignById(selectedCampaignId);
+
+  if (!campaign) {
+    notFound();
+  }
+
+  const campaignStats =
+    MOCK_CAMPAIGN_STATS[selectedCampaignId as keyof typeof MOCK_CAMPAIGN_STATS] ?? {
+      raised: 0,
+      donors: 0,
+      daysRemaining: 0,
+    };
+
+  const progress =
+    campaign.goal > 0
+      ? Math.min((campaignStats.raised / campaign.goal) * 100, 100)
+      : 0;
 
   const handleSubmit: SubmitEventHandler<HTMLFormElement> = (e) => {
     e.preventDefault();
     console.log("Form submitted");
-  }
+  };
+
+  const handleTabChange = (tab: "Overview" | "Donors" | "Analytics") => {
+    const basePath = `/dashboard/${selectedCampaignId}`;
+
+    if (tab === "Donors") {
+      router.push(`${basePath}/donors`);
+      return;
+    }
+
+    if (tab === "Analytics") {
+      router.push(`${basePath}/analytics`);
+      return;
+    }
+
+    router.push(basePath);
+  };
 
   return (
     <div className="min-h-screen bg-[#f6faf9] p-8 font-lato text-slate-700">
@@ -59,9 +89,27 @@ export default function CampaignOverviewPage() {
 
       <div className="max-w-5xl mx-auto mb-4 flex flex-col gap-3">
         <div className="flex gap-5">
-          <button className="pb-1 px-3 border-b-2 border-[#1b76d2] text-[#1b76d2] font-bold text-sm hover:cursor-pointer">Overview</button>
-          <button className="pb-1 px-3 text-[#636464] font-bold text-sm hover:cursor-pointer">Donors</button>
-          <button className="pb-1 px-3 text-[#636464] font-bold text-sm hover:cursor-pointer">Analytics</button>
+          <button
+            type="button"
+            onClick={() => handleTabChange("Overview")}
+            className="pb-1 px-3 border-b-2 border-[#1b76d2] text-[#1b76d2] font-bold text-sm hover:cursor-pointer"
+          >
+            Overview
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange("Donors")}
+            className="pb-1 px-3 text-[#636464] font-bold text-sm hover:cursor-pointer"
+          >
+            Donors
+          </button>
+          <button
+            type="button"
+            onClick={() => handleTabChange("Analytics")}
+            className="pb-1 px-3 text-[#636464] font-bold text-sm hover:cursor-pointer"
+          >
+            Analytics
+          </button>
         </div>
         <div className="flex flex-wrap gap-3">
           <button className="bg-[#2c7a45] text-white px-4 py-2 rounded-md font-bold text-xs uppercase hover:bg-[#2d5a43] transition">
@@ -102,7 +150,7 @@ export default function CampaignOverviewPage() {
 
             <div className="flex justify-between items-end">
               <div>
-                <div className="text-3xl font-bold text-[#293140]">${campaign.raised.toLocaleString()}</div>
+                <div className="text-3xl font-bold text-[#293140]">${campaignStats.raised.toLocaleString()}</div>
                 <div className="text-sm text-[#6a7282] font-medium mt-1">
                   {Math.round(progress)}% of ${campaign.goal.toLocaleString()} goal
                 </div>
@@ -119,7 +167,7 @@ export default function CampaignOverviewPage() {
             <div className="bg-white p-6 rounded-xl border border-[#e5e5e5] border-[2px] flex justify-between">
               <div>
                 <span className="text-md text-[#3a3a3a]">Total Donors</span>
-                <div className="text-4xl font-bold text-[#0f1828] mt-2">{campaign.donors}</div>
+                <div className="text-4xl font-bold text-[#0f1828] mt-2">{campaignStats.donors}</div>
                 <div className="text-sm text-[#6a7282] font-medium">Donors</div>
               </div>
               <div className="flex flex-col items-end justify-between">
@@ -133,7 +181,7 @@ export default function CampaignOverviewPage() {
             <div className="bg-white p-6 rounded-xl border border-[#e5e5e5] border-[2px] flex justify-between">
               <div>
                 <span className="text-md text-[#3a3a3a]">Days Remaining</span>
-                <div className="text-4xl font-bold text-[#0f1828] mt-2">{campaign.days_remaining}</div>
+                <div className="text-4xl font-bold text-[#0f1828] mt-2">{campaignStats.daysRemaining}</div>
                 <div className="text-sm text-[#6a7282] font-medium">days until campaign ends</div>
               </div>
               <TrendingUpIcon className="!text-[#666666] !text-3xl" />
@@ -215,5 +263,5 @@ export default function CampaignOverviewPage() {
       </main>
 
     </div>
-  )
+  );
 }
