@@ -109,6 +109,10 @@ function ReviewBanner({
   );
 }
 
+function formatCountry(value: string) {
+  return value === "US" ? "United States" : value;
+}
+
 export default function ReviewSubmitPage() {
   const { form, setCurrentStep } = useApplicationForm();
   const values = form.state.values;
@@ -262,7 +266,11 @@ export default function ReviewSubmitPage() {
 
         <ValueRow label="City" value={values.gardenCity} required />
         <ValueRow label="State / Province" value={values.gardenState} required />
-        <ValueRow label="Country" value={values.gardenCountry} required />
+        <ValueRow
+          label="Country"
+          value={formatCountry(values.gardenCountry)}
+          required
+        />
       </div>
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-2">
@@ -410,7 +418,7 @@ export default function ReviewSubmitPage() {
         <ValueRow label="ZIP / Postal Code" value={values.mailingZip} required />
         <ValueRow
           label="Country"
-          value={values.mailingCountry === "US" ? "United States" : values.mailingCountry}
+          value={formatCountry(values.mailingCountry)}
           required
         />
       </div>

@@ -53,7 +53,7 @@ const INITIAL_FORM_VALUES: ApplicationFormData = {
   fundraisingGoal: "",
   gardenCity: "",
   gardenState: "",
-  gardenCountry: "United States",
+  gardenCountry: "US",
   gardenCategory: "",
   gardenBeneficiaries: [],
   storyLocationAndAudience: "",
