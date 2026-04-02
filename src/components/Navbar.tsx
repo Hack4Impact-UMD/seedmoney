@@ -17,6 +17,10 @@ import { createBrowserClient } from "@/src/lib/supabase-client";
 import { usePathname, useRouter } from "next/navigation";
 import moment from "moment";
 import type { Campaign } from "@/src/types/db/campaigns";
+import { useAuth } from "@/src/context/AuthProvider";
+import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
+
+
 
 type SidebarProps = {
   campaigns: Campaign[];
@@ -30,12 +34,10 @@ export default function Navbar({
   onCampaignSelect,
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
-
+  const { user } = useAuth();
+  const { data: userData} = useUserByAuthId(user?.id || "");
   const router = useRouter();
   const pathname = usePathname();
-
-  
-  
 
   const handleCampaignClick = (id: number) => {
     onCampaignSelect(id);
@@ -85,6 +87,7 @@ export default function Navbar({
 
     return { currentYearCampaigns, previousCampaigns };
   }, [campaigns, currentYear]);
+  const isAdmin = userData?.is_admin ?? false;
 
   const getItemClasses = (isSelected: boolean) =>
     clsx(
@@ -126,9 +129,11 @@ export default function Navbar({
           {!isCollapsed && (
             <div className="min-w-0">
               <h6 className="text-xl font-bold leading-[1.3] text-white">
-                John Doe
+                {userData?.first_name ?? "SeedMoney"}
               </h6>
-              <p className="text-sm text-white/80">Campaign Leader</p>
+              <p className="text-sm text-white/80">
+                {userData ? (isAdmin ? "Admin" : "Campaign Leader") : "Loading profile"}
+              </p>
             </div>
           )}
         </div>
@@ -147,81 +152,30 @@ export default function Navbar({
         )}
       </IconButton>
 
-      <div className="scrollbar-hide mt-5 flex flex-1 flex-col overflow-y-auto overscroll-contain">
-        {currentYearCampaigns.length > 0 && (
-          <>
-            {!isCollapsed && (
-              <div className="mb-2 h-7 px-6 text-[13px] font-normal tracking-[1px] text-white">
-                {currentYear} Campaigns
-              </div>
-            )}
-
-            <List disablePadding>
-              {currentYearCampaigns.map((campaign) => {
-                const isSelected = !isViewAllSelected && campaign.campaign_id === selectedCampaignId;
-
-                return (
-                  <ListItemButton
-                    key={campaign.campaign_id}
-                    onClick={() => handleCampaignClick(campaign.campaign_id)}
-                    className={getItemClasses(isSelected)}
-                  >
-                    {isCollapsed ? (
-                      <div
-                        className={clsx(
-                          "h-3 w-3 rounded-full",
-                          isSelected ? "bg-white" : "bg-gray-200/50",
-                        )}
-                      />
-                    ) : (
-                      <ListItemText
-                        primary={campaign.name}
-                        slotProps={{
-                          primary: {
-                            className:
-                              "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
-                          },
-                        }}
-                      />
-                    )}
-                  </ListItemButton>
-                );
-              })}
-            </List>
-          </>
-        )}
-
-        {previousCampaigns.length > 0 && !isCollapsed && (
-          <div className="mb-2 mt-4 h-7 px-6 text-[13px] font-normal tracking-[1px] text-white/70">
-            Previous Campaigns
-          </div>
-        )}
-
-        {previousCampaigns.length > 0 && (
+      {userData && isAdmin && (
+        <div className="scrollbar-hide mt-5 flex flex-1 flex-col overflow-y-auto overscroll-contain">
           <List disablePadding>
-            {previousCampaigns.map((campaign) => {
-              const isSelected = !isViewAllSelected && campaign.campaign_id === selectedCampaignId;
-
+            {[
+              { label: "Home", path: "/dashboard" },
+              { label: "Ongoing Campaigns", path: "/dashboard/ongoing-campaigns" },
+              { label: "Review Applications", path: "/dashboard/review-applications" },
+              { label: "List of Users", path: "/dashboard/users" },
+            ].map(({ label, path }) => {
+              const isSelected = pathname === path;
               return (
                 <ListItemButton
-                  key={campaign.campaign_id}
-                  onClick={() => handleCampaignClick(campaign.campaign_id)}
+                  key={path}
+                  onClick={() => router.push(path)}
                   className={getItemClasses(isSelected)}
                 >
                   {isCollapsed ? (
-                    <div
-                      className={clsx(
-                        "h-3 w-3 rounded-full",
-                        isSelected ? "bg-white" : "bg-gray-200/50",
-                      )}
-                    />
+                    <div className={clsx("h-3 w-3 rounded-full", isSelected ? "bg-white" : "bg-gray-200/50")} />
                   ) : (
                     <ListItemText
-                      primary={campaign.name}
+                      primary={label}
                       slotProps={{
                         primary: {
-                          className:
-                            "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
+                          className: "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
                         },
                       }}
                     />
@@ -230,70 +184,172 @@ export default function Navbar({
               );
             })}
           </List>
-        )}
 
-        <List disablePadding>
-          <ListItemButton
-            onClick={() => router.push("/dashboard/view-all")}
-            aria-label="View all campaigns"
-            className={clsx(getItemClasses(isViewAllSelected), "mt-2")}
-          >
-            {isCollapsed ? (
-              <div
-                className={clsx(
-                  "h-3 w-3 rounded-full",
-                  isViewAllSelected ? "bg-white" : "bg-gray-200/50",
+          <div className="mt-auto flex flex-col gap-3 px-4 pb-6">
+            <Button onClick={handleSettings} size="medium" variant="text" className="!flex !justify-start !text-white">
+              <SettingsIcon className="!text-[28px]" />
+              {!isCollapsed && <span className="ml-2">SETTINGS</span>}
+            </Button>
+            <Button onClick={handleLogout} size="medium" variant="text" className="!flex !justify-start !text-white">
+              <LogoutIcon className="!text-[28px]" />
+              {!isCollapsed && <span className="ml-2">LOG OUT</span>}
+            </Button>
+          </div>
+        </div>
+      )}
+      {userData && !isAdmin && (
+        <>
+          <div className="scrollbar-hide mt-5 flex flex-1 flex-col overflow-y-auto overscroll-contain">
+            {currentYearCampaigns.length > 0 && (
+              <>
+                {!isCollapsed && (
+                  <div className="mb-2 h-7 px-6 text-[13px] font-normal tracking-[1px] text-white">
+                    {currentYear} Campaigns
+                  </div>
                 )}
-              />
-            ) : (
-              <ListItemText
-                primary="View all"
-                slotProps={{
-                  primary: {
-                    className:
-                      "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
-                  },
-                }}
-              />
+
+                <List disablePadding>
+                  {currentYearCampaigns.map((campaign) => {
+                    const isSelected = !isViewAllSelected && campaign.campaign_id === selectedCampaignId;
+
+                    return (
+                      <ListItemButton
+                        key={campaign.campaign_id}
+                        onClick={() => handleCampaignClick(campaign.campaign_id)}
+                        className={getItemClasses(isSelected)}
+                      >
+                        {isCollapsed ? (
+                          <div
+                            className={clsx(
+                              "h-3 w-3 rounded-full",
+                              isSelected ? "bg-white" : "bg-gray-200/50",
+                            )}
+                          />
+                        ) : (
+                          <ListItemText
+                            primary={campaign.name}
+                            slotProps={{
+                              primary: {
+                                className:
+                                  "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
+                              },
+                            }}
+                          />
+                        )}
+                      </ListItemButton>
+                    );
+                  })}
+                </List>
+              </>
             )}
-          </ListItemButton>
-        </List>
-      </div>
 
-      <div className="flex flex-col gap-3 px-4 pb-6">
-        <Button
-          size="large"
-          variant="outlined"
-          startIcon={!isCollapsed && <AddIcon />}
-          onClick={handleNewCampaign}
-          fullWidth
-          className="hover:!bg-gray-100"
-        >
-          {isCollapsed ? <AddIcon /> : "New Campaign"}
-        </Button>
+            {previousCampaigns.length > 0 && !isCollapsed && (
+              <div className="mb-2 mt-4 h-7 px-6 text-[13px] font-normal tracking-[1px] text-white/70">
+                Previous Campaigns
+              </div>
+            )}
 
-        <Button
-          onClick={handleSettings}
-          size="medium"
-          variant="text"
-          aria-label="Settings"
-          className="!flex !justify-start !text-white"
-        >
-          <SettingsIcon className="!text-[28px]" />
-          {!isCollapsed && <span className="ml-2">SETTINGS</span>}
-        </Button>
+            {previousCampaigns.length > 0 && (
+              <List disablePadding>
+                {previousCampaigns.map((campaign) => {
+                  const isSelected = !isViewAllSelected && campaign.campaign_id === selectedCampaignId;
 
-        <Button
-          onClick={handleLogout}
-          size="medium"
-          variant="text"
-          aria-label="Logout"
-          className="!flex !justify-start !text-white"
-        >
-          <LogoutIcon className="!text-[28px]" />
-          {!isCollapsed && <span className="ml-2">LOG OUT</span>}
-        </Button>
-      </div>
+                  return (
+                    <ListItemButton
+                      key={campaign.campaign_id}
+                      onClick={() => handleCampaignClick(campaign.campaign_id)}
+                      className={getItemClasses(isSelected)}
+                    >
+                      {isCollapsed ? (
+                        <div
+                          className={clsx(
+                            "h-3 w-3 rounded-full",
+                            isSelected ? "bg-white" : "bg-gray-200/50",
+                          )}
+                        />
+                      ) : (
+                        <ListItemText
+                          primary={campaign.name}
+                          slotProps={{
+                            primary: {
+                              className:
+                                "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
+                            },
+                          }}
+                        />
+                      )}
+                    </ListItemButton>
+                  );
+                })}
+              </List>
+            )}
+
+            <List disablePadding>
+              <ListItemButton
+                onClick={() => router.push("/dashboard/view-all")}
+                aria-label="View all campaigns"
+                className={clsx(getItemClasses(isViewAllSelected), "mt-2")}
+              >
+                {isCollapsed ? (
+                  <div
+                    className={clsx(
+                      "h-3 w-3 rounded-full",
+                      isViewAllSelected ? "bg-white" : "bg-gray-200/50",
+                    )}
+                  />
+                ) : (
+                  <ListItemText
+                    primary="View all"
+                    slotProps={{
+                      primary: {
+                        className:
+                          "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
+                      },
+                    }}
+                  />
+                )}
+              </ListItemButton>
+            </List>
+          </div>
+
+          <div className="flex flex-col gap-3 px-4 pb-6">
+            <Button
+              size="large"
+              variant="outlined"
+              startIcon={!isCollapsed && <AddIcon />}
+              onClick={handleNewCampaign}
+              fullWidth
+              className="hover:!bg-gray-100"
+            >
+              {isCollapsed ? <AddIcon /> : "New Campaign"}
+            </Button>
+
+            <Button
+              onClick={handleSettings}
+              size="medium"
+              variant="text"
+              aria-label="Settings"
+              className="!flex !justify-start !text-white"
+            >
+              <SettingsIcon className="!text-[28px]" />
+              {!isCollapsed && <span className="ml-2">SETTINGS</span>}
+            </Button>
+
+            <Button
+              onClick={handleLogout}
+              size="medium"
+              variant="text"
+              aria-label="Logout"
+              className="!flex !justify-start !text-white"
+            >
+              <LogoutIcon className="!text-[28px]" />
+              {!isCollapsed && <span className="ml-2">LOG OUT</span>}
+            </Button>
+          </div>
+        </>
+        
+      )}
+
     </nav>
   );
 }

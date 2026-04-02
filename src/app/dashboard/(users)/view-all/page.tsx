@@ -3,10 +3,14 @@
 import { useRouter } from "next/navigation";
 import CampaignsTable from "@/src/components/CampaignsTable";
 import Navbar from "@/src/components/Navbar";
-import { sampleCampaigns } from "../sampleCampaigns";
+import { sampleCampaigns } from "../../sampleCampaigns";
+import { useAuth } from "@/src/context/AuthProvider";
 
 export default function ViewAllCampaignsPage() {
   const router = useRouter();
+  const { user } = useAuth();
+
+  if (!user) return null;
 
   const mockCampaignData = [
     {
