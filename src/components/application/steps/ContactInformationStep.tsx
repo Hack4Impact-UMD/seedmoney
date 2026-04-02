@@ -222,15 +222,18 @@ export default function ContactInformationStep() {
         <form.Field name="mailingCountry">
           {(field) => (
             <TextField
-              select
+              label="Country"
               variant="standard"
               fullWidth
+              name="mailingCountry"
+              autoComplete="country-name"
               value={field.state.value}
+              onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
-              SelectProps={{ displayEmpty: true }}
-            >
-              <MenuItem value="US">United States</MenuItem>
-            </TextField>
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
+            />
           )}
         </form.Field>
       </div>
