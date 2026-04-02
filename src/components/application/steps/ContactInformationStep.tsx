@@ -107,8 +107,14 @@ export default function ContactInformationStep() {
               variant="standard"
               label="Legal Name of Beneficiary Organization*"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="organizationName"
+              autoComplete="organization"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -119,8 +125,13 @@ export default function ContactInformationStep() {
               variant="standard"
               label="EIN or Public-Sector Identifier*"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="organizationIdentifier"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -139,8 +150,14 @@ export default function ContactInformationStep() {
               variant="standard"
               label="Street 1"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="mailingStreet1"
+              autoComplete="address-line1"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -151,8 +168,14 @@ export default function ContactInformationStep() {
               variant="standard"
               label="Street 2"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="mailingStreet2"
+              autoComplete="address-line2"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -163,8 +186,14 @@ export default function ContactInformationStep() {
               variant="standard"
               label="City*"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="mailingCity"
+              autoComplete="address-level2"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -209,8 +238,14 @@ export default function ContactInformationStep() {
               variant="standard"
               label="ZIP/Postal Code*"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="mailingZip"
+              autoComplete="postal-code"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -244,8 +279,14 @@ export default function ContactInformationStep() {
               variant="standard"
               label="First Name*"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="contactFirstName"
+              autoComplete="given-name"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -256,8 +297,14 @@ export default function ContactInformationStep() {
               variant="standard"
               label="Last Name*"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="contactLastName"
+              autoComplete="family-name"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -268,8 +315,14 @@ export default function ContactInformationStep() {
               variant="standard"
               label="Email*"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="contactEmail"
+              autoComplete="email"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -280,8 +333,14 @@ export default function ContactInformationStep() {
               variant="standard"
               label="Role or Title"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="contactRole"
+              autoComplete="organization-title"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
