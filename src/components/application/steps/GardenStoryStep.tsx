@@ -50,8 +50,13 @@ export default function GardenStoryStep() {
               variant="standard"
               label="Where is your garden, and who does it serve?"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="storyLocationAndAudience"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -62,8 +67,13 @@ export default function GardenStoryStep() {
               variant="standard"
               label="What challenge does your garden help address, and why does it matter locally?"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="storyChallenge"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -74,8 +84,13 @@ export default function GardenStoryStep() {
               variant="standard"
               label="What happens in the garden during the growing season?"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="storySeasonActivity"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -86,8 +101,13 @@ export default function GardenStoryStep() {
               variant="standard"
               label="What will this year’s SeedMoney campaign make possible?"
               fullWidth
-              defaultValue={field.state.value}
-              onBlur={(e) => field.handleChange(e.target.value)}
+              name="storyCampaignImpact"
+              value={field.state.value}
+              onBlur={field.handleBlur}
+              onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>

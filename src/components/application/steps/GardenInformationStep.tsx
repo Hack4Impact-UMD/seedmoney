@@ -86,9 +86,14 @@ export default function GardenInformationStep() {
               label="City"
               variant="standard"
               fullWidth
+              name="gardenCity"
+              autoComplete="address-level2"
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -99,9 +104,14 @@ export default function GardenInformationStep() {
               label="State / Province"
               variant="standard"
               fullWidth
+              name="gardenState"
+              autoComplete="address-level1"
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -112,9 +122,14 @@ export default function GardenInformationStep() {
               label="Country"
               variant="standard"
               fullWidth
+              name="gardenCountry"
+              autoComplete="country-name"
               value={field.state.value}
               onBlur={field.handleBlur}
               onChange={(e) => field.handleChange(e.target.value)}
+              onInput={(e) =>
+                field.handleChange((e.target as HTMLInputElement).value)
+              }
             />
           )}
         </form.Field>
@@ -166,9 +181,13 @@ export default function GardenInformationStep() {
               {isOtherCategorySelected && (
                 <input
                   type="text"
+                  name="gardenCategoryOther"
                   placeholder="Please specify"
                   value={field.state.value}
                   onChange={(e) => field.handleChange(e.target.value)}
+                  onInput={(e) =>
+                    field.handleChange((e.target as HTMLInputElement).value)
+                  }
                   className="mt-2 p-2 border border-gray-300 rounded-md text-sm"
                 />
               )}
@@ -250,6 +269,7 @@ export default function GardenInformationStep() {
                 {isOtherBeneficiarySelected && (
                   <input
                     type="text"
+                    name="gardenBeneficiariesOther"
                     placeholder="Please specify"
                     value={
                       field.state.value.find(
