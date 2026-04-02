@@ -1,4 +1,5 @@
 import Image from "next/image";
+import Link from "next/link";
 import { Button } from "@mui/material";
 import Footer from "@/src/components/Footer";
 
@@ -30,7 +31,12 @@ export default function ApplyPage() {
           </p>
         </div>
         <div className="mt-6">
-          <Button href="/apply/terms" variant="contained" size="medium">
+          <Button
+            component={Link}
+            href="/apply/terms"
+            variant="contained"
+            size="medium"
+          >
             Start Application
           </Button>
         </div>

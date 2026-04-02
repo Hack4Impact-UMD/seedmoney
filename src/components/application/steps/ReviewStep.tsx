@@ -445,7 +445,8 @@ export default function ReviewSubmitPage() {
         </Button>
 
         <Button
-          href="/apply/submit"
+          component={canSubmit ? Link : "button"}
+          href={canSubmit ? "/apply/submit" : undefined}
           variant={canSubmit ? "contained" : "text"}
           className={canSubmit ? "!px-4" : "!bg-[#E0E0E0] !px-4"}
           size="medium"
