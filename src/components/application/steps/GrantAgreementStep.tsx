@@ -2,9 +2,10 @@
 
 import { Checkbox, FormControlLabel } from "@mui/material";
 import { Button } from "@mui/material";
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef } from "react";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
 
 const checkboxStyle = {
   color: "#1976D2",
@@ -13,23 +14,14 @@ const checkboxStyle = {
   },
 };
 
-const items = [
-  "I am not seeking to raise funds for personal use or a personal garden. Funds must benefit a nonprofit or community-serving garden project.*",
-  "I am applying on behalf of a nonprofit or community-based organization that can document its nonprofit or public-service status.*",
-  "I understand SeedMoney cannot send funds to personal accounts or via informal transfer services.*",
-  "I understand international projects must raise at least $50 to be eligible for electronic transfers.*",
-  "I understand SeedMoney may request a brief progress report if my project receives funding.*",
-  "I authorize SeedMoney to reuse submitted text and photos for educational or promotional purposes.*",
-  "I certify that the information provided is accurate and complete.*",
-  "PLACEHOLDER FOR THE AI POLICY",
-];
-
 export default function GrantAgreementStep() {
-  const { setCurrentStep, updateStepStatus } = useApplicationForm();
-  const [checked, setChecked] = useState<boolean[]>(() =>
-    items.map(() => false),
-  );
-  const allChecked = checked.every(Boolean);
+  const {
+    agreementSelections,
+    setAgreementSelections,
+    setCurrentStep,
+    updateStepStatus,
+  } = useApplicationForm();
+  const allChecked = agreementSelections.every(Boolean);
   const allCheckedRef = useRef(allChecked);
 
   useEffect(() => {
@@ -48,7 +40,11 @@ export default function GrantAgreementStep() {
   }, [setCurrentStep, updateStepStatus]);
 
   const toggle = (index: number) => {
-    setChecked((prev) => prev.map((v, i) => (i === index ? !v : v)));
+    setAgreementSelections((prev) =>
+      prev.map((value, currentIndex) =>
+        currentIndex === index ? !value : value,
+      ),
+    );
   };
 
   return (
@@ -71,13 +67,13 @@ export default function GrantAgreementStep() {
           I confirm that:
         </p>
 
-        {items.map((label, i) => (
+        {GRANT_AGREEMENT_ITEMS.map((label, i) => (
           <FormControlLabel
             key={i}
             control={
               <Checkbox
                 sx={checkboxStyle}
-                checked={checked[i]}
+                checked={agreementSelections[i]}
                 onChange={() => toggle(i)}
               />
             }

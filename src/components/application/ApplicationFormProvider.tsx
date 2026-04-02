@@ -32,9 +32,16 @@
 
 "use client";
 
-import { createContext, useContext, ReactNode } from "react";
+import {
+  createContext,
+  useContext,
+  ReactNode,
+  SetStateAction,
+  useState,
+} from "react";
 import { useForm } from "@tanstack/react-form";
 import { Step, StepStatus, ApplicationFormData } from "@/src/types/form";
+import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
 
 const INITIAL_STEPS: Step[] = [
   { label: "Grantee Agreement", status: "current" },
@@ -87,6 +94,8 @@ type ApplicationFormApi = ReturnType<typeof useApplicationFormState>;
 
 interface ApplicationFormContextValue {
   form: ApplicationFormApi;
+  agreementSelections: boolean[];
+  setAgreementSelections: (value: SetStateAction<boolean[]>) => void;
   updateStepStatus: (label: string, newStatus: StepStatus) => void;
   setCurrentStep: (label: string) => void;
 }
@@ -100,6 +109,9 @@ export const ApplicationFormProvider = ({
   children: ReactNode;
 }) => {
   const form = useApplicationFormState();
+  const [agreementSelections, setAgreementSelections] = useState<boolean[]>(() =>
+    GRANT_AGREEMENT_ITEMS.map(() => false),
+  );
 
   const updateStepStatus = (label: string, newStatus: StepStatus) => {
     const currentSteps = form.getFieldValue("steps");
@@ -143,7 +155,13 @@ export const ApplicationFormProvider = ({
 
   return (
     <ApplicationFormContext.Provider
-      value={{ form, updateStepStatus, setCurrentStep }}
+      value={{
+        form,
+        agreementSelections,
+        setAgreementSelections,
+        updateStepStatus,
+        setCurrentStep,
+      }}
     >
       {children}
     </ApplicationFormContext.Provider>
