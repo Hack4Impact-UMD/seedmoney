@@ -25,8 +25,6 @@ export interface ApplicationFormData {
   contactLastName: string;
   contactEmail: string;
   contactRole: string;
-
-  steps: Step[];
 }
 
 export type StepStatus = "completed" | "current" | "review" | "unvisited";

@@ -2,32 +2,68 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { useApplicationForm } from "./ApplicationFormProvider";
+import { usePathname } from "next/navigation";
+import { useAgreementSelections, useApplicationForm } from "./ApplicationFormProvider";
 import { StepStatus } from "@/src/types/form";
-
-const stepHrefMap: Record<string, string> = {
-  "Grantee Agreement": "/apply/terms",
-  "Campaign Information": "/apply/campaign",
-  "Garden Information": "/apply/garden",
-  "Garden Story": "/apply/story",
-  "Contact Information": "/apply/contact",
-  "Review & Submit": "/apply/review",
-};
+import {
+  APPLICATION_STEPS,
+  getApplicationCompletionState,
+  getDerivedApplicationSteps,
+} from "./applicationStepState";
 
 export default function ApplicationSidebar() {
   const form = useApplicationForm();
+  const { agreementSelections } = useAgreementSelections();
+  const pathname = usePathname();
 
   return (
     <div className="flex flex-col gap-4 w-[260px] mt-20">
-      {/* 1. Wrap the list in form.Subscribe to listen for changes */}
-      <form.Subscribe selector={(state) => state.values.steps}>
-        {(steps) => (
+      <form.Subscribe
+        selector={(state) => ({
+          campaignTitle: state.values.campaignTitle,
+          beneficiaryCount: state.values.beneficiaryCount,
+          gardenSize: state.values.gardenSize,
+          gardenStatus: state.values.gardenStatus,
+          fundraisingGoal: state.values.fundraisingGoal,
+          gardenCity: state.values.gardenCity,
+          gardenState: state.values.gardenState,
+          gardenCountry: state.values.gardenCountry,
+          gardenCategory: state.values.gardenCategory,
+          gardenBeneficiaries: state.values.gardenBeneficiaries,
+          storyLocationAndAudience: state.values.storyLocationAndAudience,
+          storyChallenge: state.values.storyChallenge,
+          storySeasonActivity: state.values.storySeasonActivity,
+          storyCampaignImpact: state.values.storyCampaignImpact,
+          organizationName: state.values.organizationName,
+          organizationIdentifier: state.values.organizationIdentifier,
+          mailingStreet1: state.values.mailingStreet1,
+          mailingStreet2: state.values.mailingStreet2,
+          mailingCity: state.values.mailingCity,
+          mailingState: state.values.mailingState,
+          mailingZip: state.values.mailingZip,
+          mailingCountry: state.values.mailingCountry,
+          contactFirstName: state.values.contactFirstName,
+          contactLastName: state.values.contactLastName,
+          contactEmail: state.values.contactEmail,
+          contactRole: state.values.contactRole,
+        })}
+      >
+        {(values) => {
+          const steps = getDerivedApplicationSteps(
+            pathname,
+            values,
+            agreementSelections,
+          );
+          const { agreementComplete } = getApplicationCompletionState(
+            values,
+            agreementSelections,
+          );
+
+          return (
           <>
             {steps?.map((step, i) => {
-              const agreementCompleted =
-                steps[0]?.status === "completed";
               const canNavigate =
-                step.label === "Grantee Agreement" || agreementCompleted;
+                step.label === "Grantee Agreement" || agreementComplete;
               const content = (
                 <div
                   className={`flex items-start gap-3 ${
@@ -67,13 +103,14 @@ export default function ApplicationSidebar() {
               }
 
               return (
-                <Link key={step.label} href={stepHrefMap[step.label]}>
+                <Link key={step.label} href={APPLICATION_STEPS[i].href}>
                   {content}
                 </Link>
               );
             })}
           </>
-        )}
+          );
+        }}
       </form.Subscribe>
 
       {/* autosave indicator */}

@@ -35,24 +35,14 @@
 import {
   createContext,
   useContext,
-  useCallback,
   useMemo,
   ReactNode,
   SetStateAction,
   useState,
 } from "react";
 import { useForm } from "@tanstack/react-form";
-import { Step, StepStatus, ApplicationFormData } from "@/src/types/form";
+import { ApplicationFormData } from "@/src/types/form";
 import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
-
-const INITIAL_STEPS: Step[] = [
-  { label: "Grantee Agreement", status: "current" },
-  { label: "Campaign Information", status: "unvisited" },
-  { label: "Garden Information", status: "unvisited" },
-  { label: "Garden Story", status: "unvisited" },
-  { label: "Contact Information", status: "unvisited" },
-  { label: "Review & Submit", status: "unvisited" },
-];
 
 const INITIAL_FORM_VALUES: ApplicationFormData = {
   campaignTitle: "",
@@ -81,7 +71,6 @@ const INITIAL_FORM_VALUES: ApplicationFormData = {
   contactLastName: "",
   contactEmail: "",
   contactRole: "",
-  steps: INITIAL_STEPS,
 };
 
 const useApplicationFormState = () =>
@@ -99,16 +88,9 @@ interface AgreementSelectionsContextValue {
   setAgreementSelections: (value: SetStateAction<boolean[]>) => void;
 }
 
-interface ApplicationStepContextValue {
-  updateStepStatus: (label: string, newStatus: StepStatus) => void;
-  setCurrentStep: (label: string) => void;
-}
-
 const ApplicationFormContext = createContext<ApplicationFormApi | null>(null);
 const AgreementSelectionsContext =
   createContext<AgreementSelectionsContextValue | null>(null);
-const ApplicationStepContext =
-  createContext<ApplicationStepContextValue | null>(null);
 
 export const ApplicationFormProvider = ({
   children,
@@ -120,46 +102,6 @@ export const ApplicationFormProvider = ({
     GRANT_AGREEMENT_ITEMS.map(() => false),
   );
 
-  const updateStepStatus = useCallback((label: string, newStatus: StepStatus) => {
-    const currentSteps = form.getFieldValue("steps");
-
-    const updatedSteps: Step[] = currentSteps.map((step) =>
-      step.label === label ? { ...step, status: newStatus } : step,
-    );
-
-    form.setFieldValue("steps", updatedSteps);
-  }, [form]);
-
-  const setCurrentStep = useCallback((label: string) => {
-    const currentSteps = form.getFieldValue("steps");
-    const targetIndex = currentSteps.findIndex((step) => step.label === label);
-
-    if (targetIndex === -1) {
-      return;
-    }
-
-    const updatedSteps: Step[] = currentSteps.map((step, index) => {
-      if (index < targetIndex) {
-        return {
-          ...step,
-          status: step.status === "completed" ? "completed" : "review",
-        };
-      }
-
-      if (index === targetIndex) {
-        return { ...step, status: "current" };
-      }
-
-      if (step.status === "current") {
-        return { ...step, status: "unvisited" };
-      }
-
-      return step;
-    });
-
-    form.setFieldValue("steps", updatedSteps);
-  }, [form]);
-
   const agreementSelectionsValue = useMemo(
     () => ({
       agreementSelections,
@@ -168,20 +110,10 @@ export const ApplicationFormProvider = ({
     [agreementSelections],
   );
 
-  const applicationStepValue = useMemo(
-    () => ({
-      updateStepStatus,
-      setCurrentStep,
-    }),
-    [updateStepStatus, setCurrentStep],
-  );
-
   return (
     <ApplicationFormContext.Provider value={form}>
       <AgreementSelectionsContext.Provider value={agreementSelectionsValue}>
-        <ApplicationStepContext.Provider value={applicationStepValue}>
-          {children}
-        </ApplicationStepContext.Provider>
+        {children}
       </AgreementSelectionsContext.Provider>
     </ApplicationFormContext.Provider>
   );
@@ -202,16 +134,6 @@ export const useAgreementSelections = () => {
   if (!context) {
     throw new Error(
       "useAgreementSelections must be used within an ApplicationFormProvider",
-    );
-  }
-  return context;
-};
-
-export const useApplicationStepNavigation = () => {
-  const context = useContext(ApplicationStepContext);
-  if (!context) {
-    throw new Error(
-      "useApplicationStepNavigation must be used within an ApplicationFormProvider",
     );
   }
   return context;

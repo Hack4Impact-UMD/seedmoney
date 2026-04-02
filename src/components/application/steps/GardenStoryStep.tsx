@@ -3,36 +3,10 @@ import Image from "next/image";
 import { Button } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import Link from "next/link";
-import { useEffect } from "react";
-import {
-  useApplicationForm,
-  useApplicationStepNavigation,
-} from "@/src/components/application/ApplicationFormProvider";
+import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 
 export default function GardenStoryStep() {
   const form = useApplicationForm();
-  const { setCurrentStep, updateStepStatus } = useApplicationStepNavigation();
-
-  useEffect(() => {
-    const computeIsComplete = () => {
-      const values = form.getFieldValue;
-      return (
-        values("storyLocationAndAudience").trim().length > 0 &&
-        values("storyChallenge").trim().length > 0 &&
-        values("storySeasonActivity").trim().length > 0 &&
-        values("storyCampaignImpact").trim().length > 0
-      );
-    };
-
-    setCurrentStep("Garden Story");
-
-    return () => {
-      updateStepStatus(
-        "Garden Story",
-        computeIsComplete() ? "completed" : "review",
-      );
-    };
-  }, [form, setCurrentStep, updateStepStatus]);
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">

@@ -4,10 +4,10 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@mui/material";
 import {
+  useAgreementSelections,
   useApplicationForm,
-  useApplicationStepNavigation,
 } from "@/src/components/application/ApplicationFormProvider";
-import { useEffect } from "react";
+import { getApplicationCompletionState } from "@/src/components/application/applicationStepState";
 
 const stateNames: Record<string, string> = {
   AL: "Alabama",
@@ -118,46 +118,16 @@ function formatCountry(value: string) {
 
 export default function ReviewSubmitPage() {
   const form = useApplicationForm();
-  const { setCurrentStep } = useApplicationStepNavigation();
+  const { agreementSelections } = useAgreementSelections();
   const values = form.state.values;
-
-  const campaignComplete =
-    values.campaignTitle?.trim().length > 0 &&
-    values.fundraisingGoal?.trim().length > 0 &&
-    values.beneficiaryCount?.trim().length > 0 &&
-    values.gardenStatus?.trim().length > 0;
-
-  const gardenComplete =
-    values.gardenCity.trim().length > 0 &&
-    values.gardenState.trim().length > 0 &&
-    values.gardenCountry.trim().length > 0 &&
-    values.gardenCategory.trim().length > 0 &&
-    values.gardenBeneficiaries.length > 0;
-
-  const storyComplete =
-    values.storyLocationAndAudience.trim().length > 0 &&
-    values.storyChallenge.trim().length > 0 &&
-    values.storySeasonActivity.trim().length > 0 &&
-    values.storyCampaignImpact.trim().length > 0;
-
-  const contactComplete =
-    values.organizationName.trim().length > 0 &&
-    values.organizationIdentifier.trim().length > 0 &&
-    values.mailingStreet1.trim().length > 0 &&
-    values.mailingCity.trim().length > 0 &&
-    values.mailingState.trim().length > 0 &&
-    values.mailingZip.trim().length > 0 &&
-    values.mailingCountry.trim().length > 0 &&
-    values.contactFirstName.trim().length > 0 &&
-    values.contactLastName.trim().length > 0 &&
-    values.contactEmail.trim().length > 0;
-
-  const canSubmit =
-    values.steps?.slice(0, values.steps.length - 1).every((step) => step.status === "completed");
-
-  useEffect(() => {
-    setCurrentStep("Review & Submit");
-  }, [setCurrentStep]);
+  const {
+    campaignComplete,
+    gardenComplete,
+    storyComplete,
+    contactComplete,
+    reviewComplete,
+  } = getApplicationCompletionState(values, agreementSelections);
+  const canSubmit = reviewComplete;
 
   return (
     <div className="w-[700px] flex flex-col gap-6 pb-20 m-15">

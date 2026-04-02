@@ -3,11 +3,7 @@
 import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
 import Link from "next/link";
-import { useEffect } from "react";
-import {
-  useApplicationForm,
-  useApplicationStepNavigation,
-} from "@/src/components/application/ApplicationFormProvider";
+import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import { useState } from "react";
 
 const categoryOptions = [
@@ -46,31 +42,8 @@ const beneficiaryOptions = [
 
 export default function GardenInformationStep() {
   const form = useApplicationForm();
-  const { setCurrentStep, updateStepStatus } = useApplicationStepNavigation();
   const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(false);
   const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] = useState(false);
-
-  useEffect(() => {
-    const computeIsComplete = () => {
-      const values = form.getFieldValue;
-      return (
-        values("gardenCity").trim().length > 0 &&
-        values("gardenState").trim().length > 0 &&
-        values("gardenCountry").trim().length > 0 &&
-        values("gardenCategory").trim().length > 0 &&
-        values("gardenBeneficiaries").length > 0
-      );
-    };
-
-    setCurrentStep("Garden Information");
-
-    return () => {
-      updateStepStatus(
-        "Garden Information",
-        computeIsComplete() ? "completed" : "review",
-      );
-    };
-  }, [form, setCurrentStep, updateStepStatus]);
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">

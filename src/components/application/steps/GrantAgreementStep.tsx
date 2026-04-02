@@ -2,12 +2,8 @@
 
 import { Checkbox, FormControlLabel } from "@mui/material";
 import { Button } from "@mui/material";
-import { useEffect, useRef } from "react";
 import Link from "next/link";
-import {
-  useAgreementSelections,
-  useApplicationStepNavigation,
-} from "@/src/components/application/ApplicationFormProvider";
+import { useAgreementSelections } from "@/src/components/application/ApplicationFormProvider";
 import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
 
 const checkboxStyle = {
@@ -22,24 +18,7 @@ export default function GrantAgreementStep() {
     agreementSelections,
     setAgreementSelections,
   } = useAgreementSelections();
-  const { setCurrentStep, updateStepStatus } = useApplicationStepNavigation();
   const allChecked = agreementSelections.every(Boolean);
-  const allCheckedRef = useRef(allChecked);
-
-  useEffect(() => {
-    allCheckedRef.current = allChecked;
-  }, [allChecked]);
-
-  useEffect(() => {
-    setCurrentStep("Grantee Agreement");
-
-    return () => {
-      updateStepStatus(
-        "Grantee Agreement",
-        allCheckedRef.current ? "completed" : "review",
-      );
-    };
-  }, [setCurrentStep, updateStepStatus]);
 
   const toggle = (index: number) => {
     setAgreementSelections((prev) =>

@@ -3,16 +3,11 @@
 import TextField from "@mui/material/TextField";
 import MenuItem from "@mui/material/MenuItem";
 import { Button } from "@mui/material";
-import { useEffect } from "react";
 import Link from "next/link";
-import {
-  useApplicationForm,
-  useApplicationStepNavigation,
-} from "@/src/components/application/ApplicationFormProvider";
+import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 
 export default function ContactInformationStep() {
   const form = useApplicationForm();
-  const { setCurrentStep, updateStepStatus } = useApplicationStepNavigation();
   const states = [
     { code: "AL", name: "Alabama" },
     { code: "AK", name: "Alaska" },
@@ -65,33 +60,6 @@ export default function ContactInformationStep() {
     { code: "WI", name: "Wisconsin" },
     { code: "WY", name: "Wyoming" },
   ];
-
-  useEffect(() => {
-    const computeIsComplete = () => {
-      const values = form.getFieldValue;
-      return (
-        values("organizationName").trim().length > 0 &&
-        values("organizationIdentifier").trim().length > 0 &&
-        values("mailingStreet1").trim().length > 0 &&
-        values("mailingCity").trim().length > 0 &&
-        values("mailingState").trim().length > 0 &&
-        values("mailingZip").trim().length > 0 &&
-        values("mailingCountry").trim().length > 0 &&
-        values("contactFirstName").trim().length > 0 &&
-        values("contactLastName").trim().length > 0 &&
-        values("contactEmail").trim().length > 0
-      );
-    };
-
-    setCurrentStep("Contact Information");
-
-    return () => {
-      updateStepStatus(
-        "Contact Information",
-        computeIsComplete() ? "completed" : "review",
-      );
-    };
-  }, [form, setCurrentStep, updateStepStatus]);
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">

@@ -1,35 +1,11 @@
 "use client";
 
 import { Button, TextField } from "@mui/material";
-import {
-  useApplicationForm,
-  useApplicationStepNavigation,
-} from "@/src/components/application/ApplicationFormProvider";
+import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import Link from "next/link";
-import { useEffect } from "react";
 
 export default function CampaignInformationStep() {
   const form = useApplicationForm();
-  const { setCurrentStep, updateStepStatus } = useApplicationStepNavigation();
-
-  useEffect(() => {
-    setCurrentStep("Campaign Information");
-
-    return () => {
-      const values = form.state.values;
-      const isComplete =
-        values.campaignTitle?.trim().length > 0 &&
-        values.fundraisingGoal?.trim().length > 0 &&
-        values.beneficiaryCount?.trim().length > 0 &&
-        values.gardenStatus?.trim().length > 0;
-
-      if (isComplete) {
-        updateStepStatus("Campaign Information", "completed");
-      } else {
-        updateStepStatus("Campaign Information", "review");
-      }
-    };
-  }, [form, setCurrentStep, updateStepStatus]);
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
