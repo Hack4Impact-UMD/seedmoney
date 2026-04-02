@@ -4,7 +4,10 @@ import { Checkbox, FormControlLabel } from "@mui/material";
 import { Button } from "@mui/material";
 import { useEffect, useRef } from "react";
 import Link from "next/link";
-import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import {
+  useAgreementSelections,
+  useApplicationStepNavigation,
+} from "@/src/components/application/ApplicationFormProvider";
 import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
 
 const checkboxStyle = {
@@ -18,9 +21,8 @@ export default function GrantAgreementStep() {
   const {
     agreementSelections,
     setAgreementSelections,
-    setCurrentStep,
-    updateStepStatus,
-  } = useApplicationForm();
+  } = useAgreementSelections();
+  const { setCurrentStep, updateStepStatus } = useApplicationStepNavigation();
   const allChecked = agreementSelections.every(Boolean);
   const allCheckedRef = useRef(allChecked);
 

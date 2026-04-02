@@ -5,10 +5,14 @@ import MenuItem from "@mui/material/MenuItem";
 import { Button } from "@mui/material";
 import { useEffect } from "react";
 import Link from "next/link";
-import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import {
+  useApplicationForm,
+  useApplicationStepNavigation,
+} from "@/src/components/application/ApplicationFormProvider";
 
 export default function ContactInformationStep() {
-  const { form, setCurrentStep, updateStepStatus } = useApplicationForm();
+  const form = useApplicationForm();
+  const { setCurrentStep, updateStepStatus } = useApplicationStepNavigation();
   const states = [
     { code: "AL", name: "Alabama" },
     { code: "AK", name: "Alaska" },

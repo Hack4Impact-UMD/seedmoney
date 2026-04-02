@@ -35,6 +35,8 @@
 import {
   createContext,
   useContext,
+  useCallback,
+  useMemo,
   ReactNode,
   SetStateAction,
   useState,
@@ -92,16 +94,21 @@ const useApplicationFormState = () =>
 
 type ApplicationFormApi = ReturnType<typeof useApplicationFormState>;
 
-interface ApplicationFormContextValue {
-  form: ApplicationFormApi;
+interface AgreementSelectionsContextValue {
   agreementSelections: boolean[];
   setAgreementSelections: (value: SetStateAction<boolean[]>) => void;
+}
+
+interface ApplicationStepContextValue {
   updateStepStatus: (label: string, newStatus: StepStatus) => void;
   setCurrentStep: (label: string) => void;
 }
 
-const ApplicationFormContext =
-  createContext<ApplicationFormContextValue | null>(null);
+const ApplicationFormContext = createContext<ApplicationFormApi | null>(null);
+const AgreementSelectionsContext =
+  createContext<AgreementSelectionsContextValue | null>(null);
+const ApplicationStepContext =
+  createContext<ApplicationStepContextValue | null>(null);
 
 export const ApplicationFormProvider = ({
   children,
@@ -113,7 +120,7 @@ export const ApplicationFormProvider = ({
     GRANT_AGREEMENT_ITEMS.map(() => false),
   );
 
-  const updateStepStatus = (label: string, newStatus: StepStatus) => {
+  const updateStepStatus = useCallback((label: string, newStatus: StepStatus) => {
     const currentSteps = form.getFieldValue("steps");
 
     const updatedSteps: Step[] = currentSteps.map((step) =>
@@ -121,9 +128,9 @@ export const ApplicationFormProvider = ({
     );
 
     form.setFieldValue("steps", updatedSteps);
-  };
+  }, [form]);
 
-  const setCurrentStep = (label: string) => {
+  const setCurrentStep = useCallback((label: string) => {
     const currentSteps = form.getFieldValue("steps");
     const targetIndex = currentSteps.findIndex((step) => step.label === label);
 
@@ -151,28 +158,60 @@ export const ApplicationFormProvider = ({
     });
 
     form.setFieldValue("steps", updatedSteps);
-  };
+  }, [form]);
+
+  const agreementSelectionsValue = useMemo(
+    () => ({
+      agreementSelections,
+      setAgreementSelections,
+    }),
+    [agreementSelections],
+  );
+
+  const applicationStepValue = useMemo(
+    () => ({
+      updateStepStatus,
+      setCurrentStep,
+    }),
+    [updateStepStatus, setCurrentStep],
+  );
 
   return (
-    <ApplicationFormContext.Provider
-      value={{
-        form,
-        agreementSelections,
-        setAgreementSelections,
-        updateStepStatus,
-        setCurrentStep,
-      }}
-    >
-      {children}
+    <ApplicationFormContext.Provider value={form}>
+      <AgreementSelectionsContext.Provider value={agreementSelectionsValue}>
+        <ApplicationStepContext.Provider value={applicationStepValue}>
+          {children}
+        </ApplicationStepContext.Provider>
+      </AgreementSelectionsContext.Provider>
     </ApplicationFormContext.Provider>
   );
 };
 
 export const useApplicationForm = () => {
-  const context = useContext(ApplicationFormContext);
-  if (!context) {
+  const form = useContext(ApplicationFormContext);
+  if (!form) {
     throw new Error(
       "useApplicationForm must be used within an ApplicationFormProvider",
+    );
+  }
+  return form;
+};
+
+export const useAgreementSelections = () => {
+  const context = useContext(AgreementSelectionsContext);
+  if (!context) {
+    throw new Error(
+      "useAgreementSelections must be used within an ApplicationFormProvider",
+    );
+  }
+  return context;
+};
+
+export const useApplicationStepNavigation = () => {
+  const context = useContext(ApplicationStepContext);
+  if (!context) {
+    throw new Error(
+      "useApplicationStepNavigation must be used within an ApplicationFormProvider",
     );
   }
   return context;

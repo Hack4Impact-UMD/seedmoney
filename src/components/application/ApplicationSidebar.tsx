@@ -15,7 +15,7 @@ const stepHrefMap: Record<string, string> = {
 };
 
 export default function ApplicationSidebar() {
-  const { form } = useApplicationForm();
+  const form = useApplicationForm();
 
   return (
     <div className="flex flex-col gap-4 w-[260px] mt-20">

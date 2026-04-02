@@ -1,12 +1,16 @@
 "use client";
 
 import { Button, TextField } from "@mui/material";
-import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import {
+  useApplicationForm,
+  useApplicationStepNavigation,
+} from "@/src/components/application/ApplicationFormProvider";
 import Link from "next/link";
 import { useEffect } from "react";
 
 export default function CampaignInformationStep() {
-  const { form, setCurrentStep, updateStepStatus } = useApplicationForm();
+  const form = useApplicationForm();
+  const { setCurrentStep, updateStepStatus } = useApplicationStepNavigation();
 
   useEffect(() => {
     setCurrentStep("Campaign Information");

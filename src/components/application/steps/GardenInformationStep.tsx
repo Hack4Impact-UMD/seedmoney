@@ -4,7 +4,10 @@ import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
 import Link from "next/link";
 import { useEffect } from "react";
-import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import {
+  useApplicationForm,
+  useApplicationStepNavigation,
+} from "@/src/components/application/ApplicationFormProvider";
 import { useState } from "react";
 
 const categoryOptions = [
@@ -42,7 +45,8 @@ const beneficiaryOptions = [
 ];
 
 export default function GardenInformationStep() {
-  const { form, setCurrentStep, updateStepStatus } = useApplicationForm();
+  const form = useApplicationForm();
+  const { setCurrentStep, updateStepStatus } = useApplicationStepNavigation();
   const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(false);
   const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] = useState(false);
 

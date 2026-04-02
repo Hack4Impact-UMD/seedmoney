@@ -3,7 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@mui/material";
-import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import {
+  useApplicationForm,
+  useApplicationStepNavigation,
+} from "@/src/components/application/ApplicationFormProvider";
 import { useEffect } from "react";
 
 const stateNames: Record<string, string> = {
@@ -114,7 +117,8 @@ function formatCountry(value: string) {
 }
 
 export default function ReviewSubmitPage() {
-  const { form, setCurrentStep } = useApplicationForm();
+  const form = useApplicationForm();
+  const { setCurrentStep } = useApplicationStepNavigation();
   const values = form.state.values;
 
   const campaignComplete =

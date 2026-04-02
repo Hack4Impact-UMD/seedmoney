@@ -4,10 +4,14 @@ import { Button } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import Link from "next/link";
 import { useEffect } from "react";
-import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import {
+  useApplicationForm,
+  useApplicationStepNavigation,
+} from "@/src/components/application/ApplicationFormProvider";
 
 export default function GardenStoryStep() {
-  const { form, setCurrentStep, updateStepStatus } = useApplicationForm();
+  const form = useApplicationForm();
+  const { setCurrentStep, updateStepStatus } = useApplicationStepNavigation();
 
   useEffect(() => {
     const computeIsComplete = () => {
