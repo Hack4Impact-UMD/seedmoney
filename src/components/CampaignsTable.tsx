@@ -80,9 +80,14 @@ const CampaignsTable = ({ initialData }: Props) => {
             </div>
             <span className="text-sm text-gray-600">{displayPercentage}%</span>
             {/* TODO: pass in campaign id as function parameter for handleCampaignClick  */}
-            <span 
-              className="text-[#2c7a45] font-bold ml-1 text-xl hover:pointer-cursor transition-colors"
-              onClick={handleCampaignClick}>&gt;</span>
+            <button
+              type="button"
+              className="ml-1 cursor-pointer select-none text-xl font-bold text-[#2c7a45] transition-colors"
+              onClick={handleCampaignClick}
+              aria-label="Open campaign details"
+            >
+              &gt;
+            </button>
           </div>
         );
       }
@@ -178,14 +183,14 @@ const CampaignsTable = ({ initialData }: Props) => {
                 <button 
                   onClick={() => table.previousPage()} 
                   disabled={!table.getCanPreviousPage()}
-                  className="p-1 disabled:opacity-30 text-2xl text-black font-bold"
+                  className="cursor-pointer p-1 text-2xl font-bold text-black disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   &lt;
                 </button>
                 <button 
                   onClick={() => table.nextPage()} 
                   disabled={!table.getCanNextPage()}
-                  className="p-1 disabled:opacity-30 text-2xl text-black font-bold"
+                  className="cursor-pointer p-1 text-2xl font-bold text-black disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   &gt;
                 </button>
