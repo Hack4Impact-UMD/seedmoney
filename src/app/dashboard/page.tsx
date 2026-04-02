@@ -25,10 +25,8 @@ export default function DashboardIndexPage() {
 
   const handleNewCampaign = () => {
     console.log("New campaign clicked");
-    router.push("/dashboard/new");
+    router.push("/apply");
   };
-
-  if (!userData) return null;
 
   return (
     <div className="flex min-h-screen">
@@ -40,15 +38,13 @@ export default function DashboardIndexPage() {
       <div className="flex-1 bg-gray-50 p-10">
         <h3 className="text-4xl font-bold text-[#096B2E]">Dashboard</h3>
 
-        {!userData.is_admin && (
+        {userData && !userData.is_admin && (
           <>
             <div className="mt-10 flex items-center justify-center">
               <NotStarted onNewCampaign={handleNewCampaign} />
             </div>
           </>
-          
         )}
-
       </div>
     </div>
   );

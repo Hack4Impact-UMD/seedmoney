@@ -1,7 +1,24 @@
+"use client";
+
 import Link from "next/link";
 import Image from "next/image";
+import { createBrowserClient } from "@/src/lib/supabase-client";
+import type { Session } from "@supabase/supabase-js";
+import { useRouter } from "next/navigation";
 
-export default function LoginNavbar() {
+interface Props {
+  session?: Session | null;
+}
+
+export default function LoginNavbar({ session = null }: Props) {
+  const router = useRouter();
+
+  const handleLogout = async () => {
+    const supabase = createBrowserClient();
+    await supabase.auth.signOut();
+    router.push("/");
+  };
+
   return (
     <div className="w-full">
       <nav className="w-full bg-[#333333] text-white">
@@ -20,15 +37,37 @@ export default function LoginNavbar() {
           </Link>
           {/* auth links */}
           <div className="flex items-center gap-6 text-sm font-medium">
-            <Link
-              href="/signup"
-              className="text-white transition hover:underline"
-            >
-              Sign Up
-            </Link>
-            <Link href="/" className="text-white transition hover:underline">
-              Log In
-            </Link>
+            {session ? (
+              <>
+                <Link
+                  href="/dashboard"
+                  className="text-white transition hover:underline"
+                >
+                  My Dashboard
+                </Link>
+                <button
+                  onClick={handleLogout}
+                  className="text-white transition hover:underline"
+                >
+                  Log Out
+                </button>
+              </>
+            ) : (
+              <>
+                <Link
+                  href="/signup"
+                  className="text-white transition hover:underline"
+                >
+                  Sign Up
+                </Link>
+                <Link
+                  href="/"
+                  className="text-white transition hover:underline"
+                >
+                  Log In
+                </Link>
+              </>
+            )}
           </div>
         </div>
       </nav>

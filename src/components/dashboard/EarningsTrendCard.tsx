@@ -21,6 +21,8 @@ export function EarningsTrendCard({
   campaignGoal: number;
   todayIso: string;
 }) {
+  const showTodayReferenceLine = dates.includes(todayIso);
+
   return (
     <div className="bg-white rounded-lg border border-1 border-[#e5e5e5] p-6 pb-2">
       {/* Header row */}
@@ -92,15 +94,17 @@ export function EarningsTrendCard({
           },
         }}
       >
-        <ChartsReferenceLine
-          x={todayIso}
-          lineStyle={{
-            stroke: "rgba(0,0,0,0.15)",
-            strokeWidth: 2,
-          }}
-          labelAlign="start"
-          labelStyle={{ fill: "#6B7280", fontSize: 11, fontWeight: 500 }}
-        />
+        {showTodayReferenceLine && (
+          <ChartsReferenceLine
+            x={todayIso}
+            lineStyle={{
+              stroke: "rgba(0,0,0,0.15)",
+              strokeWidth: 2,
+            }}
+            labelAlign="start"
+            labelStyle={{ fill: "#6B7280", fontSize: 11, fontWeight: 500 }}
+          />
+        )}
 
         <ChartsReferenceLine
           y={campaignGoal}
