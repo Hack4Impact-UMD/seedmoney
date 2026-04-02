@@ -40,6 +40,10 @@ export type ApplicationProgressValues = Pick<
   | "contactRole"
 >;
 
+function validateEmail(email: string): boolean {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+}
+
 export function getApplicationCompletionState(
   values: ApplicationProgressValues,
   agreementSelections: boolean[],
@@ -77,7 +81,7 @@ export function getApplicationCompletionState(
     values.mailingCountry.trim().length > 0 &&
     values.contactFirstName.trim().length > 0 &&
     values.contactLastName.trim().length > 0 &&
-    values.contactEmail.trim().length > 0;
+    validateEmail(values.contactEmail.trim());
 
   const reviewComplete =
     agreementComplete &&
