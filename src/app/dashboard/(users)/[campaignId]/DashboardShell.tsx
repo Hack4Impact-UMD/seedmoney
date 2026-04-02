@@ -109,20 +109,6 @@ export default function DashboardShell({
     );
   }
 
-  if (selectedTab === "Overview") {
-    return (
-      <div className="flex min-h-screen">
-        <Navbar
-          campaigns={sampleCampaigns}
-          selectedCampaignId={selectedCampaignId}
-          onCampaignSelect={handleCampaignChange}
-        />
-
-        <div className="flex-1">{children}</div>
-      </div>
-    );
-  }
-
   return (
     <div className="flex min-h-screen">
       <Navbar
