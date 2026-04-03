@@ -1,6 +1,6 @@
 "use client";
 
-import { useCallback, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/src/components/Navbar";
 import type { Campaign } from "@/src/types/db/campaigns";
@@ -24,6 +24,16 @@ import {
   US_STATES,
 } from "./options";
 
+function parseCampaignIdParam(value: string): number | null {
+  if (!/^\d+$/.test(value)) {
+    return null;
+  }
+
+  const parsedValue = Number(value);
+
+  return Number.isSafeInteger(parsedValue) ? parsedValue : null;
+}
+
 export default function EditCampaignPage() {
   const params = useParams();
   const router = useRouter();
@@ -31,6 +41,7 @@ export default function EditCampaignPage() {
   const campaignId = Array.isArray(rawCampaignId)
     ? rawCampaignId[0]
     : rawCampaignId ?? "";
+  const parsedCampaignId = parseCampaignIdParam(campaignId);
 
   const [initialData, setInitialData] = useState(MOCK_CAMPAIGN_DATA);
   const [formData, setFormData] = useState(MOCK_CAMPAIGN_DATA);
@@ -39,6 +50,12 @@ export default function EditCampaignPage() {
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   const isFormDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
+
+  useEffect(() => {
+    if (parsedCampaignId === null) {
+      router.replace("/dashboard/ongoing-campaigns");
+    }
+  }, [parsedCampaignId, router]);
 
   const setFieldValue = useCallback(
     <K extends keyof EditCampaignFormData>(
@@ -85,27 +102,35 @@ export default function EditCampaignPage() {
 
   const handleConfirmCancel = useCallback(() => {
     setIsCancelModalOpen(false);
-    router.push(`/dashboard/ongoing-campaigns/${campaignId}`);
-  }, [campaignId, router]);
+    if (parsedCampaignId === null) {
+      router.push("/dashboard/ongoing-campaigns");
+      return;
+    }
+    router.push(`/dashboard/ongoing-campaigns/${parsedCampaignId}`);
+  }, [parsedCampaignId, router]);
+
+  if (parsedCampaignId === null) {
+    return null;
+  }
 
   return (
     <div className="flex min-h-screen">
       <Navbar
         campaigns={[
           {
-            campaign_id: Number(campaignId),
+            campaign_id: parsedCampaignId,
             name: formData.campaignTitle,
             status: "published",
             date_created: new Date().toISOString(),
           } as Campaign,
         ]}
-        selectedCampaignId={Number(campaignId)}
+        selectedCampaignId={parsedCampaignId}
         onCampaignSelect={() => {}}
       />
 
       <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
         <EditCampaignHeader
-          campaignId={campaignId}
+          campaignId={String(parsedCampaignId)}
           onBack={() => setIsCancelModalOpen(true)}
         />
 

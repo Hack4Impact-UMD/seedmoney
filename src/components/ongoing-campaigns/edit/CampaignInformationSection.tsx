@@ -53,6 +53,7 @@ export default function CampaignInformationSection({
           value={formData.beneficiaryCount}
           onChange={onTextChange("beneficiaryCount")}
           type="number"
+          inputProps={{ min: 0 }}
         />
 
         <p className="pt-2 text-sm">Is this a new or existing garden?</p>
@@ -108,6 +109,7 @@ export default function CampaignInformationSection({
           type="number"
           value={formData.fundraisingGoal}
           onChange={onTextChange("fundraisingGoal")}
+          inputProps={{ min: 0 }}
         />
       </div>
     </>
