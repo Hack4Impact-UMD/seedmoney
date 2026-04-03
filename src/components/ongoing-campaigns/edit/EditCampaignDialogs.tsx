@@ -148,7 +148,7 @@ export default function EditCampaignDialogs({
         >
           <AlertTitle sx={{ fontSize: "16px" }}>Campaigns Updated!</AlertTitle>
           <span className="text-[14px]">
-            You have successfully updated 2 <br />
+            You have successfully updated this <br />
             campaigns.
           </span>
         </Alert>
