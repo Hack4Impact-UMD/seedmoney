@@ -82,6 +82,14 @@ const sectionCardSx = {
   boxShadow: "0 8px 24px rgba(31,60,44,0.05)",
 };
 
+const sectionHeadingSx = {
+  color: "#1e2320",
+  fontSize: 28,
+  fontWeight: 700,
+  mb: 2,
+  lineHeight: 1.15,
+};
+
 const selectionControlSx = {
   color: "#b7c1b8",
   "&.Mui-checked": {
@@ -467,7 +475,7 @@ export default function CampaignReviewPage() {
       />
 
       <main className="flex-1 px-6 py-8 sm:px-10 md:px-12">
-        <div className="mx-auto max-w-[980px]">
+        <div className="mx-auto max-w-[1120px]">
           {toast && (
             <div className="fixed right-8 top-8 z-30 flex justify-end">
               <div className="flex min-w-[300px] max-w-[340px] items-start gap-3 rounded-sm bg-[#f4fbf2] px-4 py-3 text-[#3b5a40] shadow-[0_8px_24px_rgba(74,107,79,0.08)]">
@@ -486,26 +494,7 @@ export default function CampaignReviewPage() {
             </div>
           )}
 
-          <div className="sticky top-0 z-10 bg-[#f8fbf8] pt-4 pb-4 -mx-6 px-6 sm:-mx-10 sm:px-10 md:-mx-12 md:px-12">
-            <div className="mx-auto max-w-[980px] flex justify-end">
-              <Stack direction="column" spacing={1.5}>
-                <Button
-                  variant="contained"
-                  onClick={() => setActiveModal("approve")}
-                >
-                  APPROVE
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => setActiveModal("deny")}
-                >
-                  DENY
-                </Button>
-              </Stack>
-            </div>
-          </div>
-
-          <div className="flex flex-col gap-4 border-b border-[#dce5dc] pb-6 relative z-20">
+          <div className="relative z-20 flex flex-col gap-4 pb-6">
             <div>
               <Typography
                 sx={{
@@ -531,9 +520,11 @@ export default function CampaignReviewPage() {
             </div>
           </div>
 
-          <Stack spacing={5} sx={{ mt: 4 }}>
+          <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
+            <div className="min-w-0 flex-1">
+              <Stack spacing={5}>
             <Box>
-              <Typography sx={{ color: "#1e2320", fontSize: 34, fontWeight: 700, mb: 2.5 }}>
+              <Typography sx={sectionHeadingSx}>
                 Campaign Information
               </Typography>
               <Stack spacing={2}>
@@ -612,7 +603,7 @@ export default function CampaignReviewPage() {
             </Box>
 
             <Box>
-              <Typography sx={{ color: "#1e2320", fontSize: 34, fontWeight: 700, mb: 2.5 }}>
+              <Typography sx={sectionHeadingSx}>
                 Garden Information
               </Typography>
               <Stack spacing={2}>
@@ -706,7 +697,7 @@ export default function CampaignReviewPage() {
             </Box>
 
             <Box>
-              <Typography sx={{ color: "#1e2320", fontSize: 34, fontWeight: 700, mb: 2.5 }}>
+              <Typography sx={sectionHeadingSx}>
                 Garden Story
               </Typography>
               <ReviewSectionCard subtitle="2–3 sentences each" title="Garden Story">
@@ -763,7 +754,7 @@ export default function CampaignReviewPage() {
             </Box>
 
             <Box>
-              <Typography sx={{ color: "#1e2320", fontSize: 34, fontWeight: 700, mb: 2.5 }}>
+              <Typography sx={sectionHeadingSx}>
                 Contact Information
               </Typography>
               <Stack spacing={2}>
@@ -859,7 +850,42 @@ export default function CampaignReviewPage() {
                 </ReviewSectionCard>
               </Stack>
             </Box>
-          </Stack>
+              </Stack>
+            </div>
+
+            <aside className="w-full lg:sticky lg:top-8 lg:w-[132px] lg:shrink-0 lg:pt-[92px]">
+              <Stack direction="column" spacing={1.25}>
+                <Button
+                  variant="contained"
+                  onClick={() => setActiveModal("approve")}
+                  sx={{
+                    minHeight: 50,
+                    borderRadius: "10px",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    px: 2,
+                  }}
+                >
+                  APPROVE
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() => setActiveModal("deny")}
+                  sx={{
+                    minHeight: 50,
+                    borderRadius: "10px",
+                    fontSize: 14,
+                    fontWeight: 700,
+                    letterSpacing: "0.08em",
+                    px: 2,
+                  }}
+                >
+                  DENY
+                </Button>
+              </Stack>
+            </aside>
+          </div>
         </div>
       </main>
 
