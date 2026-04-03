@@ -57,11 +57,23 @@ const MOCK_CAMPAIGN_DATA = {
     "The Full Belly Community Garden in Scarborough, Maine, provides over 300 pounds of organic produce annually to local food-insecure families and seniors. Beyond its harvest, it serves as an educational hub for at-risk youth and neighbors through nature exploration and hands-on workshops.",
   storyLocationAndAudienceFinal:
     "The Full Belly Community Garden in Scarborough, Maine, provides over 300 pounds of produce annually to local food-insecure families and seniors. Beyond its harvest, it serves as an educational hub for at-risk youth and neighbors through nature exploration and hands-on gardening workshops.",
-  storyChallenge:
+  storyChallengeOriginal:
     "The Full Belly Community Garden addresses the challenge of food insecurity, specifically the difficulty many local families and seniors face in accessing fresh, affordable organic produce.",
-  storySeasonActivity:
+  storyChallengeAI:
+    "The Full Belly Community Garden addresses the challenge of food insecurity, specifically the barriers many local families and seniors face in accessing fresh, affordable produce.",
+  storyChallengeFinal:
+    "The Full Belly Community Garden addresses the challenge of food insecurity, specifically the difficulty many local families and seniors face in accessing fresh, affordable organic produce.",
+  storySeasonActivityOriginal:
     "During the growing season, it serves as a 'vibrant oasis' where volunteers host monthly workshops to teach gardening skills and provide a safe space for at-risk youth to explore nature.",
-  storyCampaignImpact:
+  storySeasonActivityAI:
+    "During the growing season, the garden becomes a vibrant community space where volunteers lead monthly workshops, teach practical gardening skills, and provide a safe place for at-risk youth to connect with nature.",
+  storySeasonActivityFinal:
+    "During the growing season, it serves as a 'vibrant oasis' where volunteers host monthly workshops to teach gardening skills and provide a safe space for at-risk youth to explore nature.",
+  storyCampaignImpactOriginal:
+    "These contributions allow the garden to continue its mission of providing over 300 pounds of organic food to local food-insecure families and seniors at the Elm Street Senior Center.",
+  storyCampaignImpactAI:
+    "These contributions enable the garden to continue providing more than 300 pounds of organic food to local food-insecure families and seniors at the Elm Street Senior Center.",
+  storyCampaignImpactFinal:
     "These contributions allow the garden to continue its mission of providing over 300 pounds of organic food to local food-insecure families and seniors at the Elm Street Senior Center.",
 };
 
@@ -230,7 +242,7 @@ export default function EditCampaignPage() {
         </h3>
         <button
           onClick={() => setIsCancelModalOpen(true)}
-          className="flex items-center uppercase !text-[#666666] text-sm font-bold hover:text-gray-800 transition w-fit"
+          className="flex w-fit cursor-pointer items-center uppercase !text-[#666666] text-sm font-bold transition hover:text-gray-800"
         >
           <ArrowBack className="mr-1 !text-sm" fontSize="inherit" />
           Back
@@ -549,7 +561,7 @@ export default function EditCampaignPage() {
                     placeholder="No original version available"
                     fullWidth
                     multiline
-                    value={formData.storyChallenge}
+                    value={formData.storyChallengeOriginal}
                     slotProps={{
                       input: {
                         readOnly: true,
@@ -567,7 +579,7 @@ export default function EditCampaignPage() {
                     placeholder="AI version will appear here"
                     fullWidth
                     multiline
-                    value={formData.storyChallenge}
+                    value={formData.storyChallengeAI}
                     slotProps={{
                       input: {
                         readOnly: true,
@@ -585,8 +597,8 @@ export default function EditCampaignPage() {
                     placeholder="Write your final version here..."
                     fullWidth
                     multiline
-                    value={formData.storyChallenge}
-                    onChange={handleChange("storyChallenge")}
+                    value={formData.storyChallengeFinal}
+                    onChange={handleChange("storyChallengeFinal")}
                   />
                   <div className="flex justify-end mt-4">
                     <Button
@@ -596,7 +608,7 @@ export default function EditCampaignPage() {
                         console.log(
                           // TODO: Save to database
                           "Saving final story challenge:",
-                          formData.storyChallenge,
+                          formData.storyChallengeFinal,
                         )
                       }
                     >
@@ -620,7 +632,7 @@ export default function EditCampaignPage() {
                     placeholder="No original version available"
                     fullWidth
                     multiline
-                    value={formData.storySeasonActivity}
+                    value={formData.storySeasonActivityOriginal}
                     slotProps={{
                       input: {
                         readOnly: true,
@@ -638,7 +650,7 @@ export default function EditCampaignPage() {
                     placeholder="AI version will appear here"
                     fullWidth
                     multiline
-                    value={formData.storySeasonActivity}
+                    value={formData.storySeasonActivityAI}
                     slotProps={{
                       input: {
                         readOnly: true,
@@ -656,8 +668,8 @@ export default function EditCampaignPage() {
                     placeholder="Write your final version here..."
                     fullWidth
                     multiline
-                    value={formData.storySeasonActivity}
-                    onChange={handleChange("storySeasonActivity")}
+                    value={formData.storySeasonActivityFinal}
+                    onChange={handleChange("storySeasonActivityFinal")}
                   />
                   <div className="flex justify-end mt-4">
                     <Button
@@ -667,7 +679,7 @@ export default function EditCampaignPage() {
                         console.log(
                           // TODO: Save to database
                           "Saving final story season activity:",
-                          formData.storySeasonActivity,
+                          formData.storySeasonActivityFinal,
                         )
                       }
                     >
@@ -691,7 +703,7 @@ export default function EditCampaignPage() {
                     placeholder="No original version available"
                     fullWidth
                     multiline
-                    value={formData.storyCampaignImpact}
+                    value={formData.storyCampaignImpactOriginal}
                     slotProps={{
                       input: {
                         readOnly: true,
@@ -709,7 +721,7 @@ export default function EditCampaignPage() {
                     placeholder="AI version will appear here"
                     fullWidth
                     multiline
-                    value={formData.storyCampaignImpact}
+                    value={formData.storyCampaignImpactAI}
                     slotProps={{
                       input: {
                         readOnly: true,
@@ -727,8 +739,8 @@ export default function EditCampaignPage() {
                     placeholder="Write your final version here..."
                     fullWidth
                     multiline
-                    value={formData.storyCampaignImpact}
-                    onChange={handleChange("storyCampaignImpact")}
+                    value={formData.storyCampaignImpactFinal}
+                    onChange={handleChange("storyCampaignImpactFinal")}
                   />
                   <div className="flex justify-end mt-4">
                     <Button
@@ -738,7 +750,7 @@ export default function EditCampaignPage() {
                         console.log(
                           // TODO: Save to database
                           "Saving final story campaign impact:",
-                          formData.storyCampaignImpact,
+                          formData.storyCampaignImpactFinal,
                         )
                       }
                     >
