@@ -455,7 +455,8 @@ export default function CampaignReviewPage() {
       activeModal === "deny" ||
       activeModal === "revert"
     ) {
-      // Later this should update the campaign in the backend and then reload fresh data from the database.
+      // Later this should call the backend to change this campaign's status.
+      // After that, load this page again so it shows the real database state.
       setActiveModal(null);
     }
   };

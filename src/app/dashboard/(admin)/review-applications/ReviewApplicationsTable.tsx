@@ -140,7 +140,8 @@ export default function ReviewApplicationsTable({
       return;
     }
 
-    // Later this should send the new status to the backend and then reload the list from the database.
+    // Later this should call the backend to change the selected campaign statuses.
+    // After that, load the list again so this table shows the real database state.
     setPendingAction(null);
   };
 

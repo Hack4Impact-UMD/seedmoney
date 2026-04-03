@@ -8,6 +8,8 @@ export type ReviewApplication = {
   status: ReviewApplicationStatus;
 };
 
+// This file is only mock UI data.
+// Once the backend is wired, the pages should read these statuses from the database.
 export const reviewApplications: ReviewApplication[] = [
   {
     campaignId: 1,
