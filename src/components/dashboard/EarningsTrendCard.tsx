@@ -24,7 +24,7 @@ export function EarningsTrendCard({
   const showTodayReferenceLine = dates.includes(todayIso);
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6 pb-2">
+    <div className="bg-white rounded-lg border border-1 border-[#e5e5e5] p-6 pb-2">
       {/* Header row */}
       <div className="flex justify-between items-start mb-1">
         <div>

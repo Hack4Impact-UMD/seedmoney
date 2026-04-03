@@ -4,6 +4,10 @@ export type Campaign = {
   campaign_id: number;
   name: string;
   givebutterlink: string;
+  givebutter_id?: string;
+  givebutter_slug?: string;
+  raised?: number;
+  donors?: number;
   status: Status;
   date_created: string;
   street: string;
