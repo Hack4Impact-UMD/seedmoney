@@ -139,6 +139,7 @@ export default function ReviewApplicationsTable({
 
   const handleSearchChange = (value: string) => {
     setSearchQuery(value);
+    setSelectedIds([]);
     setPageIndex(0);
   };
 
