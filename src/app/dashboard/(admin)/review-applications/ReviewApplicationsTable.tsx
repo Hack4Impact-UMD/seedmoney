@@ -1,23 +1,16 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import clsx from "clsx";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import type {
   ReviewApplication,
   ReviewApplicationStatus,
 } from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
-import {
-  getHydratedReviewApplications,
-  notifyReviewApplicationStatusChange,
-  subscribeToReviewApplicationStatusChange,
-  updateReviewApplicationStatus,
-} from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
-import {useRouter} from "next/navigation";
+import { useRouter } from "next/navigation";
 
 type ReviewApplicationsTableProps = {
   applications: ReviewApplication[];
@@ -26,11 +19,6 @@ type ReviewApplicationsTableProps = {
 const pageSizeOptions = [5, 10, 20];
 
 type ReviewAction = "APPROVE" | "DENY" | "REVERT";
-
-type ToastState = {
-  action: ReviewAction;
-  count: number;
-} | null;
 
 const formatSubmissionDate = (date: string) =>
   new Intl.DateTimeFormat("en-US", {
@@ -42,20 +30,17 @@ const formatSubmissionDate = (date: string) =>
 export default function ReviewApplicationsTable({
   applications,
 }: ReviewApplicationsTableProps) {
-  const [applicationRows, setApplicationRows] =
-    useState<ReviewApplication[]>(applications);
   const [tab, setTab] = useState<ReviewApplicationStatus>("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(5);
   const [pendingAction, setPendingAction] = useState<ReviewAction | null>(null);
-  const [toast, setToast] = useState<ToastState>(null);
   const router = useRouter();
 
   const countsByStatus = useMemo(
     () =>
-      applicationRows.reduce(
+      applications.reduce(
         (counts, application) => {
           if (application.status === "PENDING" || application.status === "DENIED") {
             counts[application.status] += 1;
@@ -64,13 +49,13 @@ export default function ReviewApplicationsTable({
         },
         { PENDING: 0, DENIED: 0 } as Record<"PENDING" | "DENIED", number>,
       ),
-    [applicationRows],
+    [applications],
   );
 
   const filteredApplications = useMemo(() => {
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
-    return applicationRows.filter((application) => {
+    return applications.filter((application) => {
       if (application.status !== tab) {
         return false;
       }
@@ -87,7 +72,7 @@ export default function ReviewApplicationsTable({
           .includes(normalizedQuery)
       );
     });
-  }, [applicationRows, searchQuery, tab]);
+  }, [applications, searchQuery, tab]);
 
   const totalPages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
   const currentPageIndex = Math.min(pageIndex, totalPages - 1);
@@ -101,35 +86,9 @@ export default function ReviewApplicationsTable({
     (currentPageIndex + 1) * pageSize,
     filteredApplications.length,
   );
-  const selectedApplications = applicationRows.filter((application) =>
+  const selectedApplications = applications.filter((application) =>
     selectedIds.includes(application.campaignId),
   );
-
-  useEffect(() => {
-    const timeoutId = window.setTimeout(() => {
-      setApplicationRows(getHydratedReviewApplications());
-    }, 0);
-
-    return () => window.clearTimeout(timeoutId);
-  }, []);
-
-  useEffect(() => {
-    return subscribeToReviewApplicationStatusChange(() => {
-      setApplicationRows(getHydratedReviewApplications());
-    });
-  }, []);
-
-  useEffect(() => {
-    if (!toast) {
-      return;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setToast(null);
-    }, 3500);
-
-    return () => window.clearTimeout(timeoutId);
-  }, [toast]);
 
   const handleTabChange = (status: ReviewApplicationStatus) => {
     setTab(status);
@@ -181,26 +140,8 @@ export default function ReviewApplicationsTable({
       return;
     }
 
-    const nextStatus: ReviewApplicationStatus =
-      pendingAction === "APPROVE"
-        ? "APPROVED"
-        : pendingAction === "DENY"
-          ? "DENIED"
-          : "PENDING";
-
-    setApplicationRows((current) =>
-      current.map((application) =>
-        selectedIds.includes(application.campaignId)
-          ? { ...application, status: nextStatus }
-          : application,
-      ),
-    );
-    updateReviewApplicationStatus(selectedIds, nextStatus);
-    notifyReviewApplicationStatusChange();
-    setToast({ action: pendingAction, count: selectedIds.length });
-    setSelectedIds([]);
+    // Later this should send the new status to the backend and then reload the list from the database.
     setPendingAction(null);
-    setPageIndex(0);
   };
 
   const hasSelectedRows = selectedIds.length > 0;
@@ -221,30 +162,6 @@ export default function ReviewApplicationsTable({
 
   return (
     <div className="relative w-full max-w-[1040px] pb-24 pt-2">
-      {toast && (
-        <div className="fixed right-8 top-8 z-30 flex justify-end">
-          <div className="flex min-w-[300px] max-w-[340px] items-start gap-3 rounded-sm bg-[#f4fbf2] px-4 py-3 text-[#3b5a40] shadow-[0_8px_24px_rgba(74,107,79,0.08)]">
-            <CheckCircleOutlinedIcon className="mt-0.5 !h-5 !w-5 text-[#5f9e68]" />
-            <div>
-              <p className="text-[14px] font-semibold">
-                {toast.action === "APPROVE"
-                  ? "Campaigns Approved!"
-                  : toast.action === "DENY"
-                    ? "Campaigns Denied!"
-                    : "Campaigns Reverted!"}
-              </p>
-              <p className="mt-1 text-[13px] leading-5">
-                {toast.action === "APPROVE"
-                  ? `You have successfully approved ${toast.count} campaign${toast.count === 1 ? "" : "s"}.`
-                  : toast.action === "DENY"
-                    ? `You have successfully denied ${toast.count} campaign${toast.count === 1 ? "" : "s"}.`
-                    : `You have successfully moved ${toast.count} campaign${toast.count === 1 ? "" : "s"} back to pending.`}
-              </p>
-            </div>
-          </div>
-        </div>
-      )}
-
       <div className="mb-5 pt-8">
         <h1 className="text-[40px] font-semibold tracking-[-0.04em] text-[#214E34] sm:text-[42px]">
           Review Campaigns

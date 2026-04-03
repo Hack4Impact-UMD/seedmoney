@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useMemo, useState } from "react";
 import Image from "next/image";
 import {
   notFound,
@@ -23,22 +23,15 @@ import {
 } from "@mui/material";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
-import CheckCircleOutlinedIcon from "@mui/icons-material/CheckCircleOutlined";
 import UploadFileIcon from "@mui/icons-material/UploadFile";
 import DeleteIcon from "@mui/icons-material/Delete";
 import CheckIcon from "@mui/icons-material/Check";
 import Navbar from "@/src/components/Navbar";
 import {
-  getHydratedReviewApplicationById,
   getReviewApplicationById,
-  notifyReviewApplicationStatusChange,
-  subscribeToReviewApplicationStatusChange,
-  type ReviewApplicationStatus,
-  updateReviewApplicationStatus,
 } from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
 
 type ModalType = "approve" | "deny" | "revert" | "unsaved" | null;
-type ToastType = "approve" | "deny" | "revert" | null;
 
 type ReviewSectionCardProps = {
   children: React.ReactNode;
@@ -411,10 +404,6 @@ export default function CampaignReviewPage() {
   const params = useParams<{ campaignId: string }>();
   const router = useRouter();
   const baseApplication = getReviewApplicationById(Number(params.campaignId));
-  const [applicationStatus, setApplicationStatus] =
-    useState<ReviewApplicationStatus>(
-      baseApplication?.status ?? "PENDING",
-    );
   const [formData, setFormData] = useState(() => ({
     ...initialReviewData,
     campaignTitle:
@@ -423,37 +412,13 @@ export default function CampaignReviewPage() {
       baseApplication?.campaignTitle ?? initialReviewData.organizationName,
   }));
   const [activeModal, setActiveModal] = useState<ModalType>(null);
-  const [toast, setToast] = useState<ToastType>(null);
-  const isDeniedApplication = applicationStatus === "DENIED";
 
   if (!baseApplication) {
     notFound();
   }
 
-  const application = {
-    ...baseApplication,
-    status: applicationStatus,
-  };
-
-  useEffect(() => {
-    const hydratedApplication = getHydratedReviewApplicationById(
-      baseApplication.campaignId,
-    );
-
-    if (hydratedApplication) {
-      setApplicationStatus(hydratedApplication.status);
-    }
-
-    return subscribeToReviewApplicationStatusChange(() => {
-      const nextApplication = getHydratedReviewApplicationById(
-        baseApplication.campaignId,
-      );
-
-      if (nextApplication) {
-        setApplicationStatus(nextApplication.status);
-      }
-    });
-  }, [baseApplication.campaignId]);
+  const application = baseApplication;
+  const isDeniedApplication = application.status === "DENIED";
 
   const isDirty = useMemo(() => {
     return JSON.stringify(formData) !== JSON.stringify({
@@ -490,22 +455,8 @@ export default function CampaignReviewPage() {
       activeModal === "deny" ||
       activeModal === "revert"
     ) {
-      const nextStatus: ReviewApplicationStatus =
-        activeModal === "approve"
-          ? "APPROVED"
-          : activeModal === "deny"
-            ? "DENIED"
-            : "PENDING";
-
-      updateReviewApplicationStatus(
-        [application.campaignId],
-        nextStatus,
-      );
-      notifyReviewApplicationStatusChange();
-      setApplicationStatus(nextStatus);
-      setToast(activeModal);
+      // Later this should update the campaign in the backend and then reload fresh data from the database.
       setActiveModal(null);
-      window.setTimeout(() => setToast(null), 3500);
     }
   };
 
@@ -519,30 +470,6 @@ export default function CampaignReviewPage() {
 
       <main className="flex-1 px-6 py-8 sm:px-10 md:px-12">
         <div className="mx-auto max-w-[1120px]">
-          {toast && (
-            <div className="fixed right-8 top-8 z-30 flex justify-end">
-              <div className="flex min-w-[300px] max-w-[340px] items-start gap-3 rounded-sm bg-[#f4fbf2] px-4 py-3 text-[#3b5a40] shadow-[0_8px_24px_rgba(74,107,79,0.08)]">
-                <CheckCircleOutlinedIcon className="mt-0.5 !h-5 !w-5 text-[#5f9e68]" />
-                <div>
-                  <p className="text-[14px] font-semibold">
-                    {toast === "approve"
-                      ? "Campaign Approved!"
-                      : toast === "deny"
-                        ? "Campaign Denied!"
-                        : "Campaign Reverted!"}
-                  </p>
-                  <p className="mt-1 text-[13px] leading-5">
-                    {toast === "approve"
-                      ? "You have successfully approved this campaign."
-                      : toast === "deny"
-                        ? "You have successfully denied this campaign."
-                        : "You have successfully moved this campaign back to pending."}
-                  </p>
-                </div>
-              </div>
-            </div>
-          )}
-
           <div className="relative z-20 flex flex-col gap-4 pb-6">
             <div>
               <Typography
