@@ -108,11 +108,14 @@ interface EditCampaignDialogsProps {
   formData: EditCampaignFormData;
   isSaveModalOpen: boolean;
   isCancelModalOpen: boolean;
+  isDiscardModalOpen: boolean;
   showSuccessToast: boolean;
   onCloseSaveModal: () => void;
   onConfirmSave: () => void;
   onCloseCancelModal: () => void;
   onConfirmCancel: () => void;
+  onCloseDiscardModal: () => void;
+  onConfirmDiscard: () => void;
   onCloseToast: () => void;
 }
 
@@ -121,11 +124,14 @@ export default function EditCampaignDialogs({
   formData,
   isSaveModalOpen,
   isCancelModalOpen,
+  isDiscardModalOpen,
   showSuccessToast,
   onCloseSaveModal,
   onConfirmSave,
   onCloseCancelModal,
   onConfirmCancel,
+  onCloseDiscardModal,
+  onConfirmDiscard,
   onCloseToast,
 }: EditCampaignDialogsProps) {
   const changedSections = useMemo(
@@ -278,6 +284,88 @@ export default function EditCampaignDialogs({
             }}
           >
             Stay
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={isDiscardModalOpen}
+        onClose={onCloseDiscardModal}
+        maxWidth="sm"
+        fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: "10px",
+          },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            m: 0,
+            px: 4,
+            pt: 4,
+            pb: 0.5,
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+          }}
+        >
+          <span className="text-[#1A4A28] text-[22px] font-bold leading-none">
+            Discard changes?
+          </span>
+          <IconButton
+            aria-label="close"
+            onClick={onCloseDiscardModal}
+            sx={{
+              color: "#9E9E9E",
+              mr: -1,
+              mt: -0.5,
+            }}
+          >
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <DialogContent
+          sx={{
+            px: 4,
+            pt: 4.5,
+            pb: 6,
+          }}
+        >
+          <p className="m-0 max-w-[660px] text-[16px] leading-[1.5] text-[#5F6368]">
+            You have unsaved changes. This will reset the form to its previous
+            state.
+          </p>
+        </DialogContent>
+        <DialogActions
+          sx={{
+            px: 4,
+            pb: 3,
+            pt: 0,
+            gap: 2,
+          }}
+        >
+          <Button
+            onClick={onConfirmDiscard}
+            sx={{
+              color: "#666666",
+              fontWeight: 700,
+              fontSize: "16px",
+              letterSpacing: "0.02em",
+            }}
+          >
+            Discard changes
+          </Button>
+          <Button
+            variant="contained"
+            onClick={onCloseDiscardModal}
+            sx={{
+              px: 2.5,
+              py: 1.1,
+              minWidth: "128px",
+            }}
+          >
+            Keep editing
           </Button>
         </DialogActions>
       </Dialog>

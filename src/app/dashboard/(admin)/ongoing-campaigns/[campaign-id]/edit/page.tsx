@@ -47,6 +47,7 @@ export default function EditCampaignPage() {
   const [formData, setFormData] = useState(MOCK_CAMPAIGN_DATA);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
   const [showSuccessToast, setShowSuccessToast] = useState(false);
 
   const isFormDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
@@ -123,6 +124,19 @@ export default function EditCampaignPage() {
     navigateToCampaignPage();
   }, [navigateToCampaignPage]);
 
+  const handleAttemptDiscard = useCallback(() => {
+    if (!isFormDirty) {
+      return;
+    }
+
+    setIsDiscardModalOpen(true);
+  }, [isFormDirty]);
+
+  const handleConfirmDiscard = useCallback(() => {
+    setFormData(initialData);
+    setIsDiscardModalOpen(false);
+  }, [initialData]);
+
   if (parsedCampaignId === null) {
     return null;
   }
@@ -186,7 +200,7 @@ export default function EditCampaignPage() {
           <EditCampaignActions
             isFormDirty={isFormDirty}
             onSave={() => setIsSaveModalOpen(true)}
-            onCancel={handleAttemptLeave}
+            onCancel={handleAttemptDiscard}
           />
         </div>
 
@@ -198,11 +212,14 @@ export default function EditCampaignPage() {
         formData={formData}
         isSaveModalOpen={isSaveModalOpen}
         isCancelModalOpen={isCancelModalOpen}
+        isDiscardModalOpen={isDiscardModalOpen}
         showSuccessToast={showSuccessToast}
         onCloseSaveModal={() => setIsSaveModalOpen(false)}
         onConfirmSave={handleConfirmSave}
         onCloseCancelModal={() => setIsCancelModalOpen(false)}
         onConfirmCancel={handleConfirmCancel}
+        onCloseDiscardModal={() => setIsDiscardModalOpen(false)}
+        onConfirmDiscard={handleConfirmDiscard}
         onCloseToast={() => setShowSuccessToast(false)}
       />
     </div>
