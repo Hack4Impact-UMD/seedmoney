@@ -1,7 +1,7 @@
 "use client";
 import Navbar from "@/src/components/Navbar";
 import UsersTable from "@/src/components/UsersTable";
-import { mockUsers } from "./mockUsersData";
+import { mockUsersTableRows } from "./mockUsersData";
 
 export default function Users() {
   return (
@@ -28,7 +28,7 @@ export default function Users() {
           </div>
         </div>
         <div className="mt-6">
-          <UsersTable initialData={mockUsers} />
+          <UsersTable initialData={mockUsersTableRows} />
         </div>
       </div>
     </div>

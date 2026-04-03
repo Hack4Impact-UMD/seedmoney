@@ -12,13 +12,13 @@ import DeleteUserPopUp from "@/src/components/DeleteUserPopUp";
 import ApplicationStatusPopUp from "@/src/components/ApplicationStatusPopUp";
 import { Avatar, Chip, Snackbar, Alert } from "@mui/material";
 import type {
-  MockUser,
   MockCampaign,
+  MockUsersTableRow,
 } from "@/src/app/dashboard/(admin)/users/mockUsersData";
 import type { Status } from "@/src/types/db/enums";
 
 interface Props {
-  initialData: MockUser[];
+  initialData: MockUsersTableRow[];
 }
 
 type AggregateStatus = Status | "mixed";
@@ -194,19 +194,19 @@ function CampaignsSummaryBadge({
   );
 }
 
-const columnHelper = createColumnHelper<MockUser>();
+const columnHelper = createColumnHelper<MockUsersTableRow>();
 
 const UsersTable = ({ initialData }: Props) => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<MockUser | null>(null);
-  const [statusTarget, setStatusTarget] = useState<MockUser | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<MockUsersTableRow | null>(null);
+  const [statusTarget, setStatusTarget] = useState<MockUsersTableRow | null>(null);
   const [toast, setToast] = useState(false);
 
   const handleConfirmDelete = useCallback(() => {
     setDeleteTarget(null);
     setToast(true);
-    // TOTO: Delete user logic
+    // Later this should delete the user in the backend and then reload the users list.
   }, []);
 
   const columns = useMemo(

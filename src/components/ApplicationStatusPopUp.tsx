@@ -3,13 +3,13 @@
 import { useEffect } from "react";
 import Button from "@mui/material/Button";
 import type {
-  MockUser,
   MockCampaign,
+  MockUsersTableRow,
 } from "@/src/app/dashboard/(admin)/users/mockUsersData";
 import type { Status } from "@/src/types/db/enums";
 
 interface ApplicationStatusPopUpProps {
-  user: MockUser;
+  user: MockUsersTableRow;
   onClose: () => void;
 }
 
