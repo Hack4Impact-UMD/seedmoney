@@ -217,7 +217,9 @@ export default function EditCampaignDialogs({
             alignItems: "center",
           }}
         >
-          <span className="text-[#1A4A28] font-bold text-xl">Confirm Edit</span>
+          <span className="text-[#1A4A28] font-bold text-xl">
+            Unsaved changes
+          </span>
           <IconButton
             aria-label="close"
             onClick={onCloseCancelModal}
@@ -227,15 +229,23 @@ export default function EditCampaignDialogs({
           </IconButton>
         </DialogTitle>
         <DialogContent>
-          <p className="mb-4 text-gray-600">
-            Are you sure you want to leave this form? Your changes will not be
-            saved.
+          <p className="mb-4 text-gray-600 text-[16px]">
+            You have unsaved changes. If you leave, your edits will be lost.
           </p>
         </DialogContent>
-        <DialogActions>
-          <Button onClick={onCloseCancelModal}>Cancel</Button>
-          <Button variant="contained" onClick={onConfirmCancel}>
-            Save
+        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+          <Button
+            onClick={onConfirmCancel}
+            sx={{ color: "#666666", fontWeight: 700 }}
+          >
+            Leave without saving
+          </Button>
+          <Button
+            variant="contained"
+            onClick={onCloseCancelModal}
+            sx={{ px: 2.5, py: 1 }}
+          >
+            Stay
           </Button>
         </DialogActions>
       </Dialog>

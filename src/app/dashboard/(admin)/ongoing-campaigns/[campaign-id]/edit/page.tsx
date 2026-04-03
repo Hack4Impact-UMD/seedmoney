@@ -100,14 +100,28 @@ export default function EditCampaignPage() {
     setShowSuccessToast(true);
   }, [formData]);
 
-  const handleConfirmCancel = useCallback(() => {
-    setIsCancelModalOpen(false);
+  const navigateToCampaignPage = useCallback(() => {
     if (parsedCampaignId === null) {
       router.push("/dashboard/ongoing-campaigns");
       return;
     }
+
     router.push(`/dashboard/ongoing-campaigns/${parsedCampaignId}`);
   }, [parsedCampaignId, router]);
+
+  const handleAttemptLeave = useCallback(() => {
+    if (isFormDirty) {
+      setIsCancelModalOpen(true);
+      return;
+    }
+
+    navigateToCampaignPage();
+  }, [isFormDirty, navigateToCampaignPage]);
+
+  const handleConfirmCancel = useCallback(() => {
+    setIsCancelModalOpen(false);
+    navigateToCampaignPage();
+  }, [navigateToCampaignPage]);
 
   if (parsedCampaignId === null) {
     return null;
@@ -131,7 +145,7 @@ export default function EditCampaignPage() {
       <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
         <EditCampaignHeader
           campaignId={String(parsedCampaignId)}
-          onBack={() => setIsCancelModalOpen(true)}
+          onBack={handleAttemptLeave}
         />
 
         <div className="flex items-start gap-24">
@@ -172,7 +186,7 @@ export default function EditCampaignPage() {
           <EditCampaignActions
             isFormDirty={isFormDirty}
             onSave={() => setIsSaveModalOpen(true)}
-            onCancel={() => setIsCancelModalOpen(true)}
+            onCancel={handleAttemptLeave}
           />
         </div>
 
