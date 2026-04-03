@@ -1,13 +1,14 @@
 'use client'
 import { Box, Container, Typography, Link, Divider, Stack} from '@mui/material';
-import StarIcon from '@mui/icons-material/Star';
 
 export default function Footer() {
 
   return (
     <Box component="footer" className="bg-[#333333] text-[#EEEEEE]">
       <Container>
-        <Divider className="pt-8 before:border before:border-[#525252] after:border after:border-[#525252]"> <StarIcon fontSize='small' /> </Divider>
+        <Divider className="pt-8 before:border before:border-[#525252] after:border after:border-[#525252]">
+          <span aria-hidden="true" className="text-sm">★</span>
+        </Divider>
 
         <Box className="flex flex-col sm:flex-row justify-center items-start sm:gap-40 mb-1 py-2">
 

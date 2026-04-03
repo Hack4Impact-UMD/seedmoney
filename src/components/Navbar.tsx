@@ -20,8 +20,6 @@ import type { Campaign } from "@/src/types/db/campaigns";
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 
-
-
 type SidebarProps = {
   campaigns: Campaign[];
   selectedCampaignId: number;
@@ -35,7 +33,7 @@ export default function Navbar({
 }: SidebarProps) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAuth();
-  const { data: userData} = useUserByAuthId(user?.id || "");
+  const { data: userData } = useUserByAuthId(user?.id || "");
   const router = useRouter();
   const pathname = usePathname();
 
@@ -87,11 +85,7 @@ export default function Navbar({
 
     return { currentYearCampaigns, previousCampaigns };
   }, [campaigns, currentYear]);
-
-  if (!userData) {
-    return null;
-  }
-
+  const isAdmin = userData?.is_admin ?? false;
 
   const getItemClasses = (isSelected: boolean) =>
     clsx(
@@ -133,10 +127,14 @@ export default function Navbar({
           {!isCollapsed && (
             <div className="min-w-0">
               <h6 className="text-xl font-bold leading-[1.3] text-white">
-                {userData.first_name}
+                {userData?.first_name ?? "SeedMoney"}
               </h6>
               <p className="text-sm text-white/80">
-                {userData.is_admin ? "Admin" : "Campaign Leader"}
+                {userData
+                  ? isAdmin
+                    ? "Admin"
+                    : "Campaign Leader"
+                  : "Loading profile"}
               </p>
             </div>
           )}
@@ -156,19 +154,26 @@ export default function Navbar({
         )}
       </IconButton>
 
-      {userData.is_admin && (
+      {userData && isAdmin && (
         <div className="scrollbar-hide mt-5 flex flex-1 flex-col overflow-y-auto overscroll-contain">
           <List disablePadding>
             {[
               { label: "Home", path: "/dashboard" },
-              { label: "Ongoing Campaigns", path: "/dashboard/ongoing-campaigns" },
-              { label: "Review Applications", path: "/dashboard/review-applications" },
+              {
+                label: "Ongoing Campaigns",
+                path: "/dashboard/ongoing-campaigns",
+              },
+              {
+                label: "Review Applications",
+                path: "/dashboard/review-applications",
+              },
               { label: "List of Users", path: "/dashboard/users" },
             ].map(({ label, path }) => {
+              // readjusted pathname to accommodate /ongoing-campaigns/{id}
               const isSelected =
                 path === "/dashboard"
                   ? pathname === path
-                  : pathname === path || pathname.startsWith(`${path}/`);
+                  : pathname.startsWith(path);
               return (
                 <ListItemButton
                   key={path}
@@ -176,13 +181,19 @@ export default function Navbar({
                   className={getItemClasses(isSelected)}
                 >
                   {isCollapsed ? (
-                    <div className={clsx("h-3 w-3 rounded-full", isSelected ? "bg-white" : "bg-gray-200/50")} />
+                    <div
+                      className={clsx(
+                        "h-3 w-3 rounded-full",
+                        isSelected ? "bg-white" : "bg-gray-200/50",
+                      )}
+                    />
                   ) : (
                     <ListItemText
                       primary={label}
                       slotProps={{
                         primary: {
-                          className: "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
+                          className:
+                            "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
                         },
                       }}
                     />
@@ -193,18 +204,28 @@ export default function Navbar({
           </List>
 
           <div className="mt-auto flex flex-col gap-3 px-4 pb-6">
-            <Button onClick={handleSettings} size="medium" variant="text" className="!flex !justify-start !text-white">
+            <Button
+              onClick={handleSettings}
+              size="medium"
+              variant="text"
+              className="!flex !justify-start !text-white"
+            >
               <SettingsIcon className="!text-[28px]" />
               {!isCollapsed && <span className="ml-2">SETTINGS</span>}
             </Button>
-            <Button onClick={handleLogout} size="medium" variant="text" className="!flex !justify-start !text-white">
+            <Button
+              onClick={handleLogout}
+              size="medium"
+              variant="text"
+              className="!flex !justify-start !text-white"
+            >
               <LogoutIcon className="!text-[28px]" />
               {!isCollapsed && <span className="ml-2">LOG OUT</span>}
             </Button>
           </div>
         </div>
       )}
-      {!userData.is_admin && (
+      {userData && !isAdmin && (
         <>
           <div className="scrollbar-hide mt-5 flex flex-1 flex-col overflow-y-auto overscroll-contain">
             {currentYearCampaigns.length > 0 && (
@@ -217,12 +238,16 @@ export default function Navbar({
 
                 <List disablePadding>
                   {currentYearCampaigns.map((campaign) => {
-                    const isSelected = !isViewAllSelected && campaign.campaign_id === selectedCampaignId;
+                    const isSelected =
+                      !isViewAllSelected &&
+                      campaign.campaign_id === selectedCampaignId;
 
                     return (
                       <ListItemButton
                         key={campaign.campaign_id}
-                        onClick={() => handleCampaignClick(campaign.campaign_id)}
+                        onClick={() =>
+                          handleCampaignClick(campaign.campaign_id)
+                        }
                         className={getItemClasses(isSelected)}
                       >
                         {isCollapsed ? (
@@ -259,7 +284,9 @@ export default function Navbar({
             {previousCampaigns.length > 0 && (
               <List disablePadding>
                 {previousCampaigns.map((campaign) => {
-                  const isSelected = !isViewAllSelected && campaign.campaign_id === selectedCampaignId;
+                  const isSelected =
+                    !isViewAllSelected &&
+                    campaign.campaign_id === selectedCampaignId;
 
                   return (
                     <ListItemButton
@@ -354,9 +381,7 @@ export default function Navbar({
             </Button>
           </div>
         </>
-        
       )}
-
     </nav>
   );
 }

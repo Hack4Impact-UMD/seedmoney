@@ -9,7 +9,7 @@ export function TotalDonorsCard({
   donorsChangePercent: number;
 }) {
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-white rounded-lg border border-1 border-[#e5e5e5] p-6">
       <CardHeader label="Total Donors" icon={<PeopleOutlineIcon />} />
       <h2 className="text-3xl font-bold text-gray-900 my-3">{totalDonors}</h2>
       <div className="flex justify-between items-center">

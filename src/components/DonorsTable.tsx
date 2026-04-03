@@ -159,7 +159,7 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
 
   return (
     <div className="w-full">
-      <div className="overflow-x-auto rounded-xl bg-white md:mx-auto md:w-full">
+      <div className="overflow-x-auto rounded-xl bg-white md:mx-auto md:w-full border border-1 border-[#e5e5e5]">
         <div className="px-5 pt-8">
           <h2 className="text-center text-black sm:text-left">Donors List</h2>
           <p className="text-center text-sm text-gray-500 sm:text-left">
@@ -274,6 +274,7 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
             </div>
           </>
         )}
+        <button className="bg-[#2c7a45] text-white uppercase font-semibold px-4 py-2 rounded-md mb-7 ml-4 cursor-pointer outline-none">Export to CSV</button>
       </div>
     </div>
   );

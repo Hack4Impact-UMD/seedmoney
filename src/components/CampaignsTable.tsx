@@ -1,5 +1,6 @@
 'use client';
 import React, { useMemo, useState } from 'react';
+import { useRouter } from 'next/navigation';
 import { 
   flexRender, 
   useReactTable, 
@@ -21,7 +22,14 @@ interface Props {
 }
 
 const CampaignsTable = ({ initialData }: Props) => {
+  const router = useRouter();
   const [campaignSearch, setCampaignSearch] = useState('');
+
+  // TODO: function to handle invidiual campaigns (parameter will probably be campaign id)
+  const handleCampaignClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    router.push(`/dashboard/ongoing-campaigns/1`);
+  }
 
   const filteredData = useMemo(() => {
     return initialData.filter(campaign => 
@@ -35,30 +43,35 @@ const CampaignsTable = ({ initialData }: Props) => {
   const columns = [
     columnHelper.accessor('name', {
       header: 'Campaign Title',
+      size: 200,
       cell: info => <span className="font-medium text-gray-700">{info.getValue()}</span>
     }),
     columnHelper.accessor('campaign_leader', {
       header: 'Campaign Leader',
+      size: 180,
       cell: info => info.getValue()
     }),
     columnHelper.accessor('raised', {
       header: 'Raised',
+      size: 120,
       cell: info => `$${info.getValue().toLocaleString()}`
     }),
     columnHelper.accessor('goal', {
       header: 'Goal',
+      size: 120,
       cell: info => `$${info.getValue().toLocaleString()}`
     }), 
     columnHelper.accessor(row => ({ 
       percentage: row.percentage 
     }), {
       id: 'status',
+      size: 200,
       header: 'Goal Status',
       cell: info => {
         const { percentage } = info.getValue();
         const displayPercentage = Math.min(percentage, 100);
         return (
-          <div className="flex items-center gap-3 w-full max-w-[150px]">
+          <div className="flex items-center gap-3 w-full min-w-[180px]">
             <div className="w-full bg-blue-100 rounded-full h-2">
               <div 
                 className="bg-blue-600 h-2 rounded-full" 
@@ -66,6 +79,15 @@ const CampaignsTable = ({ initialData }: Props) => {
               ></div>
             </div>
             <span className="text-sm text-gray-600">{displayPercentage}%</span>
+            {/* TODO: pass in campaign id as function parameter for handleCampaignClick  */}
+            <button
+              type="button"
+              className="ml-1 cursor-pointer select-none text-xl font-bold text-[#2c7a45] transition-colors"
+              onClick={handleCampaignClick}
+              aria-label="Open campaign details"
+            >
+              &gt;
+            </button>
           </div>
         );
       }
@@ -112,7 +134,7 @@ const CampaignsTable = ({ initialData }: Props) => {
               {table.getHeaderGroups().map(headerGroup => (
                 <tr key={headerGroup.id}>
                   {headerGroup.headers.map(header => (
-                    <th key={header.id} className="text-left px-5 py-4 border-b border-gray-300">
+                    <th key={header.id} style={{ width: header.getSize() !== 150 ? header.getSize() : 'auto' }} className="text-left px-5 py-4 border-b border-gray-300">
                       {header.isPlaceholder
                         ? null
                         : flexRender(
@@ -131,6 +153,7 @@ const CampaignsTable = ({ initialData }: Props) => {
                     <td key={cell.id} className="text-left px-5 py-4 border-b border-gray-300">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
                     </td>
+                    
                   ))}
                 </tr>
               ))}
@@ -160,14 +183,14 @@ const CampaignsTable = ({ initialData }: Props) => {
                 <button 
                   onClick={() => table.previousPage()} 
                   disabled={!table.getCanPreviousPage()}
-                  className="p-1 disabled:opacity-30 text-2xl text-black font-bold"
+                  className="cursor-pointer p-1 text-2xl font-bold text-black disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   &lt;
                 </button>
                 <button 
                   onClick={() => table.nextPage()} 
                   disabled={!table.getCanNextPage()}
-                  className="p-1 disabled:opacity-30 text-2xl text-black font-bold"
+                  className="cursor-pointer p-1 text-2xl font-bold text-black disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   &gt;
                 </button>
