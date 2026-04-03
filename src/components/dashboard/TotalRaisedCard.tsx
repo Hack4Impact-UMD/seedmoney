@@ -16,7 +16,7 @@ export function TotalRaisedCard({
   );
 
   return (
-    <div className="bg-white rounded-lg shadow-sm p-6">
+    <div className="bg-white rounded-lg border border-1 border-[#e5e5e5] p-6">
       <CardHeader label="Total Raised" icon={<AttachMoneyIcon />} />
 
       {/* Progress bar */}

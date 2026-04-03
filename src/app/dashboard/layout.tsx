@@ -17,9 +17,7 @@ export default async function DashboardLayout({
 
   return (
     <QueryProvider>
-      <AuthProvider initialUser={data.user}>
-        {children}
-      </AuthProvider>
+      <AuthProvider initialUser={data.user}>{children}</AuthProvider>
     </QueryProvider>
   );
 }
