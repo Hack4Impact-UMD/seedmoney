@@ -108,6 +108,11 @@ export const reviewApplications: ReviewApplication[] = [
 export const getReviewApplicationById = (campaignId: number) =>
   reviewApplications.find((application) => application.campaignId === campaignId);
 
+export const getHydratedReviewApplicationById = (campaignId: number) =>
+  getHydratedReviewApplications().find(
+    (application) => application.campaignId === campaignId,
+  );
+
 export const getHydratedReviewApplications = (): ReviewApplication[] => {
   if (typeof window === "undefined") {
     return reviewApplications;

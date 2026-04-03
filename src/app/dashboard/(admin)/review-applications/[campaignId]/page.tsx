@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Image from "next/image";
 import {
   notFound,
@@ -29,13 +29,16 @@ import DeleteIcon from "@mui/icons-material/Delete";
 import CheckIcon from "@mui/icons-material/Check";
 import Navbar from "@/src/components/Navbar";
 import {
+  getHydratedReviewApplicationById,
   getReviewApplicationById,
   notifyReviewApplicationStatusChange,
+  subscribeToReviewApplicationStatusChange,
+  type ReviewApplicationStatus,
   updateReviewApplicationStatus,
 } from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
 
-type ModalType = "approve" | "deny" | "unsaved" | null;
-type ToastType = "approve" | "deny" | null;
+type ModalType = "approve" | "deny" | "revert" | "unsaved" | null;
+type ToastType = "approve" | "deny" | "revert" | null;
 
 type ReviewSectionCardProps = {
   children: React.ReactNode;
@@ -53,6 +56,7 @@ type EditableFieldProps = {
 
 type StoryEditorProps = {
   finalValue: string;
+  aiValue: string;
   onChange: (value: string) => void;
   originalValue: string;
   prompt: string;
@@ -127,10 +131,16 @@ const initialReviewData = {
   projectCategory: "Community Garden",
   storyChallenge:
     "The Full Belly Community Garden addresses the challenge of food insecurity, specifically the difficulty many local families and seniors face in accessing fresh, affordable organic produce.",
+  storyChallengeAi:
+    "This garden helps address local food insecurity by improving access to fresh, affordable organic produce for families and seniors in the community.",
   storyGrowingSeason:
     "During the growing season, the garden becomes a vibrant oasis where volunteers host monthly workshops, teach hands-on gardening skills, and create a safe place for at-risk youth to explore nature.",
+  storyGrowingSeasonAi:
+    "Throughout the growing season, the garden becomes an active learning space where volunteers lead workshops, build gardening skills, and welcome youth into a safe outdoor environment.",
   storyLocation:
     "The Full Belly Community Garden in Scarborough, Maine, provides over 300 pounds of produce annually to local food-insecure families and seniors. Beyond its harvest, it serves as an educational hub for at-risk youth and neighbors through nature exploration and hands-on workshops.",
+  storyLocationAi:
+    "Located in Scarborough, Maine, the Full Belly Community Garden provides hundreds of pounds of produce each year while also serving as a hands-on learning space for neighbors, youth, and local families.",
   zipcode: "98921",
 };
 
@@ -219,6 +229,7 @@ function EditableField({
 
 function StoryEditor({
   finalValue,
+  aiValue,
   onChange,
   originalValue,
   prompt,
@@ -231,7 +242,7 @@ function StoryEditor({
       <Stack spacing={2}>
         {[
           { editable: false, label: "Original Version", value: originalValue },
-          { editable: false, label: "AI Polished Version ", value: originalValue },
+          { editable: false, label: "AI Polished Version ", value: aiValue },
           { editable: true, label: "Final Version", value: finalValue },
         ].map((entry) => (
           <Stack
@@ -265,21 +276,6 @@ function StoryEditor({
             />
           </Stack>
         ))}
-        <Stack alignItems="flex-end">
-          <Button
-            size="small"
-            variant="outlined"
-            sx={{
-              borderColor: "#b8c6b9",
-              borderRadius: "8px",
-              color: "#5c7d61",
-              fontSize: 12,
-              minWidth: 54,
-            }}
-          >
-            SAVE
-          </Button>
-        </Stack>
       </Stack>
     </Box>
   );
@@ -414,18 +410,50 @@ function UploadedPhotoCard({
 export default function CampaignReviewPage() {
   const params = useParams<{ campaignId: string }>();
   const router = useRouter();
-  const application = getReviewApplicationById(Number(params.campaignId));
+  const baseApplication = getReviewApplicationById(Number(params.campaignId));
+  const [applicationStatus, setApplicationStatus] =
+    useState<ReviewApplicationStatus>(
+      baseApplication?.status ?? "PENDING",
+    );
   const [formData, setFormData] = useState(() => ({
     ...initialReviewData,
-    campaignTitle: application?.campaignTitle ?? initialReviewData.organizationName,
-    organizationName: application?.campaignTitle ?? initialReviewData.organizationName,
+    campaignTitle:
+      baseApplication?.campaignTitle ?? initialReviewData.organizationName,
+    organizationName:
+      baseApplication?.campaignTitle ?? initialReviewData.organizationName,
   }));
   const [activeModal, setActiveModal] = useState<ModalType>(null);
   const [toast, setToast] = useState<ToastType>(null);
+  const isDeniedApplication = applicationStatus === "DENIED";
 
-  if (!application) {
+  if (!baseApplication) {
     notFound();
   }
+
+  const application = {
+    ...baseApplication,
+    status: applicationStatus,
+  };
+
+  useEffect(() => {
+    const hydratedApplication = getHydratedReviewApplicationById(
+      baseApplication.campaignId,
+    );
+
+    if (hydratedApplication) {
+      setApplicationStatus(hydratedApplication.status);
+    }
+
+    return subscribeToReviewApplicationStatusChange(() => {
+      const nextApplication = getHydratedReviewApplicationById(
+        baseApplication.campaignId,
+      );
+
+      if (nextApplication) {
+        setApplicationStatus(nextApplication.status);
+      }
+    });
+  }, [baseApplication.campaignId]);
 
   const isDirty = useMemo(() => {
     return JSON.stringify(formData) !== JSON.stringify({
@@ -457,12 +485,24 @@ export default function CampaignReviewPage() {
       return;
     }
 
-    if (activeModal === "approve" || activeModal === "deny") {
+    if (
+      activeModal === "approve" ||
+      activeModal === "deny" ||
+      activeModal === "revert"
+    ) {
+      const nextStatus: ReviewApplicationStatus =
+        activeModal === "approve"
+          ? "APPROVED"
+          : activeModal === "deny"
+            ? "DENIED"
+            : "PENDING";
+
       updateReviewApplicationStatus(
         [application.campaignId],
-        activeModal === "approve" ? "APPROVED" : "DENIED",
+        nextStatus,
       );
       notifyReviewApplicationStatusChange();
+      setApplicationStatus(nextStatus);
       setToast(activeModal);
       setActiveModal(null);
       window.setTimeout(() => setToast(null), 3500);
@@ -485,12 +525,18 @@ export default function CampaignReviewPage() {
                 <CheckCircleOutlinedIcon className="mt-0.5 !h-5 !w-5 text-[#5f9e68]" />
                 <div>
                   <p className="text-[14px] font-semibold">
-                    {toast === "approve" ? "Campaign Approved!" : "Campaign Denied!"}
+                    {toast === "approve"
+                      ? "Campaign Approved!"
+                      : toast === "deny"
+                        ? "Campaign Denied!"
+                        : "Campaign Reverted!"}
                   </p>
                   <p className="mt-1 text-[13px] leading-5">
                     {toast === "approve"
                       ? "You have successfully approved this campaign."
-                      : "You have successfully denied this campaign."}
+                      : toast === "deny"
+                        ? "You have successfully denied this campaign."
+                        : "You have successfully moved this campaign back to pending."}
                   </p>
                 </div>
               </div>
@@ -710,18 +756,21 @@ export default function CampaignReviewPage() {
               <ReviewSectionCard subtitle="2–3 sentences each" title="Garden Story">
                 <StoryEditor
                   finalValue={formData.storyLocation}
+                  aiValue={initialReviewData.storyLocationAi}
                   originalValue={initialReviewData.storyLocation}
                   prompt="Where is your garden, and who does it serve?"
                   onChange={(value) => handleFieldChange("storyLocation", value)}
                 />
                 <StoryEditor
                   finalValue={formData.storyChallenge}
+                  aiValue={initialReviewData.storyChallengeAi}
                   originalValue={initialReviewData.storyChallenge}
                   prompt="What challenge does your garden help address, and why does it matter locally?"
                   onChange={(value) => handleFieldChange("storyChallenge", value)}
                 />
                 <StoryEditor
                   finalValue={formData.storyGrowingSeason}
+                  aiValue={initialReviewData.storyGrowingSeasonAi}
                   originalValue={initialReviewData.storyGrowingSeason}
                   prompt="What happens in the garden during the growing season?"
                   onChange={(value) => handleFieldChange("storyGrowingSeason", value)}
@@ -866,34 +915,53 @@ export default function CampaignReviewPage() {
 
             <aside className="w-full lg:sticky lg:top-8 lg:w-[132px] lg:shrink-0 lg:pt-[92px]">
               <Stack direction="column" spacing={1.25}>
-                <Button
-                  variant="contained"
-                  onClick={() => setActiveModal("approve")}
-                  sx={{
-                    minHeight: 50,
-                    borderRadius: "10px",
-                    fontSize: 14,
-                    fontWeight: 700,
-                    letterSpacing: "0.08em",
-                    px: 2,
-                  }}
-                >
-                  APPROVE
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() => setActiveModal("deny")}
-                  sx={{
-                    minHeight: 50,
-                    borderRadius: "10px",
-                    fontSize: 14,
-                    fontWeight: 700,
-                    letterSpacing: "0.08em",
-                    px: 2,
-                  }}
-                >
-                  DENY
-                </Button>
+                {isDeniedApplication ? (
+                  <Button
+                    variant="contained"
+                    onClick={() => setActiveModal("revert")}
+                    sx={{
+                      minHeight: 50,
+                      borderRadius: "10px",
+                      fontSize: 14,
+                      fontWeight: 700,
+                      letterSpacing: "0.08em",
+                      px: 2,
+                    }}
+                  >
+                    REVERT
+                  </Button>
+                ) : (
+                  <>
+                    <Button
+                      variant="contained"
+                      onClick={() => setActiveModal("approve")}
+                      sx={{
+                        minHeight: 50,
+                        borderRadius: "10px",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        letterSpacing: "0.08em",
+                        px: 2,
+                      }}
+                    >
+                      APPROVE
+                    </Button>
+                    <Button
+                      variant="outlined"
+                      onClick={() => setActiveModal("deny")}
+                      sx={{
+                        minHeight: 50,
+                        borderRadius: "10px",
+                        fontSize: 14,
+                        fontWeight: 700,
+                        letterSpacing: "0.08em",
+                        px: 2,
+                      }}
+                    >
+                      DENY
+                    </Button>
+                  </>
+                )}
               </Stack>
             </aside>
           </div>
@@ -937,6 +1005,28 @@ export default function CampaignReviewPage() {
               </ul>
               <p className="mt-3">
                 Are you sure you would like to deny? This action cannot be undone.
+              </p>
+            </>
+          }
+        />
+      )}
+
+      {activeModal === "revert" && (
+        <ActionModal
+          title="Confirm Revert"
+          confirmLabel="REVERT"
+          onClose={() => setActiveModal(null)}
+          onConfirm={handleConfirmAction}
+          secondaryLabel="CANCEL"
+          body={
+            <>
+              <p>You are about to move this campaign back to pending:</p>
+              <ul className="mt-2 list-disc pl-6 text-[#222622]">
+                <li>{application.campaignTitle}</li>
+              </ul>
+              <p className="mt-3">
+                Are you sure you would like to revert it? This will return the
+                campaign to the pending list.
               </p>
             </>
           }
