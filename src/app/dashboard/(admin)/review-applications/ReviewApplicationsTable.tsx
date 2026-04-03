@@ -226,7 +226,7 @@ export default function ReviewApplicationsTable({
         </div>
       )}
 
-      <div className="mb-5 pt-14">
+      <div className="mb-5 pt-8">
         <h1 className="text-[40px] font-semibold tracking-[-0.04em] text-[#214E34] sm:text-[42px]">
           Review Campaigns
         </h1>
