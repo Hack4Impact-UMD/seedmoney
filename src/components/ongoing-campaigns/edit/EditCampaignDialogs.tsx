@@ -1,5 +1,6 @@
 "use client";
 
+import { useMemo } from "react";
 import {
   Alert,
   AlertTitle,
@@ -14,7 +15,96 @@ import {
 import { CheckCircleOutline, Close } from "@mui/icons-material";
 import { EditCampaignFormData } from "./types";
 
+const SECTION_CHANGE_GROUPS: Array<{
+  label: string;
+  fields: Array<keyof EditCampaignFormData>;
+}> = [
+  {
+    label: "Campaign Title",
+    fields: ["campaignTitle"],
+  },
+  {
+    label: "Project Details & Impact",
+    fields: ["beneficiaryCount", "gardenStatus", "gardenSize"],
+  },
+  {
+    label: "Fundraising Goal",
+    fields: ["fundraisingGoal"],
+  },
+  {
+    label: "Garden Location",
+    fields: ["gardenCity", "gardenState", "gardenCountry"],
+  },
+  {
+    label: "Primary Project Category",
+    fields: ["gardenCategory"],
+  },
+  {
+    label: "Beneficiary Populations Served",
+    fields: ["gardenBeneficiaries"],
+  },
+  {
+    label: "Organization Information",
+    fields: ["organizationName", "organizationIdentifier"],
+  },
+  {
+    label: "Beneficiary Organization Mailing Address",
+    fields: [
+      "mailingStreet1",
+      "mailingStreet2",
+      "mailingCity",
+      "mailingState",
+      "mailingZip",
+      "mailingCountry",
+    ],
+  },
+  {
+    label: "Primary Contact Information",
+    fields: [
+      "contactFirstName",
+      "contactLastName",
+      "contactEmail",
+      "contactRole",
+    ],
+  },
+];
+
+const STORY_QUESTION_CHANGES: Array<{
+  field: keyof EditCampaignFormData;
+  label: string;
+}> = [
+  {
+    field: "storyLocationAndAudienceFinal",
+    label: "Where is your garden, and who does it serve?",
+  },
+  {
+    field: "storyChallengeFinal",
+    label:
+      "What challenge does your garden help address, and why does it matter locally?",
+  },
+  {
+    field: "storySeasonActivityFinal",
+    label: "What happens in the garden during the growing season?",
+  },
+  {
+    field: "storyCampaignImpactFinal",
+    label: "What will this year’s SeedMoney campaign make possible?",
+  },
+];
+
+function hasChanged(
+  before: EditCampaignFormData[keyof EditCampaignFormData],
+  after: EditCampaignFormData[keyof EditCampaignFormData],
+) {
+  if (Array.isArray(before) && Array.isArray(after)) {
+    return JSON.stringify(before) !== JSON.stringify(after);
+  }
+
+  return before !== after;
+}
+
 interface EditCampaignDialogsProps {
+  initialData: EditCampaignFormData;
   formData: EditCampaignFormData;
   isSaveModalOpen: boolean;
   isCancelModalOpen: boolean;
@@ -27,6 +117,7 @@ interface EditCampaignDialogsProps {
 }
 
 export default function EditCampaignDialogs({
+  initialData,
   formData,
   isSaveModalOpen,
   isCancelModalOpen,
@@ -37,6 +128,18 @@ export default function EditCampaignDialogs({
   onConfirmCancel,
   onCloseToast,
 }: EditCampaignDialogsProps) {
+  const changedSections = useMemo(
+    () => [
+      ...SECTION_CHANGE_GROUPS.filter(({ fields }) =>
+        fields.some((field) => hasChanged(initialData[field], formData[field])),
+      ).map(({ label }) => label),
+      ...STORY_QUESTION_CHANGES.filter(({ field }) =>
+        hasChanged(initialData[field], formData[field]),
+      ).map(({ label }) => label),
+    ],
+    [formData, initialData],
+  );
+
   return (
     <>
       <Dialog open={isSaveModalOpen} onClose={onCloseSaveModal} fullWidth>
@@ -59,17 +162,21 @@ export default function EditCampaignDialogs({
             <Close />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
+        <DialogContent sx={{ maxHeight: "60vh", overflowY: "auto" }}>
           <p className="mb-4 text-gray-600">
             You are about to edit this campaign:
           </p>
-          <ul className="mb-4 list-disc space-y-1 pl-6 text-black font-medium">
-            <li>Campaign title</li>
-            <li>
-              Garden story -{" "}
-              <strong>Where is your garden, and who does it serve?</strong>
-            </li>
-          </ul>
+          {changedSections.length > 0 ? (
+            <ul className="mb-4 list-disc space-y-1 pl-6 text-black font-medium">
+              {changedSections.map((section) => (
+                <li key={section}>{section}</li>
+              ))}
+            </ul>
+          ) : (
+            <p className="mb-4 text-sm text-gray-500">
+              No editable fields were changed.
+            </p>
+          )}
           <p className="mt-4 text-sm text-gray-500">
             Changes cannot be reversed unless edit is requested again. Are you
             sure you would like to save changes?

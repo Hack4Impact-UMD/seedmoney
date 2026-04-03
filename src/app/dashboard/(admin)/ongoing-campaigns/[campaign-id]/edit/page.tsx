@@ -180,6 +180,7 @@ export default function EditCampaignPage() {
       </div>
 
       <EditCampaignDialogs
+        initialData={initialData}
         formData={formData}
         isSaveModalOpen={isSaveModalOpen}
         isCancelModalOpen={isCancelModalOpen}
