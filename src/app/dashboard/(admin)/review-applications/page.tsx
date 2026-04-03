@@ -1,19 +1,21 @@
 "use client";
+
 import Navbar from "@/src/components/Navbar";
-export default function ReviewCampaigns() {
+import ReviewApplicationsTable from "@/src/app/dashboard/(admin)/review-applications/ReviewApplicationsTable";
+import { reviewApplications } from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
+
+export default function ReviewApplicationsPage() {
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen bg-[#fbfcfb]">
       <Navbar
         campaigns={[]}
         selectedCampaignId={0}
         onCampaignSelect={() => {}}
       />
-      <div className="flex-1 bg-gray-50 p-10">
-        <h3 className="text-4xl font-bold text-[#096B2E]">Review Campaigns</h3>
 
-      </div>
+      <main className="flex-1 px-6 py-8 sm:px-10 md:px-12">
+        <ReviewApplicationsTable applications={reviewApplications} />
+      </main>
     </div>
-    
-
   );
 }
