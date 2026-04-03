@@ -25,7 +25,7 @@ type ReviewApplicationsTableProps = {
 
 const pageSizeOptions = [5, 10, 20];
 
-type ReviewAction = "APPROVE" | "DENY";
+type ReviewAction = "APPROVE" | "DENY" | "REVERT";
 
 type ToastState = {
   action: ReviewAction;
@@ -182,7 +182,11 @@ export default function ReviewApplicationsTable({
     }
 
     const nextStatus: ReviewApplicationStatus =
-      pendingAction === "APPROVE" ? "APPROVED" : "DENIED";
+      pendingAction === "APPROVE"
+        ? "APPROVED"
+        : pendingAction === "DENY"
+          ? "DENIED"
+          : "PENDING";
 
     setApplicationRows((current) =>
       current.map((application) =>
@@ -200,10 +204,20 @@ export default function ReviewApplicationsTable({
   };
 
   const hasSelectedRows = selectedIds.length > 0;
+  const isDeniedTab = tab === "DENIED";
   const isActionModalOpen = pendingAction !== null;
   const modalTitle =
-    pendingAction === "APPROVE" ? "Confirm Approval" : "Confirm Denial";
-  const modalVerb = pendingAction === "APPROVE" ? "approve" : "deny";
+    pendingAction === "APPROVE"
+      ? "Confirm Approval"
+      : pendingAction === "DENY"
+        ? "Confirm Denial"
+        : "Confirm Revert";
+  const modalVerb =
+    pendingAction === "APPROVE"
+      ? "approve"
+      : pendingAction === "DENY"
+        ? "deny"
+        : "revert";
 
   return (
     <div className="relative w-full max-w-[1040px] pb-24 pt-2">
@@ -215,12 +229,16 @@ export default function ReviewApplicationsTable({
               <p className="text-[14px] font-semibold">
                 {toast.action === "APPROVE"
                   ? "Campaigns Approved!"
-                  : "Campaigns Denied!"}
+                  : toast.action === "DENY"
+                    ? "Campaigns Denied!"
+                    : "Campaigns Reverted!"}
               </p>
               <p className="mt-1 text-[13px] leading-5">
                 {toast.action === "APPROVE"
                   ? `You have successfully approved ${toast.count} campaign${toast.count === 1 ? "" : "s"}.`
-                  : `You have successfully denied ${toast.count} campaign${toast.count === 1 ? "" : "s"}.`}
+                  : toast.action === "DENY"
+                    ? `You have successfully denied ${toast.count} campaign${toast.count === 1 ? "" : "s"}.`
+                    : `You have successfully moved ${toast.count} campaign${toast.count === 1 ? "" : "s"} back to pending.`}
               </p>
             </div>
           </div>
@@ -300,22 +318,35 @@ export default function ReviewApplicationsTable({
               </label>
 
               <div className="flex items-center gap-3">
-                <button
-                  type="button"
-                  disabled={!hasSelectedRows}
-                  onClick={() => handleOpenActionModal("APPROVE")}
-                  className="rounded-[8px] bg-[#2D7A45] px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
-                >
-                  APPROVE
-                </button>
-                <button
-                  type="button"
-                  disabled={!hasSelectedRows}
-                  onClick={() => handleOpenActionModal("DENY")}
-                  className="rounded-[8px] border border-[#2D7A45] bg-white px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-[#2D7A45] transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
-                >
-                  DENY
-                </button>
+                {isDeniedTab ? (
+                  <button
+                    type="button"
+                    disabled={!hasSelectedRows}
+                    onClick={() => handleOpenActionModal("REVERT")}
+                    className="rounded-[8px] bg-[#2D7A45] px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+                  >
+                    REVERT
+                  </button>
+                ) : (
+                  <>
+                    <button
+                      type="button"
+                      disabled={!hasSelectedRows}
+                      onClick={() => handleOpenActionModal("APPROVE")}
+                      className="rounded-[8px] bg-[#2D7A45] px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      APPROVE
+                    </button>
+                    <button
+                      type="button"
+                      disabled={!hasSelectedRows}
+                      onClick={() => handleOpenActionModal("DENY")}
+                      className="rounded-[8px] border border-[#2D7A45] bg-white px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-[#2D7A45] transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+                    >
+                      DENY
+                    </button>
+                  </>
+                )}
               </div>
             </div>
           </div>
@@ -460,7 +491,9 @@ export default function ReviewApplicationsTable({
 
               <div className="px-4 pb-4 text-[14px] text-[#727873]">
                 <p>
-                  You are about to bulk {modalVerb} these campaigns:
+                  {pendingAction === "REVERT"
+                    ? "You are about to move these campaigns back to the pending list:"
+                    : `You are about to bulk ${modalVerb} these campaigns:`}
                 </p>
                 <ul className="mt-2 list-disc pl-6 text-[#222622]">
                   {selectedApplications.map((application) => (
@@ -468,8 +501,9 @@ export default function ReviewApplicationsTable({
                   ))}
                 </ul>
                 <p className="mt-3">
-                  Are you sure you would like to {modalVerb}? This action cannot be
-                  undone.
+                  {pendingAction === "REVERT"
+                    ? "Are you sure you would like to revert them? This will move them back to the pending list."
+                    : `Are you sure you would like to ${modalVerb}? This action cannot be undone.`}
                 </p>
               </div>
 
