@@ -299,52 +299,27 @@ export default function EditCampaignDialogs({
           },
         }}
       >
-        <DialogTitle
-          sx={{
-            m: 0,
-            px: 4,
-            pt: 4,
-            pb: 0.5,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <span className="text-[#1A4A28] text-[22px] font-bold leading-none">
-            Discard changes?
-          </span>
+        <div className="relative px-8 pb-6 pt-8">
           <IconButton
             aria-label="close"
             onClick={onCloseDiscardModal}
             sx={{
+              position: "absolute",
+              top: 18,
+              right: 18,
               color: "#9E9E9E",
-              mr: -1,
-              mt: -0.5,
             }}
           >
             <Close />
           </IconButton>
-        </DialogTitle>
-        <DialogContent
-          sx={{
-            px: 4,
-            pt: 4.5,
-            pb: 6,
-          }}
-        >
-          <p className="m-0 max-w-[660px] text-[16px] leading-[1.5] text-[#5F6368]">
+          <span className="block pr-12 text-[22px] font-bold leading-none text-[#1A4A28]">
+            Discard changes?
+          </span>
+          <p className="m-0 mt-[38px] max-w-[660px] text-[16px] leading-[1.5] text-[#5F6368]">
             You have unsaved changes. This will reset the form to its previous
             state.
           </p>
-        </DialogContent>
-        <DialogActions
-          sx={{
-            px: 4,
-            pb: 3,
-            pt: 0,
-            gap: 2,
-          }}
-        >
+          <div className="mt-[38px] flex justify-end gap-4">
           <Button
             onClick={onConfirmDiscard}
             sx={{
@@ -367,7 +342,8 @@ export default function EditCampaignDialogs({
           >
             Keep editing
           </Button>
-        </DialogActions>
+          </div>
+        </div>
       </Dialog>
 
       <Snackbar
