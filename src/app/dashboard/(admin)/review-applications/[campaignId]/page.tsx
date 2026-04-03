@@ -106,22 +106,25 @@ const initialReviewData = {
     "Seniors / Older adults",
     "Food-insecure individuals or households",
   ],
-  city: "Scarborough",
   contactEmail: "rogerdoiron@gmail.com",
   contactFirstName: "Roger",
   contactLastName: "Doiron",
   contactRole: "Director",
-  country: "United States",
   ein: "81-9345210",
   fundraisingGoal: "600",
+  gardenCity: "Scarborough",
+  gardenCountry: "United States",
   gardenSize: "2000",
+  gardenState: "Maine",
   impactCount: "250",
   isExistingGarden: true,
   locationStreet1: "123 Scarborough Dr",
   locationStreet2: "",
+  mailingCity: "Scarborough",
+  mailingCountry: "United States",
+  mailingState: "Maine",
   organizationName: "Fully Belly Community Garden",
   projectCategory: "Community Garden",
-  state: "Maine",
   storyChallenge:
     "The Full Belly Community Garden addresses the challenge of food insecurity, specifically the difficulty many local families and seniors face in accessing fresh, affordable organic produce.",
   storyGrowingSeason:
@@ -611,18 +614,20 @@ export default function CampaignReviewPage() {
                   <Stack spacing={2}>
                     <EditableField
                       label="City"
-                      value={formData.city}
-                      onChange={(value) => handleFieldChange("city", value)}
+                      value={formData.gardenCity}
+                      onChange={(value) => handleFieldChange("gardenCity", value)}
                     />
                     <TextField
                       fullWidth
                       label="State / Province"
                       select
                       slotProps={{ inputLabel: { shrink: true } }}
-                      value={formData.state}
+                      value={formData.gardenState}
                       variant="standard"
                       sx={fieldSx}
-                      onChange={(event) => handleFieldChange("state", event.target.value)}
+                      onChange={(event) =>
+                        handleFieldChange("gardenState", event.target.value)
+                      }
                     >
                       <MenuItem value="Maine">Maine</MenuItem>
                       <MenuItem value="Maryland">Maryland</MenuItem>
@@ -632,10 +637,12 @@ export default function CampaignReviewPage() {
                       label="Country"
                       select
                       slotProps={{ inputLabel: { shrink: true } }}
-                      value={formData.country}
+                      value={formData.gardenCountry}
                       variant="standard"
                       sx={fieldSx}
-                      onChange={(event) => handleFieldChange("country", event.target.value)}
+                      onChange={(event) =>
+                        handleFieldChange("gardenCountry", event.target.value)
+                      }
                     >
                       <MenuItem value="United States">United States</MenuItem>
                       <MenuItem value="Canada">Canada</MenuItem>
@@ -787,18 +794,20 @@ export default function CampaignReviewPage() {
                     />
                     <EditableField
                       label="City"
-                      value={formData.city}
-                      onChange={(value) => handleFieldChange("city", value)}
+                      value={formData.mailingCity}
+                      onChange={(value) => handleFieldChange("mailingCity", value)}
                     />
                     <TextField
                       fullWidth
                       label="State / Province"
                       select
                       slotProps={{ inputLabel: { shrink: true } }}
-                      value={formData.state}
+                      value={formData.mailingState}
                       variant="standard"
                       sx={fieldSx}
-                      onChange={(event) => handleFieldChange("state", event.target.value)}
+                      onChange={(event) =>
+                        handleFieldChange("mailingState", event.target.value)
+                      }
                     >
                       <MenuItem value="Maine">Maine</MenuItem>
                       <MenuItem value="Maryland">Maryland</MenuItem>
@@ -813,10 +822,12 @@ export default function CampaignReviewPage() {
                       label="Country"
                       select
                       slotProps={{ inputLabel: { shrink: true } }}
-                      value={formData.country}
+                      value={formData.mailingCountry}
                       variant="standard"
                       sx={fieldSx}
-                      onChange={(event) => handleFieldChange("country", event.target.value)}
+                      onChange={(event) =>
+                        handleFieldChange("mailingCountry", event.target.value)
+                      }
                     >
                       <MenuItem value="United States">United States</MenuItem>
                       <MenuItem value="Canada">Canada</MenuItem>
