@@ -206,44 +206,76 @@ export default function EditCampaignDialogs({
         onClose={onCloseCancelModal}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: "10px",
+          },
+        }}
       >
         <DialogTitle
           sx={{
             m: 0,
-            p: 2,
-            pb: 1,
+            px: 4,
+            pt: 4,
+            pb: 0.5,
             display: "flex",
             justifyContent: "space-between",
             alignItems: "center",
           }}
         >
-          <span className="text-[#1A4A28] font-bold text-xl">
+          <span className="text-[#1A4A28] text-[22px] font-bold leading-none">
             Unsaved changes
           </span>
           <IconButton
             aria-label="close"
             onClick={onCloseCancelModal}
-            sx={{ color: (theme) => theme.palette.grey[500] }}
+            sx={{
+              color: "#9E9E9E",
+              mr: -1,
+              mt: -0.5,
+            }}
           >
             <Close />
           </IconButton>
         </DialogTitle>
-        <DialogContent>
-          <p className="mb-4 text-gray-600 text-[16px]">
+        <DialogContent
+          sx={{
+            px: 4,
+            pt: 4.5,
+            pb: 7,
+          }}
+        >
+          <p className="m-0 max-w-[660px] text-[16px] leading-[1.5] text-[#5F6368]">
             You have unsaved changes. If you leave, your edits will be lost.
           </p>
         </DialogContent>
-        <DialogActions sx={{ px: 3, pb: 2.5 }}>
+        <DialogActions
+          sx={{
+            px: 4,
+            pb: 4,
+            pt: 0,
+            gap: 2,
+          }}
+        >
           <Button
             onClick={onConfirmCancel}
-            sx={{ color: "#666666", fontWeight: 700 }}
+            sx={{
+              color: "#666666",
+              fontWeight: 700,
+              fontSize: "16px",
+              letterSpacing: "0.02em",
+            }}
           >
             Leave without saving
           </Button>
           <Button
             variant="contained"
             onClick={onCloseCancelModal}
-            sx={{ px: 2.5, py: 1 }}
+            sx={{
+              px: 3,
+              py: 1.25,
+              minWidth: "84px",
+            }}
           >
             Stay
           </Button>
