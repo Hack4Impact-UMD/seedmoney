@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Dialog from "@mui/material/Dialog";
 import DialogTitle from "@mui/material/DialogTitle";
 import DialogContent from "@mui/material/DialogContent";
@@ -18,6 +18,7 @@ type ChangeNameModalProps = {
   onSave?: (firstName: string, lastName: string) => void;
   firstName: string;
   lastName: string;
+  title?: string;
 };
 
 export default function ChangeNameModal({
@@ -26,30 +27,27 @@ export default function ChangeNameModal({
   onSave,
   firstName,
   lastName,
+  title = "Change Name",
 }: ChangeNameModalProps) {
   const [first, setFirst] = useState(firstName);
   const [last, setLast] = useState(lastName);
 
-  useEffect(() => {
-    if (open) {
-      setFirst(firstName);
-      setLast(lastName);
-    }
-  }, [open, firstName, lastName]);
-
-  const isUnchanged = first === firstName && last === lastName;
+  const isDisabled =
+    !first.trim() ||
+    !last.trim() ||
+    (first.trim() === firstName.trim() && last.trim() === lastName.trim());
 
   return (
     <Dialog
       open={open}
       onClose={onClose}
-      maxWidth="xs"
+      maxWidth="sm"
       fullWidth
       PaperProps={{ sx: { borderRadius: "12px" } }}
     >
       <DialogTitle sx={{ m: 0, p: 2, pr: 6 }}>
         <Typography component="span" fontWeight={700} fontSize="1.25rem">
-          Change Name
+          {title}
         </Typography>
         <IconButton
           aria-label="close"
@@ -84,9 +82,9 @@ export default function ChangeNameModal({
         <Button
           variant="contained"
           size="medium"
-          disabled={isUnchanged}
+          disabled={isDisabled}
           onClick={() => {
-            onSave?.(first, last);
+            onSave?.(first.trim(), last.trim());
             onClose();
           }}
         >

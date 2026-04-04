@@ -42,7 +42,7 @@ export default function VerificationCodeStep({
           variant="text"
           onClick={onResend}
           sx={{
-            color: "#00A63E",
+            color: "#1976d2",
             textDecoration: "underline",
             fontWeight: 600,
             p: 0,

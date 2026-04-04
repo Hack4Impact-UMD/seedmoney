@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -12,30 +12,40 @@ type ChangeEmailModalProps = {
   open: boolean;
   onClose: () => void;
   userEmail?: string;
+  onLogin?: () => void;
 };
+
+const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+const VALID_DEMO_VERIFICATION_CODE = "123456";
 
 export default function ChangeEmailModal({
   open,
   onClose,
   userEmail = "johnsmith@gmail.com",
+  onLogin,
 }: ChangeEmailModalProps) {
   const [step, setStep] = useState(0);
   const [newEmail, setNewEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) {
-      setStep(0);
-      setNewEmail("");
-      setVerificationCode("");
-      setCodeError(null);
-    }
-  }, [open]);
-
   const handleCancel = () => {
     onClose();
   };
+
+  const normalizedNewEmail = newEmail.trim();
+  const canContinueToEmailChange =
+    normalizedNewEmail.length > 0 &&
+    normalizedNewEmail.toLowerCase() !== userEmail.toLowerCase() &&
+    EMAIL_REGEX.test(normalizedNewEmail);
+  const modalTitle =
+    step === 0
+      ? "Change Email"
+      : step === 1 || step === 2
+        ? "Verify Email"
+        : step === 3
+          ? "Confirm New Email"
+          : "Email Change Success";
 
   const renderStep = () => {
     switch (step) {
@@ -68,7 +78,7 @@ export default function ChangeEmailModal({
               <Button
                 variant="contained"
                 size="medium"
-                disabled={!newEmail.trim()}
+                disabled={!canContinueToEmailChange}
                 onClick={() => setStep(1)}
               >
                 NEXT
@@ -110,14 +120,17 @@ export default function ChangeEmailModal({
         return {
           body: (
             <VerificationCodeStep
-              message={`A code has been sent to johnsmith@gmail.com`}
+              message={`A code has been sent to your email ${userEmail}.`}
               code={verificationCode}
               onCodeChange={(val) => {
                 setVerificationCode(val);
                 setCodeError(null);
               }}
               error={codeError}
-              onResend={() => console.log("Resend verification code")}
+              onResend={() => {
+                setVerificationCode("");
+                setCodeError(null);
+              }}
             />
           ),
           actions: (
@@ -130,11 +143,12 @@ export default function ChangeEmailModal({
                 size="medium"
                 disabled={!verificationCode.trim()}
                 onClick={() => {
-                  if (verificationCode.trim() === "123456") {
+                  if (verificationCode.trim() === VALID_DEMO_VERIFICATION_CODE) {
                     setCodeError(null);
                     setStep(3);
                   } else {
                     setCodeError("Invalid Code. Try again.");
+                    setVerificationCode("");
                   }
                 }}
               >
@@ -150,7 +164,7 @@ export default function ChangeEmailModal({
             <Box>
               <Typography variant="body1" sx={{ mb: 2 }}>
                 To complete your email change, verify your new address.
-                We&apos;ve sent a confirmation link to {newEmail}.
+                We&apos;ve sent a confirmation link to {normalizedNewEmail}.
               </Typography>
               <Typography variant="body2" sx={{ color: "#666" }}>
                 Didn&apos;t receive it?{" "}
@@ -159,7 +173,7 @@ export default function ChangeEmailModal({
                   variant="body2"
                   onClick={() => console.log("Resend confirmation")}
                   sx={{
-                    color: "#00A63E",
+                    color: "#1976d2",
                     cursor: "pointer",
                     textDecoration: "underline",
                     fontWeight: 600,
@@ -175,14 +189,6 @@ export default function ChangeEmailModal({
               <Button variant="text" size="medium" onClick={handleCancel}>
                 CANCEL
               </Button>
-              {/* For UI demo: allow advancing to success step */}
-              <Button
-                variant="contained"
-                size="medium"
-                onClick={() => setStep(4)}
-              >
-                CONTINUE
-              </Button>
             </>
           ),
         };
@@ -195,7 +201,11 @@ export default function ChangeEmailModal({
             </Typography>
           ),
           actions: (
-            <Button variant="contained" size="medium" onClick={handleCancel}>
+            <Button
+              variant="contained"
+              size="medium"
+              onClick={onLogin ?? handleCancel}
+            >
               LOG IN
             </Button>
           ),
@@ -209,7 +219,12 @@ export default function ChangeEmailModal({
   const { body, actions } = renderStep();
 
   return (
-    <ConfirmEditModalShell open={open} onClose={handleCancel} actions={actions}>
+    <ConfirmEditModalShell
+      open={open}
+      onClose={handleCancel}
+      actions={actions}
+      title={modalTitle}
+    >
       {body}
     </ConfirmEditModalShell>
   );

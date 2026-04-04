@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -16,12 +16,16 @@ type ChangePasswordModalProps = {
   open: boolean;
   onClose: () => void;
   userEmail?: string;
+  onLogin?: () => void;
 };
+
+const VALID_DEMO_VERIFICATION_CODE = "123456";
 
 export default function ChangePasswordModal({
   open,
   onClose,
   userEmail = "johnsmith@gmail.com",
+  onLogin,
 }: ChangePasswordModalProps) {
   const [step, setStep] = useState(0);
   const [verificationCode, setVerificationCode] = useState("");
@@ -32,22 +36,22 @@ export default function ChangePasswordModal({
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
 
-  useEffect(() => {
-    if (!open) {
-      setStep(0);
-      setVerificationCode("");
-      setCodeError(null);
-      setNewPassword("");
-      setConfirmPassword("");
-      setShowNewPassword(false);
-      setShowConfirmPassword(false);
-      setPasswordError(null);
-    }
-  }, [open]);
-
   const handleCancel = () => {
     onClose();
   };
+
+  const passwordsMatch =
+    !!newPassword &&
+    !!confirmPassword &&
+    newPassword === confirmPassword;
+  const showPasswordError =
+    confirmPassword.length > 0 && newPassword !== confirmPassword;
+  const modalTitle =
+    step === 0 || step === 1
+      ? "Verify Email"
+      : step === 2
+        ? "Change Password"
+        : "Password Change Success";
 
   const renderStep = () => {
     switch (step) {
@@ -99,11 +103,12 @@ export default function ChangePasswordModal({
                 size="medium"
                 disabled={!verificationCode.trim()}
                 onClick={() => {
-                  if (verificationCode.trim() === "123456") {
+                  if (verificationCode.trim() === VALID_DEMO_VERIFICATION_CODE) {
                     setCodeError(null);
                     setStep(2);
                   } else {
                     setCodeError("Invalid Code. Try again.");
+                    setVerificationCode("");
                   }
                 }}
               >
@@ -165,8 +170,11 @@ export default function ChangePasswordModal({
                     setConfirmPassword(e.target.value);
                     setPasswordError(null);
                   }}
-                  error={!!passwordError}
-                  helperText={passwordError}
+                  error={!!passwordError || showPasswordError}
+                  helperText={
+                    passwordError ||
+                    (showPasswordError ? "Passwords do not match. Try again." : "")
+                  }
                   slotProps={{
                     input: {
                       endAdornment: (
@@ -202,7 +210,7 @@ export default function ChangePasswordModal({
               <Button
                 variant="contained"
                 size="medium"
-                disabled={!newPassword || !confirmPassword}
+                disabled={!passwordsMatch}
                 onClick={() => {
                   if (newPassword !== confirmPassword) {
                     setPasswordError("Passwords do not match. Try again.");
@@ -226,7 +234,11 @@ export default function ChangePasswordModal({
             </Typography>
           ),
           actions: (
-            <Button variant="contained" size="medium" onClick={handleCancel}>
+            <Button
+              variant="contained"
+              size="medium"
+              onClick={onLogin ?? handleCancel}
+            >
               LOG IN
             </Button>
           ),
@@ -240,7 +252,12 @@ export default function ChangePasswordModal({
   const { body, actions } = renderStep();
 
   return (
-    <ConfirmEditModalShell open={open} onClose={handleCancel} actions={actions}>
+    <ConfirmEditModalShell
+      open={open}
+      onClose={handleCancel}
+      actions={actions}
+      title={modalTitle}
+    >
       {body}
     </ConfirmEditModalShell>
   );

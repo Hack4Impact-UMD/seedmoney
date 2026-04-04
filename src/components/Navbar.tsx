@@ -52,7 +52,7 @@ export default function Navbar({
   };
 
   const handleSettings = () => {
-    console.log("Navigate -> /settings");
+    router.push("/dashboard/settings");
   };
 
   const currentYear = moment().format("YYYY");
