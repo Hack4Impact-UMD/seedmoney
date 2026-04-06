@@ -24,6 +24,8 @@ export const sampleCampaigns: Campaign[] = [
     mailing_state: "CA",
     mailing_country: "US",
     mailing_zipcode: "90401",
+    raised: 32000,
+    donors: 150,
   },
   {
     campaign_id: 2,
@@ -48,6 +50,8 @@ export const sampleCampaigns: Campaign[] = [
     mailing_state: "OR",
     mailing_country: "US",
     mailing_zipcode: "97201",
+    raised: 12500,
+    donors: 85,
   },
   {
     campaign_id: 3,
@@ -72,6 +76,8 @@ export const sampleCampaigns: Campaign[] = [
     mailing_state: "TX",
     mailing_country: "US",
     mailing_zipcode: "73301",
+    raised: 6500,
+    donors: 45,
   },
   {
     campaign_id: 4,
@@ -96,6 +102,8 @@ export const sampleCampaigns: Campaign[] = [
     mailing_state: "CO",
     mailing_country: "US",
     mailing_zipcode: "80201",
+    raised: 18000,
+    donors: 120,
   },
   {
     campaign_id: 5,
@@ -120,6 +128,8 @@ export const sampleCampaigns: Campaign[] = [
     mailing_state: "WI",
     mailing_country: "US",
     mailing_zipcode: "53703",
+    raised: 9500,
+    donors: 60,
   },
 ];
 
