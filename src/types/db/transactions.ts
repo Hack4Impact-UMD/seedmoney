@@ -1,4 +1,4 @@
-export interface Transaction {
+export type Transaction = {
   transaction_id: number;
   first_name: string;
   last_name: string;
