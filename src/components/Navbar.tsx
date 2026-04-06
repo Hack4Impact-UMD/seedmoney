@@ -57,7 +57,7 @@ export default function Navbar() {
     const currentYearCampaigns = campaigns
       .filter(
         (campaign) =>
-          campaign.campaign_id === currentCompetitionData?.competition_id
+          campaign.competition_id === currentCompetitionData?.competition_id
       )
       .sort(
         (a, b) =>
@@ -68,7 +68,7 @@ export default function Navbar() {
     const previousCampaigns = campaigns
       .filter(
         (campaign) =>
-          campaign.campaign_id !== currentCompetitionData?.competition_id
+          campaign.competition_id !== currentCompetitionData?.competition_id
       )
       .sort(
         (a, b) =>
