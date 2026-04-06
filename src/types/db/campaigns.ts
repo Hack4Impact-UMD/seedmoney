@@ -6,8 +6,8 @@ export type Campaign = {
   givebutterlink: string;
   givebutter_id?: string;
   givebutter_slug?: string;
-  raised?: number;
-  donors?: number;
+  raised: number;
+  donors: number;
   status: Status;
   date_created: string;
   street: string;
@@ -28,8 +28,6 @@ export type Campaign = {
   mailing_country: string;
   mailing_zipcode: string;
 };
-
-export type NewCampaign = Omit<Campaign, "campaign_id" | "date_created">;
 
 export type GivebutterCampaignPayload = {
   id: string;
