@@ -16,13 +16,8 @@ import { useAuth } from "@/src/context/AuthProvider";
 import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import Button from "@mui/material/Button";
 import { Snackbar, Alert } from "@mui/material";
+import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 type DashboardTab = "Overview" | "Donors" | "Analytics";
-
-function getDaysRemaining() {
-  const today = moment().startOf("day");
-  const end = moment("2026-04-14", "YYYY-MM-DD");
-  return Math.max(0, end.diff(today, "days"));
-}
 
 export default function DashboardShell({
   children,
@@ -34,6 +29,7 @@ export default function DashboardShell({
   const { campaignId } = useParams<{ campaignId: string }>();
   const { user } = useAuth();
   const { data: campaignData, isLoading } = useReadCampaign(Number(campaignId));
+  const { data: currentCompetitionData } = useReadCurrentCompetition();
   const [toast, setToast] = useState(false);
 
   if (!user) notFound();
@@ -135,8 +131,11 @@ export default function DashboardShell({
               donorsChangePercent={0}
             />
 
+
             <DaysRemainingCard
-              daysRemaining={getDaysRemaining()}
+              startDate={currentCompetitionData?.start_date ?? null}
+              endDate={currentCompetitionData?.end_date ?? null}
+              is_current={campaignData.competition_id == currentCompetitionData?.competition_id}
             />
           </div>
         </div>
@@ -159,6 +158,23 @@ export default function DashboardShell({
           Campaign Link Copied!
         </Alert>
       </Snackbar>
+
+      { campaignData.competition_id !== currentCompetitionData?.competition_id &&
+        <Snackbar
+          open={true}
+          autoHideDuration={3000}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        >
+          <Alert
+            severity="success"
+            variant="outlined"
+            className = "!pr-[100px]"
+          >
+            <p className="text-[16px] font-medium">This campaign has ended!</p>
+            <p className="text-[14px] mt-[5px]">This page now displays the final <br></br>statistics of your campaign</p>
+          </Alert>
+        </Snackbar>
+      }
     </div>
   );
 }

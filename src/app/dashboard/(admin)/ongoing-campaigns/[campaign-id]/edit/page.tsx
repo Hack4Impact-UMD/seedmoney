@@ -150,6 +150,7 @@ export default function EditCampaignPage() {
             name: formData.campaignTitle,
             status: "published",
             date_created: new Date().toISOString(),
+            
           } as Campaign,
         ]}
         selectedCampaignId={parsedCampaignId}

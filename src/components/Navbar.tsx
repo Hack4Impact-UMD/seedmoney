@@ -20,12 +20,14 @@ import type { Campaign } from "@/src/types/db/campaigns";
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
+import useReadCurrentCompetition from "../hooks/competition-metadata/useReadCurrentCompetition";
 
 export default function Navbar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAuth();
   const { data: userData } = useUserByAuthId(user?.id || "");
   const { data: campaigns = [], isLoading } = useReadCampaignsFromMembers(user?.id || "");
+  const { data: currentCompetitionData} = useReadCurrentCompetition();
 
   const router = useRouter();
   const pathname = usePathname();
@@ -48,15 +50,14 @@ export default function Navbar() {
     router.push("/dashboard/settings");
   };
 
-  const currentYear = moment().format("YYYY");
+  const currentYear = moment(currentCompetitionData?.start_date).format("YYYY");  
   const isViewAllSelected = pathname === "/dashboard/view-all";
 
   const { currentYearCampaigns, previousCampaigns } = useMemo(() => {
     const currentYearCampaigns = campaigns
       .filter(
         (campaign) =>
-          moment(campaign.date_created, "YYYY-MM-DD").format("YYYY") ===
-          currentYear,
+          campaign.campaign_id === currentCompetitionData?.competition_id
       )
       .sort(
         (a, b) =>
@@ -67,8 +68,7 @@ export default function Navbar() {
     const previousCampaigns = campaigns
       .filter(
         (campaign) =>
-          moment(campaign.date_created, "YYYY-MM-DD").format("YYYY") <
-          currentYear,
+          campaign.campaign_id !== currentCompetitionData?.competition_id
       )
       .sort(
         (a, b) =>

@@ -15,6 +15,7 @@ export const campaignHandlers = {
       donors: payload.data.donors,
       goal: payload.data.goal ?? 0,
       status: "approved",
+      
     });
   },
   "campaign.created": async (payload: WebhookPayload) => {
@@ -27,7 +28,7 @@ export const campaignHandlers = {
       raised: payload.data.raised,
       donors: payload.data.donors,
       goal: payload.data.goal ?? 0,
-      status: "in_progress",
+      status: "approved",
       street: "",
       city: "",
       state: "",
@@ -45,6 +46,7 @@ export const campaignHandlers = {
       mailing_country: "",
       mailing_zipcode: "",
       date_created: moment(payload.data.created_at).format("YYYY-MM-DD"),
+      competition_id: 1
     });
   },
 };
