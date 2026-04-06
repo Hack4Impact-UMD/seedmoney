@@ -12,8 +12,9 @@ import { TotalRaisedCard } from "@/src/components/dashboard/TotalRaisedCard";
 import { TotalDonorsCard } from "@/src/components/dashboard/TotalDonorsCard";
 import { DaysRemainingCard } from "@/src/components/dashboard/DaysRemainingCard";
 import { mockAnalyticsData } from "@/src/app/dashboard/mockAnalyticsData";
-import { getCampaignById, sampleCampaigns } from "../../sampleCampaigns";
 import { useAuth } from "@/src/context/AuthProvider";
+import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
+import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
 
 type DashboardTab = "Overview" | "Donors" | "Analytics";
 
@@ -32,14 +33,18 @@ export default function DashboardShell({
   const pathname = usePathname();
   const { campaignId } = useParams<{ campaignId: string }>();
   const { user } = useAuth();
+  const { data: campaignData, isLoading } = useReadCampaign(Number(campaignId));
+
+
+
 
   if (!user) notFound();
+  if (isLoading ) return <div>Loading...</div>;
+  if (!campaignData) notFound();
+  if (Array.isArray(campaignData)) notFound();
 
-
-  const selectedCampaignId = Number(campaignId) || sampleCampaigns[0].campaign_id;
-  const campaign = getCampaignById(selectedCampaignId);
-
-  if (!campaign) notFound();
+  const selectedCampaignId = Number(campaignId);
+  if (Array.isArray(campaignData)) notFound();
 
   const selectedTab: DashboardTab = pathname.endsWith("/donors")
     ? "Donors"
@@ -71,16 +76,12 @@ export default function DashboardShell({
     console.log("Continue application for campaign:", selectedCampaignId);
   };
 
-  if (campaign.status === "in_progress") {
+  if (campaignData.status === "in_progress") {
     return (
       <div className="flex min-h-screen">
-        <Navbar
-          campaigns={sampleCampaigns}
-          selectedCampaignId={selectedCampaignId}
-          onCampaignSelect={handleCampaignChange}
-        />
+        <Navbar/>
         <div className="flex-1 bg-gray-50 p-10">
-          <h3 className="text-4xl font-bold text-[#096B2E]">{campaign.name}</h3>
+          <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
           <div className="flex-1 bg-gray-50 mt-10">
             <NotComplete onContinueApplication={handleContinueApplication} />
           </div>
@@ -89,16 +90,12 @@ export default function DashboardShell({
     );
   }
 
-  if (campaign.status === "submitted_under_review") {
+  if (campaignData.status === "submitted_under_review") {
     return (
       <div className="flex min-h-screen">
-        <Navbar
-          campaigns={sampleCampaigns}
-          selectedCampaignId={selectedCampaignId}
-          onCampaignSelect={handleCampaignChange}
-        />
+        <Navbar/>
         <div className="flex-1 bg-gray-50 p-10">
-          <h3 className="text-4xl font-bold text-[#096B2E]">{campaign.name}</h3>
+          <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
           <div className="flex-1 bg-gray-50 mt-10">
             <Pending />
           </div>
@@ -111,28 +108,24 @@ export default function DashboardShell({
 
   return (
     <div className="flex min-h-screen">
-      <Navbar
-        campaigns={sampleCampaigns}
-        selectedCampaignId={selectedCampaignId}
-        onCampaignSelect={handleCampaignChange}
-      />
+      <Navbar/>
 
       <div className="flex-1 bg-gray-50 p-10">
-        <h3 className="text-4xl font-bold text-[#096B2E]">{campaign.name}</h3>
+        <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
 
         <DashboardTabs selectedTab={selectedTab} onChange={handleTabChange} />
 
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <TotalRaisedCard
-            totalRaised={mockAnalyticsData.totalRaised}
-            campaignGoal={mockAnalyticsData.campaignGoal}
-            raisedChangePercent={mockAnalyticsData.raisedChangePercent}
+            totalRaised={campaignData.raised}
+            campaignGoal={campaignData.goal}
+            raisedChangePercent={0}
           />
 
           <div className="flex flex-col gap-6">
             <TotalDonorsCard
-              totalDonors={mockAnalyticsData.totalDonors}
-              donorsChangePercent={mockAnalyticsData.donorsChangePercent}
+              totalDonors={campaignData.donors}
+              donorsChangePercent={0}
             />
 
             <DaysRemainingCard

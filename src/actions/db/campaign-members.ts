@@ -1,5 +1,8 @@
 import type { CampaignMember } from "@/src/types";
 import { createServerClient } from "@/src/lib/supabase-client";
+import { createBrowserClient } from "@/src/lib/supabase-client";
+import { readCampaign } from "./campaigns";
+import { Campaign } from "@/src/types/db/campaigns";
 
 export async function createCampaignMember(
   data: CampaignMember,
@@ -91,4 +94,29 @@ export async function deleteCampaignMember(
   }
 
   return true;
+}
+
+export async function readCampaignsFromMembers(user_id: string) {
+
+  const supabase = createBrowserClient();
+  
+  const { data, error } = await supabase
+    .from("campaign_members")
+    .select("campaign_id")
+    .eq("user_id", user_id);
+
+
+  if (error) {
+    console.error("Error reading campaign members:", error.message);
+    return null;
+  }
+
+  if (!data || data.length === 0) return [];
+
+  const campaignIds = data.map((d) => d.campaign_id);
+
+  const campaigns = await readCampaign(campaignIds);
+
+  
+  return campaigns as Campaign[];
 }

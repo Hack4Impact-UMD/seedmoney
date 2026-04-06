@@ -1,10 +1,11 @@
-import type { Campaign, NewCampaign } from "@/src/types";
+import type { Campaign } from "@/src/types";
 import { createServerClient } from "@/src/lib/supabase-client";
+import { createBrowserClient } from "@/src/lib/supabase-client";
 
 export async function createCampaign(
-  data: NewCampaign,
+  data: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
 
   const { data: insertedData, error } = await supabase
     .from("campaigns")
@@ -20,10 +21,12 @@ export async function createCampaign(
   return insertedData as Campaign;
 }
 
+
 export async function readCampaign(
   ids?: number | number[],
 ): Promise<Campaign | Campaign[] | null> {
-  const supabase = await createServerClient();
+  const supabase = createBrowserClient();
+
 
   // Return ALL campaigns
   if (ids === undefined) {
@@ -39,6 +42,7 @@ export async function readCampaign(
 
   // Return a SINGLE campaign by ID
   if (typeof ids === "number") {
+    console.log(ids);
     const { data, error } = await supabase
       .from("campaigns")
       .select("*")
@@ -73,9 +77,11 @@ export async function readCampaign(
 
 export async function updateCampaign(
   id: number,
-  campaign: Partial<NewCampaign>,
+  campaign: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
+  console.log("updateCampaign called", id, campaign);
+
 
   const { data, error } = await supabase
     .from("campaigns")
@@ -97,8 +103,37 @@ export async function updateCampaign(
   return data as Campaign;
 }
 
+
+export async function updateCampaignGivebutterID(
+  id: number,
+  campaign: Partial<Campaign>,
+): Promise<Campaign | null> {
+  const supabase = await createBrowserClient();
+  console.log("updateCampaign called", id, campaign);
+
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .update(campaign)
+    .eq("givebutter_id", id)
+    .select("*")
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error updating campaign:", error.message);
+    return null;
+  }
+
+  if (!data) {
+    console.warn("Campaign not found for update:", id);
+    return null;
+  }
+
+  return data as Campaign;
+}
+
 export async function deleteCampaign(id: number): Promise<boolean> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
 
   const { data, error } = await supabase
     .from("campaigns")

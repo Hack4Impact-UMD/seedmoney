@@ -1,4 +1,6 @@
+
+import { GivebutterCampaignPayload } from "@/src/types/db/campaigns";
 export interface WebhookPayload {
   event: string;
-  data?: unknown;
+  data?: GivebutterCampaignPayload;
 }
