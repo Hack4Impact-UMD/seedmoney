@@ -32,21 +32,7 @@ export default function Navbar() {
   const { campaignId } = useParams<{ campaignId: string }>();
 
   const selectedCampaignId = Number(campaignId);
-  const currentYear = moment().format("YYYY");
-  const isViewAllSelected = pathname === "/dashboard/view-all";
   const isAdmin = userData?.is_admin ?? false;
-
-  const { currentYearCampaigns, previousCampaigns } = useMemo(() => {
-    const currentYearCampaigns = campaigns
-      .filter((c) => moment(c.date_created, "YYYY-MM-DD").format("YYYY") === currentYear)
-      .sort((a, b) => moment(b.date_created).valueOf() - moment(a.date_created).valueOf());
-
-    const previousCampaigns = campaigns
-      .filter((c) => moment(c.date_created, "YYYY-MM-DD").format("YYYY") < currentYear)
-      .sort((a, b) => moment(b.date_created).valueOf() - moment(a.date_created).valueOf());
-
-    return { currentYearCampaigns, previousCampaigns };
-  }, [campaigns, currentYear]);
 
   const handleCampaignClick = (id: number) => {
     router.push(`/dashboard/${id}`);
@@ -92,7 +78,6 @@ export default function Navbar() {
 
     return { currentYearCampaigns, previousCampaigns };
   }, [campaigns, currentYear]);
-  const isAdmin = userData?.is_admin ?? false;
 
   const getItemClasses = (isSelected: boolean) =>
     clsx(
