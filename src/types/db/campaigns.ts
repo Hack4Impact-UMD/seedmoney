@@ -27,6 +27,7 @@ export type Campaign = {
   mailing_state: string;
   mailing_country: string;
   mailing_zipcode: string;
+  competition_id: number;
 };
 
 export type GivebutterCampaignPayload = {

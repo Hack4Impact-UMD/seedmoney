@@ -1,5 +1,4 @@
 import type { Campaign } from "@/src/types";
-import { createServerClient } from "@/src/lib/supabase-client";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 
 export async function createCampaign(
