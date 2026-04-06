@@ -58,6 +58,42 @@ export default function Navbar() {
     router.push("/");
   };
 
+  const handleSettings = () => {
+    router.push("/dashboard/settings");
+  };
+
+  const currentYear = moment().format("YYYY");
+  const isViewAllSelected = pathname === "/dashboard/view-all";
+
+  const { currentYearCampaigns, previousCampaigns } = useMemo(() => {
+    const currentYearCampaigns = campaigns
+      .filter(
+        (campaign) =>
+          moment(campaign.date_created, "YYYY-MM-DD").format("YYYY") ===
+          currentYear,
+      )
+      .sort(
+        (a, b) =>
+          moment(b.date_created, "YYYY-MM-DD").valueOf() -
+          moment(a.date_created, "YYYY-MM-DD").valueOf(),
+      );
+
+    const previousCampaigns = campaigns
+      .filter(
+        (campaign) =>
+          moment(campaign.date_created, "YYYY-MM-DD").format("YYYY") <
+          currentYear,
+      )
+      .sort(
+        (a, b) =>
+          moment(b.date_created, "YYYY-MM-DD").valueOf() -
+          moment(a.date_created, "YYYY-MM-DD").valueOf(),
+      );
+
+    return { currentYearCampaigns, previousCampaigns };
+  }, [campaigns, currentYear]);
+  const isAdmin = userData?.is_admin ?? false;
+
   const getItemClasses = (isSelected: boolean) =>
     clsx(
       "!p-0 !min-h-12",

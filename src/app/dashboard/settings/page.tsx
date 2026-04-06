@@ -1,0 +1,150 @@
+"use client";
+
+import { useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
+import Navbar from "@/src/components/Navbar";
+import ChangeEmailModal from "@/src/components/settings-modals/ChangeEmailModal";
+import ChangeNameModal from "@/src/components/settings-modals/ChangeNameModal";
+import ChangePasswordModal from "@/src/components/settings-modals/ChangePasswordModal";
+import { useAuth } from "@/src/context/AuthProvider";
+import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
+import { createBrowserClient } from "@/src/lib/supabase-client";
+import { sampleCampaigns } from "../sampleCampaigns";
+
+type ActiveModal = "name" | "email" | "password" | null;
+
+function SettingsRow({
+  label,
+  onEdit,
+  value,
+}: {
+  label: string;
+  onEdit?: () => void;
+  value: string;
+}) {
+  return (
+    <div className="py-4">
+      <p className="text-[18px] font-semibold text-[#1f2320]">{label}</p>
+      <div className="mt-2 flex items-center justify-between gap-6">
+        <p className="min-w-0 flex-1 break-words text-[18px] text-[#7b827d]">
+          {value}
+        </p>
+
+        {onEdit && (
+          <button
+            type="button"
+            onClick={onEdit}
+            className="shrink-0 rounded-[10px] border border-[#2D7A45] px-4 py-2 text-[14px] font-semibold tracking-[0.03em] text-[#2D7A45] transition-colors hover:bg-[#f3faf4]"
+          >
+            EDIT
+          </button>
+        )}
+      </div>
+    </div>
+  );
+}
+
+export default function SettingsPage() {
+  const { user, setUser } = useAuth();
+  const router = useRouter();
+  const { data: userData } = useUserByAuthId(user?.id || "");
+  const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [savedName, setSavedName] = useState<{
+    firstName: string;
+    lastName: string;
+  } | null>(null);
+
+  const isAdmin = userData?.is_admin ?? false;
+  const isGoogleAuth = user?.app_metadata?.provider === "google";
+  const firstName = savedName?.firstName || userData?.first_name || "John";
+  const lastName = savedName?.lastName || userData?.last_name || "Smith";
+  const email = userData?.email || user?.email || "johnsmith@gmail.com";
+  const displayName = useMemo(() => {
+    return [firstName, lastName].filter(Boolean).join(" ");
+  }, [firstName, lastName]);
+
+  const handleCampaignSelect = (campaignId: number) => {
+    router.push(`/dashboard/${campaignId}`);
+  };
+
+  const handleReauthenticate = async () => {
+    const supabase = createBrowserClient();
+    await supabase.auth.signOut();
+    setUser(null);
+    router.push("/");
+  };
+
+  return (
+    <div className="flex min-h-screen bg-[#f8fbf8]">
+      <Navbar
+        campaigns={isAdmin ? [] : sampleCampaigns}
+        selectedCampaignId={0}
+        onCampaignSelect={handleCampaignSelect}
+      />
+
+      <main className="flex-1 px-6 py-8 sm:px-10 md:px-12">
+        <div className="mx-auto max-w-[760px]">
+          <div className="overflow-hidden rounded-[18px] border border-[#dfe8df] bg-white px-8 py-8 shadow-[0_12px_30px_rgba(31,60,44,0.08)] sm:px-10">
+            <h1 className="text-[20px] font-bold text-[#214E34]">Settings</h1>
+
+            <div className="mt-6">
+              <SettingsRow
+                label="Name"
+                value={displayName || "John Smith"}
+                onEdit={() => setActiveModal("name")}
+              />
+              <SettingsRow
+                label="Email"
+                value={email}
+                onEdit={
+                  isGoogleAuth ? undefined : () => setActiveModal("email")
+                }
+              />
+              {!isGoogleAuth && (
+                <SettingsRow
+                  label="Password"
+                  value="••••••••••••••••••"
+                  onEdit={() => setActiveModal("password")}
+                />
+              )}
+            </div>
+          </div>
+        </div>
+      </main>
+
+      {activeModal === "name" && (
+        <ChangeNameModal
+          open
+          onClose={() => setActiveModal(null)}
+          firstName={firstName}
+          lastName={lastName}
+          title={isGoogleAuth ? "Confirm Edit" : "Change Name"}
+          onSave={(nextFirstName, nextLastName) =>
+            setSavedName({
+              firstName: nextFirstName,
+              lastName: nextLastName,
+            })
+          }
+        />
+      )}
+
+      {activeModal === "email" && (
+        <ChangeEmailModal
+          open
+          onClose={() => setActiveModal(null)}
+          userEmail={email}
+          onLogin={handleReauthenticate}
+        />
+      )}
+
+      {activeModal === "password" && (
+        <ChangePasswordModal
+          open
+          onClose={() => setActiveModal(null)}
+          userEmail={email}
+          onLogin={handleReauthenticate}
+        />
+      )}
+    </div>
+  );
+}
