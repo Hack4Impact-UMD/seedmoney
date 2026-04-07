@@ -1,35 +1,3 @@
-// "use client";
-
-// import { createContext, useContext } from "react";
-// import { useForm } from "@tanstack/react-form";
-// import type { NewAnswer } from "../../types/db/answers";
-
-// //allow multiples pages to view same form data
-// const ApplicationFormContext = createContext<unknown>(null);
-
-// export const ApplicationFormProvider = ({
-//   children,
-// }: {
-//   children: React.ReactNode;
-// }) => {
-//   //create tanstack form and state obj to track form vals
-//   const form = useForm({
-//     defaultValues: {} as NewAnswer,
-//   });
-
-//   return (
-//     //give all components thbat are wrapped access to same form state
-//     <ApplicationFormContext.Provider value={form}>
-//       {children}
-//     </ApplicationFormContext.Provider>
-//   );
-// };
-
-// //shortcut to access form easier
-// export const useApplicationForm = () => {
-//   return useContext(ApplicationFormContext);
-// };
-
 "use client";
 
 import {
@@ -42,7 +10,6 @@ import {
 } from "react";
 import { useForm } from "@tanstack/react-form";
 import { ApplicationFormData } from "@/src/types/form";
-import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
 
 const INITIAL_FORM_VALUES: ApplicationFormData = {
   campaignTitle: "",
@@ -83,14 +50,15 @@ const useApplicationFormState = () =>
 
 type ApplicationFormApi = ReturnType<typeof useApplicationFormState>;
 
-interface AgreementSelectionsContextValue {
-  agreementSelections: boolean[];
-  setAgreementSelections: (value: SetStateAction<boolean[]>) => void;
+interface AgreementGateContextValue {
+  hasPassedAgreement: boolean;
+  setHasPassedAgreement: (value: SetStateAction<boolean>) => void;
 }
 
 const ApplicationFormContext = createContext<ApplicationFormApi | null>(null);
-const AgreementSelectionsContext =
-  createContext<AgreementSelectionsContextValue | null>(null);
+const AgreementGateContext = createContext<AgreementGateContextValue | null>(
+  null,
+);
 
 export const ApplicationFormProvider = ({
   children,
@@ -98,23 +66,21 @@ export const ApplicationFormProvider = ({
   children: ReactNode;
 }) => {
   const form = useApplicationFormState();
-  const [agreementSelections, setAgreementSelections] = useState<boolean[]>(() =>
-    GRANT_AGREEMENT_ITEMS.map(() => false),
-  );
+  const [hasPassedAgreement, setHasPassedAgreement] = useState(false);
 
-  const agreementSelectionsValue = useMemo(
+  const agreementGateValue = useMemo(
     () => ({
-      agreementSelections,
-      setAgreementSelections,
+      hasPassedAgreement,
+      setHasPassedAgreement,
     }),
-    [agreementSelections],
+    [hasPassedAgreement],
   );
 
   return (
     <ApplicationFormContext.Provider value={form}>
-      <AgreementSelectionsContext.Provider value={agreementSelectionsValue}>
+      <AgreementGateContext.Provider value={agreementGateValue}>
         {children}
-      </AgreementSelectionsContext.Provider>
+      </AgreementGateContext.Provider>
     </ApplicationFormContext.Provider>
   );
 };
@@ -129,11 +95,11 @@ export const useApplicationForm = () => {
   return form;
 };
 
-export const useAgreementSelections = () => {
-  const context = useContext(AgreementSelectionsContext);
+export const useAgreementGate = () => {
+  const context = useContext(AgreementGateContext);
   if (!context) {
     throw new Error(
-      "useAgreementSelections must be used within an ApplicationFormProvider",
+      "useAgreementGate must be used within an ApplicationFormProvider",
     );
   }
   return context;

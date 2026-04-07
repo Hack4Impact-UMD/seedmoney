@@ -4,7 +4,7 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@mui/material";
 import {
-  useAgreementSelections,
+  useAgreementGate,
   useApplicationForm,
 } from "@/src/components/application/ApplicationFormProvider";
 import { getApplicationCompletionState } from "@/src/components/application/applicationStepState";
@@ -118,7 +118,7 @@ function formatCountry(value: string) {
 
 export default function ReviewSubmitPage() {
   const form = useApplicationForm();
-  const { agreementSelections } = useAgreementSelections();
+  const { hasPassedAgreement } = useAgreementGate();
   const values = form.state.values;
   const {
     campaignComplete,
@@ -126,7 +126,7 @@ export default function ReviewSubmitPage() {
     storyComplete,
     contactComplete,
     reviewComplete,
-  } = getApplicationCompletionState(values, agreementSelections);
+  } = getApplicationCompletionState(values, hasPassedAgreement);
   const canSubmit = reviewComplete;
 
   return (

@@ -3,7 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAgreementSelections, useApplicationForm } from "./ApplicationFormProvider";
+import { useAgreementGate, useApplicationForm } from "./ApplicationFormProvider";
 import { StepStatus } from "@/src/types/form";
 import {
   APPLICATION_STEPS,
@@ -13,7 +13,7 @@ import {
 
 export default function ApplicationSidebar() {
   const form = useApplicationForm();
-  const { agreementSelections } = useAgreementSelections();
+  const { hasPassedAgreement } = useAgreementGate();
   const pathname = usePathname();
 
   return (
@@ -52,11 +52,11 @@ export default function ApplicationSidebar() {
           const steps = getDerivedApplicationSteps(
             pathname,
             values,
-            agreementSelections,
+            hasPassedAgreement,
           );
           const { agreementComplete } = getApplicationCompletionState(
             values,
-            agreementSelections,
+            hasPassedAgreement,
           );
 
           return (
