@@ -8,6 +8,7 @@ import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
 import { notFound } from "next/navigation";
 import { useDropzone } from "react-dropzone";
+import { useState, useEffect } from "react";
 
 export default function GardenStoryStep() {
   const form = useApplicationForm();
@@ -16,7 +17,52 @@ export default function GardenStoryStep() {
   const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
   const { data: question4, isLoading: isLoadingQuestion4 } = useReadQuestion(4);
 
-  const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
+  const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
+    accept: {
+      "image/*": [".png", ".gif", ".jpeg", ".jpg", ".svg"],
+    },
+    multiple: false,
+    maxFiles: 1,
+    onDrop: (file) => {
+      console.log(file);
+    },
+    onDropAccepted: (acceptedFiles) => {
+      setUploaded(true);
+      setFiles(
+        acceptedFiles.map((file) =>
+          Object.assign(file, {
+            preview: URL.createObjectURL(file),
+          }),
+        ),
+      );
+    },
+    maxSize: 3000000,
+  });
+
+  const [uploaded, setUploaded] = useState(false);
+  const [files, setFiles] = useState<Array<File & { preview: string }>>([]);
+  const fileNames = acceptedFiles.map((file) => (
+    <li key={file.path}>{file.path}</li>
+  ));
+
+  const imagePreviews = files.map((file) => (
+    <div key={file.name}>
+      <div>
+        <img
+          src={file.preview}
+          // Revoke data uri after image is loaded
+          onLoad={() => {
+            URL.revokeObjectURL(file.preview);
+          }}
+        />
+      </div>
+    </div>
+  ));
+
+  useEffect(() => {
+    // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
+    return () => files.forEach((file) => URL.revokeObjectURL(file.preview));
+  }, [files]);
 
   const isLoading =
     isLoadingQuestion1 ||
@@ -31,10 +77,6 @@ export default function GardenStoryStep() {
   if (!question1 || !question2 || !question3 || !question4) {
     notFound();
   }
-
-  const files = acceptedFiles.map((file) => (
-    <li key={file.path}>{file.path}</li>
-  ));
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -125,31 +167,35 @@ export default function GardenStoryStep() {
           Upload one clear, high-quality photo that best represents your
           project. This photo will appear at the top of your campaign page.
         </p>
+        {uploaded ? (
+          imagePreviews
+        ) : (
+          <div {...getRootProps({ className: "dropzone" })}>
+            <input {...getInputProps()} />
+            <div className="border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center py-10 gap-3 text-center">
+              {/* Upload Icon */}
+              <Image
+                src="/icons/upload-icon.svg"
+                alt="Upload icon"
+                width={16}
+                height={20}
+              />
 
-        <div {...getRootProps({ className: "dropzone" })}>
-          <input {...getInputProps()} />
-          <div className="border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center py-10 gap-3 text-center">
-            {/* Upload Icon */}
-            <Image
-              src="/icons/upload-icon.svg"
-              alt="Upload icon"
-              width={16}
-              height={20}
-            />
+              <p className="text-sm">
+                <span className="text-blue-600 cursor-pointer hover:underline">
+                  Link
+                </span>{" "}
+                or drag and drop
+              </p>
 
-            <p className="text-sm">
-              <span className="text-blue-600 cursor-pointer hover:underline">
-                Link
-              </span>{" "}
-              or drag and drop
-            </p>
-
-            <p className="text-xs text-gray-500">
-              SVG, PNG, JPG or GIF (max. 3MB)
-            </p>
+              <p className="text-xs text-gray-500">
+                SVG, PNG, JPG or GIF (max. 3MB)
+              </p>
+            </div>
           </div>
-        </div>
-        <ul>{files}</ul>
+        )}
+
+        <ul>{fileNames}</ul>
       </div>
 
       {/* Supporting Photos */}
