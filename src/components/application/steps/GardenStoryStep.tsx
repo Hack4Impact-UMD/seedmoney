@@ -47,9 +47,11 @@ export default function GardenStoryStep() {
 
   const imagePreviews = files.map((file) => (
     <div key={file.name}>
-      <div>
+      <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
         <img
           src={file.preview}
+          alt={file.name}
+          className="w-full h-full object-cover"
           // Revoke data uri after image is loaded
           onLoad={() => {
             URL.revokeObjectURL(file.preview);
