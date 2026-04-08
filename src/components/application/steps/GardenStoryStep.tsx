@@ -12,6 +12,14 @@ import { useDropzone } from "react-dropzone";
 import { useState, useEffect } from "react";
 
 type PreviewFile = File & { preview: string };
+type UploadError = {
+  fileName: string;
+  message: string;
+};
+
+function getFileKey(file: Pick<File, "name" | "size" | "lastModified">) {
+  return `${file.name}-${file.size}-${file.lastModified}`;
+}
 
 function buildPreviewFiles(files: File[]): PreviewFile[] {
   return files.map((file) =>
@@ -19,6 +27,24 @@ function buildPreviewFiles(files: File[]): PreviewFile[] {
       preview: URL.createObjectURL(file),
     }),
   );
+}
+
+function hasDuplicateFiles(
+  nextFiles: File[],
+  existingFiles: Pick<File, "name" | "size" | "lastModified">[],
+) {
+  const seen = new Set(existingFiles.map(getFileKey));
+
+  for (const file of nextFiles) {
+    const fileKey = getFileKey(file);
+    if (seen.has(fileKey)) {
+      return true;
+    }
+
+    seen.add(fileKey);
+  }
+
+  return false;
 }
 
 export default function GardenStoryStep() {
@@ -31,15 +57,10 @@ export default function GardenStoryStep() {
   const { data: question4, isLoading: isLoadingQuestion4 } = useReadQuestion(4);
   const [uploaded, setUploaded] = useState(false);
   const [files, setFiles] = useState<PreviewFile[]>([]);
-  const [uploadError, setUploadError] = useState<{
-    fileName: string;
-    message: string;
-  } | null>(null);
+  const [uploadError, setUploadError] = useState<UploadError | null>(null);
   const [supportingFiles, setSupportingFiles] = useState<PreviewFile[]>([]);
-  const [supportingUploadError, setSupportingUploadError] = useState<{
-    fileName: string;
-    message: string;
-  } | null>(null);
+  const [supportingUploadError, setSupportingUploadError] =
+    useState<UploadError | null>(null);
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: {
@@ -51,6 +72,16 @@ export default function GardenStoryStep() {
       console.log(file);
     },
     onDropAccepted: (acceptedFiles) => {
+      if (hasDuplicateFiles(acceptedFiles, supportingFiles)) {
+        setFiles([]);
+        setUploaded(false);
+        setUploadError({
+          fileName: acceptedFiles[0].name,
+          message: "Duplicate image",
+        });
+        return;
+      }
+
       setUploadError(null);
       setUploaded(true);
       setFiles(buildPreviewFiles(acceptedFiles));
@@ -85,6 +116,14 @@ export default function GardenStoryStep() {
     multiple: true,
     maxFiles: 5 - supportingFiles.length,
     onDropAccepted: (acceptedFiles) => {
+      if (hasDuplicateFiles(acceptedFiles, [...files, ...supportingFiles])) {
+        setSupportingUploadError({
+          fileName: acceptedFiles[0].name,
+          message: "Duplicate image",
+        });
+        return;
+      }
+
       setSupportingUploadError(null);
       setSupportingFiles((prevFiles) => [
         ...prevFiles,
