@@ -1,6 +1,6 @@
 "use client";
 import Image from "next/image";
-import { Button } from "@mui/material";
+import { Button, IconButton } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import { CheckCircle, Delete } from "@mui/icons-material";
 import Link from "next/link";
@@ -235,11 +235,15 @@ export default function GardenStoryStep() {
               </div>
             </div>
 
-            <div className="flex items-center gap-4 cursor-pointer">
-              <Delete
-                sx={{ opacity: 0.54, cursor: "pointer" }}
+            <div className="flex items-center gap-4">
+              <IconButton
+                size="small"
+                aria-label={`Delete ${file.name}`}
                 onClick={() => handleDeleteFile(file.name)}
-              />
+                sx={{ p: 0, color: "rgba(0, 0, 0, 0.54)", cursor: "pointer" }}
+              >
+                <Delete />
+              </IconButton>
               <CheckCircle color="success" />
             </div>
           </div>
