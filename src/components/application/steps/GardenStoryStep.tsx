@@ -5,7 +5,9 @@ import TextField from "@mui/material/TextField";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
+import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
 import { notFound } from "next/navigation";
+import { useDropzone } from "react-dropzone";
 
 export default function GardenStoryStep() {
   const form = useApplicationForm();
@@ -13,6 +15,8 @@ export default function GardenStoryStep() {
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
   const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
   const { data: question4, isLoading: isLoadingQuestion4 } = useReadQuestion(4);
+
+  const { acceptedFiles, getRootProps, getInputProps } = useDropzone();
 
   const isLoading =
     isLoadingQuestion1 ||
@@ -27,6 +31,10 @@ export default function GardenStoryStep() {
   if (!question1 || !question2 || !question3 || !question4) {
     notFound();
   }
+
+  const files = acceptedFiles.map((file) => (
+    <li key={file.path}>{file.path}</li>
+  ));
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -118,26 +126,30 @@ export default function GardenStoryStep() {
           project. This photo will appear at the top of your campaign page.
         </p>
 
-        <div className="border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center py-10 gap-3 text-center">
-          {/* Upload Icon */}
-          <Image
-            src="/icons/upload-icon.svg"
-            alt="Upload icon"
-            width={16}
-            height={20}
-          />
+        <div {...getRootProps({ className: "dropzone" })}>
+          <input {...getInputProps()} />
+          <div className="border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center py-10 gap-3 text-center">
+            {/* Upload Icon */}
+            <Image
+              src="/icons/upload-icon.svg"
+              alt="Upload icon"
+              width={16}
+              height={20}
+            />
 
-          <p className="text-sm">
-            <span className="text-blue-600 cursor-pointer hover:underline">
-              Link
-            </span>{" "}
-            or drag and drop
-          </p>
+            <p className="text-sm">
+              <span className="text-blue-600 cursor-pointer hover:underline">
+                Link
+              </span>{" "}
+              or drag and drop
+            </p>
 
-          <p className="text-xs text-gray-500">
-            SVG, PNG, JPG or GIF (max. 3MB)
-          </p>
+            <p className="text-xs text-gray-500">
+              SVG, PNG, JPG or GIF (max. 3MB)
+            </p>
+          </div>
         </div>
+        <ul>{files}</ul>
       </div>
 
       {/* Supporting Photos */}
