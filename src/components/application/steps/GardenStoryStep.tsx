@@ -12,6 +12,8 @@ import { useDropzone } from "react-dropzone";
 import { useState, useEffect } from "react";
 
 export default function GardenStoryStep() {
+  const ERROR_ICON_FILTER =
+    "brightness(0) saturate(100%) invert(24%) sepia(95%) saturate(2815%) hue-rotate(347deg) brightness(93%) contrast(100%)";
   const form = useApplicationForm();
   const { data: question1, isLoading: isLoadingQuestion1 } = useReadQuestion(1);
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
@@ -28,6 +30,7 @@ export default function GardenStoryStep() {
       console.log(file);
     },
     onDropAccepted: (acceptedFiles) => {
+      setUploadError(null);
       setUploaded(true);
       setFiles(
         acceptedFiles.map((file) =>
@@ -37,11 +40,32 @@ export default function GardenStoryStep() {
         ),
       );
     },
+    onDropRejected: (fileRejections) => {
+      const firstRejection = fileRejections[0];
+      if (!firstRejection) {
+        return;
+      }
+
+      const isFileTooLarge = firstRejection.errors.some(
+        (error) => error.code === "file-too-large",
+      );
+
+      setFiles([]);
+      setUploaded(false);
+      setUploadError({
+        fileName: firstRejection.file.name,
+        message: isFileTooLarge ? "File too large" : "Upload failed",
+      });
+    },
     maxSize: 3000000,
   });
 
   const [uploaded, setUploaded] = useState(false);
   const [files, setFiles] = useState<Array<File & { preview: string }>>([]);
+  const [uploadError, setUploadError] = useState<{
+    fileName: string;
+    message: string;
+  } | null>(null);
 
   const imagePreviews = files.map((file) => (
     <div key={file.name}>
@@ -92,6 +116,10 @@ export default function GardenStoryStep() {
       setUploaded(remainingFiles.length > 0);
       return remainingFiles;
     });
+  };
+
+  const handleClearUploadError = () => {
+    setUploadError(null);
   };
 
   return (
@@ -185,6 +213,44 @@ export default function GardenStoryStep() {
         </p>
         {uploaded ? (
           imagePreviews
+        ) : uploadError ? (
+          <div className="mt-2 flex items-center justify-between rounded-lg border border-[#D32F2F]/20 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/icons/upload-icon.svg"
+                alt="Upload failed"
+                width={20}
+                height={24}
+                style={{ filter: ERROR_ICON_FILTER }}
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-[#D32F2F]">
+                  Upload failed.
+                </span>
+                <span className="flex items-center text-[13px] text-[#D32F2F]">
+                  {uploadError.message}
+                  <span className="mx-1.5 text-[10px]">&bull;</span>
+                  Failed
+                </span>
+              </div>
+            </div>
+
+            <IconButton
+              size="small"
+              aria-label={`Clear failed upload ${uploadError.fileName}`}
+              onClick={handleClearUploadError}
+              sx={{
+                p: 0,
+                color: "rgba(0, 0, 0, 0.54)",
+                cursor: "pointer",
+                "& .MuiSvgIcon-root": {
+                  pointerEvents: "none",
+                },
+              }}
+            >
+              <Delete />
+            </IconButton>
+          </div>
         ) : (
           <div {...getRootProps({ className: "dropzone" })}>
             <input {...getInputProps()} />
