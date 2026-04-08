@@ -5,3 +5,10 @@ export type CampaignImageRecord = {
   display_order: number;
   is_main: boolean;
 };
+
+export type CampaignFile = {
+  file: File;
+  campaignId: number;
+  displayOrder: number;
+  isMain?: boolean;
+};

@@ -1,14 +1,10 @@
 import { createServerClient } from "@/src/lib/supabase-client";
-import { CampaignImageRecord } from "@/src/types/db/campaignImageRecords";
+import {
+  CampaignImageRecord,
+  CampaignFile,
+} from "@/src/types/db/campaignImageRecords";
 
-type CampaignFile = {
-  file: File;
-  campaignId: number;
-  displayOrder: number;
-  isMain?: boolean;
-};
-
-async function uploadFile({
+export async function uploadCampaignImage({
   file,
   campaignId,
   displayOrder,
