@@ -2,10 +2,11 @@
 import Image from "next/image";
 import { Button } from "@mui/material";
 import TextField from "@mui/material/TextField";
+import { CheckCircle, Delete } from "@mui/icons-material";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
-import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
+import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 import { notFound } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import { useState, useEffect } from "react";
@@ -17,7 +18,7 @@ export default function GardenStoryStep() {
   const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
   const { data: question4, isLoading: isLoadingQuestion4 } = useReadQuestion(4);
 
-  const { acceptedFiles, getRootProps, getInputProps } = useDropzone({
+  const { getRootProps, getInputProps } = useDropzone({
     accept: {
       "image/*": [".png", ".gif", ".jpeg", ".jpg", ".svg"],
     },
@@ -41,9 +42,6 @@ export default function GardenStoryStep() {
 
   const [uploaded, setUploaded] = useState(false);
   const [files, setFiles] = useState<Array<File & { preview: string }>>([]);
-  const fileNames = acceptedFiles.map((file) => (
-    <li key={file.path}>{file.path}</li>
-  ));
 
   const imagePreviews = files.map((file) => (
     <div key={file.name}>
@@ -65,6 +63,22 @@ export default function GardenStoryStep() {
     // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
     return () => files.forEach((file) => URL.revokeObjectURL(file.preview));
   }, [files]);
+
+  const handleDeleteFile = (fileName: string) => {
+    setFiles((prevFiles) => {
+      const remainingFiles = prevFiles.filter((file) => {
+        if (file.name === fileName) {
+          URL.revokeObjectURL(file.preview);
+          return false;
+        }
+
+        return true;
+      });
+
+      setUploaded(remainingFiles.length > 0);
+      return remainingFiles;
+    });
+  };
 
   const isLoading =
     isLoadingQuestion1 ||
@@ -197,7 +211,39 @@ export default function GardenStoryStep() {
           </div>
         )}
 
-        <ul>{fileNames}</ul>
+        {files.map((file) => (
+          <div
+            key={`${file.name}-${file.size}`}
+            className="mt-2 flex items-center justify-between rounded-lg border border-black/10 px-4 py-3"
+          >
+            <div className="flex items-center gap-3">
+              <Image
+                src="/icons/upload-icon.svg"
+                alt="Upload icon"
+                width={20}
+                height={24}
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-gray-800">
+                  {file.name}
+                </span>
+                <span className="flex items-center text-[13px] text-gray-500">
+                  {Math.round(file.size / 1000)}kb
+                  <span className="mx-1.5 text-[10px]">&bull;</span>
+                  Complete
+                </span>
+              </div>
+            </div>
+
+            <div className="flex items-center gap-4 cursor-pointer">
+              <Delete
+                sx={{ opacity: 0.54, cursor: "pointer" }}
+                onClick={() => handleDeleteFile(file.name)}
+              />
+              <CheckCircle color="success" />
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Supporting Photos */}
