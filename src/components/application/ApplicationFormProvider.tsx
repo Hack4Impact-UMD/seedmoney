@@ -26,6 +26,7 @@ const INITIAL_FORM_VALUES: ApplicationFormData = {
   storyChallenge: "",
   storySeasonActivity: "",
   storyCampaignImpact: "",
+  mainPhoto: "",
   organizationName: "",
   organizationIdentifier: "",
   mailingStreet1: "",

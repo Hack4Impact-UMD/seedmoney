@@ -3,7 +3,10 @@
 import Image from "next/image";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useAgreementGate, useApplicationForm } from "./ApplicationFormProvider";
+import {
+  useAgreementGate,
+  useApplicationForm,
+} from "./ApplicationFormProvider";
 import { StepStatus } from "@/src/types/form";
 import {
   APPLICATION_STEPS,
@@ -34,6 +37,7 @@ export default function ApplicationSidebar() {
           storyChallenge: state.values.storyChallenge,
           storySeasonActivity: state.values.storySeasonActivity,
           storyCampaignImpact: state.values.storyCampaignImpact,
+          mainPhoto: state.values.mainPhoto,
           organizationName: state.values.organizationName,
           organizationIdentifier: state.values.organizationIdentifier,
           mailingStreet1: state.values.mailingStreet1,
@@ -60,55 +64,55 @@ export default function ApplicationSidebar() {
           );
 
           return (
-          <>
-            {steps?.map((step, i) => {
-              const canNavigate =
-                step.label === "Grantee Agreement" || agreementComplete;
-              const content = (
-                <div
-                  className={`flex items-start gap-3 ${
-                    canNavigate ? "cursor-pointer" : "cursor-default"
-                  }`}
-                >
-                  <div className="flex flex-col items-center">
-                    <StepDot status={step.status} />
+            <>
+              {steps?.map((step, i) => {
+                const canNavigate =
+                  step.label === "Grantee Agreement" || agreementComplete;
+                const content = (
+                  <div
+                    className={`flex items-start gap-3 ${
+                      canNavigate ? "cursor-pointer" : "cursor-default"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center">
+                      <StepDot status={step.status} />
 
-                    {i !== steps.length - 1 && (
-                      <div className="flex flex-col items-center h-[35px]">
-                        <div className="h-[8px]" />
-                        <div
-                          className={`w-[2px] flex-1 ${
-                            steps[i + 1].status === "unvisited"
-                              ? "bg-black/10"
-                              : "bg-[#56BD60]"
-                          }`}
-                        />
-                      </div>
-                    )}
-                  </div>
+                      {i !== steps.length - 1 && (
+                        <div className="flex flex-col items-center h-[35px]">
+                          <div className="h-[8px]" />
+                          <div
+                            className={`w-[2px] flex-1 ${
+                              steps[i + 1].status === "unvisited"
+                                ? "bg-black/10"
+                                : "bg-[#56BD60]"
+                            }`}
+                          />
+                        </div>
+                      )}
+                    </div>
 
-                  <p
-                    className={`text-md leading-[133%] font-normal -translate-y-1
+                    <p
+                      className={`text-md leading-[133%] font-normal -translate-y-1
                     text-black
                     ${step.status === "review" ? "text-red-600" : ""}
                     ${canNavigate ? "hover:opacity-80" : "opacity-60"}`}
-                  >
-                    {step.label}
-                  </p>
-                </div>
-              );
+                    >
+                      {step.label}
+                    </p>
+                  </div>
+                );
 
-              if (!canNavigate) {
-                return <div key={step.label}>{content}</div>;
-              }
+                if (!canNavigate) {
+                  return <div key={step.label}>{content}</div>;
+                }
 
-              return (
-                <Link key={step.label} href={APPLICATION_STEPS[i].href}>
-                  {content}
-                </Link>
-              );
-            })}
-          </>
+                return (
+                  <Link key={step.label} href={APPLICATION_STEPS[i].href}>
+                    {content}
+                  </Link>
+                );
+              })}
+            </>
           );
         }}
       </form.Subscribe>

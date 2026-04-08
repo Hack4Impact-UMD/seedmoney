@@ -79,6 +79,7 @@ export default function GardenStoryStep() {
           fileName: acceptedFiles[0].name,
           message: "Duplicate image",
         });
+        form.setFieldValue("mainPhoto", acceptedFiles[0]?.name ?? "");
         return;
       }
 
@@ -201,6 +202,7 @@ export default function GardenStoryStep() {
       });
 
       setUploaded(remainingFiles.length > 0);
+      form.setFieldValue("mainPhoto", "");
       return remainingFiles;
     });
   };
@@ -505,7 +507,10 @@ export default function GardenStoryStep() {
         )}
 
         {supportingFiles.map((file) => (
-          <div key={`${file.name}-${file.size}`} className="flex flex-col gap-2">
+          <div
+            key={`${file.name}-${file.size}`}
+            className="flex flex-col gap-2"
+          >
             <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
               <img
                 src={file.preview}
