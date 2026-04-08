@@ -555,9 +555,6 @@ export default function GardenStoryStep() {
                 src={file.preview}
                 alt={file.name}
                 className="w-full h-full object-cover"
-                onLoad={() => {
-                  URL.revokeObjectURL(file.preview);
-                }}
               />
             </div>
 
