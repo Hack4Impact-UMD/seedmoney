@@ -64,7 +64,21 @@ export default function GardenStoryStep() {
     return () => files.forEach((file) => URL.revokeObjectURL(file.preview));
   }, [files]);
 
-  const handleDeleteFile = (fileName: string) => {
+  const isLoading =
+    isLoadingQuestion1 ||
+    isLoadingQuestion2 ||
+    isLoadingQuestion3 ||
+    isLoadingQuestion4;
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!question1 || !question2 || !question3 || !question4) {
+    notFound();
+  }
+
+  const handleDeleteImage = (fileName: string) => {
     setFiles((prevFiles) => {
       const remainingFiles = prevFiles.filter((file) => {
         if (file.name === fileName) {
@@ -79,20 +93,6 @@ export default function GardenStoryStep() {
       return remainingFiles;
     });
   };
-
-  const isLoading =
-    isLoadingQuestion1 ||
-    isLoadingQuestion2 ||
-    isLoadingQuestion3 ||
-    isLoadingQuestion4;
-
-  if (isLoading) {
-    return <div>Loading...</div>;
-  }
-
-  if (!question1 || !question2 || !question3 || !question4) {
-    notFound();
-  }
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -239,8 +239,15 @@ export default function GardenStoryStep() {
               <IconButton
                 size="small"
                 aria-label={`Delete ${file.name}`}
-                onClick={() => handleDeleteFile(file.name)}
-                sx={{ p: 0, color: "rgba(0, 0, 0, 0.54)", cursor: "pointer" }}
+                onClick={() => handleDeleteImage(file.name)}
+                sx={{
+                  p: 0,
+                  color: "rgba(0, 0, 0, 0.54)",
+                  cursor: "pointer",
+                  "& .MuiSvgIcon-root": {
+                    pointerEvents: "none",
+                  },
+                }}
               >
                 <Delete />
               </IconButton>
