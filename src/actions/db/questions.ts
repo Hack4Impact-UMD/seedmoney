@@ -1,9 +1,9 @@
-import { NewQuestions, Questions } from "@/src/types";
-import { createServerClient } from "@/src/lib/supabase-client";
+import { NewQuestion, Question } from "@/src/types";
+import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
 
 export async function createQuestion(
-  question: NewQuestions,
-): Promise<Questions | null> {
+  question: NewQuestion,
+): Promise<Question | null> {
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -17,11 +17,11 @@ export async function createQuestion(
     return null;
   }
 
-  return data as Questions;
+  return data as Question;
 }
 
-export async function readQuestion(id: number): Promise<Questions | null> {
-  const supabase = await createServerClient();
+export async function readQuestion(id: number): Promise<Question | null> {
+  const supabase = createBrowserClient();
 
   const { data, error } = await supabase
     .from("questions")
@@ -34,13 +34,13 @@ export async function readQuestion(id: number): Promise<Questions | null> {
     return null;
   }
 
-  return data as Questions;
+  return data as Question;
 }
 
 export async function updateQuestion(
   id: number,
-  question: Partial<NewQuestions>,
-): Promise<Questions | null> {
+  question: Partial<NewQuestion>,
+): Promise<Question | null> {
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
@@ -55,7 +55,7 @@ export async function updateQuestion(
     return null;
   }
 
-  return data as Questions;
+  return data as Question;
 }
 
 export async function deleteQuestion(id: number): Promise<boolean> {

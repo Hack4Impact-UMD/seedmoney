@@ -4,9 +4,29 @@ import { Button } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
+import { notFound } from "next/navigation";
 
 export default function GardenStoryStep() {
   const form = useApplicationForm();
+  const { data: question1, isLoading: isLoadingQuestion1 } = useReadQuestion(1);
+  const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
+  const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
+  const { data: question4, isLoading: isLoadingQuestion4 } = useReadQuestion(4);
+
+  const isLoading =
+    isLoadingQuestion1 ||
+    isLoadingQuestion2 ||
+    isLoadingQuestion3 ||
+    isLoadingQuestion4;
+
+  if (isLoading) {
+    return <div>Loading...</div>;
+  }
+
+  if (!question1 || !question2 || !question3 || !question4) {
+    notFound();
+  }
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -22,7 +42,7 @@ export default function GardenStoryStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="Where is your garden, and who does it serve?"
+              label={question1.question}
               fullWidth
               name="storyLocationAndAudience"
               value={field.state.value}
@@ -39,7 +59,7 @@ export default function GardenStoryStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="What challenge does your garden help address, and why does it matter locally?"
+              label={question2.question}
               fullWidth
               name="storyChallenge"
               value={field.state.value}
@@ -56,7 +76,7 @@ export default function GardenStoryStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="What happens in the garden during the growing season?"
+              label={question3.question}
               fullWidth
               name="storySeasonActivity"
               value={field.state.value}
@@ -73,7 +93,7 @@ export default function GardenStoryStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="What will this year’s SeedMoney campaign make possible?"
+              label={question4.question}
               fullWidth
               name="storyCampaignImpact"
               value={field.state.value}
