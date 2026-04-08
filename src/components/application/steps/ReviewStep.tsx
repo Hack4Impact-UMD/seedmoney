@@ -315,26 +315,48 @@ export default function ReviewSubmitPage() {
           project. This photo will appear at the top of your campaign page.
         </p>
 
-        <div className="flex items-center gap-3 text-[#D32F2F]">
-          <div
-            style={{
-              filter:
-                "invert(27%) sepia(80%) saturate(800%) hue-rotate(330deg) brightness(85%)",
-            }}
-          >
-            <Image
-              src="/icons/upload-icon.svg"
-              width={20}
-              height={20}
-              alt="upload status"
-            />
-          </div>
+        {values.mainPhoto ? (
+          <div className="flex flex-col gap-4">
+            <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+              <img
+                src={values.mainPhoto}
+                alt={values.mainPhotoName || "Main photo"}
+                className="w-full h-full object-cover"
+              />
+            </div>
 
-          <div>
-            <p>Upload not implemented yet.</p>
-            <p className="text-sm">Main photo will appear here once file handling is wired.</p>
+            <div className="rounded-lg border border-black/10 px-4 py-3">
+              <p className="text-sm font-medium text-gray-800">
+                {values.mainPhotoName || "Uploaded image"}
+              </p>
+              <p className="text-[13px] text-gray-500">
+                {Math.round(values.mainPhotoSize / 1000)}kb
+                <span className="mx-1.5 text-[10px]">&bull;</span>
+                Complete
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3 text-[#D32F2F]">
+            <div
+              style={{
+                filter:
+                  "invert(27%) sepia(80%) saturate(800%) hue-rotate(330deg) brightness(85%)",
+              }}
+            >
+              <Image
+                src="/icons/upload-icon.svg"
+                width={20}
+                height={20}
+                alt="upload status"
+              />
+            </div>
+
+            <div>
+              <p>Main photo is required.</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
@@ -345,9 +367,34 @@ export default function ReviewSubmitPage() {
           garden’s story.
         </p>
 
-        <p className="text-sm text-gray-500">
-          Supporting photo uploads are not connected yet.
-        </p>
+        {values.supportingPhotos.length > 0 ? (
+          <div className="flex flex-col gap-6">
+            {values.supportingPhotos.map((photo, index) => (
+              <div key={`${photo}-${index}`} className="flex flex-col gap-4">
+                <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+                  <img
+                    src={photo}
+                    alt={values.supportingPhotoNames[index] || "Supporting photo"}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="rounded-lg border border-black/10 px-4 py-3">
+                  <p className="text-sm font-medium text-gray-800">
+                    {values.supportingPhotoNames[index] || "Uploaded image"}
+                  </p>
+                  <p className="text-[13px] text-gray-500">
+                    {Math.round((values.supportingPhotoSizes[index] ?? 0) / 1000)}kb
+                    <span className="mx-1.5 text-[10px]">&bull;</span>
+                    Complete
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">No supporting photos uploaded.</p>
+        )}
       </div>
 
       <h2 className="text-xl font-semibold">Contact Information</h2>

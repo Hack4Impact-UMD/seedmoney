@@ -9,29 +9,35 @@ import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUpload
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 import { notFound } from "next/navigation";
 import { useDropzone } from "react-dropzone";
-import { useState, useEffect } from "react";
+import { useState } from "react";
 
-type PreviewFile = File & { preview: string };
+type PreviewFile = {
+  name: string;
+  size: number;
+  preview: string;
+};
 type UploadError = {
   fileName: string;
   message: string;
 };
 
-function getFileKey(file: Pick<File, "name" | "size" | "lastModified">) {
-  return `${file.name}-${file.size}-${file.lastModified}`;
+function getFileKey(
+  file: Pick<PreviewFile, "name" | "size"> | Pick<File, "name" | "size">,
+) {
+  return `${file.name}-${file.size}`;
 }
 
 function buildPreviewFiles(files: File[]): PreviewFile[] {
-  return files.map((file) =>
-    Object.assign(file, {
+  return files.map((file) => ({
+    name: file.name,
+    size: file.size,
       preview: URL.createObjectURL(file),
-    }),
-  );
+    }));
 }
 
 function hasDuplicateFiles(
   nextFiles: File[],
-  existingFiles: Pick<File, "name" | "size" | "lastModified">[],
+  existingFiles: Pick<PreviewFile, "name" | "size">[],
 ) {
   const seen = new Set(existingFiles.map(getFileKey));
 
@@ -51,14 +57,31 @@ export default function GardenStoryStep() {
   const ERROR_ICON_FILTER =
     "brightness(0) saturate(100%) invert(24%) sepia(95%) saturate(2815%) hue-rotate(347deg) brightness(93%) contrast(100%)";
   const form = useApplicationForm();
+  const values = form.state.values;
   const { data: question1, isLoading: isLoadingQuestion1 } = useReadQuestion(1);
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
   const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
   const { data: question4, isLoading: isLoadingQuestion4 } = useReadQuestion(4);
-  const [uploaded, setUploaded] = useState(false);
-  const [files, setFiles] = useState<PreviewFile[]>([]);
+  const [uploaded, setUploaded] = useState(() => values.mainPhoto.trim().length > 0);
+  const [files, setFiles] = useState<PreviewFile[]>(() =>
+    values.mainPhoto
+      ? [
+          {
+            name: values.mainPhotoName || "Uploaded image",
+            size: values.mainPhotoSize,
+            preview: values.mainPhoto,
+          },
+        ]
+      : [],
+  );
   const [uploadError, setUploadError] = useState<UploadError | null>(null);
-  const [supportingFiles, setSupportingFiles] = useState<PreviewFile[]>([]);
+  const [supportingFiles, setSupportingFiles] = useState<PreviewFile[]>(() =>
+    values.supportingPhotos.map((preview, index) => ({
+      name: values.supportingPhotoNames[index] || "Uploaded image",
+      size: values.supportingPhotoSizes[index] ?? 0,
+      preview,
+    })),
+  );
   const [supportingUploadError, setSupportingUploadError] =
     useState<UploadError | null>(null);
 
@@ -79,13 +102,20 @@ export default function GardenStoryStep() {
           fileName: acceptedFiles[0].name,
           message: "Duplicate image",
         });
-        form.setFieldValue("mainPhoto", acceptedFiles[0]?.name ?? "");
+        form.setFieldValue("mainPhoto", "");
+        form.setFieldValue("mainPhotoName", "");
+        form.setFieldValue("mainPhotoSize", 0);
         return;
       }
 
+      files.forEach((file) => URL.revokeObjectURL(file.preview));
       setUploadError(null);
       setUploaded(true);
-      setFiles(buildPreviewFiles(acceptedFiles));
+      const nextFiles = buildPreviewFiles(acceptedFiles);
+      setFiles(nextFiles);
+      form.setFieldValue("mainPhoto", nextFiles[0]?.preview ?? "");
+      form.setFieldValue("mainPhotoName", nextFiles[0]?.name ?? "");
+      form.setFieldValue("mainPhotoSize", nextFiles[0]?.size ?? 0);
     },
     onDropRejected: (fileRejections) => {
       const firstRejection = fileRejections[0];
@@ -97,8 +127,6 @@ export default function GardenStoryStep() {
         (error) => error.code === "file-too-large",
       );
 
-      setFiles([]);
-      setUploaded(false);
       setUploadError({
         fileName: firstRejection.file.name,
         message: isFileTooLarge ? "File too large" : "Upload failed",
@@ -126,10 +154,21 @@ export default function GardenStoryStep() {
       }
 
       setSupportingUploadError(null);
-      setSupportingFiles((prevFiles) => [
-        ...prevFiles,
-        ...buildPreviewFiles(acceptedFiles),
-      ]);
+      const nextFiles = buildPreviewFiles(acceptedFiles);
+      const updatedFiles = [...supportingFiles, ...nextFiles];
+      setSupportingFiles(updatedFiles);
+      form.setFieldValue(
+        "supportingPhotos",
+        updatedFiles.map((file) => file.preview),
+      );
+      form.setFieldValue(
+        "supportingPhotoNames",
+        updatedFiles.map((file) => file.name),
+      );
+      form.setFieldValue(
+        "supportingPhotoSizes",
+        updatedFiles.map((file) => file.size),
+      );
     },
     onDropRejected: (fileRejections) => {
       const firstRejection = fileRejections[0];
@@ -157,24 +196,10 @@ export default function GardenStoryStep() {
           src={file.preview}
           alt={file.name}
           className="w-full h-full object-cover"
-          // Revoke data uri after image is loaded
-          onLoad={() => {
-            URL.revokeObjectURL(file.preview);
-          }}
         />
       </div>
     </div>
   ));
-
-  useEffect(() => {
-    // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
-    return () => files.forEach((file) => URL.revokeObjectURL(file.preview));
-  }, [files]);
-
-  useEffect(() => {
-    return () =>
-      supportingFiles.forEach((file) => URL.revokeObjectURL(file.preview));
-  }, [supportingFiles]);
 
   const isLoading =
     isLoadingQuestion1 ||
@@ -202,9 +227,11 @@ export default function GardenStoryStep() {
       });
 
       setUploaded(remainingFiles.length > 0);
-      form.setFieldValue("mainPhoto", "");
       return remainingFiles;
     });
+    form.setFieldValue("mainPhoto", "");
+    form.setFieldValue("mainPhotoName", "");
+    form.setFieldValue("mainPhotoSize", 0);
   };
 
   const handleClearUploadError = () => {
@@ -212,15 +239,27 @@ export default function GardenStoryStep() {
   };
 
   const handleDeleteSupportingImage = (fileName: string) => {
-    setSupportingFiles((prevFiles) =>
-      prevFiles.filter((file) => {
-        if (file.name === fileName) {
-          URL.revokeObjectURL(file.preview);
-          return false;
-        }
+    const remainingFiles = supportingFiles.filter((file) => {
+      if (file.name === fileName) {
+        URL.revokeObjectURL(file.preview);
+        return false;
+      }
 
-        return true;
-      }),
+      return true;
+    });
+
+    setSupportingFiles(remainingFiles);
+    form.setFieldValue(
+      "supportingPhotos",
+      remainingFiles.map((file) => file.preview),
+    );
+    form.setFieldValue(
+      "supportingPhotoNames",
+      remainingFiles.map((file) => file.name),
+    );
+    form.setFieldValue(
+      "supportingPhotoSizes",
+      remainingFiles.map((file) => file.size),
     );
   };
 
