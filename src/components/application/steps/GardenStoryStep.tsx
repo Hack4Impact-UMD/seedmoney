@@ -11,6 +11,16 @@ import { notFound } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import { useState, useEffect } from "react";
 
+type PreviewFile = File & { preview: string };
+
+function buildPreviewFiles(files: File[]): PreviewFile[] {
+  return files.map((file) =>
+    Object.assign(file, {
+      preview: URL.createObjectURL(file),
+    }),
+  );
+}
+
 export default function GardenStoryStep() {
   const ERROR_ICON_FILTER =
     "brightness(0) saturate(100%) invert(24%) sepia(95%) saturate(2815%) hue-rotate(347deg) brightness(93%) contrast(100%)";
@@ -19,6 +29,17 @@ export default function GardenStoryStep() {
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
   const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
   const { data: question4, isLoading: isLoadingQuestion4 } = useReadQuestion(4);
+  const [uploaded, setUploaded] = useState(false);
+  const [files, setFiles] = useState<PreviewFile[]>([]);
+  const [uploadError, setUploadError] = useState<{
+    fileName: string;
+    message: string;
+  } | null>(null);
+  const [supportingFiles, setSupportingFiles] = useState<PreviewFile[]>([]);
+  const [supportingUploadError, setSupportingUploadError] = useState<{
+    fileName: string;
+    message: string;
+  } | null>(null);
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: {
@@ -32,13 +53,7 @@ export default function GardenStoryStep() {
     onDropAccepted: (acceptedFiles) => {
       setUploadError(null);
       setUploaded(true);
-      setFiles(
-        acceptedFiles.map((file) =>
-          Object.assign(file, {
-            preview: URL.createObjectURL(file),
-          }),
-        ),
-      );
+      setFiles(buildPreviewFiles(acceptedFiles));
     },
     onDropRejected: (fileRejections) => {
       const firstRejection = fileRejections[0];
@@ -60,12 +75,40 @@ export default function GardenStoryStep() {
     maxSize: 3000000,
   });
 
-  const [uploaded, setUploaded] = useState(false);
-  const [files, setFiles] = useState<Array<File & { preview: string }>>([]);
-  const [uploadError, setUploadError] = useState<{
-    fileName: string;
-    message: string;
-  } | null>(null);
+  const {
+    getRootProps: getSupportingRootProps,
+    getInputProps: getSupportingInputProps,
+  } = useDropzone({
+    accept: {
+      "image/*": [".png", ".gif", ".jpeg", ".jpg", ".svg"],
+    },
+    multiple: true,
+    maxFiles: 5 - supportingFiles.length,
+    onDropAccepted: (acceptedFiles) => {
+      setSupportingUploadError(null);
+      setSupportingFiles((prevFiles) => [
+        ...prevFiles,
+        ...buildPreviewFiles(acceptedFiles),
+      ]);
+    },
+    onDropRejected: (fileRejections) => {
+      const firstRejection = fileRejections[0];
+      if (!firstRejection) {
+        return;
+      }
+
+      const isFileTooLarge = firstRejection.errors.some(
+        (error) => error.code === "file-too-large",
+      );
+
+      setSupportingUploadError({
+        fileName: firstRejection.file.name,
+        message: isFileTooLarge ? "File too large" : "Upload failed",
+      });
+    },
+    maxSize: 3000000,
+    disabled: supportingFiles.length >= 5,
+  });
 
   const imagePreviews = files.map((file) => (
     <div key={file.name}>
@@ -87,6 +130,11 @@ export default function GardenStoryStep() {
     // Make sure to revoke the data uris to avoid memory leaks, will run on unmount
     return () => files.forEach((file) => URL.revokeObjectURL(file.preview));
   }, [files]);
+
+  useEffect(() => {
+    return () =>
+      supportingFiles.forEach((file) => URL.revokeObjectURL(file.preview));
+  }, [supportingFiles]);
 
   const isLoading =
     isLoadingQuestion1 ||
@@ -120,6 +168,23 @@ export default function GardenStoryStep() {
 
   const handleClearUploadError = () => {
     setUploadError(null);
+  };
+
+  const handleDeleteSupportingImage = (fileName: string) => {
+    setSupportingFiles((prevFiles) =>
+      prevFiles.filter((file) => {
+        if (file.name === fileName) {
+          URL.revokeObjectURL(file.preview);
+          return false;
+        }
+
+        return true;
+      }),
+    );
+  };
+
+  const handleClearSupportingUploadError = () => {
+    setSupportingUploadError(null);
   };
 
   return (
@@ -335,26 +400,125 @@ export default function GardenStoryStep() {
           upload logos, flyers, graphics, or AI-generated images.
         </p>
 
-        <div className="border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center py-10 gap-3 text-center">
-          {/* Upload Icon */}
-          <Image
-            src="/icons/upload-icon.svg"
-            alt="Upload icon"
-            width={16}
-            height={20}
-          />
+        {supportingUploadError && (
+          <div className="mt-2 flex items-center justify-between rounded-lg border border-[#D32F2F]/20 px-4 py-3">
+            <div className="flex items-center gap-3">
+              <Image
+                src="/icons/upload-icon.svg"
+                alt="Upload failed"
+                width={20}
+                height={24}
+                style={{ filter: ERROR_ICON_FILTER }}
+              />
+              <div className="flex flex-col">
+                <span className="text-sm font-medium text-[#D32F2F]">
+                  Upload failed.
+                </span>
+                <span className="flex items-center text-[13px] text-[#D32F2F]">
+                  {supportingUploadError.message}
+                  <span className="mx-1.5 text-[10px]">&bull;</span>
+                  Failed
+                </span>
+              </div>
+            </div>
 
-          <p className="text-sm">
-            <span className="text-blue-600 cursor-pointer hover:underline">
-              Link
-            </span>{" "}
-            or drag and drop
-          </p>
+            <IconButton
+              size="small"
+              aria-label={`Clear failed upload ${supportingUploadError.fileName}`}
+              onClick={handleClearSupportingUploadError}
+              sx={{
+                p: 0,
+                color: "rgba(0, 0, 0, 0.54)",
+                cursor: "pointer",
+                "& .MuiSvgIcon-root": {
+                  pointerEvents: "none",
+                },
+              }}
+            >
+              <Delete />
+            </IconButton>
+          </div>
+        )}
 
-          <p className="text-xs text-gray-500">
-            SVG, PNG, JPG or GIF (max. 3MB)
-          </p>
-        </div>
+        {supportingFiles.length < 5 && (
+          <div {...getSupportingRootProps({ className: "dropzone" })}>
+            <input {...getSupportingInputProps()} />
+            <div className="border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center py-10 gap-3 text-center">
+              <Image
+                src="/icons/upload-icon.svg"
+                alt="Upload icon"
+                width={16}
+                height={20}
+              />
+
+              <p className="text-sm">
+                <span className="text-blue-600 cursor-pointer hover:underline">
+                  Link
+                </span>{" "}
+                or drag and drop
+              </p>
+
+              <p className="text-xs text-gray-500">
+                SVG, PNG, JPG or GIF (max. 3MB)
+              </p>
+            </div>
+          </div>
+        )}
+
+        {supportingFiles.map((file) => (
+          <div key={`${file.name}-${file.size}`} className="flex flex-col gap-2">
+            <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+              <img
+                src={file.preview}
+                alt={file.name}
+                className="w-full h-full object-cover"
+                onLoad={() => {
+                  URL.revokeObjectURL(file.preview);
+                }}
+              />
+            </div>
+
+            <div className="mt-2 flex items-center justify-between rounded-lg border border-black/10 px-4 py-3">
+              <div className="flex items-center gap-3">
+                <Image
+                  src="/icons/upload-icon.svg"
+                  alt="Upload icon"
+                  width={20}
+                  height={24}
+                />
+                <div className="flex flex-col">
+                  <span className="text-sm font-medium text-gray-800">
+                    {file.name}
+                  </span>
+                  <span className="flex items-center text-[13px] text-gray-500">
+                    {Math.round(file.size / 1000)}kb
+                    <span className="mx-1.5 text-[10px]">&bull;</span>
+                    Complete
+                  </span>
+                </div>
+              </div>
+
+              <div className="flex items-center gap-4">
+                <IconButton
+                  size="small"
+                  aria-label={`Delete ${file.name}`}
+                  onClick={() => handleDeleteSupportingImage(file.name)}
+                  sx={{
+                    p: 0,
+                    color: "rgba(0, 0, 0, 0.54)",
+                    cursor: "pointer",
+                    "& .MuiSvgIcon-root": {
+                      pointerEvents: "none",
+                    },
+                  }}
+                >
+                  <Delete />
+                </IconButton>
+                <CheckCircle color="success" />
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
 
       {/* Navigation Buttons */}
