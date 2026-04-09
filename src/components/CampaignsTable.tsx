@@ -9,26 +9,19 @@ import {
   getPaginationRowModel 
 } from '@tanstack/react-table';
 
-interface CampaignMock {
-  name: string;
-  campaign_leader: string;
-  raised: number;
-  goal: number;
-  percentage: number;
-}
+import { CampaignWithLeader } from '../hooks/campaigns/useReadOngoingCampaigns';
+
 
 interface Props {
-  initialData: CampaignMock[];
+  initialData: CampaignWithLeader[];
 }
 
 const CampaignsTable = ({ initialData }: Props) => {
   const router = useRouter();
   const [campaignSearch, setCampaignSearch] = useState('');
 
-  // TODO: function to handle invidiual campaigns (parameter will probably be campaign id)
-  const handleCampaignClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    router.push(`/dashboard/ongoing-campaigns/1`);
+  const handleCampaignClick = (id: number) => {
+    router.push(`/dashboard/ongoing-campaigns/${id}`);
   }
 
   const filteredData = useMemo(() => {
@@ -38,7 +31,7 @@ const CampaignsTable = ({ initialData }: Props) => {
     );
   }, [campaignSearch, initialData]);
 
-  const columnHelper = createColumnHelper<CampaignMock>();
+  const columnHelper = createColumnHelper<CampaignWithLeader>();
 
   const columns = [
     columnHelper.accessor('name', {
@@ -62,14 +55,16 @@ const CampaignsTable = ({ initialData }: Props) => {
       cell: info => `$${info.getValue().toLocaleString()}`
     }), 
     columnHelper.accessor(row => ({ 
-      percentage: row.percentage 
+      percentage: row.raised / row.goal * 100
     }), {
       id: 'status',
       size: 200,
       header: 'Goal Status',
-      cell: info => {
-        const { percentage } = info.getValue();
+      cell: ({ row }) => {
+        const campaign = row.original;
+        const percentage = campaign.goal > 0 ? Math.round((campaign.raised / campaign.goal) * 100) : 0;
         const displayPercentage = Math.min(percentage, 100);
+
         return (
           <div className="flex items-center gap-3 w-full min-w-[180px]">
             <div className="w-full bg-blue-100 rounded-full h-2">
@@ -79,11 +74,11 @@ const CampaignsTable = ({ initialData }: Props) => {
               ></div>
             </div>
             <span className="text-sm text-gray-600">{displayPercentage}%</span>
-            {/* TODO: pass in campaign id as function parameter for handleCampaignClick  */}
+
             <button
               type="button"
               className="ml-1 cursor-pointer select-none text-xl font-bold text-[#2c7a45] transition-colors"
-              onClick={handleCampaignClick}
+              onClick={() => handleCampaignClick(campaign.campaign_id)}
               aria-label="Open campaign details"
             >
               &gt;
