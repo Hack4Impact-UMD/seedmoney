@@ -34,7 +34,9 @@ export default function DashboardShell({
 
   if (!user) notFound();
   if (isLoading ) return <div>Loading...</div>;
-  if (!campaignsData || campaignsData.length === 0) return error;
+  if (error) throw error;
+  if (!campaignsData) return <div className="flex min-h-screen" >Unable to load campaign.</div>;
+  if (campaignsData.length === 0) notFound();
 
   const campaignData = campaignsData[0];
 
