@@ -25,8 +25,7 @@ import useReadCurrentCompetition from "../hooks/competition-metadata/useReadCurr
 export default function Navbar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAuth();
-  // const { data: userData } = useUserByAuthId(user?.id || "");
-    const userData = { id: 'dev-user-id', email: 'dev@example.com', is_admin: true, first_name: 'Dev', last_name: 'User', phone_number: '123-456-7890', middle_name: 'D', created_at: '2023-01-01T00:00:00.000Z', updated_at: '2023-01-01T00:00:00.000Z', app_metadata: { provider: 'email' }, user_metadata: {}, user_id: 'dev-user-id', app_id: 'dev-app-id', aud: 'dev-aud', email_confirmed_at: '2023-01-01T00:00:00.000Z', phone_confirmed_at: '2023-01-01T00:00:00.000Z' };
+  const { data: userData } = useUserByAuthId(user?.id || "");
   const { data: campaigns = [], isLoading } = useReadCampaignsFromMembers(user?.id || "");
   const { data: currentCompetitionData} = useReadCurrentCompetition();
 

@@ -12,9 +12,7 @@ export default function DashboardIndexPage() {
   const { user } = useAuth();
   const router = useRouter();
 
-  // const { data: userData, isLoading: isLoadingUser } = useUserByAuthId(user?.id || "");
-  const userData = { first_name: "Alex", is_admin: true };
-  const isLoadingUser = false;
+  const { data: userData, isLoading: isLoadingUser } = useUserByAuthId(user?.id || "");
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useReadCampaignsFromMembers(user?.id || "");
 
   const isLoading = isLoadingUser || isLoadingCampaigns;
