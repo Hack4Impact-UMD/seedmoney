@@ -28,13 +28,13 @@ export default function DashboardShell({
   const pathname = usePathname();
   const { campaignId } = useParams<{ campaignId: string }>();
   const { user } = useAuth();
-  const { data: campaignsData, isLoading } = useReadCampaign({ campaignId: Number(campaignId) });
+  const { data: campaignsData, isLoading, error} = useReadCampaign({ campaignId: Number(campaignId) });
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const [toast, setToast] = useState(false);
 
   if (!user) notFound();
   if (isLoading ) return <div>Loading...</div>;
-  if (!campaignsData || campaignsData.length === 0) notFound();
+  if (!campaignsData || campaignsData.length === 0) return error;
 
   const campaignData = campaignsData[0];
 
