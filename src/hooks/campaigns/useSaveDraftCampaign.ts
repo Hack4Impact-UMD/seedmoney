@@ -15,6 +15,10 @@ export default function useSaveDraftCampaign() {
   const updateCampaign = useUpdateCampaign();
 
   const saveDraftCampaign = async (campaignData: Partial<Campaign>) => {
+    campaignData = Object.fromEntries(
+      Object.entries(campaignData).filter(([, value]) => value !== undefined),
+    ) as Partial<Campaign>;
+
     if (!draftCampaignId) {
       const draftCampaign = await createCampaign.mutateAsync({
         status: "in_progress",
@@ -27,9 +31,13 @@ export default function useSaveDraftCampaign() {
       return draftCampaign.campaign_id;
     }
 
+    if (Object.keys(campaignData).length === 0) {
+      return draftCampaignId;
+    }
+
     await updateCampaign.mutateAsync({
       campaignId: draftCampaignId,
-      campaignData,
+      campaignData: campaignData,
     });
     setLastSaved(new Date().toLocaleTimeString());
     return draftCampaignId;
