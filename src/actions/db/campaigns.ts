@@ -1,6 +1,6 @@
 "use server";
 
-import type { Campaign } from "@/src/types";
+import type { Campaign, CampaignMember } from "@/src/types";
 import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
 
 export async function createCampaign(
@@ -189,7 +189,7 @@ export async function readOngoingChallengeApplications() {
   
   if (error) throw error;
   return data.map(campaign => {
-    const leaderMember = campaign.campaign_members[0];
+    const leaderMember = campaign.campaign_members.find((member: CampaignMember) => member.role === "campaign_leader") || campaign.campaign_members[0];
     const leaderUser = Array.isArray(leaderMember?.users) 
       ? leaderMember.users[0] 
       : leaderMember?.users;
