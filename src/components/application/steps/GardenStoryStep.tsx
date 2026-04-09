@@ -4,11 +4,16 @@ import { Button, IconButton } from "@mui/material";
 import TextField from "@mui/material/TextField";
 import { CheckCircle, Delete } from "@mui/icons-material";
 import Link from "next/link";
-import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import {
+  useApplicationForm,
+  useLastSaved,
+} from "@/src/components/application/ApplicationFormProvider";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 import { notFound } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import { useState } from "react";
+import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
+import useUpsertAnswer from "@/src/hooks/answers/useUpsertAnswer";
 
 type PreviewFile = {
   name: string;
@@ -56,6 +61,9 @@ export default function GardenStoryStep() {
   const ERROR_ICON_FILTER =
     "brightness(0) saturate(100%) invert(24%) sepia(95%) saturate(2815%) hue-rotate(347deg) brightness(93%) contrast(100%)";
   const form = useApplicationForm();
+  const { setLastSaved } = useLastSaved();
+  const { draftCampaignId, saveDraftCampaign } = useSaveDraftCampaign();
+  const upsertAnswer = useUpsertAnswer();
   const values = form.state.values;
   const { data: question1, isLoading: isLoadingQuestion1 } = useReadQuestion(1);
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
@@ -268,6 +276,17 @@ export default function GardenStoryStep() {
     setSupportingUploadError(null);
   };
 
+  const saveStoryAnswer = async (questionId: number, finalAnswer: string) => {
+    const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+
+    await upsertAnswer.mutateAsync({
+      campaignId,
+      questionId,
+      finalAnswer,
+    });
+    setLastSaved(new Date().toLocaleTimeString());
+  };
+
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
       {/* Garden Story */}
@@ -286,7 +305,10 @@ export default function GardenStoryStep() {
               fullWidth
               name="storyLocationAndAudience"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveStoryAnswer(1, e.target.value);
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -303,7 +325,10 @@ export default function GardenStoryStep() {
               fullWidth
               name="storyChallenge"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveStoryAnswer(2, e.target.value);
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -320,7 +345,10 @@ export default function GardenStoryStep() {
               fullWidth
               name="storySeasonActivity"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveStoryAnswer(3, e.target.value);
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -337,7 +365,10 @@ export default function GardenStoryStep() {
               fullWidth
               name="storyCampaignImpact"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveStoryAnswer(4, e.target.value);
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)

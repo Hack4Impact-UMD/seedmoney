@@ -3,40 +3,11 @@
 import { Button, TextField } from "@mui/material";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import Link from "next/link";
-import {
-  useDraftCampaignId,
-  useLastSaved,
-} from "@/src/components/application/ApplicationFormProvider";
-import useCreateCampaign from "@/src/hooks/campaigns/useCreateCampaign";
-import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
-import { Campaign } from "@/src/types/db/campaigns";
+import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 export default function CampaignInformationStep() {
   const form = useApplicationForm();
-  const { draftCampaignId, setDraftCampaignId } = useDraftCampaignId();
-  const { setLastSaved } = useLastSaved();
-  const createCampaign = useCreateCampaign();
-  const updateCampaign = useUpdateCampaign();
-
-  const saveCampaignDraft = async (campaignData: Partial<Campaign>) => {
-    if (!draftCampaignId) {
-      const draftCampaign = await createCampaign.mutateAsync({
-        status: "in_progress",
-        date_created: new Date().toISOString(),
-        ...campaignData,
-      });
-
-      setDraftCampaignId(draftCampaign.campaign_id);
-      setLastSaved(new Date().toLocaleTimeString());
-      return;
-    }
-
-    await updateCampaign.mutateAsync({
-      campaignId: draftCampaignId,
-      campaignData,
-    });
-    setLastSaved(new Date().toLocaleTimeString());
-  };
+  const { saveDraftCampaign } = useSaveDraftCampaign();
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -59,7 +30,7 @@ export default function CampaignInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveCampaignDraft({ name: e.target.value });
+                await saveDraftCampaign({ name: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               error={field.state.meta.errors.length > 0}
@@ -89,7 +60,7 @@ export default function CampaignInformationStep() {
               fullWidth
               value={field.state.value}
               onBlur={async (e) => {
-                await saveCampaignDraft({
+                await saveDraftCampaign({
                   impact: e.target.value ? Number(e.target.value) : undefined,
                 });
               }}
@@ -109,7 +80,7 @@ export default function CampaignInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveCampaignDraft({
+                await saveDraftCampaign({
                   size: e.target.value ? Number(e.target.value) : undefined,
                 });
               }}
@@ -132,7 +103,7 @@ export default function CampaignInformationStep() {
                     checked={field.state.value === "new"}
                     onChange={async () => {
                       field.handleChange("new");
-                      await saveCampaignDraft({ existence: "new" });
+                      await saveDraftCampaign({ existence: "new" });
                     }}
                     className="w-6 h-6 accent-blue-600 cursor-pointer"
                   />
@@ -147,7 +118,7 @@ export default function CampaignInformationStep() {
                     checked={field.state.value === "existing"}
                     onChange={async () => {
                       field.handleChange("existing");
-                      await saveCampaignDraft({ existence: "existing" });
+                      await saveDraftCampaign({ existence: "existing" });
                     }}
                     className="w-6 h-6 accent-blue-600 cursor-pointer"
                   />
@@ -178,7 +149,7 @@ export default function CampaignInformationStep() {
               type="number"
               value={field.state.value}
               onBlur={async (e) => {
-                await saveCampaignDraft({
+                await saveDraftCampaign({
                   goal: e.target.value ? Number(e.target.value) : undefined,
                 });
               }}

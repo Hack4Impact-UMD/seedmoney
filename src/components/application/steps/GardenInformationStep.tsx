@@ -5,6 +5,7 @@ import { Button } from "@mui/material";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import { useState } from "react";
+import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 const categoryOptions = [
   "Community Garden",
@@ -42,6 +43,7 @@ const beneficiaryOptions = [
 
 export default function GardenInformationStep() {
   const form = useApplicationForm();
+  const { saveDraftCampaign } = useSaveDraftCampaign();
   const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(false);
   const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] = useState(false);
 
@@ -62,7 +64,10 @@ export default function GardenInformationStep() {
               name="gardenCity"
               autoComplete="address-level2"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ city: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -80,7 +85,10 @@ export default function GardenInformationStep() {
               name="gardenState"
               autoComplete="address-level1"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ state: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -98,7 +106,10 @@ export default function GardenInformationStep() {
               name="gardenCountry"
               autoComplete="country-name"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ country: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -140,6 +151,7 @@ export default function GardenInformationStep() {
                       } else {
                         setIsOtherCategorySelected(false);
                         field.handleChange(option);
+                        void saveDraftCampaign({ project_category: option });
                       }
                     }}
                     className="w-[20px] h-[20px] accent-blue-600 cursor-pointer transition-transform duration-150 group-hover:scale-105"
@@ -157,6 +169,11 @@ export default function GardenInformationStep() {
                   name="gardenCategoryOther"
                   placeholder="Please specify"
                   value={field.state.value}
+                  onBlur={async (e) => {
+                    await saveDraftCampaign({
+                      project_category: e.target.value,
+                    });
+                  }}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onInput={(e) =>
                     field.handleChange((e.target as HTMLInputElement).value)
@@ -204,23 +221,33 @@ export default function GardenInformationStep() {
                               setIsOtherBeneficiarySelected(true);
                             } else {
                               setIsOtherBeneficiarySelected(false);
-                              field.handleChange(
-                                field.state.value.filter((item) =>
-                                  beneficiaryOptions.includes(item)
-                                )
+                              const nextValue = field.state.value.filter((item) =>
+                                beneficiaryOptions.includes(item),
                               );
+                              field.handleChange(nextValue);
+                              void saveDraftCampaign({
+                                project_beneficiaries: nextValue,
+                              });
                             }
                             return;
                           }
 
                           if (e.target.checked) {
-                            field.handleChange([...field.state.value, option]);
+                            const nextValue = [...field.state.value, option];
+                            field.handleChange(nextValue);
+                            void saveDraftCampaign({
+                              project_beneficiaries: nextValue,
+                            });
                             return;
                           }
 
-                          field.handleChange(
-                            field.state.value.filter((item) => item !== option),
+                          const nextValue = field.state.value.filter(
+                            (item) => item !== option,
                           );
+                          field.handleChange(nextValue);
+                          void saveDraftCampaign({
+                            project_beneficiaries: nextValue,
+                          });
                         }}
                         className="
                           w-[18px] h-[18px]
@@ -260,6 +287,17 @@ export default function GardenInformationStep() {
                           ? [...withoutCustom, customValue]
                           : withoutCustom,
                       );
+                    }}
+                    onBlur={async (e) => {
+                      const customValue = e.target.value;
+                      const withoutCustom = field.state.value.filter((item) =>
+                        beneficiaryOptions.includes(item),
+                      );
+                      await saveDraftCampaign({
+                        project_beneficiaries: customValue
+                          ? [...withoutCustom, customValue]
+                          : withoutCustom,
+                      });
                     }}
                     className="mt-2 p-2 border border-gray-300 rounded-md text-sm"
                   />

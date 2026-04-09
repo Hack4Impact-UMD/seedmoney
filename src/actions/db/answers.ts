@@ -1,8 +1,8 @@
 import type { NewAnswer, Answers } from "@/src/types";
-import { createServerClient } from "@/src/lib/supabase-client";
+import { createBrowserClient } from "@/src/lib/supabase-client";
 
 export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
 
   const { data: insertedData, error } = await supabase
     .from("answers")
@@ -18,7 +18,7 @@ export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
 }
 
 export async function readAnswer(id: number): Promise<Answers | null> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
 
   const { data, error } = await supabase
     .from("answers")
@@ -38,7 +38,7 @@ export async function updateAnswer(
   id: number,
   data: Partial<NewAnswer>,
 ): Promise<Answers | null> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
 
   const { data: updatedData, error } = await supabase
     .from("answers")
@@ -56,7 +56,7 @@ export async function updateAnswer(
 }
 
 export async function deleteAnswer(id: number): Promise<boolean> {
-  const supabase = await createServerClient();
+  const supabase = await createBrowserClient();
 
   const { error } = await supabase.from("answers").delete().eq("answer_id", id);
 
@@ -66,4 +66,54 @@ export async function deleteAnswer(id: number): Promise<boolean> {
   }
 
   return true;
+}
+
+export async function readAnswerByCampaignAndQuestion(
+  campaignId: number,
+  questionId: number,
+): Promise<Answers | null> {
+  const supabase = await createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("answers")
+    .select("*")
+    .eq("campaign_id", campaignId)
+    .eq("question_id", questionId)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error reading answer by campaign/question:", error.message);
+    return null;
+  }
+
+  return data as Answers;
+}
+
+export async function upsertAnswerByCampaignAndQuestion({
+  campaignId,
+  questionId,
+  finalAnswer,
+}: {
+  campaignId: number;
+  questionId: number;
+  finalAnswer: string;
+}): Promise<Answers | null> {
+  const existingAnswer = await readAnswerByCampaignAndQuestion(
+    campaignId,
+    questionId,
+  );
+
+  if (existingAnswer) {
+    return updateAnswer(existingAnswer.answer_id, {
+      final_answer: finalAnswer,
+    });
+  }
+
+  return createAnswer({
+    campaign_id: campaignId,
+    question_id: questionId,
+    pre_ai_answer: "",
+    ai_answer: "",
+    final_answer: finalAnswer,
+  });
 }
