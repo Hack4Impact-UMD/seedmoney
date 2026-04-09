@@ -2,17 +2,17 @@ import { useQuery } from "@tanstack/react-query";
 import { readCampaign } from "@/src/actions/db/campaigns";
 import { Campaign } from "@/src/types/db/campaigns";
 
-export default function useReadCampaign(campaignId: number) {
+export default function useReadCampaigns(params?: { campaignId?: number | number[] } ) {
 
-    return useQuery<Campaign | Campaign[]>({
-        queryKey: [campaignId, 'campaign', 'read'],
+    return useQuery<Campaign[]>({
+        queryKey: [params, 'campaigns', 'read'],
         queryFn: async () =>  {
-          const campaign = await readCampaign(campaignId);
-          if (!campaign) throw new Error("Error reading campaign");
-          return campaign;
+          const data = await readCampaign(params?.campaignId);
+          if (!data) return [];
+          return Array.isArray(data) ? data : [data];
         },
         staleTime: 1000 * 60 * 5,
         retry: 2,
-        enabled: !!campaignId
+        enabled: !!params?.campaignId
     });
 }
