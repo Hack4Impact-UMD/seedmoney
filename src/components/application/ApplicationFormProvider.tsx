@@ -61,10 +61,24 @@ interface AgreementGateContextValue {
   setHasPassedAgreement: (value: SetStateAction<boolean>) => void;
 }
 
+interface DraftCampaignIdContextValue {
+  draftCampaignId: number | null;
+  setDraftCampaignId: (value: SetStateAction<number | null>) => void;
+}
+
+interface LastSavedContextValue {
+  lastSaved: number | null;
+  setLastSaved: (value: SetStateAction<number | null>) => void;
+}
+
 const ApplicationFormContext = createContext<ApplicationFormApi | null>(null);
 const AgreementGateContext = createContext<AgreementGateContextValue | null>(
   null,
 );
+const DraftCampaignIdContext =
+  createContext<DraftCampaignIdContextValue | null>(null);
+
+const LastSavedContext = createContext<LastSavedContextValue | null>(null);
 
 export const ApplicationFormProvider = ({
   children,
@@ -73,6 +87,8 @@ export const ApplicationFormProvider = ({
 }) => {
   const form = useApplicationFormState();
   const [hasPassedAgreement, setHasPassedAgreement] = useState(false);
+  const [draftCampaignId, setDraftCampaignId] = useState<number | null>(null);
+  const [lastSaved, setLastSaved] = useState<number | null>(null);
 
   const agreementGateValue = useMemo(
     () => ({
@@ -82,10 +98,30 @@ export const ApplicationFormProvider = ({
     [hasPassedAgreement],
   );
 
+  const draftCampaignIdValue = useMemo(
+    () => ({
+      draftCampaignId,
+      setDraftCampaignId,
+    }),
+    [draftCampaignId],
+  );
+
+  const lastSavedValue = useMemo(
+    () => ({
+      lastSaved,
+      setLastSaved,
+    }),
+    [lastSaved],
+  );
+
   return (
     <ApplicationFormContext.Provider value={form}>
       <AgreementGateContext.Provider value={agreementGateValue}>
-        {children}
+        <DraftCampaignIdContext.Provider value={draftCampaignIdValue}>
+          <LastSavedContext.Provider value={lastSavedValue}>
+            {children}
+          </LastSavedContext.Provider>
+        </DraftCampaignIdContext.Provider>
       </AgreementGateContext.Provider>
     </ApplicationFormContext.Provider>
   );
@@ -106,6 +142,26 @@ export const useAgreementGate = () => {
   if (!context) {
     throw new Error(
       "useAgreementGate must be used within an ApplicationFormProvider",
+    );
+  }
+  return context;
+};
+
+export const useDraftCampaignId = () => {
+  const context = useContext(DraftCampaignIdContext);
+  if (!context) {
+    throw new Error(
+      "useDraftCampaignId must be used within an ApplicationFormProvider",
+    );
+  }
+  return context;
+};
+
+export const useLastSaved = () => {
+  const context = useContext(LastSavedContext);
+  if (!context) {
+    throw new Error(
+      "useLastSaved must be used within an ApplicationFormProvider",
     );
   }
   return context;

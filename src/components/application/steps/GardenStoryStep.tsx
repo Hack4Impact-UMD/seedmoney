@@ -5,7 +5,6 @@ import TextField from "@mui/material/TextField";
 import { CheckCircle, Delete } from "@mui/icons-material";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
-import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 import { notFound } from "next/navigation";
 import { useDropzone } from "react-dropzone";
@@ -31,8 +30,8 @@ function buildPreviewFiles(files: File[]): PreviewFile[] {
   return files.map((file) => ({
     name: file.name,
     size: file.size,
-      preview: URL.createObjectURL(file),
-    }));
+    preview: URL.createObjectURL(file),
+  }));
 }
 
 function hasDuplicateFiles(
@@ -62,7 +61,9 @@ export default function GardenStoryStep() {
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
   const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
   const { data: question4, isLoading: isLoadingQuestion4 } = useReadQuestion(4);
-  const [uploaded, setUploaded] = useState(() => values.mainPhoto.trim().length > 0);
+  const [uploaded, setUploaded] = useState(
+    () => values.mainPhoto.trim().length > 0,
+  );
   const [files, setFiles] = useState<PreviewFile[]>(() =>
     values.mainPhoto
       ? [
