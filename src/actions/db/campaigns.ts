@@ -1,5 +1,7 @@
+"use server";
+
 import type { Campaign } from "@/src/types";
-import { createBrowserClient } from "@/src/lib/supabase-client";
+import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
 
 export async function createCampaign(
   data: Partial<Campaign>,
@@ -24,7 +26,7 @@ export async function createCampaign(
 export async function readCampaign(
   ids?: number | number[],
 ): Promise<Campaign | Campaign[] | null> {
-  const supabase = createBrowserClient();
+  const supabase = await createBrowserClient();
 
 
   // Return ALL campaigns
@@ -151,4 +153,50 @@ export async function deleteCampaign(id: number): Promise<boolean> {
   }
 
   return true;
+}
+
+export async function readOngoingChallengeApplications() {
+  const supabase = await createServerClient();
+
+  // reading current competition
+  const { data: competition, error: compError } = await supabase
+    .from("competition_metadata")
+    .select()
+    .eq("is_current", true)
+    .single();
+
+  console.log("competition:", competition, "error:", compError);
+
+  if (compError || !competition) throw new Error("No ongoing challenge found");
+
+  // retrieve campaigns from current competition
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select(`
+      *,
+      campaign_members!inner(
+        role,
+        users!inner(
+          first_name,
+          last_name
+        )
+      )`)
+    .eq("competition_id", competition.competition_id)
+    .eq("status", "approved")
+  
+  console.log("campaigns data:", data, "error:", error);
+
+  
+  if (error) throw error;
+  return data.map(campaign => {
+    const leaderMember = campaign.campaign_members[0];
+    const leaderUser = Array.isArray(leaderMember?.users) 
+      ? leaderMember.users[0] 
+      : leaderMember?.users;
+
+    return {
+      ...campaign,
+      campaign_leader: leaderUser ? `${leaderUser.first_name} ${leaderUser.last_name}` : "",
+    }
+  });
 }
