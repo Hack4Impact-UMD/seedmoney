@@ -67,8 +67,8 @@ interface DraftCampaignIdContextValue {
 }
 
 interface LastSavedContextValue {
-  lastSaved: number | null;
-  setLastSaved: (value: SetStateAction<number | null>) => void;
+  lastSaved: string | null;
+  setLastSaved: (value: SetStateAction<string | null>) => void;
 }
 
 const ApplicationFormContext = createContext<ApplicationFormApi | null>(null);
@@ -88,7 +88,7 @@ export const ApplicationFormProvider = ({
   const form = useApplicationFormState();
   const [hasPassedAgreement, setHasPassedAgreement] = useState(false);
   const [draftCampaignId, setDraftCampaignId] = useState<number | null>(null);
-  const [lastSaved, setLastSaved] = useState<number | null>(null);
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
 
   const agreementGateValue = useMemo(
     () => ({

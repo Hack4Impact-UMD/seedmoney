@@ -3,9 +3,40 @@
 import { Button, TextField } from "@mui/material";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import Link from "next/link";
+import {
+  useDraftCampaignId,
+  useLastSaved,
+} from "@/src/components/application/ApplicationFormProvider";
+import useCreateCampaign from "@/src/hooks/campaigns/useCreateCampaign";
+import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
+import { Campaign } from "@/src/types/db/campaigns";
 
 export default function CampaignInformationStep() {
   const form = useApplicationForm();
+  const { draftCampaignId, setDraftCampaignId } = useDraftCampaignId();
+  const { setLastSaved } = useLastSaved();
+  const createCampaign = useCreateCampaign();
+  const updateCampaign = useUpdateCampaign();
+
+  const saveCampaignDraft = async (campaignData: Partial<Campaign>) => {
+    if (!draftCampaignId) {
+      const draftCampaign = await createCampaign.mutateAsync({
+        status: "in_progress",
+        date_created: new Date().toISOString(),
+        ...campaignData,
+      });
+
+      setDraftCampaignId(draftCampaign.campaign_id);
+      setLastSaved(new Date().toLocaleTimeString());
+      return;
+    }
+
+    await updateCampaign.mutateAsync({
+      campaignId: draftCampaignId,
+      campaignData,
+    });
+    setLastSaved(new Date().toLocaleTimeString());
+  };
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -26,7 +57,10 @@ export default function CampaignInformationStep() {
             <TextField
               label="Campaign Title"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveCampaignDraft({ name: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               error={field.state.meta.errors.length > 0}
               helperText={
@@ -54,6 +88,11 @@ export default function CampaignInformationStep() {
               variant="standard"
               fullWidth
               value={field.state.value}
+              onBlur={async (e) => {
+                await saveCampaignDraft({
+                  impact: e.target.value ? Number(e.target.value) : undefined,
+                });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               type="number"
             />
@@ -68,7 +107,12 @@ export default function CampaignInformationStep() {
               variant="standard"
               fullWidth
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveCampaignDraft({
+                  size: e.target.value ? Number(e.target.value) : undefined,
+                });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
             />
           )}
@@ -86,7 +130,10 @@ export default function CampaignInformationStep() {
                     name="gardenStatus"
                     value="new"
                     checked={field.state.value === "new"}
-                    onChange={() => field.handleChange("new")}
+                    onChange={async () => {
+                      field.handleChange("new");
+                      await saveCampaignDraft({ existence: "new" });
+                    }}
                     className="w-6 h-6 accent-blue-600 cursor-pointer"
                   />
                   <span className="text-sm">New garden</span>
@@ -98,7 +145,10 @@ export default function CampaignInformationStep() {
                     name="gardenStatus"
                     value="existing"
                     checked={field.state.value === "existing"}
-                    onChange={() => field.handleChange("existing")}
+                    onChange={async () => {
+                      field.handleChange("existing");
+                      await saveCampaignDraft({ existence: "existing" });
+                    }}
                     className="w-6 h-6 accent-blue-600 cursor-pointer"
                   />
                   <span className="text-sm">Existing garden</span>
@@ -127,6 +177,11 @@ export default function CampaignInformationStep() {
               fullWidth
               type="number"
               value={field.state.value}
+              onBlur={async (e) => {
+                await saveCampaignDraft({
+                  goal: e.target.value ? Number(e.target.value) : undefined,
+                });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
             />
           )}
