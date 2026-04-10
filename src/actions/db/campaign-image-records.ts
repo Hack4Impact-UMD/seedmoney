@@ -1,4 +1,4 @@
-import { createServerClient } from "@/src/lib/supabase-client";
+import { createBrowserClient } from "@/src/lib/supabase-client";
 import {
   CampaignImageRecord,
   CampaignFile,
@@ -10,7 +10,7 @@ export async function uploadCampaignImage({
   displayOrder,
   isMain = false,
 }: CampaignFile): Promise<CampaignImageRecord> {
-  const supabase = await createServerClient();
+  const supabase = createBrowserClient();
 
   const fileName = file.name.replace(/\s+/g, "-");
   const filePath = `campaigns/${campaignId}/${crypto.randomUUID()}-${fileName}`;
@@ -33,7 +33,7 @@ export async function uploadCampaignImage({
       display_order: displayOrder,
       is_main: isMain,
     })
-    .select("image_id, campaign_id, storage_path, display_order, is_main")
+    .select("id, campaign_id, storage_path, display_order, is_main")
     .single();
 
   if (insertError) {
@@ -42,4 +42,31 @@ export async function uploadCampaignImage({
   }
 
   return data;
+}
+
+export async function deleteCampaignImage(
+  storagePath: string,
+): Promise<boolean> {
+  const supabase = createBrowserClient();
+
+  const { error: storageError } = await supabase.storage
+    .from("campaign_images")
+    .remove([storagePath]);
+
+  if (storageError) {
+    throw new Error(`Storage delete failed: ${storageError.message}`);
+  }
+
+  const { data, error } = await supabase
+    .from("campaign_image_records")
+    .delete()
+    .eq("storage_path", storagePath)
+    .select("id")
+    .maybeSingle();
+
+  if (error) {
+    throw new Error(`DB delete failed: ${error.message}`);
+  }
+
+  return !!data;
 }

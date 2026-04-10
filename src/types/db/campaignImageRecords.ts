@@ -1,5 +1,5 @@
 export type CampaignImageRecord = {
-  image_id: number;
+  id: number;
   campaign_id: number;
   storage_path: string;
   display_order: number;
@@ -11,4 +11,9 @@ export type CampaignFile = {
   campaignId: number;
   displayOrder: number;
   isMain?: boolean;
+};
+
+export type DeleteCampaignFile = {
+  campaignId: number;
+  storagePath: string;
 };

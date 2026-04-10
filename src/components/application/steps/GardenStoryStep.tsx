@@ -14,11 +14,14 @@ import { useDropzone } from "react-dropzone";
 import { useState } from "react";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import useUpsertAnswer from "@/src/hooks/answers/useUpsertAnswer";
+import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
+import useDeleteCampaignImage from "@/src/hooks/campaign-image-records/useDeleteCampaignImage";
 
 type PreviewFile = {
   name: string;
   size: number;
   preview: string;
+  storagePath?: string;
 };
 type UploadError = {
   fileName: string;
@@ -64,6 +67,8 @@ export default function GardenStoryStep() {
   const { setLastSaved } = useLastSaved();
   const { draftCampaignId, saveDraftCampaign } = useSaveDraftCampaign();
   const upsertAnswer = useUpsertAnswer();
+  const uploadCampaignImage = useUploadCampaignImage();
+  const deleteCampaignImage = useDeleteCampaignImage();
   const values = form.state.values;
   const { data: question1, isLoading: isLoadingQuestion1 } = useReadQuestion(1);
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
@@ -79,6 +84,7 @@ export default function GardenStoryStep() {
             name: values.mainPhotoName || "Uploaded image",
             size: values.mainPhotoSize,
             preview: values.mainPhoto,
+            storagePath: values.mainPhotoStoragePath,
           },
         ]
       : [],
@@ -89,6 +95,7 @@ export default function GardenStoryStep() {
       name: values.supportingPhotoNames[index] || "Uploaded image",
       size: values.supportingPhotoSizes[index] ?? 0,
       preview,
+      storagePath: values.supportingPhotoStoragePaths[index],
     })),
   );
   const [supportingUploadError, setSupportingUploadError] =
@@ -103,7 +110,7 @@ export default function GardenStoryStep() {
     onDrop: (file) => {
       console.log(file);
     },
-    onDropAccepted: (acceptedFiles) => {
+    onDropAccepted: async (acceptedFiles) => {
       if (hasDuplicateFiles(acceptedFiles, supportingFiles)) {
         setFiles([]);
         setUploaded(false);
@@ -112,19 +119,51 @@ export default function GardenStoryStep() {
           message: "Duplicate image",
         });
         form.setFieldValue("mainPhoto", "");
+        form.setFieldValue("mainPhotoStoragePath", "");
         form.setFieldValue("mainPhotoName", "");
         form.setFieldValue("mainPhotoSize", 0);
         return;
       }
 
-      files.forEach((file) => URL.revokeObjectURL(file.preview));
-      setUploadError(null);
-      setUploaded(true);
-      const nextFiles = buildPreviewFiles(acceptedFiles);
-      setFiles(nextFiles);
-      form.setFieldValue("mainPhoto", nextFiles[0]?.preview ?? "");
-      form.setFieldValue("mainPhotoName", nextFiles[0]?.name ?? "");
-      form.setFieldValue("mainPhotoSize", nextFiles[0]?.size ?? 0);
+      try {
+        const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+        const nextFiles = buildPreviewFiles(acceptedFiles);
+        const existingMainStoragePath = files[0]?.storagePath;
+
+        if (existingMainStoragePath) {
+          await deleteCampaignImage.mutateAsync({
+            campaignId,
+            storagePath: existingMainStoragePath,
+          });
+        }
+
+        const uploadedImage = await uploadCampaignImage.mutateAsync({
+          file: acceptedFiles[0],
+          campaignId,
+          displayOrder: 0,
+          isMain: true,
+        });
+
+        files.forEach((file) => URL.revokeObjectURL(file.preview));
+        nextFiles[0].storagePath = uploadedImage.storage_path;
+        setUploadError(null);
+        setUploaded(true);
+        setFiles(nextFiles);
+        form.setFieldValue("mainPhoto", nextFiles[0]?.preview ?? "");
+        form.setFieldValue(
+          "mainPhotoStoragePath",
+          uploadedImage.storage_path ?? "",
+        );
+        form.setFieldValue("mainPhotoName", nextFiles[0]?.name ?? "");
+        form.setFieldValue("mainPhotoSize", nextFiles[0]?.size ?? 0);
+        setLastSaved(new Date().toLocaleTimeString());
+      } catch (error) {
+        console.error(error);
+        setUploadError({
+          fileName: acceptedFiles[0].name,
+          message: "Upload failed",
+        });
+      }
     },
     onDropRejected: (fileRejections) => {
       const firstRejection = fileRejections[0];
@@ -153,7 +192,7 @@ export default function GardenStoryStep() {
     },
     multiple: true,
     maxFiles: 5 - supportingFiles.length,
-    onDropAccepted: (acceptedFiles) => {
+    onDropAccepted: async (acceptedFiles) => {
       if (hasDuplicateFiles(acceptedFiles, [...files, ...supportingFiles])) {
         setSupportingUploadError({
           fileName: acceptedFiles[0].name,
@@ -162,22 +201,53 @@ export default function GardenStoryStep() {
         return;
       }
 
-      setSupportingUploadError(null);
-      const nextFiles = buildPreviewFiles(acceptedFiles);
-      const updatedFiles = [...supportingFiles, ...nextFiles];
-      setSupportingFiles(updatedFiles);
-      form.setFieldValue(
-        "supportingPhotos",
-        updatedFiles.map((file) => file.preview),
-      );
-      form.setFieldValue(
-        "supportingPhotoNames",
-        updatedFiles.map((file) => file.name),
-      );
-      form.setFieldValue(
-        "supportingPhotoSizes",
-        updatedFiles.map((file) => file.size),
-      );
+      try {
+        const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+        const nextFiles = buildPreviewFiles(acceptedFiles);
+        const uploadedFiles: PreviewFile[] = [];
+        const nextDisplayOrderBase = Date.now();
+
+        for (const [index, file] of acceptedFiles.entries()) {
+          const uploadedImage = await uploadCampaignImage.mutateAsync({
+            file,
+            campaignId,
+            displayOrder: nextDisplayOrderBase + index,
+            isMain: false,
+          });
+
+          uploadedFiles.push({
+            ...nextFiles[index],
+            storagePath: uploadedImage.storage_path,
+          });
+        }
+
+        setSupportingUploadError(null);
+        const updatedFiles = [...supportingFiles, ...uploadedFiles];
+        setSupportingFiles(updatedFiles);
+        form.setFieldValue(
+          "supportingPhotos",
+          updatedFiles.map((file) => file.preview),
+        );
+        form.setFieldValue(
+          "supportingPhotoStoragePaths",
+          updatedFiles.map((file) => file.storagePath ?? ""),
+        );
+        form.setFieldValue(
+          "supportingPhotoNames",
+          updatedFiles.map((file) => file.name),
+        );
+        form.setFieldValue(
+          "supportingPhotoSizes",
+          updatedFiles.map((file) => file.size),
+        );
+        setLastSaved(new Date().toLocaleTimeString());
+      } catch (error) {
+        console.error(error);
+        setSupportingUploadError({
+          fileName: acceptedFiles[0].name,
+          message: "Upload failed",
+        });
+      }
     },
     onDropRejected: (fileRejections) => {
       const firstRejection = fileRejections[0];
@@ -224,10 +294,17 @@ export default function GardenStoryStep() {
     notFound();
   }
 
-  const handleDeleteImage = (fileName: string) => {
+  const handleDeleteImage = async (fileToDelete: PreviewFile) => {
+    if (fileToDelete.storagePath && draftCampaignId) {
+      await deleteCampaignImage.mutateAsync({
+        campaignId: draftCampaignId,
+        storagePath: fileToDelete.storagePath,
+      });
+    }
+
     setFiles((prevFiles) => {
       const remainingFiles = prevFiles.filter((file) => {
-        if (file.name === fileName) {
+        if (file.preview === fileToDelete.preview) {
           URL.revokeObjectURL(file.preview);
           return false;
         }
@@ -239,17 +316,26 @@ export default function GardenStoryStep() {
       return remainingFiles;
     });
     form.setFieldValue("mainPhoto", "");
+    form.setFieldValue("mainPhotoStoragePath", "");
     form.setFieldValue("mainPhotoName", "");
     form.setFieldValue("mainPhotoSize", 0);
+    setLastSaved(new Date().toLocaleTimeString());
   };
 
   const handleClearUploadError = () => {
     setUploadError(null);
   };
 
-  const handleDeleteSupportingImage = (fileName: string) => {
+  const handleDeleteSupportingImage = async (fileToDelete: PreviewFile) => {
+    if (fileToDelete.storagePath && draftCampaignId) {
+      await deleteCampaignImage.mutateAsync({
+        campaignId: draftCampaignId,
+        storagePath: fileToDelete.storagePath,
+      });
+    }
+
     const remainingFiles = supportingFiles.filter((file) => {
-      if (file.name === fileName) {
+      if (file.preview === fileToDelete.preview) {
         URL.revokeObjectURL(file.preview);
         return false;
       }
@@ -263,6 +349,10 @@ export default function GardenStoryStep() {
       remainingFiles.map((file) => file.preview),
     );
     form.setFieldValue(
+      "supportingPhotoStoragePaths",
+      remainingFiles.map((file) => file.storagePath ?? ""),
+    );
+    form.setFieldValue(
       "supportingPhotoNames",
       remainingFiles.map((file) => file.name),
     );
@@ -270,6 +360,7 @@ export default function GardenStoryStep() {
       "supportingPhotoSizes",
       remainingFiles.map((file) => file.size),
     );
+    setLastSaved(new Date().toLocaleTimeString());
   };
 
   const handleClearSupportingUploadError = () => {
@@ -482,7 +573,7 @@ export default function GardenStoryStep() {
               <IconButton
                 size="small"
                 aria-label={`Delete ${file.name}`}
-                onClick={() => handleDeleteImage(file.name)}
+                onClick={() => handleDeleteImage(file)}
                 sx={{
                   p: 0,
                   color: "rgba(0, 0, 0, 0.54)",
@@ -614,7 +705,7 @@ export default function GardenStoryStep() {
                 <IconButton
                   size="small"
                   aria-label={`Delete ${file.name}`}
-                  onClick={() => handleDeleteSupportingImage(file.name)}
+                  onClick={() => handleDeleteSupportingImage(file)}
                   sx={{
                     p: 0,
                     color: "rgba(0, 0, 0, 0.54)",

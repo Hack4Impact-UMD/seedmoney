@@ -1,3 +1,5 @@
+"use client";
+
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { uploadCampaignImage } from "@/src/actions/db/campaign-image-records";
 import {
