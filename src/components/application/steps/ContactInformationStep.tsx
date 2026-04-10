@@ -5,7 +5,6 @@ import MenuItem from "@mui/material/MenuItem";
 import { Button } from "@mui/material";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
-import { useState } from "react";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 export default function ContactInformationStep() {
@@ -151,7 +150,10 @@ export default function ContactInformationStep() {
               name="mailingStreet2"
               autoComplete="address-line2"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ mailing_street_2: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -169,7 +171,10 @@ export default function ContactInformationStep() {
               name="mailingCity"
               autoComplete="address-level2"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ mailing_city: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -186,7 +191,10 @@ export default function ContactInformationStep() {
               variant="standard"
               fullWidth
               value={field.state.value}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={async (e) => {
+                field.handleChange(e.target.value);
+                await saveDraftCampaign({ mailing_state: e.target.value });
+              }}
               SelectProps={{
                 displayEmpty: true,
                 renderValue: (selected) => {
@@ -221,7 +229,10 @@ export default function ContactInformationStep() {
               name="mailingZip"
               autoComplete="postal-code"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ mailing_zipcode: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -240,7 +251,10 @@ export default function ContactInformationStep() {
               name="mailingCountry"
               autoComplete="country-name"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ mailing_country: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -265,7 +279,10 @@ export default function ContactInformationStep() {
               name="contactFirstName"
               autoComplete="given-name"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ contact_first_name: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -283,7 +300,10 @@ export default function ContactInformationStep() {
               name="contactLastName"
               autoComplete="family-name"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ contact_last_name: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -301,7 +321,10 @@ export default function ContactInformationStep() {
               name="contactEmail"
               autoComplete="email"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ contact_email: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -319,7 +342,10 @@ export default function ContactInformationStep() {
               name="contactRole"
               autoComplete="organization-title"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ contact_role: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
