@@ -107,10 +107,7 @@ export default function GardenInformationStep() {
 
     await saveDraftCampaign(changedValues);
 
-    gardenInformationRef.current = {
-      ...gardenInformationRef.current,
-      ...changedValues,
-    };
+    gardenInformationRef.current = currentPayload;
   };
 
   return (

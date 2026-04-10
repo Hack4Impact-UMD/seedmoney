@@ -11,7 +11,7 @@ import {
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 import { notFound } from "next/navigation";
 import { useDropzone } from "react-dropzone";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import useUpsertAnswer from "@/src/hooks/answers/useUpsertAnswer";
 import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
@@ -100,6 +100,12 @@ export default function GardenStoryStep() {
   );
   const [supportingUploadError, setSupportingUploadError] =
     useState<UploadError | null>(null);
+  const storyAnswersRef = useRef({
+    1: values.storyLocationAndAudience,
+    2: values.storyChallenge,
+    3: values.storySeasonActivity,
+    4: values.storyCampaignImpact,
+  });
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: {
@@ -368,6 +374,10 @@ export default function GardenStoryStep() {
   };
 
   const saveStoryAnswer = async (questionId: number, finalAnswer: string) => {
+    if (storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] === finalAnswer) {
+      return;
+    }
+
     const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
 
     await upsertAnswer.mutateAsync({
@@ -375,6 +385,7 @@ export default function GardenStoryStep() {
       questionId,
       finalAnswer,
     });
+    storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] = finalAnswer;
     setLastSaved(new Date().toLocaleTimeString());
   };
 

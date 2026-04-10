@@ -3,11 +3,25 @@
 import { Button, TextField } from "@mui/material";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import Link from "next/link";
+import { useRef } from "react";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 export default function CampaignInformationStep() {
   const form = useApplicationForm();
   const { saveDraftCampaign } = useSaveDraftCampaign();
+  const campaignInformationRef = useRef({
+    name: form.state.values.campaignTitle,
+    impact: form.state.values.beneficiaryCount
+      ? Number(form.state.values.beneficiaryCount)
+      : undefined,
+    size: form.state.values.gardenSize
+      ? Number(form.state.values.gardenSize)
+      : undefined,
+    existence: form.state.values.gardenStatus || undefined,
+    goal: form.state.values.fundraisingGoal
+      ? Number(form.state.values.fundraisingGoal)
+      : undefined,
+  });
   const saveCampaignInformationDraft = async (
     overrides: Partial<typeof form.state.values> = {},
   ) => {
@@ -16,13 +30,46 @@ export default function CampaignInformationStep() {
       ...overrides,
     };
 
-    await saveDraftCampaign({
+    const currentPayload = {
       name: values.campaignTitle,
-      impact: values.beneficiaryCount ? Number(values.beneficiaryCount) : undefined,
+      impact: values.beneficiaryCount
+        ? Number(values.beneficiaryCount)
+        : undefined,
       size: values.gardenSize ? Number(values.gardenSize) : undefined,
       existence: values.gardenStatus || undefined,
-      goal: values.fundraisingGoal ? Number(values.fundraisingGoal) : undefined,
-    });
+      goal: values.fundraisingGoal
+        ? Number(values.fundraisingGoal)
+        : undefined,
+    };
+
+    const changedValues: Partial<typeof currentPayload> = {};
+
+    if (currentPayload.name !== campaignInformationRef.current.name) {
+      changedValues.name = currentPayload.name;
+    }
+
+    if (currentPayload.impact !== campaignInformationRef.current.impact) {
+      changedValues.impact = currentPayload.impact;
+    }
+
+    if (currentPayload.size !== campaignInformationRef.current.size) {
+      changedValues.size = currentPayload.size;
+    }
+
+    if (currentPayload.existence !== campaignInformationRef.current.existence) {
+      changedValues.existence = currentPayload.existence;
+    }
+
+    if (currentPayload.goal !== campaignInformationRef.current.goal) {
+      changedValues.goal = currentPayload.goal;
+    }
+
+    if (Object.keys(changedValues).length === 0) {
+      return;
+    }
+
+    await saveDraftCampaign(changedValues);
+    campaignInformationRef.current = currentPayload;
   };
 
   return (
