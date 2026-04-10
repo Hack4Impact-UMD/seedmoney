@@ -5,6 +5,7 @@ import { Button } from "@mui/material";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 const categoryOptions = [
@@ -43,6 +44,7 @@ const beneficiaryOptions = [
 
 export default function GardenInformationStep() {
   const form = useApplicationForm();
+  const router = useRouter();
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(false);
   const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] =
@@ -391,10 +393,13 @@ export default function GardenInformationStep() {
           Previous Step
         </Button>
         <Button
-          component={Link}
-          href="/apply/story"
+          component="button"
           variant="contained"
           size="medium"
+          onClick={async () => {
+            await saveGardenInformationDraft();
+            router.push("/apply/story");
+          }}
         >
           Next Step
         </Button>

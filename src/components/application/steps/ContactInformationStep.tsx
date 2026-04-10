@@ -6,10 +6,12 @@ import { Button } from "@mui/material";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import { useRef } from "react";
+import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 export default function ContactInformationStep() {
   const form = useApplicationForm();
+  const router = useRouter();
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const contactInformationRef = useRef({
     organization_name: form.state.values.organizationName,
@@ -495,10 +497,13 @@ export default function ContactInformationStep() {
         </Button>
 
         <Button
-          component={Link}
-          href="/apply/review"
+          component="button"
           variant="contained"
           size="medium"
+          onClick={async () => {
+            await saveContactDraft();
+            router.push("/apply/review");
+          }}
         >
           Next Step
         </Button>

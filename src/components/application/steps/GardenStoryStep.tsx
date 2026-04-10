@@ -9,7 +9,7 @@ import {
   useLastSaved,
 } from "@/src/components/application/ApplicationFormProvider";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
-import { notFound } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import { useRef, useState } from "react";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
@@ -64,6 +64,7 @@ export default function GardenStoryStep() {
   const ERROR_ICON_FILTER =
     "brightness(0) saturate(100%) invert(24%) sepia(95%) saturate(2815%) hue-rotate(347deg) brightness(93%) contrast(100%)";
   const form = useApplicationForm();
+  const router = useRouter();
   const { setLastSaved } = useLastSaved();
   const { draftCampaignId, saveDraftCampaign } = useSaveDraftCampaign();
   const upsertAnswer = useUpsertAnswer();
@@ -387,6 +388,13 @@ export default function GardenStoryStep() {
     });
     storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] = finalAnswer;
     setLastSaved(new Date().toLocaleTimeString());
+  };
+
+  const saveGardenStoryDraft = async () => {
+    await saveStoryAnswer(1, form.state.values.storyLocationAndAudience);
+    await saveStoryAnswer(2, form.state.values.storyChallenge);
+    await saveStoryAnswer(3, form.state.values.storySeasonActivity);
+    await saveStoryAnswer(4, form.state.values.storyCampaignImpact);
   };
 
   return (
@@ -747,10 +755,13 @@ export default function GardenStoryStep() {
         </Button>
 
         <Button
-          component={Link}
-          href="/apply/contact"
+          component="button"
           variant="contained"
           size="medium"
+          onClick={async () => {
+            await saveGardenStoryDraft();
+            router.push("/apply/contact");
+          }}
         >
           Next Step
         </Button>

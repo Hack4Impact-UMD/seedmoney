@@ -4,10 +4,12 @@ import { Button, TextField } from "@mui/material";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import Link from "next/link";
 import { useRef } from "react";
+import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 export default function CampaignInformationStep() {
   const form = useApplicationForm();
+  const router = useRouter();
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const campaignInformationRef = useRef({
     name: form.state.values.campaignTitle,
@@ -242,10 +244,13 @@ export default function CampaignInformationStep() {
         </Button>
 
         <Button
-          component={Link}
-          href="/apply/garden"
+          component="button"
           variant="contained"
           size="medium"
+          onClick={async () => {
+            await saveCampaignInformationDraft();
+            router.push("/apply/garden");
+          }}
         >
           Next Step
         </Button>

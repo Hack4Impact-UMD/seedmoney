@@ -6,8 +6,12 @@ import { Button } from "@mui/material";
 import {
   useAgreementGate,
   useApplicationForm,
+  useDraftCampaignId,
 } from "@/src/components/application/ApplicationFormProvider";
 import { getApplicationCompletionState } from "@/src/components/application/applicationStepState";
+import { useRouter } from "next/navigation";
+import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
+import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 
 const stateNames: Record<string, string> = {
   AL: "Alabama",
@@ -117,7 +121,11 @@ function formatCountry(value: string) {
 
 export default function ReviewSubmitPage() {
   const form = useApplicationForm();
+  const router = useRouter();
   const { hasPassedAgreement } = useAgreementGate();
+  const { draftCampaignId } = useDraftCampaignId();
+  const { saveDraftCampaign } = useSaveDraftCampaign();
+  const updateCampaign = useUpdateCampaign();
   const values = form.state.values;
   const {
     campaignComplete,
@@ -127,6 +135,20 @@ export default function ReviewSubmitPage() {
     reviewComplete,
   } = getApplicationCompletionState(values, hasPassedAgreement);
   const canSubmit = reviewComplete;
+
+  const handleSubmitApplication = async () => {
+    const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+
+    await updateCampaign.mutateAsync({
+      campaignId,
+      campaignData: {
+        status: "submitted_under_review",
+      },
+    });
+
+    await form.handleSubmit();
+    router.push("/apply/submit");
+  };
 
   return (
     <div className="w-[700px] flex flex-col gap-6 pb-20 m-15">
@@ -495,13 +517,18 @@ export default function ReviewSubmitPage() {
         </Button>
 
         <Button
-          component={canSubmit ? Link : "button"}
-          href={canSubmit ? "/apply/submit" : undefined}
+          component="button"
           variant={canSubmit ? "contained" : "text"}
           className={canSubmit ? "!px-4" : "!bg-[#E0E0E0] !px-4"}
           size="medium"
           disabled={!canSubmit}
-          onClick={() => form.handleSubmit()}
+          onClick={async () => {
+            if (!canSubmit) {
+              return;
+            }
+
+            await handleSubmitApplication();
+          }}
         >
           Submit Application
         </Button>
