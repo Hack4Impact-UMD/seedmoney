@@ -81,7 +81,10 @@ export default function ContactInformationStep() {
               name="organizationName"
               autoComplete="organization"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ organization_name: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -98,7 +101,10 @@ export default function ContactInformationStep() {
               fullWidth
               name="organizationIdentifier"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ ein: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -124,7 +130,10 @@ export default function ContactInformationStep() {
               name="mailingStreet1"
               autoComplete="address-line1"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveDraftCampaign({ mailing_street_1: e.target.value });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)

@@ -28,7 +28,7 @@ export type Campaign = {
   contact_email: string;
   contact_role: string;
   mailing_street_1: string | null;
-  mailing_street_2: string;
+  mailing_street_2?: string | null;
   mailing_city: string;
   mailing_state: string;
   mailing_country: string;
