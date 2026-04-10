@@ -10,6 +10,30 @@ import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 export default function ContactInformationStep() {
   const form = useApplicationForm();
   const { saveDraftCampaign } = useSaveDraftCampaign();
+  const saveContactDraft = async (
+    overrides: Partial<typeof form.state.values> = {},
+  ) => {
+    const values = {
+      ...form.state.values,
+      ...overrides,
+    };
+
+    await saveDraftCampaign({
+      organization_name: values.organizationName,
+      ein: values.organizationIdentifier,
+      mailing_street_1: values.mailingStreet1,
+      mailing_street_2: values.mailingStreet2,
+      mailing_city: values.mailingCity,
+      mailing_state: values.mailingState,
+      mailing_zipcode: values.mailingZip,
+      mailing_country: values.mailingCountry,
+      contact_first_name: values.contactFirstName,
+      contact_last_name: values.contactLastName,
+      contact_email: values.contactEmail,
+      contact_role: values.contactRole,
+    });
+  };
+
   const states = [
     { code: "AL", name: "Alabama" },
     { code: "AK", name: "Alaska" },
@@ -82,7 +106,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ organization_name: e.target.value });
+                await saveContactDraft({ organizationName: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -102,7 +126,9 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ ein: e.target.value });
+                await saveContactDraft({
+                  organizationIdentifier: e.target.value,
+                });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -131,7 +157,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ mailing_street_1: e.target.value });
+                await saveContactDraft({ mailingStreet1: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -152,7 +178,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ mailing_street_2: e.target.value });
+                await saveContactDraft({ mailingStreet2: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -173,7 +199,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ mailing_city: e.target.value });
+                await saveContactDraft({ mailingCity: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -193,7 +219,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onChange={async (e) => {
                 field.handleChange(e.target.value);
-                await saveDraftCampaign({ mailing_state: e.target.value });
+                await saveContactDraft({ mailingState: e.target.value });
               }}
               SelectProps={{
                 displayEmpty: true,
@@ -231,7 +257,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ mailing_zipcode: e.target.value });
+                await saveContactDraft({ mailingZip: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -253,7 +279,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ mailing_country: e.target.value });
+                await saveContactDraft({ mailingCountry: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -281,7 +307,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ contact_first_name: e.target.value });
+                await saveContactDraft({ contactFirstName: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -302,7 +328,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ contact_last_name: e.target.value });
+                await saveContactDraft({ contactLastName: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -323,7 +349,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ contact_email: e.target.value });
+                await saveContactDraft({ contactEmail: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -344,7 +370,7 @@ export default function ContactInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ contact_role: e.target.value });
+                await saveContactDraft({ contactRole: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
