@@ -5,9 +5,12 @@ import MenuItem from "@mui/material/MenuItem";
 import { Button } from "@mui/material";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
+import { useState } from "react";
+import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 export default function ContactInformationStep() {
   const form = useApplicationForm();
+  const { saveDraftCampaign } = useSaveDraftCampaign();
   const states = [
     { code: "AL", name: "Alabama" },
     { code: "AK", name: "Alaska" },
