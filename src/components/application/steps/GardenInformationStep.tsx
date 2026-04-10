@@ -4,7 +4,7 @@ import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
-import { useState } from "react";
+import { useState, useRef } from "react";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 const categoryOptions = [
@@ -45,7 +45,17 @@ export default function GardenInformationStep() {
   const form = useApplicationForm();
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(false);
-  const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] = useState(false);
+  const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] =
+    useState(false);
+
+  const gardenInformationRef = useRef({
+    city: form.state.values.gardenCity,
+    state: form.state.values.gardenState,
+    country: form.state.values.gardenCountry,
+    project_category: form.state.values.gardenCategory,
+    project_beneficiaries: form.state.values.gardenBeneficiaries,
+  });
+
   const saveGardenInformationDraft = async (
     overrides: Partial<typeof form.state.values> = {},
   ) => {
@@ -54,13 +64,53 @@ export default function GardenInformationStep() {
       ...overrides,
     };
 
-    await saveDraftCampaign({
+    const currentPayload = {
       city: values.gardenCity,
       state: values.gardenState,
       country: values.gardenCountry,
       project_category: values.gardenCategory,
       project_beneficiaries: values.gardenBeneficiaries,
-    });
+    };
+
+    const changedValues: Partial<typeof currentPayload> = {};
+
+    if (currentPayload.city !== gardenInformationRef.current.city) {
+      changedValues.city = currentPayload.city;
+    }
+
+    if (currentPayload.state !== gardenInformationRef.current.state) {
+      changedValues.state = currentPayload.state;
+    }
+
+    if (currentPayload.country !== gardenInformationRef.current.country) {
+      changedValues.country = currentPayload.country;
+    }
+
+    if (
+      currentPayload.project_category !==
+      gardenInformationRef.current.project_category
+    ) {
+      changedValues.project_category = currentPayload.project_category;
+    }
+
+    if (
+      JSON.stringify(currentPayload.project_beneficiaries) !==
+      JSON.stringify(gardenInformationRef.current.project_beneficiaries)
+    ) {
+      changedValues.project_beneficiaries =
+        currentPayload.project_beneficiaries;
+    }
+
+    if (Object.keys(changedValues).length === 0) {
+      return;
+    }
+
+    await saveDraftCampaign(changedValues);
+
+    gardenInformationRef.current = {
+      ...gardenInformationRef.current,
+      ...changedValues,
+    };
   };
 
   return (
@@ -82,7 +132,9 @@ export default function GardenInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveGardenInformationDraft({ gardenCity: e.target.value });
+                await saveGardenInformationDraft({
+                  gardenCity: e.target.value,
+                });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -103,7 +155,9 @@ export default function GardenInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveGardenInformationDraft({ gardenState: e.target.value });
+                await saveGardenInformationDraft({
+                  gardenState: e.target.value,
+                });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -144,7 +198,6 @@ export default function GardenInformationStep() {
         </h2>
 
         <p className="text-sm">Select one:</p>
-
 
         <form.Field name="gardenCategory">
           {(field) => (
@@ -242,8 +295,8 @@ export default function GardenInformationStep() {
                               setIsOtherBeneficiarySelected(true);
                             } else {
                               setIsOtherBeneficiarySelected(false);
-                              const nextValue = field.state.value.filter((item) =>
-                                beneficiaryOptions.includes(item),
+                              const nextValue = field.state.value.filter(
+                                (item) => beneficiaryOptions.includes(item),
                               );
                               field.handleChange(nextValue);
                               void saveGardenInformationDraft({
