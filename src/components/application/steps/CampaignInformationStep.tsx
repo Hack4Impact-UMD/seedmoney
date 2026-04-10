@@ -8,6 +8,22 @@ import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 export default function CampaignInformationStep() {
   const form = useApplicationForm();
   const { saveDraftCampaign } = useSaveDraftCampaign();
+  const saveCampaignInformationDraft = async (
+    overrides: Partial<typeof form.state.values> = {},
+  ) => {
+    const values = {
+      ...form.state.values,
+      ...overrides,
+    };
+
+    await saveDraftCampaign({
+      name: values.campaignTitle,
+      impact: values.beneficiaryCount ? Number(values.beneficiaryCount) : undefined,
+      size: values.gardenSize ? Number(values.gardenSize) : undefined,
+      existence: values.gardenStatus || undefined,
+      goal: values.fundraisingGoal ? Number(values.fundraisingGoal) : undefined,
+    });
+  };
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -30,7 +46,9 @@ export default function CampaignInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ name: e.target.value });
+                await saveCampaignInformationDraft({
+                  campaignTitle: e.target.value,
+                });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               error={field.state.meta.errors.length > 0}
@@ -60,8 +78,9 @@ export default function CampaignInformationStep() {
               fullWidth
               value={field.state.value}
               onBlur={async (e) => {
-                await saveDraftCampaign({
-                  impact: e.target.value ? Number(e.target.value) : undefined,
+                field.handleBlur();
+                await saveCampaignInformationDraft({
+                  beneficiaryCount: e.target.value,
                 });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
@@ -80,8 +99,8 @@ export default function CampaignInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({
-                  size: e.target.value ? Number(e.target.value) : undefined,
+                await saveCampaignInformationDraft({
+                  gardenSize: e.target.value,
                 });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
@@ -103,7 +122,9 @@ export default function CampaignInformationStep() {
                     checked={field.state.value === "new"}
                     onChange={async () => {
                       field.handleChange("new");
-                      await saveDraftCampaign({ existence: "new" });
+                      await saveCampaignInformationDraft({
+                        gardenStatus: "new",
+                      });
                     }}
                     className="w-6 h-6 accent-blue-600 cursor-pointer"
                   />
@@ -118,7 +139,9 @@ export default function CampaignInformationStep() {
                     checked={field.state.value === "existing"}
                     onChange={async () => {
                       field.handleChange("existing");
-                      await saveDraftCampaign({ existence: "existing" });
+                      await saveCampaignInformationDraft({
+                        gardenStatus: "existing",
+                      });
                     }}
                     className="w-6 h-6 accent-blue-600 cursor-pointer"
                   />
@@ -149,8 +172,9 @@ export default function CampaignInformationStep() {
               type="number"
               value={field.state.value}
               onBlur={async (e) => {
-                await saveDraftCampaign({
-                  goal: e.target.value ? Number(e.target.value) : undefined,
+                field.handleBlur();
+                await saveCampaignInformationDraft({
+                  fundraisingGoal: e.target.value,
                 });
               }}
               onChange={(e) => field.handleChange(e.target.value)}

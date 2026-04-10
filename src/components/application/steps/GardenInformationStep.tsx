@@ -46,6 +46,22 @@ export default function GardenInformationStep() {
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(false);
   const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] = useState(false);
+  const saveGardenInformationDraft = async (
+    overrides: Partial<typeof form.state.values> = {},
+  ) => {
+    const values = {
+      ...form.state.values,
+      ...overrides,
+    };
+
+    await saveDraftCampaign({
+      city: values.gardenCity,
+      state: values.gardenState,
+      country: values.gardenCountry,
+      project_category: values.gardenCategory,
+      project_beneficiaries: values.gardenBeneficiaries,
+    });
+  };
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -66,7 +82,7 @@ export default function GardenInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ city: e.target.value });
+                await saveGardenInformationDraft({ gardenCity: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -87,7 +103,7 @@ export default function GardenInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ state: e.target.value });
+                await saveGardenInformationDraft({ gardenState: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -108,7 +124,9 @@ export default function GardenInformationStep() {
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                await saveDraftCampaign({ country: e.target.value });
+                await saveGardenInformationDraft({
+                  gardenCountry: e.target.value,
+                });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
@@ -151,7 +169,9 @@ export default function GardenInformationStep() {
                       } else {
                         setIsOtherCategorySelected(false);
                         field.handleChange(option);
-                        void saveDraftCampaign({ project_category: option });
+                        void saveGardenInformationDraft({
+                          gardenCategory: option,
+                        });
                       }
                     }}
                     className="w-[20px] h-[20px] accent-blue-600 cursor-pointer transition-transform duration-150 group-hover:scale-105"
@@ -170,8 +190,9 @@ export default function GardenInformationStep() {
                   placeholder="Please specify"
                   value={field.state.value}
                   onBlur={async (e) => {
-                    await saveDraftCampaign({
-                      project_category: e.target.value,
+                    field.handleBlur();
+                    await saveGardenInformationDraft({
+                      gardenCategory: e.target.value,
                     });
                   }}
                   onChange={(e) => field.handleChange(e.target.value)}
@@ -225,8 +246,8 @@ export default function GardenInformationStep() {
                                 beneficiaryOptions.includes(item),
                               );
                               field.handleChange(nextValue);
-                              void saveDraftCampaign({
-                                project_beneficiaries: nextValue,
+                              void saveGardenInformationDraft({
+                                gardenBeneficiaries: nextValue,
                               });
                             }
                             return;
@@ -235,8 +256,8 @@ export default function GardenInformationStep() {
                           if (e.target.checked) {
                             const nextValue = [...field.state.value, option];
                             field.handleChange(nextValue);
-                            void saveDraftCampaign({
-                              project_beneficiaries: nextValue,
+                            void saveGardenInformationDraft({
+                              gardenBeneficiaries: nextValue,
                             });
                             return;
                           }
@@ -245,8 +266,8 @@ export default function GardenInformationStep() {
                             (item) => item !== option,
                           );
                           field.handleChange(nextValue);
-                          void saveDraftCampaign({
-                            project_beneficiaries: nextValue,
+                          void saveGardenInformationDraft({
+                            gardenBeneficiaries: nextValue,
                           });
                         }}
                         className="
@@ -289,12 +310,13 @@ export default function GardenInformationStep() {
                       );
                     }}
                     onBlur={async (e) => {
+                      field.handleBlur();
                       const customValue = e.target.value;
                       const withoutCustom = field.state.value.filter((item) =>
                         beneficiaryOptions.includes(item),
                       );
-                      await saveDraftCampaign({
-                        project_beneficiaries: customValue
+                      await saveGardenInformationDraft({
+                        gardenBeneficiaries: customValue
                           ? [...withoutCustom, customValue]
                           : withoutCustom,
                       });
