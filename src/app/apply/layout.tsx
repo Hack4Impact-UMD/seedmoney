@@ -1,7 +1,7 @@
 import LoginNavbar from "@/src/components/LoginNavbar";
 import { ApplicationFormProvider } from "@/src/components/application/ApplicationFormProvider";
 import { createServerClient } from "@/src/lib/supabase-client";
-import { readCurrentDraftCampaignForUser } from "@/src/actions/db/campaign-members";
+import { readCurrentDraftCampaignForUser } from "@/src/actions/db/campaigns";
 
 export default async function ApplyLayout({
   children,

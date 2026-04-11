@@ -20,12 +20,10 @@ export async function createCampaign(
   return insertedData as Campaign;
 }
 
-
 export async function readCampaign(
   ids?: number | number[],
 ): Promise<Campaign | Campaign[] | null> {
   const supabase = createBrowserClient();
-
 
   // Return ALL campaigns
   if (ids === undefined) {
@@ -81,7 +79,6 @@ export async function updateCampaign(
   const supabase = await createBrowserClient();
   console.log("updateCampaign called", id, campaign);
 
-
   const { data, error } = await supabase
     .from("campaigns")
     .update(campaign)
@@ -102,14 +99,12 @@ export async function updateCampaign(
   return data as Campaign;
 }
 
-
 export async function updateCampaignGivebutterID(
   id: number,
   campaign: Partial<Campaign>,
 ): Promise<Campaign | null> {
   const supabase = await createBrowserClient();
   console.log("updateCampaign called", id, campaign);
-
 
   const { data, error } = await supabase
     .from("campaigns")
@@ -151,4 +146,27 @@ export async function deleteCampaign(id: number): Promise<boolean> {
   }
 
   return true;
+}
+
+export async function readCurrentDraftCampaignForUser(user_id: string) {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("campaign_id")
+    .eq("user_id", user_id)
+    .eq("status", "in_progress");
+
+  if (error) {
+    console.error("Error reading campaign members:", error.message);
+    return null;
+  }
+
+  if (!data || data.length === 0) return null;
+
+  const draftCampaignId = data as unknown as number;
+
+  const draftCampaign = await readCampaign(draftCampaignId);
+
+  return draftCampaign as Campaign;
 }
