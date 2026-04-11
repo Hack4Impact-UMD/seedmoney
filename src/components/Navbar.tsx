@@ -77,7 +77,7 @@ export default function Navbar() {
       );
 
     return { currentYearCampaigns, previousCampaigns };
-  }, [campaigns, currentYear]);
+  }, [campaigns, currentYear, currentCompetitionData?.competition_id]);
 
   const getItemClasses = (isSelected: boolean) =>
     clsx(
