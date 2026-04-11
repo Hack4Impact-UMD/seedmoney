@@ -131,6 +131,77 @@ export async function updateCampaignGivebutterID(
   return data as Campaign;
 }
 
+export type CampaignUnderReviewRow = {
+  campaign_id: number;
+  name: string;
+  raised: number;
+  goal: number;
+  status: string;
+  leader_name: string;
+};
+
+export async function readCampaignsUnderReview(
+  competitionId: number,
+): Promise<CampaignUnderReviewRow[]> {
+  const supabase = createBrowserClient();
+
+  const { data: campaignsData, error: campaignsError } = await supabase
+    .from("campaigns")
+    .select("campaign_id, name, raised, goal, status, campaign_members(user_id, role)")
+    .in("status", ["submitted_under_review", "not_approved"])
+    .eq("competition_id", competitionId);
+
+  if (campaignsError) {
+    console.error("Error fetching campaigns under review:", campaignsError.message);
+    return [];
+  }
+
+  const campaigns = (campaignsData ?? []) as {
+    campaign_id: number;
+    name: string;
+    raised: number;
+    goal: number;
+    status: string;
+    campaign_members: { user_id: string; role: string | null }[];
+  }[];
+
+  const leaderIdByCampaign: Record<number, string> = {};
+  for (const c of campaigns) {
+    const members = Array.isArray(c.campaign_members) ? c.campaign_members : [];
+    const leader = members.find((m) => m.role === "campaign_leader");
+    if (leader?.user_id) {
+      leaderIdByCampaign[c.campaign_id] = leader.user_id;
+    }
+  }
+
+  const uniqueLeaderIds = [...new Set(Object.values(leaderIdByCampaign))];
+
+  const usersMap: Record<string, string> = {};
+  if (uniqueLeaderIds.length > 0) {
+    const { data: usersData, error: usersError } = await supabase
+      .from("users")
+      .select("id, first_name, last_name")
+      .in("id", uniqueLeaderIds);
+
+    if (usersError) {
+      console.error("Error fetching leader users:", usersError.message);
+    } else {
+      for (const u of usersData ?? []) {
+        usersMap[u.id] = `${u.first_name} ${u.last_name}`.trim();
+      }
+    }
+  }
+
+  return campaigns.map((c) => ({
+    campaign_id: c.campaign_id,
+    name: c.name ?? "",
+    raised: c.raised ?? 0,
+    goal: c.goal ?? 0,
+    status: c.status,
+    leader_name: usersMap[leaderIdByCampaign[c.campaign_id]] ?? "",
+  }));
+}
+
 export async function deleteCampaign(id: number): Promise<boolean> {
   const supabase = await createBrowserClient();
 
