@@ -44,11 +44,7 @@ export default function ViewAllCampaignsPage() {
 
   return (
     <div className="flex min-h-screen">
-      <Navbar
-        campaigns={sampleCampaigns}
-        selectedCampaignId={selectedCampaignId}
-        onCampaignSelect={handleCampaignChange}
-      />
+      <Navbar />
 
       <div className="flex-1 bg-gray-50 p-10">
         <div className="flex flex-col gap-6">

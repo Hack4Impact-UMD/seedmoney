@@ -131,6 +131,28 @@ export async function updateCampaignGivebutterID(
   return data as Campaign;
 }
 
+export async function deleteCampaign(id: number): Promise<boolean> {
+  const supabase = await createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .delete()
+    .eq("campaign_id", id)
+    .select("campaign_id");
+
+  if (error) {
+    console.error("Error deleting campaign:", error.message);
+    return false;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("Campaign not found for deletion:", id);
+    return false;
+  }
+
+  return true;
+}
+
 export type CampaignUnderReviewRow = {
   campaign_id: number;
   name: string;
@@ -203,26 +225,4 @@ export async function readCampaignsUnderReview(
     date_created: c.date_created ?? "",
     leader_name: usersMap[leaderIdByCampaign[c.campaign_id]] ?? "",
   }));
-}
-
-export async function deleteCampaign(id: number): Promise<boolean> {
-  const supabase = await createBrowserClient();
-
-  const { data, error } = await supabase
-    .from("campaigns")
-    .delete()
-    .eq("campaign_id", id)
-    .select("campaign_id");
-
-  if (error) {
-    console.error("Error deleting campaign:", error.message);
-    return false;
-  }
-
-  if (!data || data.length === 0) {
-    console.warn("Campaign not found for deletion:", id);
-    return false;
-  }
-
-  return true;
 }

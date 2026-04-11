@@ -15,11 +15,7 @@ export default function ReviewApplicationsPage() {
 
   return (
     <div className="flex min-h-screen bg-[#fbfcfb]">
-      <Navbar
-        campaigns={[]}
-        selectedCampaignId={0}
-        onCampaignSelect={() => {}}
-      />
+      <Navbar/>
 
       <main className="flex-1 px-6 py-8 sm:px-10 md:px-12">
         <ReviewApplicationsTable
