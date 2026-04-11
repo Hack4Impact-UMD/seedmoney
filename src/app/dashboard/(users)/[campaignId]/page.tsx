@@ -8,9 +8,12 @@ import {
   MenuItem,
   Select,
   Typography,
+  Button
 } from "@mui/material";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import LogoutIcon from "@mui/icons-material/Logout";
+import Link from "next/link";
+import OpenInNew from "@mui/icons-material/OpenInNew";
 
 const FAQ_DATA = [
   {
@@ -43,7 +46,15 @@ export default function CampaignOverviewPage() {
 
       <div className="bg-white p-8 rounded-xl border border-[#e5e5e5] border-[2px]">
         <h2 className="text-xl font-bold text-[#212121] mb-6">
-          Frequently Asked Questions
+          <span className = "flex flex-row items-center">
+            Frequently Asked Questions
+
+            <Link href="/" className="text-[#0288D1] text-[15px] ml-5 font-normal underline underline-offset-4">View More</Link>
+            <OpenInNew fontSize="small" className="text-[#0288D1] ml-[5px]" />
+
+          </span>
+
+
         </h2>
         <div className="space-y-4">
           {FAQ_DATA.map((faq) => (
@@ -104,8 +115,10 @@ export default function CampaignOverviewPage() {
               <MenuItem value="" disabled>
                 Choose a topic
               </MenuItem>
-              <MenuItem value="tech">Technical Support</MenuItem>
-              <MenuItem value="billing">Billing</MenuItem>
+              <MenuItem value="edit-campaign">Request a campaign page edit</MenuItem>
+              <MenuItem value="new-stretch-goal">Request a new stretch goal</MenuItem>
+              <MenuItem value="account-issue">Request an account issue</MenuItem>
+              <MenuItem value="something-else">Something else</MenuItem>
             </Select>
           </div>
 
@@ -125,13 +138,11 @@ export default function CampaignOverviewPage() {
             />
           </div>
 
-          <button
-            type="submit"
-            className="flex items-center gap-2 bg-[#2c7a45] text-white px-4 py-2 rounded-md font-bold text-sm uppercase hover:bg-[#2d5a43] transition"
-          >
+
+          <Button variant = "contained" size = "small">
             <LogoutIcon className="!text-md" />
             Submit Request
-          </button>
+          </Button>
         </form>
       </div>
     </div>

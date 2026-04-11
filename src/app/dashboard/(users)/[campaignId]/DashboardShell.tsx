@@ -2,9 +2,7 @@
 
 import type { ReactNode } from "react";
 import { useParams, useRouter, usePathname, notFound } from "next/navigation";
-import moment from "moment";
 import { useState } from "react";
-
 import Navbar from "@/src/components/Navbar";
 import DashboardTabs from "@/src/components/dashboard/DashboardTabs";
 import NotComplete from "@/src/components/dashboard/NotComplete";
@@ -15,8 +13,13 @@ import { DaysRemainingCard } from "@/src/components/dashboard/DaysRemainingCard"
 import { useAuth } from "@/src/context/AuthProvider";
 import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import Button from "@mui/material/Button";
-import { Snackbar, Alert } from "@mui/material";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
+import BaseModal from "@/src/components/bases/BaseModal";
+import LogoutIcon from "@mui/icons-material/Logout";
+import OpenInNew from "@mui/icons-material/OpenInNew";
+import BaseAlert from "@/src/components/bases/BaseAlert";
+import DashboardFooter from "@/src/components/DashboardFooter";
+
 type DashboardTab = "Overview" | "Donors" | "Analytics";
 
 export default function DashboardShell({
@@ -31,6 +34,8 @@ export default function DashboardShell({
   const { data: campaignData, isLoading } = useReadCampaign(Number(campaignId));
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const [toast, setToast] = useState(false);
+  const [viewCampaignModal, setViewCampaignModal] = useState(false);
+
 
   if (!user) notFound();
   if (isLoading ) return <div>Loading...</div>;
@@ -105,7 +110,9 @@ export default function DashboardShell({
 
         <DashboardTabs selectedTab={selectedTab} onChange={handleTabChange} />
 
-        <Button size="small" variant="contained" className = "!mr-2" onClick={() => router.push(campaignData.givebutterlink)}>View Campaign Site</Button>
+        <Button size="small" variant="contained" className = "!mr-2" onClick={() => setViewCampaignModal(true)}>View Campaign Site
+          <OpenInNew fontSize="small" className="text-[#FFFFFF] ml-[5px]" />
+        </Button>
         <Button
           size="small"
           variant="outlined"
@@ -117,7 +124,16 @@ export default function DashboardShell({
         >
           Copy Campaign Site Link
         </Button>        
-        <Button size="small" variant="outlined" onClick={() => router.push(`/dashboard/${selectedCampaignId}/donors`)}>View Leaderboard</Button>
+        <Button 
+          size="small" 
+          variant="outlined"
+          onClick={() => router.push(`/dashboard/${selectedCampaignId}/donors`)}
+        >
+          View Leaderboard
+          <OpenInNew fontSize="small" className="text-[#123A1E] ml-[5px]" />
+
+        </Button>
+            
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <TotalRaisedCard
             totalRaised={campaignData.raised}
@@ -141,39 +157,42 @@ export default function DashboardShell({
         </div>
 
         <div className="mt-8">{children}</div>
+        <DashboardFooter />
       </div>
 
 
-      <Snackbar
-        open={toast}
-        autoHideDuration={3000}
-        onClose={() => setToast(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
-          onClose={() => setToast(false)}
-          severity="success"
-          variant="outlined"
-        >
-          Campaign Link Copied!
-        </Alert>
-      </Snackbar>
+      
+      <BaseModal open={viewCampaignModal} onClose={() => setViewCampaignModal(false)} title="You are about to leave the site">
+          
+          <p className = "text-[#666666] !text-[16px]">The link you have clicked will open a new website in a separate tab. Would you like to proceed? </p>
 
-      { campaignData.competition_id !== currentCompetitionData?.competition_id &&
-        <Snackbar
+          <div className ="flex flex-row mt-5 w-full justify-end">
+            <Button variant="outlined" size = "small" className="mt-4  !border-none !text-[#666666]" onClick={() => setViewCampaignModal(false)}>Cancel</Button>
+
+            <Button variant="contained" size = "small" className = "mt-4 !ml-3" onClick={() => window.open(campaignData.givebutterlink, '_blank')}>
+              Proceed
+              <LogoutIcon className="!ml-[5px] !text-[18px]" />
+              
+            </Button>
+          </div>
+
+      
+      </BaseModal>
+
+
+          
+      <BaseAlert open={toast} onClose={() => setToast(false)} title="Successfully Copied!">
+          <p>Link has been copied to clipboard</p>
+      </BaseAlert>
+
+      {campaignData.competition_id !== currentCompetitionData?.competition_id &&
+        <BaseAlert
           open={true}
-          autoHideDuration={3000}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
+          onClose={() => {}}
+          title="This campaign has ended!"
         >
-          <Alert
-            severity="success"
-            variant="outlined"
-            className = "!pr-[100px]"
-          >
-            <p className="text-[16px] font-medium">This campaign has ended!</p>
-            <p className="text-[14px] mt-[5px]">This page now displays the final <br></br>statistics of your campaign</p>
-          </Alert>
-        </Snackbar>
+          <p>This page now displays the final <br></br>statistics of your campaign</p>
+        </BaseAlert>
       }
     </div>
   );
