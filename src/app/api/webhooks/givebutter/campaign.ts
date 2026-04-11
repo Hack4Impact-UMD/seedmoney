@@ -21,9 +21,11 @@ export const campaignHandlers = {
   "campaign.created": async (payload: WebhookPayload) => {
     if (!payload.data) return;
     await createCampaign({
+      user_id: null,
       givebutter_id: String(payload.data.id),
       givebutter_slug: payload.data.slug,
       name: payload.data.title,
+      organization_name: "",
       givebutterlink: payload.data.url,
       raised: payload.data.raised,
       donors: payload.data.donors,
@@ -40,7 +42,12 @@ export const campaignHandlers = {
       impact: 0,
       size: 0,
       ein: "",
-      mailing_street: "",
+      contact_first_name: "",
+      contact_last_name: "",
+      contact_email: "",
+      contact_role: "",
+      mailing_street_1: "",
+      mailing_street_2: "",
       mailing_city: "",
       mailing_state: "",
       mailing_country: "",

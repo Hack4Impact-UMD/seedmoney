@@ -5,10 +5,21 @@ export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
   const supabase = await createBrowserClient();
+  const campaignData = { ...data };
+
+  if (!campaignData.user_id) {
+    const {
+      data: { user },
+    } = await supabase.auth.getUser();
+
+    if (user) {
+      campaignData.user_id = user.id;
+    }
+  }
 
   const { data: insertedData, error } = await supabase
     .from("campaigns")
-    .insert(data)
+    .insert(campaignData)
     .select()
     .single();
 
@@ -153,9 +164,11 @@ export async function readCurrentDraftCampaignForUser(user_id: string) {
 
   const { data, error } = await supabase
     .from("campaigns")
-    .select("campaign_id")
+    .select("*")
     .eq("user_id", user_id)
-    .eq("status", "in_progress");
+    .eq("status", "in_progress")
+    .order("date_created", { ascending: false })
+    .limit(1);
 
   if (error) {
     console.error("Error reading campaign members:", error.message);
@@ -164,9 +177,5 @@ export async function readCurrentDraftCampaignForUser(user_id: string) {
 
   if (!data || data.length === 0) return null;
 
-  const draftCampaignId = data as unknown as number;
-
-  const draftCampaign = await readCampaign(draftCampaignId);
-
-  return draftCampaign as Campaign;
+  return data[0] as Campaign;
 }
