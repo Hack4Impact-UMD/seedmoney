@@ -48,9 +48,14 @@ const INITIAL_FORM_VALUES: ApplicationFormData = {
   contactRole: "",
 };
 
-const useApplicationFormState = () =>
+const useApplicationFormState = (
+  initialFormValues: Partial<ApplicationFormData> = {},
+) =>
   useForm({
-    defaultValues: INITIAL_FORM_VALUES,
+    defaultValues: {
+      ...INITIAL_FORM_VALUES,
+      ...initialFormValues,
+    },
     onSubmit: async ({ value }) => {
       console.log("Submitted:", value);
     },
@@ -84,12 +89,22 @@ const LastSavedContext = createContext<LastSavedContextValue | null>(null);
 
 export const ApplicationFormProvider = ({
   children,
+  initialDraftCampaignId = null,
+  initialFormValues = {},
+  initialHasPassedAgreement = false,
 }: {
   children: ReactNode;
+  initialDraftCampaignId?: number | null;
+  initialFormValues?: Partial<ApplicationFormData>;
+  initialHasPassedAgreement?: boolean;
 }) => {
-  const form = useApplicationFormState();
-  const [hasPassedAgreement, setHasPassedAgreement] = useState(false);
-  const [draftCampaignId, setDraftCampaignId] = useState<number | null>(null);
+  const form = useApplicationFormState(initialFormValues);
+  const [hasPassedAgreement, setHasPassedAgreement] = useState(
+    initialHasPassedAgreement,
+  );
+  const [draftCampaignId, setDraftCampaignId] = useState<number | null>(
+    initialDraftCampaignId,
+  );
   const [lastSaved, setLastSaved] = useState<string | null>(null);
 
   const agreementGateValue = useMemo(

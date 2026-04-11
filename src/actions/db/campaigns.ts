@@ -1,5 +1,5 @@
 import type { Campaign } from "@/src/types";
-import { createBrowserClient } from "@/src/lib/supabase-client";
+import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
 
 export async function createCampaign(
   data: Partial<Campaign>,
@@ -160,7 +160,7 @@ export async function deleteCampaign(id: number): Promise<boolean> {
 }
 
 export async function readCurrentDraftCampaignForUser(user_id: string) {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
 
   const { data, error } = await supabase
     .from("campaigns")
@@ -171,7 +171,7 @@ export async function readCurrentDraftCampaignForUser(user_id: string) {
     .limit(1);
 
   if (error) {
-    console.error("Error reading campaign members:", error.message);
+    console.error("Error reading campaign:", error.message);
     return null;
   }
 
