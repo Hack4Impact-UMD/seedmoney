@@ -97,14 +97,12 @@ export async function deleteCampaignMember(
 }
 
 export async function readCampaignsFromMembers(user_id: string) {
-
   const supabase = createBrowserClient();
-  
+
   const { data, error } = await supabase
     .from("campaign_members")
     .select("campaign_id")
     .eq("user_id", user_id);
-
 
   if (error) {
     console.error("Error reading campaign members:", error.message);
@@ -117,6 +115,28 @@ export async function readCampaignsFromMembers(user_id: string) {
 
   const campaigns = await readCampaign(campaignIds);
 
-  
   return campaigns as Campaign[];
+}
+
+export async function readCurrentDraftCampaignForUser(user_id: string) {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaign_members")
+    .select("campaign_id")
+    .eq("user_id", user_id)
+    .eq("status", "in_progress");
+
+  if (error) {
+    console.error("Error reading campaign members:", error.message);
+    return null;
+  }
+
+  if (!data || data.length === 0) return [];
+
+  const draftCampaignId = data as unknown as number;
+
+  const draftCampaign = await readCampaign(draftCampaignId);
+
+  return draftCampaign as Campaign;
 }
