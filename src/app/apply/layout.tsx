@@ -1,6 +1,7 @@
 import LoginNavbar from "@/src/components/LoginNavbar";
 import { ApplicationFormProvider } from "@/src/components/application/ApplicationFormProvider";
 import { createServerClient } from "@/src/lib/supabase-client";
+import { readCurrentDraftCampaignForUser } from "@/src/actions/db/campaign-members";
 
 export default async function ApplyLayout({
   children,
@@ -11,6 +12,12 @@ export default async function ApplyLayout({
   const {
     data: { session },
   } = await supabase.auth.getSession();
+
+  const userId = session?.user.id;
+
+  if (userId) {
+    const draftCampaign = readCurrentDraftCampaignForUser(userId);
+  }
 
   return (
     <div className="bg-[#F6FAF9] min-h-screen flex flex-col">

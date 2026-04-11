@@ -132,7 +132,7 @@ export async function readCurrentDraftCampaignForUser(user_id: string) {
     return null;
   }
 
-  if (!data || data.length === 0) return [];
+  if (!data || data.length === 0) return null;
 
   const draftCampaignId = data as unknown as number;
 
