@@ -16,6 +16,7 @@ export default function useReadCampaignsNotApproved(competitionId: number) {
         goalProgress:
           c.goal > 0 ? Math.round((c.raised / c.goal) * 100) : 0,
         status: c.status as "submitted_under_review" | "not_approved",
+        submissionDate: c.date_created,
       }));
     },
     staleTime: 1000 * 60 * 5,

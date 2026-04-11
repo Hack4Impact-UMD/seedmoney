@@ -138,6 +138,7 @@ export type CampaignUnderReviewRow = {
   goal: number;
   status: string;
   leader_name: string;
+  date_created: string;
 };
 
 export async function readCampaignsUnderReview(
@@ -147,7 +148,7 @@ export async function readCampaignsUnderReview(
 
   const { data: campaignsData, error: campaignsError } = await supabase
     .from("campaigns")
-    .select("campaign_id, name, raised, goal, status, campaign_members(user_id, role)")
+    .select("campaign_id, name, raised, goal, status, date_created, campaign_members(user_id, role)")
     .in("status", ["submitted_under_review", "not_approved"])
     .eq("competition_id", competitionId);
 
@@ -162,6 +163,7 @@ export async function readCampaignsUnderReview(
     raised: number;
     goal: number;
     status: string;
+    date_created: string;
     campaign_members: { user_id: string; role: string | null }[];
   }[];
 
@@ -198,6 +200,7 @@ export async function readCampaignsUnderReview(
     raised: c.raised ?? 0,
     goal: c.goal ?? 0,
     status: c.status,
+    date_created: c.date_created ?? "",
     leader_name: usersMap[leaderIdByCampaign[c.campaign_id]] ?? "",
   }));
 }

@@ -20,6 +20,7 @@ export type ReviewApplicationRow = {
   goal: number;
   goalProgress: number;
   status: "submitted_under_review" | "not_approved";
+  submissionDate: string;
 };
 
 type ReviewApplicationsTableProps = {
@@ -32,6 +33,12 @@ const pageSizeOptions = [5, 10, 20];
 
 type TabStatus = "PENDING" | "DENIED";
 type ReviewAction = "APPROVE" | "DENY" | "REVERT";
+
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return "N/A";
+  const [year, month, day] = dateStr.split("T")[0].split("-");
+  return `${month}/${day}/${year}`;
+};
 
 const formatCurrency = (amount: number) =>
   new Intl.NumberFormat("en-US", {
@@ -381,11 +388,12 @@ export default function ReviewApplicationsTable({
             <thead>
               <tr className="border-b border-[#eef2ee] text-left text-[14px] font-semibold text-[#414644]">
                 <th className="w-8 px-3 py-3 sm:px-4" />
-                <th className="w-[240px] pl-0 pr-2 py-3">Campaign Title</th>
+                  <th className="w-[190px] pl-0 pr-2 py-3">Submission Date</th>
+                  <th className="w-[240px] pl-0 pr-2 py-3">Campaign Title</th>
                 <th className="w-[180px] px-2 py-3">Campaign Leader</th>
-                <th className="w-[100px] px-2 py-3">Raised</th>
-                <th className="w-[100px] px-2 py-3">Goal</th>
-                <th className="w-[180px] px-2 py-3">Goal Progress</th>
+                {/*<th className="w-[100px] px-2 py-3">Raised</th>*/}
+                {/*<th className="w-[100px] px-2 py-3">Goal</th>*/}
+                {/*<th className="w-[180px] px-2 py-3">Goal Progress</th>*/}
                 <th className="w-[180px] px-5 py-3 text-right sm:px-6" />
               </tr>
             </thead>
@@ -436,32 +444,35 @@ export default function ReviewApplicationsTable({
                           />
                         </div>
                       </td>
+                        <td className="px-2 py-3 text-[#49514c]">
+                          {formatDate(application.submissionDate)}
+                        </td>
                       <td className="px-2 py-3 text-[#49514c]">
                         {application.campaignTitle}
                       </td>
                       <td className="px-2 py-3 text-[#49514c]">
                         {application.campaignLeader || "—"}
                       </td>
-                      <td className="px-2 py-3">
-                        {formatCurrency(application.raised)}
-                      </td>
-                      <td className="px-2 py-3">
-                        {formatCurrency(application.goal)}
-                      </td>
-                      <td className="px-2 py-3">
-                        <div className="flex items-center gap-2">
-                          <div className="w-full max-w-[100px] rounded-full bg-blue-100 h-2">
-                            <div
-                              className="bg-blue-600 h-2 rounded-full"
-                              style={{ width: `${progressCapped}%` }}
-                            />
-                          </div>
-                          <span className="whitespace-nowrap text-sm text-[#59605b]">
-                            {application.goalProgress}%
-                          </span>
-                        </div>
-                      </td>
-                      <td className="px-5 py-2.5 text-right sm:px-6">
+                      {/*<td className="px-2 py-3">*/}
+                      {/*  {formatCurrency(application.raised)}*/}
+                      {/*</td>*/}
+                      {/*<td className="px-2 py-3">*/}
+                      {/*  {formatCurrency(application.goal)}*/}
+                      {/*</td>*/}
+                      {/*<td className="px-2 py-3">*/}
+                      {/*  <div className="flex items-center gap-2">*/}
+                      {/*    <div className="w-full max-w-[100px] rounded-full bg-blue-100 h-2">*/}
+                      {/*      <div*/}
+                      {/*        className="bg-blue-600 h-2 rounded-full"*/}
+                      {/*        style={{ width: `${progressCapped}%` }}*/}
+                      {/*      />*/}
+                      {/*    </div>*/}
+                      {/*    <span className="whitespace-nowrap text-sm text-[#59605b]">*/}
+                      {/*      {application.goalProgress}%*/}
+                      {/*    </span>*/}
+                      {/*  </div>*/}
+                      {/*</td>*/}
+                      <td className="px-4 py-2.5 text-right sm:px-6">
                         <button
                           type="button"
                           onClick={() =>
