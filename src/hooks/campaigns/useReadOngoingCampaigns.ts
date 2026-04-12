@@ -1,10 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { readOngoingChallengeApplications } from "@/src/actions/db/campaigns";
-import { Campaign } from "@/src/types/db/campaigns";
-
-export type CampaignWithLeader = Campaign & {
-  campaign_leader: string;
-}
+import { CampaignWithLeader } from "@/src/types/frontend/campaigns";
 
 export default function useReadOngoingCampaigns() {
   return useQuery<CampaignWithLeader[]>({

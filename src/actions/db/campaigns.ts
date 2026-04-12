@@ -2,6 +2,7 @@
 
 import type { Campaign, CampaignMember } from "@/src/types";
 import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
+import { CampaignWithLeader } from "@/src/types/frontend/campaigns";
 
 export async function createCampaign(
   data: Partial<Campaign>,
@@ -155,7 +156,7 @@ export async function deleteCampaign(id: number): Promise<boolean> {
   return true;
 }
 
-export async function readOngoingChallengeApplications() {
+export async function readOngoingChallengeApplications(): Promise<CampaignWithLeader[]> {
   const supabase = await createServerClient();
 
   // reading current competition
@@ -186,8 +187,8 @@ export async function readOngoingChallengeApplications() {
   
   console.log("campaigns data:", data, "error:", error);
 
-  
   if (error) throw error;
+
   return data.map(campaign => {
     const leaderMember = campaign.campaign_members.find((member: CampaignMember) => member.role === "campaign_leader") || campaign.campaign_members[0];
     const leaderUser = Array.isArray(leaderMember?.users) 
@@ -197,6 +198,6 @@ export async function readOngoingChallengeApplications() {
     return {
       ...campaign,
       campaign_leader: leaderUser ? `${leaderUser.first_name} ${leaderUser.last_name}` : "",
-    }
+    } as CampaignWithLeader
   });
 }
