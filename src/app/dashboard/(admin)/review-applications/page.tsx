@@ -9,8 +9,8 @@ export default function ReviewApplicationsPage() {
   const { data: competition } = useReadCurrentCompetition();
   const {
     data: applications = [],
-    isFetching,
-    refetch,
+    isLoading,
+    isError,
   } = useReadCampaignsNotApproved(competition?.competition_id ?? 0);
 
   return (
@@ -18,11 +18,17 @@ export default function ReviewApplicationsPage() {
       <Navbar/>
 
       <main className="flex-1 px-6 py-8 sm:px-10 md:px-12">
-        <ReviewApplicationsTable
-          applications={applications}
-          isLoading={isFetching}
-          onRefetch={refetch}
-        />
+        {isLoading ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-lg text-gray-600">Loading applications...</p>
+          </div>
+        ) : isError ? (
+          <div className="flex items-center justify-center py-12">
+            <p className="text-lg text-red-600">Error loading applications. Please try again.</p>
+          </div>
+        ) : (
+          <ReviewApplicationsTable applications={applications} />
+        )}
       </main>
     </div>
   );

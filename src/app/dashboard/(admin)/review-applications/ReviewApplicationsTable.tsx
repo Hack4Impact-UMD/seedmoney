@@ -2,31 +2,20 @@
 
 import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
-import { useMutation } from "@tanstack/react-query";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useRouter } from "next/navigation";
-import { updateCampaign } from "@/src/actions/db/campaigns";
+import { Button, Snackbar, Alert } from "@mui/material";
+import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
+import type { ReviewApplicationRow } from "@/src/actions/frontend/campaigns";
 import type { Status } from "@/src/types/db/enums";
 
-export type ReviewApplicationRow = {
-  campaignId: number;
-  campaignTitle: string;
-  campaignLeader: string;
-  raised: number;
-  goal: number;
-  goalProgress: number;
-  status: "submitted_under_review" | "not_approved";
-  submissionDate: string;
-};
 
 type ReviewApplicationsTableProps = {
   applications: ReviewApplicationRow[];
-  isLoading?: boolean;
-  onRefetch: () => void;
 };
 
 const pageSizeOptions = [5, 10, 20];
@@ -49,8 +38,6 @@ const formatCurrency = (amount: number) =>
 
 export default function ReviewApplicationsTable({
   applications,
-  isLoading = false,
-  onRefetch,
 }: ReviewApplicationsTableProps) {
   const [tab, setTab] = useState<TabStatus>("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
@@ -62,11 +49,17 @@ export default function ReviewApplicationsTable({
     action: "approved" | "denied" | "reverted" | "error";
     campaignNames: string[];
   } | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const router = useRouter();
+  const updateCampaignMutation = useUpdateCampaign();
 
   useEffect(() => {
     if (!notification) return;
-    const timer = setTimeout(() => setNotification(null), 4000);
+    setSnackbarOpen(true);
+    const timer = setTimeout(() => {
+      setSnackbarOpen(false);
+      setNotification(null);
+    }, 4000);
     return () => clearTimeout(timer);
   }, [notification]);
 
@@ -110,18 +103,22 @@ export default function ReviewApplicationsTable({
     selectedIds.includes(application.campaignId),
   );
 
-  const bulkUpdateMutation = useMutation({
-    mutationFn: async ({
-      ids,
-      status,
-    }: {
-      ids: number[];
-      status: Status;
-    }) => {
-      await Promise.all(ids.map((id) => updateCampaign(id, { status })));
-    },
-    onSuccess: (_, { status }) => {
+  const handleBulkUpdate = async (
+    ids: number[],
+    status: Status,
+  ) => {
+    try {
       const names = selectedApplications.map((a) => a.campaignTitle);
+
+      await Promise.all(
+        ids.map((id) =>
+          updateCampaignMutation.mutateAsync({
+            campaignId: id,
+            campaignData: { status },
+          }),
+        ),
+      );
+
       const action =
         status === "approved"
           ? "approved"
@@ -131,13 +128,12 @@ export default function ReviewApplicationsTable({
       setNotification({ action, campaignNames: names });
       setSelectedIds([]);
       setPendingAction(null);
-      onRefetch();
-    },
-    onError: () => {
+    } catch (error) {
+      console.error("Error updating campaigns:", error);
       setNotification({ action: "error", campaignNames: [] });
       setPendingAction(null);
-    },
-  });
+    }
+  };
 
   const handleTabChange = (status: TabStatus) => {
     setTab(status);
@@ -181,25 +177,22 @@ export default function ReviewApplicationsTable({
     setPendingAction(null);
   };
 
-  const handleConfirmAction = () => {
+  const handleConfirmAction = async () => {
     if (!pendingAction || selectedIds.length === 0) return;
 
     if (pendingAction === "APPROVE") {
-      bulkUpdateMutation.mutate({ ids: selectedIds, status: "approved" });
+      handleBulkUpdate(selectedIds, "approved");
     } else if (pendingAction === "DENY") {
-      bulkUpdateMutation.mutate({ ids: selectedIds, status: "not_approved" });
+      handleBulkUpdate(selectedIds, "not_approved");
     } else if (pendingAction === "REVERT") {
-      bulkUpdateMutation.mutate({
-        ids: selectedIds,
-        status: "submitted_under_review",
-      });
+      handleBulkUpdate(selectedIds, "submitted_under_review");
     }
   };
 
   const hasSelectedRows = selectedIds.length > 0;
   const isDeniedTab = tab === "DENIED";
   const isActionModalOpen = pendingAction !== null;
-  const isConfirming = bulkUpdateMutation.isPending;
+  const isConfirming = updateCampaignMutation.isPending;
   const modalTitle =
     pendingAction === "APPROVE"
       ? "Confirm Approval"
@@ -215,68 +208,65 @@ export default function ReviewApplicationsTable({
 
   return (
     <div className="relative w-full max-w-[1200px] pb-24 pt-2">
-      {notification && (
-        <div
-          className={clsx(
-            "fixed right-6 top-6 z-50 w-[320px] rounded-lg px-5 py-4 shadow-lg",
-            notification.action === "error"
-              ? "border border-red-200 bg-red-50"
-              : "border border-[#b8d9c0] bg-[#eef7f0]",
-          )}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={4000}
+        onClose={() => {
+          setSnackbarOpen(false);
+          setNotification(null);
+        }}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={() => {
+            setSnackbarOpen(false);
+            setNotification(null);
+          }}
+          severity={notification?.action === "error" ? "error" : "success"}
+          variant="outlined"
+          icon={
+            notification?.action !== "error" ? (
+              <CheckCircleOutlineIcon sx={{ fontSize: 22 }} />
+            ) : undefined
+          }
         >
-          <div className="flex items-start gap-3">
-            {notification.action !== "error" && (
-              <CheckCircleOutlineIcon
-                className="mt-0.5 shrink-0 text-[#2D7A45]"
-                sx={{ fontSize: 22 }}
-              />
-            )}
-            <div className="flex-1 text-[14px] text-[#214E34]">
-              <p className="mb-1 font-bold">
-                {notification.action === "approved"
-                  ? "Campaign Approved!"
-                  : notification.action === "denied"
-                    ? "Campaign Denied!"
-                    : notification.action === "reverted"
-                      ? "Campaign Restored!"
-                      : "Something went wrong."}
-              </p>
-              {notification.action !== "error" && (
-                <>
-                  <p>
-                    {notification.action === "approved"
-                      ? "You have successfully approved:"
-                      : notification.action === "denied"
-                        ? "You have successfully denied:"
-                        : "You have successfully restored:"}
+          <div>
+            <p className="font-bold">
+              {notification?.action === "approved"
+                ? "Campaign Approved!"
+                : notification?.action === "denied"
+                  ? "Campaign Denied!"
+                  : notification?.action === "reverted"
+                    ? "Campaign Restored!"
+                    : "Something went wrong."}
+            </p>
+            {notification?.action !== "error" && notification?.campaignNames && (
+              <>
+                <p className="text-sm">
+                  {notification.action === "approved"
+                    ? "You have successfully approved:"
+                    : notification.action === "denied"
+                      ? "You have successfully denied:"
+                      : "You have successfully restored:"}
+                </p>
+                <ul className="my-1 list-disc pl-5 text-sm">
+                  {notification.campaignNames.map((name) => (
+                    <li key={name}>{name}</li>
+                  ))}
+                </ul>
+                {notification.action === "approved" && (
+                  <p className="text-sm">
+                    You can view it on the &ldquo;Ongoing Campaigns&rdquo; page.
                   </p>
-                  <ul className="my-1 list-disc pl-5">
-                    {notification.campaignNames.map((name) => (
-                      <li key={name}>{name}</li>
-                    ))}
-                  </ul>
-                  {notification.action === "approved" && (
-                    <p>
-                      You can view it on the &ldquo;Ongoing Campaigns&rdquo; page.
-                    </p>
-                  )}
-                </>
-              )}
-              {notification.action === "error" && (
-                <p className="text-red-700">An error occurred. Please try again.</p>
-              )}
-            </div>
-            <button
-              type="button"
-              onClick={() => setNotification(null)}
-              className="shrink-0 rounded p-0.5 text-[#4e7a5a] hover:bg-[#d6edd9]"
-              aria-label="Dismiss notification"
-            >
-              <CloseOutlinedIcon sx={{ fontSize: 16 }} />
-            </button>
+                )}
+              </>
+            )}
+            {notification?.action === "error" && (
+              <p className="text-sm">An error occurred. Please try again.</p>
+            )}
           </div>
-        </div>
-      )}
+        </Alert>
+      </Snackbar>
 
       <div className="mb-5 pt-8">
         <h1 className="text-[40px] font-semibold tracking-[-0.04em] text-[#214E34] sm:text-[42px]">
@@ -352,32 +342,32 @@ export default function ReviewApplicationsTable({
 
               <div className="flex items-center gap-3">
                 {isDeniedTab ? (
-                  <button
-                    type="button"
+                  <Button
                     disabled={!hasSelectedRows}
                     onClick={() => handleOpenActionModal("REVERT")}
-                    className="rounded-[8px] border border-[#2D7A45] bg-white px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-[#2D7A45] transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+                    variant="outlined"
+                    size="small"
                   >
                     RESTORE
-                  </button>
+                  </Button>
                 ) : (
-                    <button
-                      type="button"
-                      disabled={!hasSelectedRows}
-                      onClick={() => handleOpenActionModal("DENY")}
-                      className="rounded-[8px] border border-[#2D7A45] bg-white px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-[#2D7A45] transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
-                    >
-                      DENY
-                    </button>
-                )}
-                  <button
-                      type="button"
-                      disabled={!hasSelectedRows}
-                      onClick={() => handleOpenActionModal("APPROVE")}
-                      className="rounded-[8px] bg-[#2D7A45] px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+                  <Button
+                    disabled={!hasSelectedRows}
+                    onClick={() => handleOpenActionModal("DENY")}
+                    variant="outlined"
+                    size="small"
                   >
-                      APPROVE
-                  </button>
+                    DENY
+                  </Button>
+                )}
+                <Button
+                  disabled={!hasSelectedRows}
+                  onClick={() => handleOpenActionModal("APPROVE")}
+                  variant="contained"
+                  size="small"
+                >
+                  APPROVE
+                </Button>
               </div>
             </div>
           </div>
@@ -399,16 +389,7 @@ export default function ReviewApplicationsTable({
             </thead>
 
             <tbody>
-              {isLoading ? (
-                <tr>
-                  <td
-                    colSpan={7}
-                    className="px-5 py-8 text-center text-sm text-[#8a918b]"
-                  >
-                    Loading applications...
-                  </td>
-                </tr>
-              ) : paginatedApplications.length === 0 ? (
+              {paginatedApplications.length === 0 ? (
                 <tr>
                   <td
                     colSpan={7}
@@ -473,18 +454,18 @@ export default function ReviewApplicationsTable({
                       {/*  </div>*/}
                       {/*</td>*/}
                       <td className="px-4 py-2.5 text-right sm:px-6">
-                        <button
-                          type="button"
+                        <Button
                           onClick={() =>
                             router.push(
                               "/dashboard/review-applications/" +
                                 application.campaignId,
                             )
                           }
-                          className="rounded-[10px] border border-[#2D7A45] px-4 py-1.5 text-[13px] font-semibold text-[#2D7A45] transition-colors hover:bg-[#f5faf5]"
+                          variant="outlined"
+                          size="small"
                         >
                           VIEW APPLICATION
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -583,22 +564,21 @@ export default function ReviewApplicationsTable({
               </div>
 
               <div className="flex items-center justify-end gap-3 px-4 pb-4">
-                <button
-                  type="button"
+                <Button
                   onClick={handleCloseActionModal}
                   disabled={isConfirming}
-                  className="px-3 py-2 text-[14px] font-medium text-[#6e7570]"
+                  variant="text"
                 >
                   CANCEL
-                </button>
-                <button
-                  type="button"
+                </Button>
+                <Button
                   onClick={handleConfirmAction}
                   disabled={isConfirming}
-                  className="rounded-[8px] bg-[#2D7A45] px-4 py-2 text-[13px] font-semibold text-white disabled:opacity-60"
+                  variant="contained"
+                  size="small"
                 >
                   {isConfirming ? "..." : pendingAction}
-                </button>
+                </Button>
               </div>
             </div>
           </div>
