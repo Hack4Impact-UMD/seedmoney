@@ -15,6 +15,7 @@ import type {
   UserCampaign,
   UsersTableRow,
 } from "@/src/hooks/users/useAllUsersWithCampaigns";
+import useDeleteUser from "@/src/hooks/users/useDeleteUser";
 import type { Status } from "@/src/types/db/enums";
 
 interface Props {
@@ -208,12 +209,17 @@ const UsersTable = ({
   const [deleteTarget, setDeleteTarget] = useState<UsersTableRow | null>(null);
   const [statusTarget, setStatusTarget] = useState<UsersTableRow | null>(null);
   const [toast, setToast] = useState(false);
+  const { mutate: deleteUserMutate } = useDeleteUser();
 
   const handleConfirmDelete = useCallback(() => {
-    setDeleteTarget(null);
-    setToast(true);
-    // Later this should delete the user in the backend and then reload the users list.
-  }, []);
+    if (!deleteTarget) return;
+    deleteUserMutate(deleteTarget.id, {
+      onSuccess: () => {
+        setDeleteTarget(null);
+        setToast(true);
+      },
+    });
+  }, [deleteTarget, deleteUserMutate]);
 
   const columns = useMemo(
     () => [
