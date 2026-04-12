@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { campaignHandlers } from "./campaign";
+import { transactionHandlers } from "./transactions";
 
 interface WebhookPayload {
   event: string;
@@ -8,6 +9,7 @@ interface WebhookPayload {
 
 const eventHandlers: Record<string, (payload: WebhookPayload) => Promise<void>> = {
   ...campaignHandlers,
+  ...transactionHandlers,
 };
 
 export async function POST(req: NextRequest) {

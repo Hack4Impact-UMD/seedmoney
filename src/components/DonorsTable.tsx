@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import React, { useCallback, useMemo, useState } from "react";
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -8,10 +8,10 @@ import {
   getPaginationRowModel,
 } from "@tanstack/table-core";
 import { flexRender, useReactTable } from "@tanstack/react-table";
+import useReadTransactionsByCampaign from "@/src/hooks/transactions/useReadTransactionsByCampaign";
 
 interface Donor {
   id: number;
-  reward: string;
   amount: number;
   name: string;
   email: string;
@@ -25,44 +25,21 @@ interface DonorsTableProps {
 }
 
 export default function DonorsTable({ campaignId }: DonorsTableProps) {
-  const [donors, setDonors] = useState<Donor[]>([]);
+  const { data: transactions, isLoading } = useReadTransactionsByCampaign(campaignId);
   const [searchQuery, setSearchQuery] = useState("");
 
-  useEffect(() => {
-    // TODO fetch real data from backend using campaignId
-    setDonors([
-      {
-        id: 1001,
-        reward: "Sticker Pack",
-        amount: 25,
-        name: "Sarah Lee",
-        email: "sarahlee@example.com",
-        card_reference: "1234567812345678",
-        date: "2026-03-01T10:30:00",
-        status: "Paid",
-      },
-      {
-        id: 1002,
-        reward: "T-Shirt",
-        amount: 50,
-        name: "John Smith",
-        email: "johnsmith@example.com",
-        card_reference: "9876543212345678",
-        date: "2026-03-02T14:20:00",
-        status: "Paid",
-      },
-      {
-        id: 1003,
-        reward: "Thank You Note",
-        amount: 15,
-        name: "Emily Chen",
-        email: "emilychen@example.com",
-        card_reference: "4567123412349999",
-        date: "2026-03-05T09:15:00",
-        status: "Pending",
-      },
-    ]);
-  }, [campaignId]);
+  const donors: Donor[] = useMemo(() => {
+    if (!transactions) return [];
+    return transactions.map((t) => ({
+      id: t.transaction_id,
+      name: `${t.first_name} ${t.last_name}`,
+      email: t.email,
+      amount: t.amount_donated,
+      date: t.date,
+      status: t.status,
+      card_reference: "0000000000000000",
+    }));
+  }, [transactions]);
 
   const filteredData = useMemo(() => {
     const query = searchQuery.toLowerCase().trim();
@@ -80,7 +57,6 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
         String(donor.id).includes(query) ||
         donor.name.toLowerCase().includes(query) ||
         donor.email.toLowerCase().includes(query) ||
-        donor.reward.toLowerCase().includes(query) ||
         donor.status.toLowerCase().includes(query)
       );
     });
@@ -95,16 +71,12 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
         <span className="font-medium text-gray-700">{info.getValue()}</span>
       ),
     }),
-    columnHelper.accessor("reward", {
-      header: "Reward",
-      cell: (info) => info.getValue(),
-    }),
     columnHelper.accessor("amount", {
       header: "Amount",
       cell: (info) => `$${info.getValue().toFixed(2)}`,
     }),
     columnHelper.accessor("name", {
-      header: "Contributor Name",
+      header: "Contributor",
       cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("email", {
@@ -126,18 +98,18 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
       header: "Status",
       cell: (info) => {
         const status = info.getValue();
-        const isPaid = status.toLowerCase() === "paid";
+        const isSuccess = status.toLowerCase() === "succeeded" || status.toLowerCase() === "paid";
 
         return (
           <span
             className={[
               "inline-flex rounded-full px-3 py-1 text-sm font-medium",
-              isPaid
+              isSuccess
                 ? "bg-green-100 text-green-700"
                 : "bg-yellow-100 text-yellow-700",
             ].join(" ")}
           >
-            {status}
+            {isSuccess ? "Success" : status}
           </span>
         );
       },
@@ -156,6 +128,10 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
+
+  if (isLoading) {
+    return <div className="p-8 text-center text-gray-500">Loading donors...</div>;
+  }
 
   return (
     <div className="w-full">
