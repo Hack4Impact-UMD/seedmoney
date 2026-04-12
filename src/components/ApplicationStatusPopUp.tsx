@@ -13,12 +13,12 @@ interface ApplicationStatusPopUpProps {
   onClose: () => void;
 }
 
-const STATUS_CONFIG: Record<
-  Status,
-  { label: string; buttonLabel: string }
-> = {
+const STATUS_CONFIG: Record<Status, { label: string; buttonLabel: string }> = {
   in_progress: { label: "in progress", buttonLabel: "REVIEW APPLICATION" },
-  submitted_under_review: { label: "submitted", buttonLabel: "REVIEW APPLICATION" },
+  submitted_under_review: {
+    label: "submitted",
+    buttonLabel: "REVIEW APPLICATION",
+  },
   approved: { label: "approved", buttonLabel: "VIEW CAMPAIGN" },
   not_approved: { label: "not approved", buttonLabel: "VIEW APPLICATION" },
   published: { label: "published", buttonLabel: "VIEW CAMPAIGN" },
@@ -80,40 +80,40 @@ const ApplicationStatusPopUp = ({
         <hr className="border-gray-300" />
 
         <div className="overflow-y-auto flex-1">
-        {STATUS_ORDER.filter((status) => groups[status]).map((status) => {
-          const campaigns = groups[status]!;
-          const config = STATUS_CONFIG[status];
+          {STATUS_ORDER.filter((status) => groups[status]).map((status) => {
+            const campaigns = groups[status]!;
+            const config = STATUS_CONFIG[status];
 
-          return (
-            <div key={status}>
-              <p className="text-gray-800 mb-3 mt-4">
-                {fullName} has{" "}
-                <span className="font-bold">&lt;{campaigns.length}&gt;</span>{" "}
-                {config.label} application{campaigns.length !== 1 ? "s" : ""}
-                {status === "in_progress" ? "." : ":"}
-              </p>
-              {status !== "in_progress" && (
-                <div className="flex flex-col gap-3 pl-6">
-                  {campaigns.map((campaign) => (
-                    <div
-                      key={campaign.campaign_id}
-                      className="flex items-center justify-between"
-                    >
-                      <span className="text-gray-700">{campaign.name}</span>
-                      <Button
-                        variant="contained"
-                        size="medium"
-                        onClick={() => handleCampaignAction(campaign)}
+            return (
+              <div key={status}>
+                <p className="text-gray-800 mb-3 mt-4">
+                  {fullName} has{" "}
+                  <span className="font-bold">&lt;{campaigns.length}&gt;</span>{" "}
+                  {config.label} application{campaigns.length !== 1 ? "s" : ""}
+                  {status === "in_progress" ? "." : ":"}
+                </p>
+                {status !== "in_progress" && (
+                  <div className="flex flex-col gap-3 pl-6">
+                    {campaigns.map((campaign) => (
+                      <div
+                        key={campaign.campaign_id}
+                        className="flex items-center justify-between"
                       >
-                        {config.buttonLabel}
-                      </Button>
-                    </div>
-                  ))}
-                </div>
-              )}
-            </div>
-          );
-        })}
+                        <span className="text-gray-700">{campaign.name}</span>
+                        <Button
+                          variant="contained"
+                          size="medium"
+                          onClick={() => handleCampaignAction(campaign)}
+                        >
+                          {config.buttonLabel}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </div>
       </div>
     </div>

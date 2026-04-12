@@ -8,18 +8,21 @@ export type JoinedCampaign = {
   competition_id: number;
 };
 
-export type UserWithCampaigns = Pick<Users, "id" | "first_name" | "last_name" | "email"> & {
+export type UserWithCampaigns = Pick<
+  Users,
+  "id" | "first_name" | "last_name" | "email"
+> & {
   campaign_members: {
     campaigns: JoinedCampaign;
   }[];
 };
 
-export async function readAllUsersWithCampaigns(): Promise<UserWithCampaigns[]> {
+export async function readAllUsersWithCampaigns(): Promise<
+  UserWithCampaigns[]
+> {
   const supabase = createBrowserClient();
 
-  const { data, error } = await supabase
-    .from("users")
-    .select(`
+  const { data, error } = await supabase.from("users").select(`
       id, first_name, last_name, email,
       campaign_members(
         campaigns(campaign_id, name, status, competition_id)

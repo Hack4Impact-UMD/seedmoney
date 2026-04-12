@@ -2,7 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { readAllUsersWithCampaigns } from "@/src/actions/db/users";
 import type { Campaign } from "@/src/types/db/campaigns";
 
-export type UserCampaign = Pick<Campaign, "campaign_id" | "name" | "status" | "competition_id">;
+export type UserCampaign = Pick<
+  Campaign,
+  "campaign_id" | "name" | "status" | "competition_id"
+>;
 
 export type UsersTableRow = {
   id: string;
