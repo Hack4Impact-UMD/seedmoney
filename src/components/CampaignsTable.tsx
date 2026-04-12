@@ -9,7 +9,7 @@ import {
   getPaginationRowModel 
 } from '@tanstack/react-table';
 
-import { CampaignWithLeader } from '../hooks/campaigns/useReadOngoingCampaigns';
+import { CampaignWithLeader } from '../types/frontend/campaigns';
 
 
 interface Props {
@@ -45,7 +45,7 @@ const CampaignsTable = ({ initialData }: Props) => {
       cell: info => info.getValue()
     }),
     columnHelper.accessor('raised', {
-      header: 'Raised',
+      header: '$ Raised',
       size: 120,
       cell: info => `$${info.getValue().toLocaleString()}`
     }),
@@ -57,9 +57,9 @@ const CampaignsTable = ({ initialData }: Props) => {
     columnHelper.accessor(row => ({ 
       percentage: row.raised / row.goal * 100
     }), {
-      id: 'status',
+      id: 'progress',
       size: 200,
-      header: 'Goal Status',
+      header: 'Goal Progress',
       cell: ({ row }) => {
         const campaign = row.original;
         const percentage = campaign.goal > 0 ? Math.round((campaign.raised / campaign.goal) * 100) : 0;
@@ -77,7 +77,7 @@ const CampaignsTable = ({ initialData }: Props) => {
 
             <button
               type="button"
-              className="ml-1 cursor-pointer select-none text-xl font-bold text-[#2c7a45] transition-colors"
+              className="ml-1 cursor-pointer select-none text-xl font-bold text-[#1e1e1e] transition-all opacity-0 group-hover:opacity-100"
               onClick={() => handleCampaignClick(campaign.campaign_id)}
               aria-label="Open campaign details"
             >
@@ -143,7 +143,7 @@ const CampaignsTable = ({ initialData }: Props) => {
             </thead>
             <tbody>
               {table.getRowModel().rows.map(row => (
-                <tr key={row.id}>
+                <tr key={row.id} className="group hover:bg-[#f5f5f5] transition-colors">
                   {row.getVisibleCells().map(cell => (
                     <td key={cell.id} className="text-left px-5 py-4 border-b border-gray-300">
                       {flexRender(cell.column.columnDef.cell, cell.getContext())}
