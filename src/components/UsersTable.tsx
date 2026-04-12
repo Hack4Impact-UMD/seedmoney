@@ -198,7 +198,11 @@ function CampaignsSummaryBadge({
 
 const columnHelper = createColumnHelper<UsersTableRow>();
 
-const UsersTable = ({ initialData, competitionYearMap, selectedYear }: Props) => {
+const UsersTable = ({
+  initialData,
+  competitionYearMap,
+  selectedYear,
+}: Props) => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<UsersTableRow | null>(null);
@@ -208,6 +212,7 @@ const UsersTable = ({ initialData, competitionYearMap, selectedYear }: Props) =>
   const handleConfirmDelete = useCallback(() => {
     setDeleteTarget(null);
     setToast(true);
+    // Later this should delete the user in the backend and then reload the users list.
   }, []);
 
   const columns = useMemo(
@@ -244,7 +249,9 @@ const UsersTable = ({ initialData, competitionYearMap, selectedYear }: Props) =>
               status={status}
               count={campaigns.length}
               onClick={() => setStatusTarget(row.original)}
-              {...(status === "mixed" && { bestStatus: getBestStatus(campaigns) })}
+              {...(status === "mixed" && {
+                bestStatus: getBestStatus(campaigns),
+              })}
             />
           );
         },
@@ -288,8 +295,7 @@ const UsersTable = ({ initialData, competitionYearMap, selectedYear }: Props) =>
         user.last_name.toLowerCase().includes(q) ||
         user.email.toLowerCase().includes(q);
       const matchesStatus =
-        !statusFilter ||
-        user.campaigns.some((c) => c.status === statusFilter);
+        !statusFilter || user.campaigns.some((c) => c.status === statusFilter);
       return matchesSearch && matchesStatus;
     });
   }, [search, statusFilter, yearFilteredData]);
@@ -476,7 +482,11 @@ const UsersTable = ({ initialData, competitionYearMap, selectedYear }: Props) =>
           onClose={() => setToast(false)}
           severity="success"
           variant="outlined"
-          sx={{ backgroundColor: "#f0fdf4", borderColor: "#bbf7d0", color: "#1B5E20" }}
+          sx={{
+            backgroundColor: "#f0fdf4",
+            borderColor: "#bbf7d0",
+            color: "#1B5E20",
+          }}
         >
           Account has been deleted!
         </Alert>
