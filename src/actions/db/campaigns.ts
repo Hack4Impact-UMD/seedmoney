@@ -5,21 +5,10 @@ export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
   const supabase = await createBrowserClient();
-  const campaignData = { ...data };
-
-  if (!campaignData.user_id) {
-    const {
-      data: { user },
-    } = await supabase.auth.getUser();
-
-    if (user) {
-      campaignData.user_id = user.id;
-    }
-  }
 
   const { data: insertedData, error } = await supabase
     .from("campaigns")
-    .insert(campaignData)
+    .insert(data)
     .select()
     .single();
 
@@ -162,10 +151,26 @@ export async function deleteCampaign(id: number): Promise<boolean> {
 export async function readCurrentDraftCampaignForUser(user_id: string) {
   const supabase = await createServerClient();
 
+  const { data: campaignMembers, error: membersError } = await supabase
+    .from("campaign_members")
+    .select("campaign_id")
+    .eq("user_id", user_id)
+    .order("campaign_id", { ascending: false });
+
+  if (membersError) {
+    console.error("Error reading campaign members:", membersError.message);
+    return null;
+  }
+
+  if (!campaignMembers || campaignMembers.length === 0) {
+    return null;
+  }
+
+  const campaignIds = campaignMembers.map((member) => member.campaign_id);
   const { data, error } = await supabase
     .from("campaigns")
     .select("*")
-    .eq("user_id", user_id)
+    .in("campaign_id", campaignIds)
     .eq("status", "in_progress")
     .order("date_created", { ascending: false })
     .limit(1);

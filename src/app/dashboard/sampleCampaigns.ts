@@ -3,7 +3,6 @@ import type { Campaign } from "@/src/types/db/campaigns";
 export const sampleCampaigns: Campaign[] = [
   {
     campaign_id: 1,
-    user_id: "1",
     name: "Save the Ocean Campaign",
     organization_name: "",
     givebutterlink: "https://givebutter.com/save-the-ocean",
@@ -39,7 +38,6 @@ export const sampleCampaigns: Campaign[] = [
   },
   {
     campaign_id: 2,
-    user_id: "2",
     name: "Community Garden Project",
     organization_name: "",
     givebutterlink: "https://givebutter.com/community-garden",
@@ -75,7 +73,6 @@ export const sampleCampaigns: Campaign[] = [
   },
   {
     campaign_id: 3,
-    user_id: "3",
     name: "Save the Garden",
     organization_name: "",
     givebutterlink: "",
@@ -111,7 +108,6 @@ export const sampleCampaigns: Campaign[] = [
   },
   {
     campaign_id: 4,
-    user_id: "4",
     name: "Protect the Trees",
     organization_name: "",
     givebutterlink: "https://givebutter.com/protect-trees",
@@ -147,7 +143,6 @@ export const sampleCampaigns: Campaign[] = [
   },
   {
     campaign_id: 5,
-    user_id: "5",
     name: "Clean Rivers Initiative",
     organization_name: "",
     givebutterlink: "https://givebutter.com/clean-rivers",

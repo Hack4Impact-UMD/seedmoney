@@ -2,7 +2,6 @@ import type { Existence, Status } from "./enums";
 
 export type Campaign = {
   campaign_id: number;
-  user_id: string | null;
   name: string;
   organization_name: string;
   givebutterlink: string;

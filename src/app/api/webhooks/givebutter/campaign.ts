@@ -21,7 +21,6 @@ export const campaignHandlers = {
   "campaign.created": async (payload: WebhookPayload) => {
     if (!payload.data) return;
     await createCampaign({
-      user_id: null,
       givebutter_id: String(payload.data.id),
       givebutter_slug: payload.data.slug,
       name: payload.data.title,

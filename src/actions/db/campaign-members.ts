@@ -7,7 +7,10 @@ import { Campaign } from "@/src/types/db/campaigns";
 export async function createCampaignMember(
   data: CampaignMember,
 ): Promise<CampaignMember | null> {
-  const supabase = await createServerClient();
+  const supabase =
+    typeof window === "undefined"
+      ? await createServerClient()
+      : createBrowserClient();
 
   const { data: insertedData, error } = await supabase
     .from("campaign_members")
