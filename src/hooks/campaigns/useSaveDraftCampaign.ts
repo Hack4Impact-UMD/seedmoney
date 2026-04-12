@@ -8,6 +8,13 @@ import {
 import useCreateCampaign from "@/src/hooks/campaigns/useCreateCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 
+function getFormattedSaveTime() {
+  return new Date().toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 export default function useSaveDraftCampaign() {
   const { draftCampaignId, setDraftCampaignId } = useDraftCampaignId();
   const { setLastSaved } = useLastSaved();
@@ -27,7 +34,7 @@ export default function useSaveDraftCampaign() {
       });
 
       setDraftCampaignId(draftCampaign.campaign_id);
-      setLastSaved(new Date().toLocaleTimeString());
+      setLastSaved(getFormattedSaveTime());
       return draftCampaign.campaign_id;
     }
 
@@ -39,7 +46,7 @@ export default function useSaveDraftCampaign() {
       campaignId: draftCampaignId,
       campaignData: campaignData,
     });
-    setLastSaved(new Date().toLocaleTimeString());
+    setLastSaved(getFormattedSaveTime());
     return draftCampaignId;
   };
 

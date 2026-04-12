@@ -6,6 +6,7 @@ import { usePathname } from "next/navigation";
 import {
   useAgreementGate,
   useApplicationForm,
+  useLastSaved,
 } from "./ApplicationFormProvider";
 import { StepStatus } from "@/src/types/form";
 import {
@@ -17,6 +18,7 @@ import {
 export default function ApplicationSidebar() {
   const form = useApplicationForm();
   const { hasPassedAgreement } = useAgreementGate();
+  const { lastSaved } = useLastSaved();
   const pathname = usePathname();
 
   return (
@@ -125,7 +127,7 @@ export default function ApplicationSidebar() {
           width={20}
           height={17}
         />
-        Auto saved at 3:42 PM
+        {lastSaved ? `Auto saved at ${lastSaved}` : "Not saved yet"}
       </div>
     </div>
   );

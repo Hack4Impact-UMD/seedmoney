@@ -48,6 +48,13 @@ function revokePreviewUrl(preview: string) {
   }
 }
 
+function getFormattedSaveTime() {
+  return new Date().toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
 function hasDuplicateFiles(
   nextFiles: File[],
   existingFiles: Pick<PreviewFile, "name" | "size">[],
@@ -169,7 +176,7 @@ export default function GardenStoryStep() {
         );
         form.setFieldValue("mainPhotoName", nextFiles[0]?.name ?? "");
         form.setFieldValue("mainPhotoSize", nextFiles[0]?.size ?? 0);
-        setLastSaved(new Date().toLocaleTimeString());
+        setLastSaved(getFormattedSaveTime());
       } catch (error) {
         console.error(error);
         setUploadError({
@@ -253,7 +260,7 @@ export default function GardenStoryStep() {
           "supportingPhotoSizes",
           updatedFiles.map((file) => file.size),
         );
-        setLastSaved(new Date().toLocaleTimeString());
+        setLastSaved(getFormattedSaveTime());
       } catch (error) {
         console.error(error);
         setSupportingUploadError({
@@ -332,7 +339,7 @@ export default function GardenStoryStep() {
     form.setFieldValue("mainPhotoStoragePath", "");
     form.setFieldValue("mainPhotoName", "");
     form.setFieldValue("mainPhotoSize", 0);
-    setLastSaved(new Date().toLocaleTimeString());
+    setLastSaved(getFormattedSaveTime());
   };
 
   const handleClearUploadError = () => {
@@ -373,7 +380,7 @@ export default function GardenStoryStep() {
       "supportingPhotoSizes",
       remainingFiles.map((file) => file.size),
     );
-    setLastSaved(new Date().toLocaleTimeString());
+    setLastSaved(getFormattedSaveTime());
   };
 
   const handleClearSupportingUploadError = () => {
@@ -393,7 +400,7 @@ export default function GardenStoryStep() {
       finalAnswer,
     });
     storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] = finalAnswer;
-    setLastSaved(new Date().toLocaleTimeString());
+    setLastSaved(getFormattedSaveTime());
   };
 
   const saveGardenStoryDraft = async () => {
