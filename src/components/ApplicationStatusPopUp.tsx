@@ -3,13 +3,13 @@
 import { useEffect } from "react";
 import Button from "@mui/material/Button";
 import type {
-  MockCampaign,
-  MockUsersTableRow,
-} from "@/src/app/dashboard/(admin)/users/mockUsersData";
+  UserCampaign,
+  UsersTableRow,
+} from "@/src/hooks/users/useAllUsersWithCampaigns";
 import type { Status } from "@/src/types/db/enums";
 
 interface ApplicationStatusPopUpProps {
-  user: MockUsersTableRow;
+  user: UsersTableRow;
   onClose: () => void;
 }
 
@@ -34,8 +34,8 @@ const STATUS_ORDER: Status[] = [
   "archived",
 ];
 
-function groupByStatus(campaigns: MockCampaign[]) {
-  const groups: Partial<Record<Status, MockCampaign[]>> = {};
+function groupByStatus(campaigns: UserCampaign[]) {
+  const groups: Partial<Record<Status, UserCampaign[]>> = {};
   for (const campaign of campaigns) {
     if (!groups[campaign.status]) {
       groups[campaign.status] = [];
@@ -59,7 +59,7 @@ const ApplicationStatusPopUp = ({
     };
   }, []);
 
-  const handleCampaignAction = (campaign: MockCampaign) => {
+  const handleCampaignAction = (campaign: UserCampaign) => {
     // TODO: Implement campaign action logic
     const action = STATUS_CONFIG[campaign.status].buttonLabel;
     console.log(`${action}: "${campaign.name}" (ID: ${campaign.campaign_id})`);
