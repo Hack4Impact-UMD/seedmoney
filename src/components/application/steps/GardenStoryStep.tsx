@@ -42,6 +42,12 @@ function buildPreviewFiles(files: File[]): PreviewFile[] {
   }));
 }
 
+function revokePreviewUrl(preview: string) {
+  if (preview.startsWith("blob:")) {
+    URL.revokeObjectURL(preview);
+  }
+}
+
 function hasDuplicateFiles(
   nextFiles: File[],
   existingFiles: Pick<PreviewFile, "name" | "size">[],
@@ -151,7 +157,7 @@ export default function GardenStoryStep() {
           isMain: true,
         });
 
-        files.forEach((file) => URL.revokeObjectURL(file.preview));
+        files.forEach((file) => revokePreviewUrl(file.preview));
         nextFiles[0].storagePath = uploadedImage.storage_path;
         setUploadError(null);
         setUploaded(true);
@@ -312,7 +318,7 @@ export default function GardenStoryStep() {
     setFiles((prevFiles) => {
       const remainingFiles = prevFiles.filter((file) => {
         if (file.preview === fileToDelete.preview) {
-          URL.revokeObjectURL(file.preview);
+          revokePreviewUrl(file.preview);
           return false;
         }
 
@@ -343,7 +349,7 @@ export default function GardenStoryStep() {
 
     const remainingFiles = supportingFiles.filter((file) => {
       if (file.preview === fileToDelete.preview) {
-        URL.revokeObjectURL(file.preview);
+        revokePreviewUrl(file.preview);
         return false;
       }
 

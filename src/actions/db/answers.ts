@@ -1,5 +1,5 @@
 import type { NewAnswer, Answers } from "@/src/types";
-import { createBrowserClient } from "@/src/lib/supabase-client";
+import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
 
 export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
   const supabase = await createBrowserClient();
@@ -116,4 +116,23 @@ export async function upsertAnswerByCampaignAndQuestion({
     ai_answer: "",
     final_answer: finalAnswer,
   });
+}
+
+export async function readAnswersByCampaign(
+  campaignId: number,
+): Promise<Answers[]> {
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("answers")
+    .select("*")
+    .eq("campaign_id", campaignId)
+    .order("question_id", { ascending: true });
+
+  if (error) {
+    console.error("Error reading answers by campaign:", error.message);
+    return [];
+  }
+
+  return (data ?? []) as Answers[];
 }

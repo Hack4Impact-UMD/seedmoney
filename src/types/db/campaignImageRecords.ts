@@ -6,6 +6,12 @@ export type CampaignImageRecord = {
   is_main: boolean;
 };
 
+export type HydratedCampaignImageRecord = CampaignImageRecord & {
+  signedUrl: string;
+  fileName: string;
+  fileSize: number;
+};
+
 export type CampaignFile = {
   file: File;
   campaignId: number;

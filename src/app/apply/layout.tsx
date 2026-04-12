@@ -3,6 +3,8 @@ import { ApplicationFormProvider } from "@/src/components/application/Applicatio
 import { createServerClient } from "@/src/lib/supabase-client";
 import { readCurrentDraftCampaignForUser } from "@/src/actions/db/campaigns";
 import { ApplicationFormData } from "@/src/types/form";
+import { readAnswersByCampaign } from "@/src/actions/db/answers";
+import { readCampaignImagesByCampaign } from "@/src/actions/db/campaign-image-records";
 
 export default async function ApplyLayout({
   children,
@@ -18,6 +20,18 @@ export default async function ApplyLayout({
   const draftCampaign = userId
     ? await readCurrentDraftCampaignForUser(userId)
     : null;
+  const [draftAnswers, draftImages] = draftCampaign
+    ? await Promise.all([
+        readAnswersByCampaign(draftCampaign.campaign_id),
+        readCampaignImagesByCampaign(draftCampaign.campaign_id),
+      ])
+    : [[], []];
+
+  const storyAnswersByQuestionId = new Map(
+    draftAnswers.map((answer) => [answer.question_id, answer.final_answer]),
+  );
+  const mainImage = draftImages.find((image) => image.is_main) ?? null;
+  const supportingImages = draftImages.filter((image) => !image.is_main);
 
   const initialFormValues: Partial<ApplicationFormData> = draftCampaign
     ? {
@@ -40,6 +54,20 @@ export default async function ApplyLayout({
         gardenCountry: draftCampaign.country ?? "US",
         gardenCategory: draftCampaign.project_category ?? "",
         gardenBeneficiaries: draftCampaign.project_beneficiaries ?? [],
+        storyLocationAndAudience: storyAnswersByQuestionId.get(1) ?? "",
+        storyChallenge: storyAnswersByQuestionId.get(2) ?? "",
+        storySeasonActivity: storyAnswersByQuestionId.get(3) ?? "",
+        storyCampaignImpact: storyAnswersByQuestionId.get(4) ?? "",
+        mainPhoto: mainImage?.signedUrl ?? "",
+        mainPhotoStoragePath: mainImage?.storage_path ?? "",
+        mainPhotoName: mainImage?.fileName ?? "",
+        mainPhotoSize: mainImage?.fileSize ?? 0,
+        supportingPhotos: supportingImages.map((image) => image.signedUrl),
+        supportingPhotoStoragePaths: supportingImages.map(
+          (image) => image.storage_path,
+        ),
+        supportingPhotoNames: supportingImages.map((image) => image.fileName),
+        supportingPhotoSizes: supportingImages.map((image) => image.fileSize),
         organizationName: draftCampaign.organization_name ?? "",
         organizationIdentifier: draftCampaign.ein ?? "",
         mailingStreet1: draftCampaign.mailing_street_1 ?? "",
