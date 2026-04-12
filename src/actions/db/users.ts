@@ -1,6 +1,38 @@
 import type { NewUser, NewUserInternal, Users } from "@/src/types";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 
+export type JoinedCampaign = {
+  campaign_id: number;
+  name: string;
+  status: string;
+  competition_id: number;
+};
+
+export type UserWithCampaigns = Pick<Users, "id" | "first_name" | "last_name" | "email"> & {
+  campaign_members: {
+    campaigns: JoinedCampaign;
+  }[];
+};
+
+export async function readAllUsersWithCampaigns(): Promise<UserWithCampaigns[]> {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("users")
+    .select(`
+      id, first_name, last_name, email,
+      campaign_members(
+        campaigns(campaign_id, name, status, competition_id)
+      )
+    `);
+
+  if (error) {
+    console.error("Error reading users with campaigns:", error.message);
+    return [];
+  }
+
+  return (data ?? []) as unknown as UserWithCampaigns[];
+}
 
 export async function createUser(user: NewUser): Promise<Users | null> {
   const supabase = await createBrowserClient();
