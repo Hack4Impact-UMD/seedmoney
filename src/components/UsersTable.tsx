@@ -12,13 +12,15 @@ import DeleteUserPopUp from "@/src/components/DeleteUserPopUp";
 import ApplicationStatusPopUp from "@/src/components/ApplicationStatusPopUp";
 import { Avatar, Chip, Snackbar, Alert } from "@mui/material";
 import type {
-  MockCampaign,
-  MockUsersTableRow,
-} from "@/src/app/dashboard/(admin)/users/mockUsersData";
+  UserCampaign,
+  UsersTableRow,
+} from "@/src/hooks/users/useAllUsersWithCampaigns";
 import type { Status } from "@/src/types/db/enums";
 
 interface Props {
-  initialData: MockUsersTableRow[];
+  initialData: UsersTableRow[];
+  competitionYearMap: Map<number, number>;
+  selectedYear: number;
 }
 
 type AggregateStatus = Status | "mixed";
@@ -33,7 +35,7 @@ const STATUS_LABELS: Record<AggregateStatus, string> = {
   mixed: "Mixed",
 };
 
-function getAggregateStatus(campaigns: MockCampaign[]): AggregateStatus {
+function getAggregateStatus(campaigns: UserCampaign[]): AggregateStatus {
   const statuses = new Set(campaigns.map((c) => c.status));
   if (statuses.size === 1) return campaigns[0].status;
   return "mixed";
@@ -48,7 +50,7 @@ const STATUS_PRIORITY: Status[] = [
   "archived",
 ];
 
-function getBestStatus(campaigns: MockCampaign[]): Status {
+function getBestStatus(campaigns: UserCampaign[]): Status {
   const statuses = new Set(campaigns.map((c) => c.status));
   return STATUS_PRIORITY.find((s) => statuses.has(s)) ?? "archived";
 }
@@ -194,19 +196,18 @@ function CampaignsSummaryBadge({
   );
 }
 
-const columnHelper = createColumnHelper<MockUsersTableRow>();
+const columnHelper = createColumnHelper<UsersTableRow>();
 
-const UsersTable = ({ initialData }: Props) => {
+const UsersTable = ({ initialData, competitionYearMap, selectedYear }: Props) => {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [deleteTarget, setDeleteTarget] = useState<MockUsersTableRow | null>(null);
-  const [statusTarget, setStatusTarget] = useState<MockUsersTableRow | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<UsersTableRow | null>(null);
+  const [statusTarget, setStatusTarget] = useState<UsersTableRow | null>(null);
   const [toast, setToast] = useState(false);
 
   const handleConfirmDelete = useCallback(() => {
     setDeleteTarget(null);
     setToast(true);
-    // Later this should delete the user in the backend and then reload the users list.
   }, []);
 
   const columns = useMemo(
@@ -270,9 +271,18 @@ const UsersTable = ({ initialData }: Props) => {
     [],
   );
 
+  const yearFilteredData = useMemo(() => {
+    return initialData.map((user) => ({
+      ...user,
+      campaigns: user.campaigns.filter(
+        (c) => competitionYearMap.get(c.competition_id) === selectedYear,
+      ),
+    }));
+  }, [initialData, competitionYearMap, selectedYear]);
+
   const filteredData = useMemo(() => {
     const q = search.toLowerCase();
-    return initialData.filter((user) => {
+    return yearFilteredData.filter((user) => {
       const matchesSearch =
         user.first_name.toLowerCase().includes(q) ||
         user.last_name.toLowerCase().includes(q) ||
@@ -282,7 +292,7 @@ const UsersTable = ({ initialData }: Props) => {
         user.campaigns.some((c) => c.status === statusFilter);
       return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter, initialData]);
+  }, [search, statusFilter, yearFilteredData]);
 
   const table = useReactTable({
     data: filteredData,
@@ -298,7 +308,7 @@ const UsersTable = ({ initialData }: Props) => {
         {/* Header */}
         <div className="pt-8 px-5">
           <h2 className="text-black sm:text-left text-center">
-            2026 User List
+            {selectedYear} User List
           </h2>
           <p className="text-sm text-gray-500 sm:text-left text-center">
             {initialData.length} Users
