@@ -98,7 +98,13 @@ export default function Navbar() {
           <div className={clsx("h-3 w-3 rounded-full", isSelected ? "bg-white" : "bg-gray-200/50")} />
         ) : (
           <ListItemText
-            primary={campaign.name}
+            primary={
+              `${campaign.name}${
+                campaign.status === "in_progress" ? " (Draft)" 
+                : campaign.status === "submitted_under_review" ? " (Pending)"
+                : ""
+              }`
+            }
             slotProps={{
               primary: {
                 className: "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
