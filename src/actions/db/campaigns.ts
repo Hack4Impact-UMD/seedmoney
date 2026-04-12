@@ -5,6 +5,9 @@ export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
   const supabase = await createBrowserClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
 
   const { data: insertedData, error } = await supabase
     .from("campaigns")
@@ -15,6 +18,28 @@ export async function createCampaign(
   if (error) {
     console.error("Error creating campaign:", error.message);
     return null;
+  }
+
+  if (user) {
+    const { error: campaignMemberError } = await supabase
+      .from("campaign_members")
+      .insert({
+        campaign_id: insertedData.campaign_id,
+        user_id: user.id,
+        role: "campaign_leader",
+      });
+
+    if (campaignMemberError) {
+      await supabase
+        .from("campaigns")
+        .delete()
+        .eq("campaign_id", insertedData.campaign_id);
+      console.error(
+        "Error creating campaign member:",
+        campaignMemberError.message,
+      );
+      return null;
+    }
   }
 
   return insertedData as Campaign;

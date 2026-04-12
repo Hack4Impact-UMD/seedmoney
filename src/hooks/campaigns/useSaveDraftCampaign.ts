@@ -5,8 +5,6 @@ import {
   useDraftCampaignId,
   useLastSaved,
 } from "@/src/components/application/ApplicationFormProvider";
-import { useAuth } from "@/src/context/AuthProvider";
-import { createCampaignMember } from "@/src/actions/db/campaign-members";
 import useCreateCampaign from "@/src/hooks/campaigns/useCreateCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 
@@ -20,7 +18,6 @@ function getFormattedSaveTime() {
 export default function useSaveDraftCampaign() {
   const { draftCampaignId, setDraftCampaignId } = useDraftCampaignId();
   const { setLastSaved } = useLastSaved();
-  const { user } = useAuth();
   const createCampaign = useCreateCampaign();
   const updateCampaign = useUpdateCampaign();
 
@@ -35,18 +32,6 @@ export default function useSaveDraftCampaign() {
         date_created: new Date().toISOString(),
         ...campaignData,
       });
-
-      if (user) {
-        const campaignMember = await createCampaignMember({
-          campaign_id: draftCampaign.campaign_id,
-          user_id: user.id,
-          role: "campaign_leader",
-        });
-
-        if (!campaignMember) {
-          throw new Error("Error creating campaign member");
-        }
-      }
 
       setDraftCampaignId(draftCampaign.campaign_id);
       setLastSaved(getFormattedSaveTime());
