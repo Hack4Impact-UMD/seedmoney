@@ -105,6 +105,27 @@ export async function updateCampaign(
   return data as Campaign;
 }
 
+export async function deleteCampaign(id: number): Promise<boolean> {
+  const supabase = await createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .delete()
+    .eq("campaign_id", id)
+    .select("campaign_id");
+
+  if (error) {
+    console.error("Error deleting campaign:", error.message);
+    return false;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("Campaign not found for deletion:", id);
+    return false;
+  }
+
+  return true;
+}
 
 export async function updateCampaignGivebutterID(
   id: number,
@@ -187,7 +208,9 @@ export async function readOngoingChallengeApplications(): Promise<CampaignWithLe
   
   console.log("campaigns data:", data, "error:", error);
 
+  
   if (error) throw error;
+
 
   return data.map(campaign => {
     const leaderMember = campaign.campaign_members.find((member: CampaignMember) => member.role === "campaign_leader") || campaign.campaign_members[0];

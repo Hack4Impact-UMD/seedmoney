@@ -23,11 +23,7 @@ export default function OngoingApplicationsPage() {
 
   return (
     <div className="flex min-h-screen">
-      <Navbar
-        campaigns={[]}
-        selectedCampaignId={0}
-        onCampaignSelect={() => {}}
-      />
+      <Navbar/>
       <div className="flex-1 bg-gray-50 p-10">
         <h3 className="text-4xl font-bold text-[#096B2E] mb-5">Ongoing Campaigns</h3>
         <CampaignsTable initialData={campaigns || []}/>
