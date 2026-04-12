@@ -1,25 +1,23 @@
 "use client";
 import Navbar from "@/src/components/Navbar";
 import CampaignsTable from "@/src/components/CampaignsTable";
+import Loading from "@/src/app/loading";
+import Error from "@/src/app/error";
 
 import useReadOngoingCampaigns from "@/src/hooks/campaigns/useReadOngoingCampaigns";
 
 export default function OngoingApplicationsPage() {
-  const { data: campaigns, isLoading, error } = useReadOngoingCampaigns();
+  const { data: campaigns, isLoading, error, refetch } = useReadOngoingCampaigns();
 
   if (isLoading) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Loading campaigns...</p>
-      </div>
+      <Loading />
     );
   }
 
   if (error) {
     return (
-      <div className="flex min-h-screen items-center justify-center">
-        <p>Error loading campaigns: {error.message}</p>
-      </div>
+      <Error error={error} reset={() => refetch()} />
     )
   }
 
