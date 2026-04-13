@@ -1,4 +1,3 @@
-import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
 import { ApplicationFormData, Step } from "@/src/types/form";
 
 export const APPLICATION_STEPS = [
@@ -26,6 +25,7 @@ export type ApplicationProgressValues = Pick<
   | "storyChallenge"
   | "storySeasonActivity"
   | "storyCampaignImpact"
+  | "mainPhoto"
   | "organizationName"
   | "organizationIdentifier"
   | "mailingStreet1"
@@ -46,11 +46,9 @@ function validateEmail(email: string): boolean {
 
 export function getApplicationCompletionState(
   values: ApplicationProgressValues,
-  agreementSelections: boolean[],
+  hasPassedAgreement: boolean,
 ) {
-  const agreementComplete =
-    agreementSelections.length === GRANT_AGREEMENT_ITEMS.length &&
-    agreementSelections.every(Boolean);
+  const agreementComplete = hasPassedAgreement;
 
   const campaignComplete =
     values.campaignTitle.trim().length > 0 &&
@@ -69,7 +67,8 @@ export function getApplicationCompletionState(
     values.storyLocationAndAudience.trim().length > 0 &&
     values.storyChallenge.trim().length > 0 &&
     values.storySeasonActivity.trim().length > 0 &&
-    values.storyCampaignImpact.trim().length > 0;
+    values.storyCampaignImpact.trim().length > 0 &&
+    values.mainPhoto.trim().length > 0;
 
   const contactComplete =
     values.organizationName.trim().length > 0 &&
@@ -103,7 +102,7 @@ export function getApplicationCompletionState(
 export function getDerivedApplicationSteps(
   pathname: string,
   values: ApplicationProgressValues,
-  agreementSelections: boolean[],
+  hasPassedAgreement: boolean,
 ): Step[] {
   const {
     agreementComplete,
@@ -112,20 +111,24 @@ export function getDerivedApplicationSteps(
     storyComplete,
     contactComplete,
     reviewComplete,
-  } = getApplicationCompletionState(values, agreementSelections);
+  } = getApplicationCompletionState(values, hasPassedAgreement);
 
-  const currentIndex = APPLICATION_STEPS.findIndex((step) => step.href === pathname);
+  const currentIndex = APPLICATION_STEPS.findIndex(
+    (step) => step.href === pathname,
+  );
   const activeIndex = currentIndex === -1 ? 0 : currentIndex;
 
-  const completionByLabel: Record<(typeof APPLICATION_STEPS)[number]["label"], boolean> =
-    {
-      "Grantee Agreement": agreementComplete,
-      "Campaign Information": campaignComplete,
-      "Garden Information": gardenComplete,
-      "Garden Story": storyComplete,
-      "Contact Information": contactComplete,
-      "Review & Submit": reviewComplete,
-    };
+  const completionByLabel: Record<
+    (typeof APPLICATION_STEPS)[number]["label"],
+    boolean
+  > = {
+    "Grantee Agreement": agreementComplete,
+    "Campaign Information": campaignComplete,
+    "Garden Information": gardenComplete,
+    "Garden Story": storyComplete,
+    "Contact Information": contactComplete,
+    "Review & Submit": reviewComplete,
+  };
 
   return APPLICATION_STEPS.map((step, index) => {
     if (index === activeIndex) {

@@ -1,14 +1,48 @@
 import type { Campaign } from "@/src/types";
-import { createBrowserClient } from "@/src/lib/supabase-client";
+import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
 
 export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+  const campaignData = { ...data };
+
+  if (userError || !user) {
+    console.error(
+      "Error reading authenticated user for campaign creation:",
+      userError?.message ?? "No authenticated user found",
+    );
+    return null;
+  }
+
+  if (
+    campaignData.competition_id === undefined ||
+    campaignData.competition_id === null
+  ) {
+    const { data: currentCompetition, error: competitionError } = await supabase
+      .from("competition_metadata")
+      .select("competition_id")
+      .eq("is_current", true)
+      .single();
+
+    if (competitionError || !currentCompetition) {
+      console.error(
+        "Error reading current competition:",
+        competitionError?.message ?? "No current competition found",
+      );
+      return null;
+    }
+
+    campaignData.competition_id = currentCompetition.competition_id;
+  }
 
   const { data: insertedData, error } = await supabase
     .from("campaigns")
-    .insert(data)
+    .insert(campaignData)
     .select()
     .single();
 
@@ -17,15 +51,74 @@ export async function createCampaign(
     return null;
   }
 
+  const { error: campaignMemberError } = await supabase
+    .from("campaign_members")
+    .insert({
+      campaign_id: insertedData.campaign_id,
+      user_id: user.id,
+      role: "campaign_leader",
+    });
+
+  if (campaignMemberError) {
+    await supabase
+      .from("campaigns")
+      .delete()
+      .eq("campaign_id", insertedData.campaign_id);
+    console.error(
+      "Error creating campaign member:",
+      campaignMemberError.message,
+    );
+    return null;
+  }
+
   return insertedData as Campaign;
 }
 
+export async function createCampaignGivebutter(
+  data: Partial<Campaign>,
+): Promise<Campaign | null> {
+  const supabase = await createServerClient();
+  const campaignData = { ...data };
+
+  if (
+    campaignData.competition_id === undefined ||
+    campaignData.competition_id === null
+  ) {
+    const { data: currentCompetition, error: competitionError } = await supabase
+      .from("competition_metadata")
+      .select("competition_id")
+      .eq("is_current", true)
+      .single();
+
+    if (competitionError || !currentCompetition) {
+      console.error(
+        "Error reading current competition:",
+        competitionError?.message ?? "No current competition found",
+      );
+      return null;
+    }
+
+    campaignData.competition_id = currentCompetition.competition_id;
+  }
+
+  const { data: insertedData, error } = await supabase
+    .from("campaigns")
+    .insert(campaignData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating Givebutter campaign:", error.message);
+    return null;
+  }
+
+  return insertedData as Campaign;
+}
 
 export async function readCampaign(
   ids?: number | number[],
 ): Promise<Campaign | Campaign[] | null> {
   const supabase = createBrowserClient();
-
 
   // Return ALL campaigns
   if (ids === undefined) {
@@ -81,7 +174,6 @@ export async function updateCampaign(
   const supabase = await createBrowserClient();
   console.log("updateCampaign called", id, campaign);
 
-
   const { data, error } = await supabase
     .from("campaigns")
     .update(campaign)
@@ -102,14 +194,12 @@ export async function updateCampaign(
   return data as Campaign;
 }
 
-
 export async function updateCampaignGivebutterID(
   id: number,
   campaign: Partial<Campaign>,
 ): Promise<Campaign | null> {
   const supabase = await createBrowserClient();
   console.log("updateCampaign called", id, campaign);
-
 
   const { data, error } = await supabase
     .from("campaigns")
@@ -153,3 +243,40 @@ export async function deleteCampaign(id: number): Promise<boolean> {
   return true;
 }
 
+export async function readCurrentDraftCampaignForUser(user_id: string) {
+  const supabase = await createServerClient();
+
+  const { data: campaignMembers, error: membersError } = await supabase
+    .from("campaign_members")
+    .select("campaign_id")
+    .eq("user_id", user_id)
+    .eq("role", "campaign_leader")
+    .order("campaign_id", { ascending: false });
+
+  if (membersError) {
+    console.error("Error reading campaign members:", membersError.message);
+    return null;
+  }
+
+  if (!campaignMembers || campaignMembers.length === 0) {
+    return null;
+  }
+
+  const campaignIds = campaignMembers.map((member) => member.campaign_id);
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("*")
+    .in("campaign_id", campaignIds)
+    .eq("status", "in_progress")
+    .order("date_created", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error("Error reading campaign:", error.message);
+    return null;
+  }
+
+  if (!data || data.length === 0) return null;
+
+  return data[0] as Campaign;
+}

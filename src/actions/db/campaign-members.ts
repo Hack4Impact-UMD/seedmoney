@@ -7,7 +7,10 @@ import { Campaign } from "@/src/types/db/campaigns";
 export async function createCampaignMember(
   data: CampaignMember,
 ): Promise<CampaignMember | null> {
-  const supabase = await createServerClient();
+  const supabase =
+    typeof window === "undefined"
+      ? await createServerClient()
+      : createBrowserClient();
 
   const { data: insertedData, error } = await supabase
     .from("campaign_members")
@@ -97,14 +100,12 @@ export async function deleteCampaignMember(
 }
 
 export async function readCampaignsFromMembers(user_id: string) {
-
   const supabase = createBrowserClient();
-  
+
   const { data, error } = await supabase
     .from("campaign_members")
     .select("campaign_id")
     .eq("user_id", user_id);
-
 
   if (error) {
     console.error("Error reading campaign members:", error.message);
@@ -117,6 +118,5 @@ export async function readCampaignsFromMembers(user_id: string) {
 
   const campaigns = await readCampaign(campaignIds);
 
-  
   return campaigns as Campaign[];
 }

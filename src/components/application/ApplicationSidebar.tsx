@@ -1,9 +1,15 @@
 "use client";
 
+import { ArrowBack } from "@mui/icons-material";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
-import { useAgreementSelections, useApplicationForm } from "./ApplicationFormProvider";
+import { usePathname, useRouter } from "next/navigation";
+import {
+  useAgreementGate,
+  useApplicationForm,
+  useDraftCampaignId,
+  useLastSaved,
+} from "./ApplicationFormProvider";
 import { StepStatus } from "@/src/types/form";
 import {
   APPLICATION_STEPS,
@@ -13,8 +19,15 @@ import {
 
 export default function ApplicationSidebar() {
   const form = useApplicationForm();
-  const { agreementSelections } = useAgreementSelections();
+  const { hasPassedAgreement } = useAgreementGate();
+  const { draftCampaignId } = useDraftCampaignId();
+  const { lastSaved } = useLastSaved();
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleExit = () => {
+    router.push(draftCampaignId ? `/dashboard/${draftCampaignId}` : "/dashboard");
+  };
 
   return (
     <div className="flex flex-col gap-4 w-[260px] mt-20">
@@ -34,6 +47,7 @@ export default function ApplicationSidebar() {
           storyChallenge: state.values.storyChallenge,
           storySeasonActivity: state.values.storySeasonActivity,
           storyCampaignImpact: state.values.storyCampaignImpact,
+          mainPhoto: state.values.mainPhoto,
           organizationName: state.values.organizationName,
           organizationIdentifier: state.values.organizationIdentifier,
           mailingStreet1: state.values.mailingStreet1,
@@ -52,63 +66,63 @@ export default function ApplicationSidebar() {
           const steps = getDerivedApplicationSteps(
             pathname,
             values,
-            agreementSelections,
+            hasPassedAgreement,
           );
           const { agreementComplete } = getApplicationCompletionState(
             values,
-            agreementSelections,
+            hasPassedAgreement,
           );
 
           return (
-          <>
-            {steps?.map((step, i) => {
-              const canNavigate =
-                step.label === "Grantee Agreement" || agreementComplete;
-              const content = (
-                <div
-                  className={`flex items-start gap-3 ${
-                    canNavigate ? "cursor-pointer" : "cursor-default"
-                  }`}
-                >
-                  <div className="flex flex-col items-center">
-                    <StepDot status={step.status} />
+            <>
+              {steps?.map((step, i) => {
+                const canNavigate =
+                  step.label === "Grantee Agreement" || agreementComplete;
+                const content = (
+                  <div
+                    className={`flex items-start gap-3 ${
+                      canNavigate ? "cursor-pointer" : "cursor-default"
+                    }`}
+                  >
+                    <div className="flex flex-col items-center">
+                      <StepDot status={step.status} />
 
-                    {i !== steps.length - 1 && (
-                      <div className="flex flex-col items-center h-[35px]">
-                        <div className="h-[8px]" />
-                        <div
-                          className={`w-[2px] flex-1 ${
-                            steps[i + 1].status === "unvisited"
-                              ? "bg-black/10"
-                              : "bg-[#56BD60]"
-                          }`}
-                        />
-                      </div>
-                    )}
-                  </div>
+                      {i !== steps.length - 1 && (
+                        <div className="flex flex-col items-center h-[35px]">
+                          <div className="h-[8px]" />
+                          <div
+                            className={`w-[2px] flex-1 ${
+                              steps[i + 1].status === "unvisited"
+                                ? "bg-black/10"
+                                : "bg-[#56BD60]"
+                            }`}
+                          />
+                        </div>
+                      )}
+                    </div>
 
-                  <p
-                    className={`text-md leading-[133%] font-normal -translate-y-1
+                    <p
+                      className={`text-md leading-[133%] font-normal -translate-y-1
                     text-black
                     ${step.status === "review" ? "text-red-600" : ""}
                     ${canNavigate ? "hover:opacity-80" : "opacity-60"}`}
-                  >
-                    {step.label}
-                  </p>
-                </div>
-              );
+                    >
+                      {step.label}
+                    </p>
+                  </div>
+                );
 
-              if (!canNavigate) {
-                return <div key={step.label}>{content}</div>;
-              }
+                if (!canNavigate) {
+                  return <div key={step.label}>{content}</div>;
+                }
 
-              return (
-                <Link key={step.label} href={APPLICATION_STEPS[i].href}>
-                  {content}
-                </Link>
-              );
-            })}
-          </>
+                return (
+                  <Link key={step.label} href={APPLICATION_STEPS[i].href}>
+                    {content}
+                  </Link>
+                );
+              })}
+            </>
           );
         }}
       </form.Subscribe>
@@ -121,8 +135,17 @@ export default function ApplicationSidebar() {
           width={20}
           height={17}
         />
-        Auto saved at 3:42 PM
+        {lastSaved ? `Auto saved at ${lastSaved}` : "Not saved yet"}
       </div>
+
+      <button
+        type="button"
+        onClick={handleExit}
+        className="flex items-center gap-2 text-[#666] text-[14px] w-fit hover:opacity-80"
+      >
+        <ArrowBack sx={{ fontSize: 16 }} />
+        Exit
+      </button>
     </div>
   );
 }
