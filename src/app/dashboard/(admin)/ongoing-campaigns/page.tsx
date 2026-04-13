@@ -5,11 +5,14 @@ import Loading from "@/src/app/loading";
 import Error from "@/src/app/error";
 
 import useReadOngoingCampaigns from "@/src/hooks/campaigns/useReadOngoingCampaigns";
+import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 
 export default function OngoingApplicationsPage() {
-  const { data: campaigns, isLoading, error, refetch } = useReadOngoingCampaigns();
+  const { data: currentCompetition, isLoading: isLoadingCompetition } = useReadCurrentCompetition();
 
-  if (isLoading) {
+  const { data: campaigns, isLoading, error, refetch } = useReadOngoingCampaigns(currentCompetition?.competition_id);
+
+  if (isLoadingCompetition || isLoading) {
     return (
       <Loading />
     );

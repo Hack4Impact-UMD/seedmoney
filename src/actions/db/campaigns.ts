@@ -1,8 +1,7 @@
 "use server";
 
-import type { Campaign, CampaignMember } from "@/src/types";
+import type { Campaign } from "@/src/types";
 import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
-import { CampaignWithLeader } from "@/src/types/frontend/campaigns";
 
 
 export async function createCampaign(
@@ -245,54 +244,6 @@ export async function updateCampaignGivebutterID(
   }
 
   return data as Campaign;
-}
-
-export async function readOngoingChallengeApplications(): Promise<CampaignWithLeader[]> {
-  const supabase = await createServerClient();
-
-  // reading current competition
-  const { data: competition, error: compError } = await supabase
-    .from("competition_metadata")
-    .select()
-    .eq("is_current", true)
-    .single();
-
-  console.log("competition:", competition, "error:", compError);
-
-  if (compError || !competition) throw new Error("No ongoing challenge found");
-
-  // retrieve campaigns from current competition
-  const { data, error } = await supabase
-    .from("campaigns")
-    .select(`
-      *,
-      campaign_members!inner(
-        role,
-        users!inner(
-          first_name,
-          last_name
-        )
-      )`)
-    .eq("competition_id", competition.competition_id)
-    .eq("status", "approved")
-  
-  console.log("campaigns data:", data, "error:", error);
-
-  
-  if (error) throw error;
-
-
-  return data.map(campaign => {
-    const leaderMember = campaign.campaign_members.find((member: CampaignMember) => member.role === "campaign_leader") || campaign.campaign_members[0];
-    const leaderUser = Array.isArray(leaderMember?.users) 
-      ? leaderMember.users[0] 
-      : leaderMember?.users;
-
-    return {
-      ...campaign,
-      campaign_leader: leaderUser ? `${leaderUser.first_name} ${leaderUser.last_name}` : "",
-    } as CampaignWithLeader
-  });
 }
 
 export async function readCurrentDraftCampaignForUser(user_id: string) {

@@ -1,16 +1,18 @@
 import { useQuery } from "@tanstack/react-query";
-import { readOngoingChallengeApplications } from "@/src/actions/db/campaigns";
+import { readOngoingChallengeApplications } from "@/src/actions/frontend/campaigns";
 import { CampaignWithLeader } from "@/src/types/frontend/campaigns";
 
-export default function useReadOngoingCampaigns() {
+export default function useReadOngoingCampaigns(competitionId?: number) {
   return useQuery<CampaignWithLeader[]>({
-    queryKey: ["campaigns", "ongoing-challenges"],
+    queryKey: ["campaigns", "ongoing-challenges", competitionId],
     queryFn: async () => {
-      const campaigns = await readOngoingChallengeApplications();
+      if (competitionId === undefined) return [];
+      const campaigns = await readOngoingChallengeApplications(competitionId);
       if (!campaigns) return [];
       return campaigns as CampaignWithLeader[];
     },
     staleTime: 1000 * 60 * 5,
     retry: 2,
+    enabled: competitionId !== undefined
   })
 }
