@@ -1,80 +1,84 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
-import type {
-  ReviewApplication,
-  ReviewApplicationStatus,
-} from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@mui/material";
+import BaseAlert from "@/src/components/bases/BaseAlert";
+import BaseModal from "@/src/components/bases/BaseModal";
+import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
+import type { Status } from "@/src/types/db/enums";
+import { ReviewApplicationRow } from "@/src/types/frontend/campaignsTable";
 
-type ReviewApplicationsTableProps = {
-  applications: ReviewApplication[];
-};
 
 const pageSizeOptions = [5, 10, 20];
 
+type TabStatus = "PENDING" | "DENIED";
 type ReviewAction = "APPROVE" | "DENY" | "REVERT";
 
-const formatSubmissionDate = (date: string) =>
-  new Intl.DateTimeFormat("en-US", {
-    month: "2-digit",
-    day: "2-digit",
-    year: "numeric",
-  }).format(new Date(`${date}T00:00:00`));
+const formatDate = (dateStr: string) => {
+    if (!dateStr) return "N/A";
+  const [year, month, day] = dateStr.split("T")[0].split("-");
+  return `${month}/${day}/${year}`;
+};
 
-export default function ReviewApplicationsTable({
-  applications,
-}: ReviewApplicationsTableProps) {
-  const [tab, setTab] = useState<ReviewApplicationStatus>("PENDING");
+interface Props {
+  applications: ReviewApplicationRow[];
+}
+
+export default function ReviewApplicationsTable({ applications }: Props) {
+  const [tab, setTab] = useState<TabStatus>("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(5);
   const [pendingAction, setPendingAction] = useState<ReviewAction | null>(null);
+  const [notification, setNotification] = useState<{
+    action: "approved" | "denied" | "reverted" | "error";
+    campaignNames: string[];
+  } | null>(null);
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
   const router = useRouter();
+  const queryClient = useQueryClient();
+  const updateCampaignMutation = useUpdateCampaign();
 
-  const countsByStatus = useMemo(
+  useEffect(() => {
+    if (!snackbarOpen) return;
+    const timer = setTimeout(() => {
+      setSnackbarOpen(false);
+      setNotification(null);
+    }, 4000);
+    return () => clearTimeout(timer);
+  }, [snackbarOpen]);
+  const pendingCount = useMemo(
     () =>
-      applications.reduce(
-        (counts, application) => {
-          if (application.status === "PENDING" || application.status === "DENIED") {
-            counts[application.status] += 1;
-          }
-          return counts;
-        },
-        { PENDING: 0, DENIED: 0 } as Record<"PENDING" | "DENIED", number>,
-      ),
+      applications.filter((a) => a.status === "submitted_under_review").length,
     [applications],
   );
 
   const filteredApplications = useMemo(() => {
+    const dbStatus =
+      tab === "PENDING" ? "submitted_under_review" : "not_approved";
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
     return applications.filter((application) => {
-      if (application.status !== tab) {
-        return false;
-      }
-
-      if (!normalizedQuery) {
-        return true;
-      }
-
+      if (application.status !== dbStatus) return false;
+      if (!normalizedQuery) return true;
       return (
         application.campaignTitle.toLowerCase().includes(normalizedQuery) ||
-        application.campaignLeader.toLowerCase().includes(normalizedQuery) ||
-        formatSubmissionDate(application.submissionDate)
-          .toLowerCase()
-          .includes(normalizedQuery)
+        application.campaignLeader.toLowerCase().includes(normalizedQuery)
       );
     });
   }, [applications, searchQuery, tab]);
 
-  const totalPages = Math.max(1, Math.ceil(filteredApplications.length / pageSize));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(filteredApplications.length / pageSize),
+  );
   const currentPageIndex = Math.min(pageIndex, totalPages - 1);
   const paginatedApplications = useMemo(() => {
     const start = currentPageIndex * pageSize;
@@ -90,7 +94,46 @@ export default function ReviewApplicationsTable({
     selectedIds.includes(application.campaignId),
   );
 
-  const handleTabChange = (status: ReviewApplicationStatus) => {
+  const handleBulkUpdate = async (
+    ids: number[],
+    status: Status,
+  ) => {
+    try {
+      const names = selectedApplications.map((a) => a.campaignTitle);
+
+      await Promise.all(
+        ids.map((id) =>
+          updateCampaignMutation.mutateAsync({
+            campaignId: id,
+            campaignData: { status },
+          }),
+        ),
+      );
+
+      const action =
+        status === "approved"
+          ? "approved"
+          : status === "not_approved"
+            ? "denied"
+            : "reverted";
+      setNotification({ action, campaignNames: names });
+      setSnackbarOpen(true);
+      setSelectedIds([]);
+      setPendingAction(null);
+
+      // Invalidate the query to refresh the data
+      await queryClient.invalidateQueries({
+        queryKey: ["campaigns"],
+      });
+    } catch (error) {
+      console.error("Error updating campaigns:", error);
+      setNotification({ action: "error", campaignNames: [] });
+      setSnackbarOpen(true);
+      setPendingAction(null);
+    }
+  };
+
+  const handleTabChange = (status: TabStatus) => {
     setTab(status);
     setSelectedIds([]);
     setPageIndex(0);
@@ -124,10 +167,7 @@ export default function ReviewApplicationsTable({
   };
 
   const handleOpenActionModal = (action: ReviewAction) => {
-    if (!selectedIds.length) {
-      return;
-    }
-
+    if (!selectedIds.length) return;
     setPendingAction(action);
   };
 
@@ -135,19 +175,22 @@ export default function ReviewApplicationsTable({
     setPendingAction(null);
   };
 
-  const handleConfirmAction = () => {
-    if (!pendingAction || selectedIds.length === 0) {
-      return;
-    }
+  const handleConfirmAction = async () => {
+    if (!pendingAction || selectedIds.length === 0) return;
 
-    // Later this should call the backend to change the selected campaign statuses.
-    // After that, load the list again so this table shows the real database state.
-    setPendingAction(null);
+    if (pendingAction === "APPROVE") {
+      handleBulkUpdate(selectedIds, "approved");
+    } else if (pendingAction === "DENY") {
+      handleBulkUpdate(selectedIds, "not_approved");
+    } else if (pendingAction === "REVERT") {
+      handleBulkUpdate(selectedIds, "submitted_under_review");
+    }
   };
 
   const hasSelectedRows = selectedIds.length > 0;
   const isDeniedTab = tab === "DENIED";
   const isActionModalOpen = pendingAction !== null;
+  const isConfirming = updateCampaignMutation.isPending;
   const modalTitle =
     pendingAction === "APPROVE"
       ? "Confirm Approval"
@@ -162,14 +205,56 @@ export default function ReviewApplicationsTable({
         : "revert";
 
   return (
-    <div className="relative w-full max-w-[1040px] pb-24 pt-2">
-      <div className="mb-5 pt-8">
-        <h1 className="text-[40px] font-semibold tracking-[-0.04em] text-[#214E34] sm:text-[42px]">
-          Review Campaigns
-        </h1>
+    <div className="relative w-full max-w-[1200px] pb-24 pt-2">
+      <BaseAlert
+        open={snackbarOpen}
+        onClose={() => {
+          setSnackbarOpen(false);
+          setNotification(null);
+        }}
+        title={
+          notification?.action === "approved"
+            ? "Campaign Approved!"
+            : notification?.action === "denied"
+              ? "Campaign Denied!"
+              : notification?.action === "reverted"
+                ? "Campaign Restored!"
+                : "Something went wrong."
+        }
+      >
+        <div>
+          {notification?.action !== "error" && notification?.campaignNames && (
+            <>
+              <p className="text-sm">
+                {notification.action === "approved"
+                  ? "You have successfully approved:"
+                  : notification.action === "denied"
+                    ? "You have successfully denied:"
+                    : "You have successfully restored:"}
+              </p>
+              <ul className="my-1 list-disc pl-5 text-sm">
+                {notification.campaignNames.map((name) => (
+                  <li key={name}>{name}</li>
+                ))}
+              </ul>
+              {notification.action === "approved" && (
+                <p className="text-sm">
+                  You can view it on the &ldquo;Ongoing Campaigns&rdquo; page.
+                </p>
+              )}
+            </>
+          )}
+          {notification?.action === "error" && (
+            <p className="text-sm">An error occurred. Please try again.</p>
+          )}
+        </div>
+      </BaseAlert>
+
+      <div className="mb-5">
+
 
         <div className="mt-4 flex items-end gap-7 border-b border-[#d6e0d7]">
-          {(["PENDING", "DENIED"] as ReviewApplicationStatus[]).map((status) => {
+          {(["PENDING", "DENIED"] as TabStatus[]).map((status) => {
             const isActive = status === tab;
             const label = status === "PENDING" ? "Pending" : "Denied";
 
@@ -193,7 +278,7 @@ export default function ReviewApplicationsTable({
                         : "bg-[#d9e7ff] text-[#3D83F6]",
                     )}
                   >
-                    {countsByStatus[status]}
+                    {pendingCount}
                   </span>
                 )}
                 <span
@@ -236,34 +321,32 @@ export default function ReviewApplicationsTable({
               </label>
 
               <div className="flex items-center gap-3">
+                <Button
+                  disabled={!hasSelectedRows}
+                  onClick={() => handleOpenActionModal("APPROVE")}
+                  variant="contained"
+                  size="small"
+                >
+                  APPROVE
+                </Button>
                 {isDeniedTab ? (
-                  <button
-                    type="button"
+                  <Button
                     disabled={!hasSelectedRows}
                     onClick={() => handleOpenActionModal("REVERT")}
-                    className="rounded-[8px] bg-[#2D7A45] px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
+                    variant="outlined"
+                    size="small"
                   >
-                    REVERT
-                  </button>
+                    RESTORE
+                  </Button>
                 ) : (
-                  <>
-                    <button
-                      type="button"
-                      disabled={!hasSelectedRows}
-                      onClick={() => handleOpenActionModal("APPROVE")}
-                      className="rounded-[8px] bg-[#2D7A45] px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-white transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
-                    >
-                      APPROVE
-                    </button>
-                    <button
-                      type="button"
-                      disabled={!hasSelectedRows}
-                      onClick={() => handleOpenActionModal("DENY")}
-                      className="rounded-[8px] border border-[#2D7A45] bg-white px-4 py-2 text-[13px] font-semibold tracking-[0.02em] text-[#2D7A45] transition-opacity disabled:cursor-not-allowed disabled:opacity-45"
-                    >
-                      DENY
-                    </button>
-                  </>
+                  <Button
+                    disabled={!hasSelectedRows}
+                    onClick={() => handleOpenActionModal("DENY")}
+                    variant="outlined"
+                    size="small"
+                  >
+                    DENY
+                  </Button>
                 )}
               </div>
             </div>
@@ -271,14 +354,17 @@ export default function ReviewApplicationsTable({
         </div>
 
         <div className="overflow-x-auto">
-          <table className="w-full min-w-[1000px]">
+          <table className="w-full min-w-[1100px]">
             <thead>
               <tr className="border-b border-[#eef2ee] text-left text-[14px] font-semibold text-[#414644]">
                 <th className="w-8 px-3 py-3 sm:px-4" />
-                <th className="w-[190px] pl-0 pr-2 py-3">Submission Date</th>
-                <th className="w-[340px] px-2 py-3">Campaign Title</th>
-                <th className="w-[210px] px-2 py-3">Campaign Leader</th>
-                <th className="w-[210px] px-5 py-3 text-right sm:px-6" />
+                  <th className="w-[190px] pl-0 pr-2 py-3">Submission Date</th>
+                  <th className="w-[240px] pl-0 pr-2 py-3">Campaign Title</th>
+                <th className="w-[180px] px-2 py-3">Campaign Leader</th>
+                {/*<th className="w-[100px] px-2 py-3">Raised</th>*/}
+                {/*<th className="w-[100px] px-2 py-3">Goal</th>*/}
+                {/*<th className="w-[180px] px-2 py-3">Goal Progress</th>*/}
+                <th className="w-[180px] px-5 py-3 text-right sm:px-6" />
               </tr>
             </thead>
 
@@ -286,7 +372,7 @@ export default function ReviewApplicationsTable({
               {paginatedApplications.length === 0 ? (
                 <tr>
                   <td
-                    colSpan={5}
+                    colSpan={7}
                     className="px-5 py-8 text-center text-sm text-[#8a918b]"
                   >
                     No applications found for this view.
@@ -294,7 +380,10 @@ export default function ReviewApplicationsTable({
                 </tr>
               ) : (
                 paginatedApplications.map((application) => {
-                  const isSelected = selectedIds.includes(application.campaignId);
+                  const isSelected = selectedIds.includes(
+                    application.campaignId,
+                  );
+                  const progressCapped = Math.min(application.goalProgress, 100);
 
                   return (
                     <tr
@@ -309,30 +398,54 @@ export default function ReviewApplicationsTable({
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={() => handleToggleSelection(application.campaignId)}
+                            onChange={() =>
+                              handleToggleSelection(application.campaignId)
+                            }
                             className="h-4 w-4 cursor-pointer rounded border-[#afb6b1] accent-[#6f7670]"
                           />
                         </div>
                       </td>
-                      <td className="px-2 py-3">
-                        {formatSubmissionDate(application.submissionDate)}
-                      </td>
+                        <td className="px-2 py-3 text-[#49514c]">
+                          {formatDate(application.submissionDate)}
+                        </td>
                       <td className="px-2 py-3 text-[#49514c]">
                         {application.campaignTitle}
                       </td>
                       <td className="px-2 py-3 text-[#49514c]">
-                        {application.campaignLeader}
+                        {application.campaignLeader || "—"}
                       </td>
-                      <td className="px-5 py-2.5 text-right sm:px-6">
-                        <button
-                          type="button"
+                      {/*<td className="px-2 py-3">*/}
+                      {/*  {formatCurrency(application.raised)}*/}
+                      {/*</td>*/}
+                      {/*<td className="px-2 py-3">*/}
+                      {/*  {formatCurrency(application.goal)}*/}
+                      {/*</td>*/}
+                      {/*<td className="px-2 py-3">*/}
+                      {/*  <div className="flex items-center gap-2">*/}
+                      {/*    <div className="w-full max-w-[100px] rounded-full bg-blue-100 h-2">*/}
+                      {/*      <div*/}
+                      {/*        className="bg-blue-600 h-2 rounded-full"*/}
+                      {/*        style={{ width: `${progressCapped}%` }}*/}
+                      {/*      />*/}
+                      {/*    </div>*/}
+                      {/*    <span className="whitespace-nowrap text-sm text-[#59605b]">*/}
+                      {/*      {application.goalProgress}%*/}
+                      {/*    </span>*/}
+                      {/*  </div>*/}
+                      {/*</td>*/}
+                      <td className="px-4 py-2.5 text-right sm:px-6">
+                        <Button
                           onClick={() =>
-                            router.push("/dashboard/review-applications/" + application.campaignId)
+                            router.push(
+                              "/dashboard/review-applications/" +
+                                application.campaignId,
+                            )
                           }
-                          className="rounded-[10px] border border-[#2D7A45] px-4 py-1.5 text-[13px] font-semibold text-[#2D7A45] transition-colors hover:bg-[#f5faf5]"
+                          variant="outlined"
+                          size="small"
                         >
                           VIEW APPLICATION
-                        </button>
+                        </Button>
                       </td>
                     </tr>
                   );
@@ -348,7 +461,9 @@ export default function ReviewApplicationsTable({
             <div className="relative">
               <select
                 value={pageSize}
-                onChange={(event) => handlePageSizeChange(Number(event.target.value))}
+                onChange={(event) =>
+                  handlePageSizeChange(Number(event.target.value))
+                }
                 className="appearance-none bg-transparent pr-5 font-medium text-[#6c736d] outline-none"
               >
                 {pageSizeOptions.map((size) => (
@@ -390,60 +505,49 @@ export default function ReviewApplicationsTable({
       </div>
 
       {isActionModalOpen && (
-        <div className="fixed inset-0 z-40 bg-[rgba(31,41,35,0.24)]">
-          <div className="ml-[240px] flex min-h-screen items-center justify-center px-4">
-            <div className="w-full max-w-[480px] rounded bg-white shadow-[0_18px_48px_rgba(0,0,0,0.2)]">
-              <div className="flex items-start justify-between px-4 pb-2 pt-4">
-                <h3 className="text-[18px] font-semibold text-[#214E34]">
-                  {modalTitle}
-                </h3>
-                <button
-                  type="button"
-                  onClick={handleCloseActionModal}
-                  className="rounded p-1 text-[#7d8480] transition-colors hover:bg-[#f2f4f2]"
-                  aria-label="Close dialog"
-                >
-                  <CloseOutlinedIcon />
-                </button>
-              </div>
-
-              <div className="px-4 pb-4 text-[14px] text-[#727873]">
-                <p>
-                  {pendingAction === "REVERT"
-                    ? "You are about to move these campaigns back to the pending list:"
-                    : `You are about to bulk ${modalVerb} these campaigns:`}
-                </p>
-                <ul className="mt-2 list-disc pl-6 text-[#222622]">
-                  {selectedApplications.map((application) => (
-                    <li key={application.campaignId}>{application.campaignTitle}</li>
-                  ))}
-                </ul>
-                <p className="mt-3">
-                  {pendingAction === "REVERT"
-                    ? "Are you sure you would like to revert them? This will move them back to the pending list."
-                    : `Are you sure you would like to ${modalVerb}? This action cannot be undone.`}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 px-4 pb-4">
-                <button
-                  type="button"
-                  onClick={handleCloseActionModal}
-                  className="px-3 py-2 text-[14px] font-medium text-[#6e7570]"
-                >
-                  CANCEL
-                </button>
-                <button
-                  type="button"
-                  onClick={handleConfirmAction}
-                  className="rounded-[8px] bg-[#2D7A45] px-4 py-2 text-[13px] font-semibold text-white"
-                >
-                  {pendingAction}
-                </button>
-              </div>
-            </div>
+        <BaseModal
+          open={isActionModalOpen}
+          onClose={handleCloseActionModal}
+          title={modalTitle}
+        >
+          <div className="px-4 pb-4 text-[14px] text-[#727873]">
+            <p>
+              {pendingAction === "REVERT"
+                ? "You are about to move these campaigns back to the pending list:"
+                : `You are about to bulk ${modalVerb} these campaigns:`}
+            </p>
+            <ul className="mt-2 list-disc pl-6 text-[#222622]">
+              {selectedApplications.map((application) => (
+                <li key={application.campaignId}>
+                  {application.campaignTitle}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3">
+              {pendingAction === "REVERT"
+                ? "Are you sure you would like to revert them? This will move them back to the pending list."
+                : `Are you sure you would like to ${modalVerb}? This action cannot be undone.`}
+            </p>
           </div>
-        </div>
+
+          <div className="flex items-center justify-end gap-3 px-4 pb-4">
+            <Button
+              onClick={handleCloseActionModal}
+              disabled={isConfirming}
+              variant="text"
+            >
+              CANCEL
+            </Button>
+            <Button
+              onClick={handleConfirmAction}
+              disabled={isConfirming}
+              variant="contained"
+              size="small"
+            >
+              {isConfirming ? "..." : pendingAction}
+            </Button>
+          </div>
+        </BaseModal>
       )}
     </div>
   );
