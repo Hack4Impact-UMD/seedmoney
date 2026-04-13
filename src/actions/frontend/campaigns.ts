@@ -19,16 +19,25 @@ export async function readCampaignsUnderReview(
   const { data: campaignsData, error: campaignsError } = await supabase
     .from("campaigns")
     .select(
-      "campaign_id, name, raised, goal, status, date_created, campaign_members!inner(role, users!inner(first_name, last_name))",
-    )
+      `campaign_id, name, raised, goal, status, date_created, 
+      campaign_members!inner(
+        role, 
+        users!inner(
+          first_name, 
+          last_name
+        )
+      )`
+    ,)
     .in("status", ["submitted_under_review", "not_approved"])
-    .eq("campaign_id.competition_id", competitionId)
+    .eq("competition_id", competitionId)
     .eq("campaign_members.role", "campaign_leader");
 
   if (campaignsError) {
     console.error("Error fetching campaigns under review:", campaignsError.message);
     return [];
   }
+
+  console.log("Campaigns under review:", campaignsData);
 
   const campaigns = (campaignsData ?? []) as {
     campaign_id: number;
@@ -44,15 +53,9 @@ export async function readCampaignsUnderReview(
   }[];
 
   return campaigns.map((c) => {
-    // Get all campaign leaders (in case there are multiple)
-    const leaders = c.campaign_members
-      .filter((m) => m.role === "campaign_leader")
-      .flatMap((m) =>
-        m.users.map((u) => `${u.first_name} ${u.last_name}`.trim()),
-      );
-
-    // Sort alphabetically and get the first one
-    const leaderName = leaders.length > 0 ? leaders.sort()[0] : "";
+    const member = c.campaign_members?.[0];
+    const user = Array.isArray(member?.users) ? member.users[0] : member?.users;
+    const leaderName = user ? `${user.first_name} ${user.last_name}`.trim() : "";
 
     return {
       campaignId: c.campaign_id,
