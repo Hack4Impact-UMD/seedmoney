@@ -14,6 +14,8 @@ import { useAuth } from "@/src/context/AuthProvider";
 import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import Button from "@mui/material/Button";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
+import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
+import useDonorsChangePercent from "@/src/hooks/transactions/useDonorsChangePercent";
 import BaseModal from "@/src/components/bases/BaseModal";
 import LogoutIcon from "@mui/icons-material/Logout";
 import OpenInNew from "@mui/icons-material/OpenInNew";
@@ -33,6 +35,20 @@ export default function DashboardShell({
   const { user } = useAuth();
   const { data: campaignData, isLoading } = useReadCampaign(Number(campaignId));
   const { data: currentCompetitionData } = useReadCurrentCompetition();
+  const {
+    percent: raisedPercent,
+    isLoading: raisedLoading,
+    isError: raisedError,
+  } = useRaisedChangePercent(Number(campaignId));
+  const {
+    percent: donorsPercent,
+    isLoading: donorsLoading,
+    isError: donorsError,
+  } = useDonorsChangePercent(Number(campaignId));
+  const raisedChangePercent =
+    raisedLoading || raisedError ? null : raisedPercent;
+  const donorsChangePercent =
+    donorsLoading || donorsError ? null : donorsPercent;
   const [toast, setToast] = useState(false);
   const [viewCampaignModal, setViewCampaignModal] = useState(false);
 
@@ -138,13 +154,13 @@ export default function DashboardShell({
           <TotalRaisedCard
             totalRaised={campaignData.raised}
             campaignGoal={campaignData.goal}
-            raisedChangePercent={0}
+            raisedChangePercent={raisedChangePercent}
           />
 
           <div className="flex flex-col gap-6">
             <TotalDonorsCard
               totalDonors={campaignData.donors}
-              donorsChangePercent={0}
+              donorsChangePercent={donorsChangePercent}
             />
 
 
