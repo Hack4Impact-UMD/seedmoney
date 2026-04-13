@@ -47,15 +47,13 @@ export default function ReviewApplicationsTable({ applications }: Props) {
   const updateCampaignMutation = useUpdateCampaign();
 
   useEffect(() => {
-    if (!notification) return;
-    setSnackbarOpen(true);
+    if (!snackbarOpen) return;
     const timer = setTimeout(() => {
       setSnackbarOpen(false);
       setNotification(null);
     }, 4000);
     return () => clearTimeout(timer);
-  }, [notification]);
-
+  }, [snackbarOpen]);
   const pendingCount = useMemo(
     () =>
       applications.filter((a) => a.status === "submitted_under_review").length,
@@ -119,6 +117,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
             ? "denied"
             : "reverted";
       setNotification({ action, campaignNames: names });
+      setSnackbarOpen(true);
       setSelectedIds([]);
       setPendingAction(null);
 
@@ -129,6 +128,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
     } catch (error) {
       console.error("Error updating campaigns:", error);
       setNotification({ action: "error", campaignNames: [] });
+      setSnackbarOpen(true);
       setPendingAction(null);
     }
   };
