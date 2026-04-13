@@ -67,6 +67,9 @@ export default function SettingsModal({
   onEditEmail,
   onEditPassword,
 }: SettingsModalProps) {
+  const firstName = userData?.first_name ?? "SeedMoney";
+  const lastName = userData?.last_name ?? "User";
+
   return (
     <Dialog
       open={open}
@@ -90,7 +93,7 @@ export default function SettingsModal({
       <DialogContent sx={{ px: 3, pb: 3 }}>
         <SettingsRow
           label="Name"
-          value={`${userData?.first_name || "John"} ${userData?.last_name || "Smith"}`}
+          value={`${firstName} ${lastName}`}
           onEdit={onEditName}
         />
         <SettingsRow
