@@ -1,7 +1,6 @@
 import type { NewUser, NewUserInternal, Users } from "@/src/types";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 
-
 export async function createUser(user: NewUser): Promise<Users | null> {
   const supabase = await createBrowserClient();
 
@@ -43,7 +42,7 @@ export async function readUser(userId: string): Promise<Users | null> {
 
 export async function updateUser(
   userId: string,
-  updatedUser: Partial<NewUserInternal>,
+  updatedUser: Partial<Users>,
 ): Promise<Users | null> {
   const supabase = await createBrowserClient();
 
