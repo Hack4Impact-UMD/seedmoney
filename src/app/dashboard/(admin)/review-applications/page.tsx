@@ -11,6 +11,7 @@ export default function ReviewApplicationsPage() {
     data: applications = [],
     isLoading,
     isError,
+    error
   } = useReadCampaignsNotApproved(competition?.competition_id ?? 0);
 
   return (

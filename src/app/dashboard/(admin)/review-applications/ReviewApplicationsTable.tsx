@@ -29,13 +29,6 @@ const formatDate = (dateStr: string) => {
   return `${month}/${day}/${year}`;
 };
 
-const formatCurrency = (amount: number) =>
-  new Intl.NumberFormat("en-US", {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  }).format(amount);
-
 export default function ReviewApplicationsTable({
   applications,
 }: ReviewApplicationsTableProps) {
@@ -341,6 +334,14 @@ export default function ReviewApplicationsTable({
               </label>
 
               <div className="flex items-center gap-3">
+                <Button
+                  disabled={!hasSelectedRows}
+                  onClick={() => handleOpenActionModal("APPROVE")}
+                  variant="contained"
+                  size="small"
+                >
+                  APPROVE
+                </Button>
                 {isDeniedTab ? (
                   <Button
                     disabled={!hasSelectedRows}
@@ -360,14 +361,6 @@ export default function ReviewApplicationsTable({
                     DENY
                   </Button>
                 )}
-                <Button
-                  disabled={!hasSelectedRows}
-                  onClick={() => handleOpenActionModal("APPROVE")}
-                  variant="contained"
-                  size="small"
-                >
-                  APPROVE
-                </Button>
               </div>
             </div>
           </div>
