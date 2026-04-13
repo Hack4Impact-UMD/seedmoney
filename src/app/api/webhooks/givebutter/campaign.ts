@@ -1,5 +1,8 @@
 import { WebhookPayload } from "./types";
-import { updateCampaignGivebutterID, createCampaign } from "@/src/actions/db/campaigns";
+import {
+  updateCampaignGivebutterID,
+  createCampaign,
+} from "@/src/actions/db/campaigns";
 import moment from "moment";
 
 export const campaignHandlers = {
@@ -15,7 +18,6 @@ export const campaignHandlers = {
       donors: payload.data.donors,
       goal: payload.data.goal ?? 0,
       status: "approved",
-      
     });
   },
   "campaign.created": async (payload: WebhookPayload) => {
@@ -52,7 +54,7 @@ export const campaignHandlers = {
       mailing_country: "",
       mailing_zipcode: "",
       date_created: moment(payload.data.created_at).format("YYYY-MM-DD"),
-      competition_id: 1
+      competition_id: null,
     });
   },
 };

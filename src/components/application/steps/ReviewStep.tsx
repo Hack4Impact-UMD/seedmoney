@@ -12,6 +12,7 @@ import { getApplicationCompletionState } from "@/src/components/application/appl
 import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
+import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 
 const stateNames: Record<string, string> = {
   AL: "Alabama",
@@ -126,6 +127,7 @@ export default function ReviewSubmitPage() {
   const { draftCampaignId } = useDraftCampaignId();
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const updateCampaign = useUpdateCampaign();
+  const { data: currentCompetitionData } = useReadCurrentCompetition();
   const values = form.state.values;
   const {
     campaignComplete,
@@ -134,15 +136,20 @@ export default function ReviewSubmitPage() {
     contactComplete,
     reviewComplete,
   } = getApplicationCompletionState(values, hasPassedAgreement);
-  const canSubmit = reviewComplete;
+  const canSubmit = reviewComplete && !!currentCompetitionData;
 
   const handleSubmitApplication = async () => {
+    if (!currentCompetitionData) {
+      return;
+    }
+
     const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
 
     await updateCampaign.mutateAsync({
       campaignId,
       campaignData: {
         status: "submitted_under_review",
+        competition_id: currentCompetitionData.competition_id,
       },
     });
 

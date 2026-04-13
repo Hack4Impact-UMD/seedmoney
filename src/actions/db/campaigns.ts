@@ -4,14 +4,39 @@ import { createBrowserClient, createServerClient } from "@/src/lib/supabase-clie
 export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createBrowserClient();
+  const supabase =
+    typeof window === "undefined"
+      ? await createServerClient()
+      : createBrowserClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
+  const campaignData = { ...data };
+
+  if (
+    campaignData.competition_id === undefined ||
+    campaignData.competition_id === null
+  ) {
+    const { data: currentCompetition, error: competitionError } = await supabase
+      .from("competition_metadata")
+      .select("competition_id")
+      .eq("is_current", true)
+      .single();
+
+    if (competitionError || !currentCompetition) {
+      console.error(
+        "Error reading current competition:",
+        competitionError?.message ?? "No current competition found",
+      );
+      return null;
+    }
+
+    campaignData.competition_id = currentCompetition.competition_id;
+  }
 
   const { data: insertedData, error } = await supabase
     .from("campaigns")
-    .insert(data)
+    .insert(campaignData)
     .select()
     .single();
 

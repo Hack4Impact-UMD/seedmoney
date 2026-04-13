@@ -50,14 +50,15 @@ export default function Navbar() {
     router.push("/dashboard/settings");
   };
 
-  const currentYear = moment(currentCompetitionData?.start_date).format("YYYY");  
+  const currentYear = moment(currentCompetitionData?.start_date).format("YYYY");
   const isViewAllSelected = pathname === "/dashboard/view-all";
+  const currentCompetitionId = currentCompetitionData?.competition_id;
 
   const { currentYearCampaigns, previousCampaigns } = useMemo(() => {
     const currentYearCampaigns = campaigns
       .filter(
         (campaign) =>
-          campaign.competition_id === currentCompetitionData?.competition_id
+          campaign.competition_id === currentCompetitionId
       )
       .sort(
         (a, b) =>
@@ -68,7 +69,7 @@ export default function Navbar() {
     const previousCampaigns = campaigns
       .filter(
         (campaign) =>
-          campaign.competition_id !== currentCompetitionData?.competition_id
+          campaign.competition_id !== currentCompetitionId
       )
       .sort(
         (a, b) =>
@@ -77,7 +78,7 @@ export default function Navbar() {
       );
 
     return { currentYearCampaigns, previousCampaigns };
-  }, [campaigns, currentYear]);
+  }, [campaigns, currentCompetitionId]);
 
   const getItemClasses = (isSelected: boolean) =>
     clsx(
@@ -85,6 +86,18 @@ export default function Navbar() {
       isSelected ? "!bg-[#1A4A28] hover:!bg-black/30" : "!bg-transparent hover:!bg-[#43B45D]",
       isCollapsed ? "!justify-center !px-0" : "!justify-start",
     );
+
+  const getCampaignDisplayName = (campaign: Campaign) => {
+    if (campaign.status === "in_progress") {
+      return `${campaign.name} (draft)`;
+    }
+
+    if (campaign.status === "submitted_under_review") {
+      return `${campaign.name} (pending)`;
+    }
+
+    return campaign.name;
+  };
 
   const renderCampaignItem = (campaign: Campaign) => {
     const isSelected = !isViewAllSelected && campaign.campaign_id === selectedCampaignId;
@@ -98,7 +111,7 @@ export default function Navbar() {
           <div className={clsx("h-3 w-3 rounded-full", isSelected ? "bg-white" : "bg-gray-200/50")} />
         ) : (
           <ListItemText
-            primary={campaign.name}
+            primary={getCampaignDisplayName(campaign)}
             slotProps={{
               primary: {
                 className: "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
