@@ -243,6 +243,7 @@ export async function readCurrentDraftCampaignForUser(user_id: string) {
     .from("campaign_members")
     .select("campaign_id")
     .eq("user_id", user_id)
+    .eq("role", "campaign_leader")
     .order("campaign_id", { ascending: false });
 
   if (membersError) {
