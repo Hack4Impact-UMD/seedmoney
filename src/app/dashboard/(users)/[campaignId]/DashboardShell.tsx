@@ -68,7 +68,7 @@ export default function DashboardShell({
   };
 
   const handleContinueApplication = () => {
-    console.log("Continue application for campaign:", selectedCampaignId);
+    router.push("/apply/campaign");
   };
 
   if (campaignData.status === "in_progress") {
