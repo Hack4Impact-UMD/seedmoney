@@ -1,11 +1,13 @@
 "use client";
 
+import { ArrowBack } from "@mui/icons-material";
 import Image from "next/image";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import {
   useAgreementGate,
   useApplicationForm,
+  useDraftCampaignId,
   useLastSaved,
 } from "./ApplicationFormProvider";
 import { StepStatus } from "@/src/types/form";
@@ -18,8 +20,14 @@ import {
 export default function ApplicationSidebar() {
   const form = useApplicationForm();
   const { hasPassedAgreement } = useAgreementGate();
+  const { draftCampaignId } = useDraftCampaignId();
   const { lastSaved } = useLastSaved();
   const pathname = usePathname();
+  const router = useRouter();
+
+  const handleExit = () => {
+    router.push(draftCampaignId ? `/dashboard/${draftCampaignId}` : "/dashboard");
+  };
 
   return (
     <div className="flex flex-col gap-4 w-[260px] mt-20">
@@ -129,6 +137,15 @@ export default function ApplicationSidebar() {
         />
         {lastSaved ? `Auto saved at ${lastSaved}` : "Not saved yet"}
       </div>
+
+      <button
+        type="button"
+        onClick={handleExit}
+        className="flex items-center gap-2 text-[#666] text-[14px] w-fit hover:opacity-80"
+      >
+        <ArrowBack sx={{ fontSize: 16 }} />
+        Exit
+      </button>
     </div>
   );
 }
