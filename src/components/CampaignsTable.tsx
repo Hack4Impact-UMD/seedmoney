@@ -9,85 +9,98 @@ import {
   getPaginationRowModel 
 } from '@tanstack/react-table';
 
-interface CampaignMock {
-  name: string;
-  campaign_leader: string;
-  raised: number;
-  goal: number;
-  percentage: number;
-}
+import { CampaignWithLeader } from '../types/frontend/campaignsTable';
+import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+
 
 interface Props {
-  initialData: CampaignMock[];
+  initialData: CampaignWithLeader[];
 }
 
 const CampaignsTable = ({ initialData }: Props) => {
   const router = useRouter();
   const [campaignSearch, setCampaignSearch] = useState('');
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
 
-  // TODO: function to handle invidiual campaigns (parameter will probably be campaign id)
-  const handleCampaignClick = (e: React.MouseEvent) => {
-    e.preventDefault();
-    router.push(`/dashboard/ongoing-campaigns/1`);
+  const handleCampaignClick = (id: number) => {
+    router.push(`/dashboard/ongoing-campaigns/${id}`);
   }
 
   const filteredData = useMemo(() => {
-    return initialData.filter(campaign => 
-      campaign.name.toLowerCase().includes(campaignSearch.toLowerCase()) || 
-      campaign.campaign_leader.toLowerCase().includes(campaignSearch.toLowerCase())
-    );
+    return (initialData ?? []).filter(campaign => {
+      const name = campaign?.name ?? '';
+      const leader = campaign?.campaign_leader ?? '';
+      const search = campaignSearch.toLowerCase();
+      return name.toLowerCase().includes(search) || leader.toLowerCase().includes(search);
+    });
   }, [campaignSearch, initialData]);
 
-  const columnHelper = createColumnHelper<CampaignMock>();
+  const columnHelper = createColumnHelper<CampaignWithLeader>();
 
   const columns = [
     columnHelper.accessor('name', {
       header: 'Campaign Title',
       size: 200,
-      cell: info => <span className="font-medium text-gray-700">{info.getValue()}</span>
+      cell: info => {
+        const val = info.getValue();
+        if (val == null) return null;
+        return <span className="font-medium text-gray-700">{val}</span>;
+      }
     }),
     columnHelper.accessor('campaign_leader', {
       header: 'Campaign Leader',
       size: 180,
-      cell: info => info.getValue()
+      cell: info => info.getValue() ?? null
     }),
     columnHelper.accessor('raised', {
-      header: 'Raised',
+      header: '$ Raised',
       size: 120,
-      cell: info => `$${info.getValue().toLocaleString()}`
+      cell: info => {
+        const val = info.getValue();
+        if (val == null) return null;
+        return `$${val.toLocaleString()}`;
+      }
     }),
     columnHelper.accessor('goal', {
       header: 'Goal',
       size: 120,
-      cell: info => `$${info.getValue().toLocaleString()}`
-    }), 
-    columnHelper.accessor(row => ({ 
-      percentage: row.percentage 
-    }), {
-      id: 'status',
-      size: 200,
-      header: 'Goal Status',
       cell: info => {
-        const { percentage } = info.getValue();
+        const val = info.getValue();
+        if (val == null) return null;
+        return `$${val.toLocaleString()}`;
+      }
+    }),
+    columnHelper.accessor(row => ({
+      percentage: (row?.raised != null && row?.goal != null && row.goal > 0)
+        ? row.raised / row.goal * 100
+        : null
+    }), {
+      id: 'progress',
+      size: 200,
+      header: 'Goal Progress',
+      cell: ({ row }) => {
+        const campaign = row.original;
+        if (campaign?.raised == null || campaign?.goal == null || campaign.goal === 0) return null;
+
+        const percentage = Math.round((campaign.raised / campaign.goal) * 100);
         const displayPercentage = Math.min(percentage, 100);
+        const isHovered = hoveredRowId === row.id;
+
         return (
           <div className="flex items-center gap-3 w-full min-w-[180px]">
             <div className="w-full bg-blue-100 rounded-full h-2">
-              <div 
-                className="bg-blue-600 h-2 rounded-full" 
+              <div
+                className="bg-blue-600 h-2 rounded-full"
                 style={{ width: `${displayPercentage}%` }}
-              ></div>
+              />
             </div>
             <span className="text-sm text-gray-600">{displayPercentage}%</span>
-            {/* TODO: pass in campaign id as function parameter for handleCampaignClick  */}
-            <button
-              type="button"
-              className="ml-1 cursor-pointer select-none text-xl font-bold text-[#2c7a45] transition-colors"
-              onClick={handleCampaignClick}
-              aria-label="Open campaign details"
+            <span
+              className="ml-1 text-xl font-bold text-[#1e1e1e] transition-opacity duration-150"
+              style={{ opacity: isHovered ? 1 : 0 }}
             >
-              &gt;
-            </button>
+              <KeyboardArrowRightIcon />
+            </span>
           </div>
         );
       }
@@ -102,19 +115,17 @@ const CampaignsTable = ({ initialData }: Props) => {
   });
 
   return (
-    <div className="w-full"> 
-
+    <div className="w-full">
       <div className="md:w-full md:mx-auto bg-white rounded-xl overflow-x-auto">
-        {/* header section */}
         <div className="pt-8 px-5">
           <h2 className="text-black sm:text-left text-center">Full Campaign List</h2>
-          <p className="text-sm text-gray-500 sm:text-left text-center">{initialData.length} Applications</p>
+          <p className="text-sm text-gray-500 sm:text-left text-center">{initialData?.length ?? 0} Applications</p>
 
           <div className="relative my-6">
             <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs text-gray-400">Search</label>
             <div className="flex items-center border border-gray-200 rounded-lg px-3 py-2.5 focus-within:border-blue-500 transition-colors">
-              <input 
-                type="text" 
+              <input
+                type="text"
                 value={campaignSearch}
                 onChange={(e) => setCampaignSearch(e.target.value)}
                 placeholder='Start typing...'
@@ -128,43 +139,48 @@ const CampaignsTable = ({ initialData }: Props) => {
           <div className="p-8 text-center text-gray-500">No campaigns available.</div>
         ) : (
           <>
-          
-          <table className="w-full">
-            <thead>
-              {table.getHeaderGroups().map(headerGroup => (
-                <tr key={headerGroup.id}>
-                  {headerGroup.headers.map(header => (
-                    <th key={header.id} style={{ width: header.getSize() !== 150 ? header.getSize() : 'auto' }} className="text-left px-5 py-4 border-b border-gray-300">
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext()
-                          )}
-                    </th>
-                  ))}
-                </tr>
-              ))}
-            </thead>
-            <tbody>
-              {table.getRowModel().rows.map(row => (
-                <tr key={row.id}>
-                  {row.getVisibleCells().map(cell => (
-                    <td key={cell.id} className="text-left px-5 py-4 border-b border-gray-300">
-                      {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                    </td>
-                    
-                  ))}
-                </tr>
-              ))}
-            </tbody>
-          </table>
+            <table className="w-full">
+              <thead>
+                {table.getHeaderGroups().map(headerGroup => (
+                  <tr key={headerGroup.id}>
+                    {headerGroup.headers.map(header => (
+                      <th
+                        key={header.id}
+                        style={{ width: header.getSize() !== 150 ? header.getSize() : 'auto' }}
+                        className="text-left px-5 py-4 border-b border-gray-300"
+                      >
+                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                      </th>
+                    ))}
+                  </tr>
+                ))}
+              </thead>
+              <tbody>
+                {table.getRowModel().rows.map(row => (
+                  <tr
+                    key={row.id}
+                    className="transition-colors cursor-pointer"
+                    onMouseEnter={() => setHoveredRowId(row.id)}
+                    onMouseLeave={() => setHoveredRowId(null)}
+                    onClick={() => {
+                      const id = row.original?.campaign_id;
+                      if (id != null) handleCampaignClick(id);
+                    }}
+                  >
+                    {row.getVisibleCells().map(cell => (
+                      <td key={cell.id} className="text-left px-5 py-4 border-b border-gray-300">
+                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                      </td>
+                    ))}
+                  </tr>
+                ))}
+              </tbody>
+            </table>
 
-          {/* pagination */}
-          <div className="px-6 py-4 flex items-center justify-end gap-6 text-sm text-gray-500 border-t border-gray-100">
+            <div className="px-6 py-4 flex items-center justify-end gap-6 text-sm text-gray-500 border-t border-gray-100">
               <div className="flex items-center gap-2">
                 <span>Rows per page:</span>
-                <select 
+                <select
                   value={table.getState().pagination.pageSize}
                   onChange={e => table.setPageSize(Number(e.target.value))}
                   className="outline-none cursor-pointer font-medium text-gray-700"
@@ -175,20 +191,20 @@ const CampaignsTable = ({ initialData }: Props) => {
 
               <span>
                 {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}-
-                {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, filteredData.length)} 
+                {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, filteredData.length)}
                 {' of '} {filteredData.length}
               </span>
 
               <div className="flex items-center gap-2">
-                <button 
-                  onClick={() => table.previousPage()} 
+                <button
+                  onClick={e => { e.stopPropagation(); table.previousPage(); }}
                   disabled={!table.getCanPreviousPage()}
                   className="cursor-pointer p-1 text-2xl font-bold text-black disabled:cursor-not-allowed disabled:opacity-30"
                 >
                   &lt;
                 </button>
-                <button 
-                  onClick={() => table.nextPage()} 
+                <button
+                  onClick={e => { e.stopPropagation(); table.nextPage(); }}
                   disabled={!table.getCanNextPage()}
                   className="cursor-pointer p-1 text-2xl font-bold text-black disabled:cursor-not-allowed disabled:opacity-30"
                 >
@@ -200,7 +216,7 @@ const CampaignsTable = ({ initialData }: Props) => {
         )}
       </div>
     </div>
-  )
+  );
 }
 
 export default CampaignsTable;
