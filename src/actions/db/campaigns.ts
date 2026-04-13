@@ -7,8 +7,17 @@ export async function createCampaign(
   const supabase = createBrowserClient();
   const {
     data: { user },
+    error: userError,
   } = await supabase.auth.getUser();
   const campaignData = { ...data };
+
+  if (userError || !user) {
+    console.error(
+      "Error reading authenticated user for campaign creation:",
+      userError?.message ?? "No authenticated user found",
+    );
+    return null;
+  }
 
   if (
     campaignData.competition_id === undefined ||
@@ -42,26 +51,24 @@ export async function createCampaign(
     return null;
   }
 
-  if (user) {
-    const { error: campaignMemberError } = await supabase
-      .from("campaign_members")
-      .insert({
-        campaign_id: insertedData.campaign_id,
-        user_id: user.id,
-        role: "campaign_leader",
-      });
+  const { error: campaignMemberError } = await supabase
+    .from("campaign_members")
+    .insert({
+      campaign_id: insertedData.campaign_id,
+      user_id: user.id,
+      role: "campaign_leader",
+    });
 
-    if (campaignMemberError) {
-      await supabase
-        .from("campaigns")
-        .delete()
-        .eq("campaign_id", insertedData.campaign_id);
-      console.error(
-        "Error creating campaign member:",
-        campaignMemberError.message,
-      );
-      return null;
-    }
+  if (campaignMemberError) {
+    await supabase
+      .from("campaigns")
+      .delete()
+      .eq("campaign_id", insertedData.campaign_id);
+    console.error(
+      "Error creating campaign member:",
+      campaignMemberError.message,
+    );
+    return null;
   }
 
   return insertedData as Campaign;

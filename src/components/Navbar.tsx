@@ -87,11 +87,11 @@ export default function Navbar() {
 
   const getCampaignDisplayName = (campaign: Campaign) => {
     if (campaign.status === "in_progress") {
-      return `${campaign.name} (draft)`;
+      return `${campaign.name} (Draft)`;
     }
 
     if (campaign.status === "submitted_under_review") {
-      return `${campaign.name} (pending)`;
+      return `${campaign.name} (Pending)`;
     }
 
     return campaign.name;
