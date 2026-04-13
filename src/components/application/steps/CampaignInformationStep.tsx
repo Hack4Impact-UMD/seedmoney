@@ -3,9 +3,76 @@
 import { Button, TextField } from "@mui/material";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
 import Link from "next/link";
+import { useRef } from "react";
+import { useRouter } from "next/navigation";
+import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 export default function CampaignInformationStep() {
   const form = useApplicationForm();
+  const router = useRouter();
+  const { saveDraftCampaign } = useSaveDraftCampaign();
+  const campaignInformationRef = useRef({
+    name: form.state.values.campaignTitle,
+    impact: form.state.values.beneficiaryCount
+      ? Number(form.state.values.beneficiaryCount)
+      : undefined,
+    size: form.state.values.gardenSize
+      ? Number(form.state.values.gardenSize)
+      : undefined,
+    existence: form.state.values.gardenStatus || undefined,
+    goal: form.state.values.fundraisingGoal
+      ? Number(form.state.values.fundraisingGoal)
+      : undefined,
+  });
+  const saveCampaignInformationDraft = async (
+    overrides: Partial<typeof form.state.values> = {},
+  ) => {
+    const values = {
+      ...form.state.values,
+      ...overrides,
+    };
+
+    const currentPayload = {
+      name: values.campaignTitle,
+      impact: values.beneficiaryCount
+        ? Number(values.beneficiaryCount)
+        : undefined,
+      size: values.gardenSize ? Number(values.gardenSize) : undefined,
+      existence: values.gardenStatus || undefined,
+      goal: values.fundraisingGoal
+        ? Number(values.fundraisingGoal)
+        : undefined,
+    };
+
+    const changedValues: Partial<typeof currentPayload> = {};
+
+    if (currentPayload.name !== campaignInformationRef.current.name) {
+      changedValues.name = currentPayload.name;
+    }
+
+    if (currentPayload.impact !== campaignInformationRef.current.impact) {
+      changedValues.impact = currentPayload.impact;
+    }
+
+    if (currentPayload.size !== campaignInformationRef.current.size) {
+      changedValues.size = currentPayload.size;
+    }
+
+    if (currentPayload.existence !== campaignInformationRef.current.existence) {
+      changedValues.existence = currentPayload.existence;
+    }
+
+    if (currentPayload.goal !== campaignInformationRef.current.goal) {
+      changedValues.goal = currentPayload.goal;
+    }
+
+    if (Object.keys(changedValues).length === 0) {
+      return;
+    }
+
+    await saveDraftCampaign(changedValues);
+    campaignInformationRef.current = currentPayload;
+  };
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -26,7 +93,12 @@ export default function CampaignInformationStep() {
             <TextField
               label="Campaign Title"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveCampaignInformationDraft({
+                  campaignTitle: e.target.value,
+                });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               error={field.state.meta.errors.length > 0}
               helperText={
@@ -54,6 +126,12 @@ export default function CampaignInformationStep() {
               variant="standard"
               fullWidth
               value={field.state.value}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveCampaignInformationDraft({
+                  beneficiaryCount: e.target.value,
+                });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               type="number"
             />
@@ -68,7 +146,12 @@ export default function CampaignInformationStep() {
               variant="standard"
               fullWidth
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveCampaignInformationDraft({
+                  gardenSize: e.target.value,
+                });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
             />
           )}
@@ -86,7 +169,12 @@ export default function CampaignInformationStep() {
                     name="gardenStatus"
                     value="new"
                     checked={field.state.value === "new"}
-                    onChange={() => field.handleChange("new")}
+                    onChange={async () => {
+                      field.handleChange("new");
+                      await saveCampaignInformationDraft({
+                        gardenStatus: "new",
+                      });
+                    }}
                     className="w-6 h-6 accent-blue-600 cursor-pointer"
                   />
                   <span className="text-sm">New garden</span>
@@ -98,7 +186,12 @@ export default function CampaignInformationStep() {
                     name="gardenStatus"
                     value="existing"
                     checked={field.state.value === "existing"}
-                    onChange={() => field.handleChange("existing")}
+                    onChange={async () => {
+                      field.handleChange("existing");
+                      await saveCampaignInformationDraft({
+                        gardenStatus: "existing",
+                      });
+                    }}
                     className="w-6 h-6 accent-blue-600 cursor-pointer"
                   />
                   <span className="text-sm">Existing garden</span>
@@ -127,6 +220,12 @@ export default function CampaignInformationStep() {
               fullWidth
               type="number"
               value={field.state.value}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveCampaignInformationDraft({
+                  fundraisingGoal: e.target.value,
+                });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
             />
           )}
@@ -145,10 +244,13 @@ export default function CampaignInformationStep() {
         </Button>
 
         <Button
-          component={Link}
-          href="/apply/garden"
+          component="button"
           variant="contained"
           size="medium"
+          onClick={async () => {
+            await saveCampaignInformationDraft();
+            router.push("/apply/garden");
+          }}
         >
           Next Step
         </Button>

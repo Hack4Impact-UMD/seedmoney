@@ -4,10 +4,15 @@ import Image from "next/image";
 import Link from "next/link";
 import { Button } from "@mui/material";
 import {
-  useAgreementSelections,
+  useAgreementGate,
   useApplicationForm,
+  useDraftCampaignId,
 } from "@/src/components/application/ApplicationFormProvider";
 import { getApplicationCompletionState } from "@/src/components/application/applicationStepState";
+import { useRouter } from "next/navigation";
+import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
+import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
+import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 
 const stateNames: Record<string, string> = {
   AL: "Alabama",
@@ -75,7 +80,9 @@ function ValueRow({
 
   return (
     <div className="flex flex-col gap-1">
-      <label className={`text-sm ${isMissing ? "text-gray-400" : "text-gray-500"}`}>
+      <label
+        className={`text-sm ${isMissing ? "text-gray-400" : "text-gray-500"}`}
+      >
         {label}
       </label>
       {isMissing ? (
@@ -90,13 +97,7 @@ function ValueRow({
   );
 }
 
-function ReviewBanner({
-  href,
-  message,
-}: {
-  href: string;
-  message: string;
-}) {
+function ReviewBanner({ href, message }: { href: string; message: string }) {
   return (
     <div className="flex justify-between items-center bg-[#FDECEA] text-[#5F2120] px-4 py-3 rounded-md text-sm">
       <div className="flex items-center gap-2">
@@ -104,7 +105,10 @@ function ReviewBanner({
         <span>{message}</span>
       </div>
 
-      <Link href={href} className="flex items-center gap-2 text-[#D32F2F] font-medium">
+      <Link
+        href={href}
+        className="flex items-center gap-2 text-[#D32F2F] font-medium"
+      >
         <Image src="/icons/pencil.svg" width={16} height={16} alt="edit" />
         EDIT
       </Link>
@@ -118,7 +122,12 @@ function formatCountry(value: string) {
 
 export default function ReviewSubmitPage() {
   const form = useApplicationForm();
-  const { agreementSelections } = useAgreementSelections();
+  const router = useRouter();
+  const { hasPassedAgreement } = useAgreementGate();
+  const { draftCampaignId } = useDraftCampaignId();
+  const { saveDraftCampaign } = useSaveDraftCampaign();
+  const updateCampaign = useUpdateCampaign();
+  const { data: currentCompetitionData } = useReadCurrentCompetition();
   const values = form.state.values;
   const {
     campaignComplete,
@@ -126,8 +135,27 @@ export default function ReviewSubmitPage() {
     storyComplete,
     contactComplete,
     reviewComplete,
-  } = getApplicationCompletionState(values, agreementSelections);
-  const canSubmit = reviewComplete;
+  } = getApplicationCompletionState(values, hasPassedAgreement);
+  const canSubmit = reviewComplete && !!currentCompetitionData;
+
+  const handleSubmitApplication = async () => {
+    if (!currentCompetitionData) {
+      return;
+    }
+
+    const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+
+    await updateCampaign.mutateAsync({
+      campaignId,
+      campaignData: {
+        status: "submitted_under_review",
+        competition_id: currentCompetitionData.competition_id,
+      },
+    });
+
+    await form.handleSubmit();
+    router.push(`/dashboard/${campaignId}`);
+  };
 
   return (
     <div className="w-[700px] flex flex-col gap-6 pb-20 m-15">
@@ -152,7 +180,11 @@ export default function ReviewSubmitPage() {
           </p>
         </div>
 
-        <ValueRow label="Campaign Title" value={values.campaignTitle} required />
+        <ValueRow
+          label="Campaign Title"
+          value={values.campaignTitle}
+          required
+        />
       </div>
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
@@ -175,7 +207,9 @@ export default function ReviewSubmitPage() {
             <div className="flex items-center gap-2">
               <div
                 className={`w-4 h-4 rounded-full border-2 ${
-                  values.gardenStatus === "new" ? "border-blue-600" : "border-gray-400"
+                  values.gardenStatus === "new"
+                    ? "border-blue-600"
+                    : "border-gray-400"
                 } flex items-center justify-center`}
               >
                 {values.gardenStatus === "new" && (
@@ -239,7 +273,11 @@ export default function ReviewSubmitPage() {
         </h3>
 
         <ValueRow label="City" value={values.gardenCity} required />
-        <ValueRow label="State / Province" value={values.gardenState} required />
+        <ValueRow
+          label="State / Province"
+          value={values.gardenState}
+          required
+        />
         <ValueRow
           label="Country"
           value={formatCountry(values.gardenCountry)}
@@ -257,10 +295,15 @@ export default function ReviewSubmitPage() {
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-2">
         <h3 className="text-lg font-medium">
-          Beneficiary Populations Served <span className="text-orange-500">*</span>
+          Beneficiary Populations Served{" "}
+          <span className="text-orange-500">*</span>
         </h3>
 
-        <p>{values.gardenBeneficiaries.length > 0 ? values.gardenBeneficiaries.join(", ") : ""}</p>
+        <p>
+          {values.gardenBeneficiaries.length > 0
+            ? values.gardenBeneficiaries.join(", ")
+            : ""}
+        </p>
         <div
           className={`border-b ${
             values.gardenBeneficiaries.length > 0
@@ -273,7 +316,10 @@ export default function ReviewSubmitPage() {
       <h2 className="text-xl font-semibold">Garden Story</h2>
 
       {!storyComplete && (
-        <ReviewBanner href="/apply/story" message="Please complete garden story" />
+        <ReviewBanner
+          href="/apply/story"
+          message="Please complete garden story"
+        />
       )}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
@@ -315,26 +361,48 @@ export default function ReviewSubmitPage() {
           project. This photo will appear at the top of your campaign page.
         </p>
 
-        <div className="flex items-center gap-3 text-[#D32F2F]">
-          <div
-            style={{
-              filter:
-                "invert(27%) sepia(80%) saturate(800%) hue-rotate(330deg) brightness(85%)",
-            }}
-          >
-            <Image
-              src="/icons/upload-icon.svg"
-              width={20}
-              height={20}
-              alt="upload status"
-            />
-          </div>
+        {values.mainPhoto ? (
+          <div className="flex flex-col gap-4">
+            <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+              <img
+                src={values.mainPhoto}
+                alt={values.mainPhotoName || "Main photo"}
+                className="w-full h-full object-cover"
+              />
+            </div>
 
-          <div>
-            <p>Upload not implemented yet.</p>
-            <p className="text-sm">Main photo will appear here once file handling is wired.</p>
+            <div className="rounded-lg border border-black/10 px-4 py-3">
+              <p className="text-sm font-medium text-gray-800">
+                {values.mainPhotoName || "Uploaded image"}
+              </p>
+              <p className="text-[13px] text-gray-500">
+                {Math.round(values.mainPhotoSize / 1000)}kb
+                <span className="mx-1.5 text-[10px]">&bull;</span>
+                Complete
+              </p>
+            </div>
           </div>
-        </div>
+        ) : (
+          <div className="flex items-center gap-3 text-[#D32F2F]">
+            <div
+              style={{
+                filter:
+                  "invert(27%) sepia(80%) saturate(800%) hue-rotate(330deg) brightness(85%)",
+              }}
+            >
+              <Image
+                src="/icons/upload-icon.svg"
+                width={20}
+                height={20}
+                alt="upload status"
+              />
+            </div>
+
+            <div>
+              <p>Main photo is required.</p>
+            </div>
+          </div>
+        )}
       </div>
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
@@ -345,9 +413,41 @@ export default function ReviewSubmitPage() {
           garden’s story.
         </p>
 
-        <p className="text-sm text-gray-500">
-          Supporting photo uploads are not connected yet.
-        </p>
+        {values.supportingPhotos.length > 0 ? (
+          <div className="flex flex-col gap-6">
+            {values.supportingPhotos.map((photo, index) => (
+              <div key={`${photo}-${index}`} className="flex flex-col gap-4">
+                <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+                  <img
+                    src={photo}
+                    alt={
+                      values.supportingPhotoNames[index] || "Supporting photo"
+                    }
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+
+                <div className="rounded-lg border border-black/10 px-4 py-3">
+                  <p className="text-sm font-medium text-gray-800">
+                    {values.supportingPhotoNames[index] || "Uploaded image"}
+                  </p>
+                  <p className="text-[13px] text-gray-500">
+                    {Math.round(
+                      (values.supportingPhotoSizes[index] ?? 0) / 1000,
+                    )}
+                    kb
+                    <span className="mx-1.5 text-[10px]">&bull;</span>
+                    Complete
+                  </p>
+                </div>
+              </div>
+            ))}
+          </div>
+        ) : (
+          <p className="text-sm text-gray-500">
+            No supporting photos uploaded.
+          </p>
+        )}
       </div>
 
       <h2 className="text-xl font-semibold">Contact Information</h2>
@@ -378,7 +478,8 @@ export default function ReviewSubmitPage() {
 
       <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
         <h3 className="text-lg font-medium">
-          Beneficiary Organization Mailing Address <span className="text-orange-500">*</span>
+          Beneficiary Organization Mailing Address{" "}
+          <span className="text-orange-500">*</span>
         </h3>
 
         <ValueRow label="Street 1" value={values.mailingStreet1} required />
@@ -389,7 +490,11 @@ export default function ReviewSubmitPage() {
           value={stateNames[values.mailingState] ?? values.mailingState}
           required
         />
-        <ValueRow label="ZIP / Postal Code" value={values.mailingZip} required />
+        <ValueRow
+          label="ZIP / Postal Code"
+          value={values.mailingZip}
+          required
+        />
         <ValueRow
           label="Country"
           value={formatCountry(values.mailingCountry)}
@@ -419,13 +524,18 @@ export default function ReviewSubmitPage() {
         </Button>
 
         <Button
-          component={canSubmit ? Link : "button"}
-          href={canSubmit ? "/apply/submit" : undefined}
+          component="button"
           variant={canSubmit ? "contained" : "text"}
           className={canSubmit ? "!px-4" : "!bg-[#E0E0E0] !px-4"}
           size="medium"
           disabled={!canSubmit}
-          onClick={() => form.handleSubmit()}
+          onClick={async () => {
+            if (!canSubmit) {
+              return;
+            }
+
+            await handleSubmitApplication();
+          }}
         >
           Submit Application
         </Button>
