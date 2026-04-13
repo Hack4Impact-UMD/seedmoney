@@ -8,9 +8,10 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table";
 import Image from "next/image";
-import DeleteUserPopUp from "@/src/components/DeleteUserPopUp";
-import ApplicationStatusPopUp from "@/src/components/ApplicationStatusPopUp";
-import { Avatar, Chip, Snackbar, Alert } from "@mui/material";
+import Button from "@mui/material/Button";
+import { Avatar, Chip } from "@mui/material";
+import BaseModal from "@/src/components/bases/BaseModal";
+import BaseAlert from "@/src/components/bases/BaseAlert";
 import type {
   UserCampaign,
   UsersTableRow,
@@ -54,6 +55,35 @@ const STATUS_PRIORITY: Status[] = [
 function getBestStatus(campaigns: UserCampaign[]): Status {
   const statuses = new Set(campaigns.map((c) => c.status));
   return STATUS_PRIORITY.find((s) => statuses.has(s)) ?? "archived";
+}
+
+const APP_STATUS_CONFIG: Record<Status, { label: string; buttonLabel: string }> = {
+  in_progress: { label: "in progress", buttonLabel: "REVIEW APPLICATION" },
+  submitted_under_review: { label: "submitted", buttonLabel: "REVIEW APPLICATION" },
+  approved: { label: "approved", buttonLabel: "VIEW CAMPAIGN" },
+  not_approved: { label: "not approved", buttonLabel: "VIEW APPLICATION" },
+  published: { label: "published", buttonLabel: "VIEW CAMPAIGN" },
+  archived: { label: "archived", buttonLabel: "VIEW CAMPAIGN" },
+};
+
+const APP_STATUS_ORDER: Status[] = [
+  "submitted_under_review",
+  "approved",
+  "in_progress",
+  "not_approved",
+  "published",
+  "archived",
+];
+
+function groupByStatus(campaigns: UserCampaign[]) {
+  const groups: Partial<Record<Status, UserCampaign[]>> = {};
+  for (const campaign of campaigns) {
+    if (!groups[campaign.status]) {
+      groups[campaign.status] = [];
+    }
+    groups[campaign.status]!.push(campaign);
+  }
+  return groups;
 }
 
 function CampaignsSummaryBadge({
@@ -462,41 +492,94 @@ const UsersTable = ({
         )}
       </div>
 
-      {deleteTarget && (
-        <DeleteUserPopUp
-          firstName={deleteTarget.first_name}
-          lastName={deleteTarget.last_name}
-          onCancel={() => setDeleteTarget(null)}
-          onDelete={handleConfirmDelete}
-        />
-      )}
-
-      {statusTarget && (
-        <ApplicationStatusPopUp
-          user={statusTarget}
-          onClose={() => setStatusTarget(null)}
-        />
-      )}
-
-      <Snackbar
-        open={toast}
-        autoHideDuration={3000}
-        onClose={() => setToast(false)}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      <BaseModal
+        open={!!deleteTarget}
+        onClose={() => setDeleteTarget(null)}
+        title="Confirm Deletion"
       >
-        <Alert
-          onClose={() => setToast(false)}
-          severity="success"
-          variant="outlined"
-          sx={{
-            backgroundColor: "#f0fdf4",
-            borderColor: "#bbf7d0",
-            color: "#1B5E20",
-          }}
-        >
-          Account has been deleted!
-        </Alert>
-      </Snackbar>
+        <p className="text-gray-700 mb-8">
+          You are about to delete {deleteTarget?.first_name}{" "}
+          {deleteTarget?.last_name}&apos;s account. This action is irreversible.
+          Are you sure you would like to delete their account?
+        </p>
+        <div className="flex justify-end gap-4">
+          <button
+            onClick={() => setDeleteTarget(null)}
+            className="px-4 py-2 text-gray-600 font-medium cursor-pointer hover:text-gray-800 transition-colors"
+          >
+            CANCEL
+          </button>
+          <div className="group/del">
+            <button
+              onClick={handleConfirmDelete}
+              className="px-5 py-2 bg-gray-300 text-gray-500 font-medium rounded pointer-events-none group-hover/del:pointer-events-auto group-hover/del:bg-red-500 group-hover/del:text-white transition-colors cursor-pointer"
+            >
+              DELETE
+            </button>
+          </div>
+        </div>
+      </BaseModal>
+
+      {statusTarget && (() => {
+        const groups = groupByStatus(statusTarget.campaigns);
+        const fullName = `${statusTarget.first_name} ${statusTarget.last_name}`;
+
+        return (
+          <BaseModal
+            open={true}
+            onClose={() => setStatusTarget(null)}
+            title="Application Status"
+          >
+            <hr className="border-gray-300" />
+            <div className="overflow-y-auto flex-1 max-h-[50vh]">
+              {APP_STATUS_ORDER.filter((status) => groups[status]).map((status) => {
+                const campaigns = groups[status]!;
+                const config = APP_STATUS_CONFIG[status];
+
+                return (
+                  <div key={status}>
+                    <p className="text-gray-800 mb-3 mt-4">
+                      {fullName} has{" "}
+                      <span className="font-bold">&lt;{campaigns.length}&gt;</span>{" "}
+                      {config.label} application{campaigns.length !== 1 ? "s" : ""}
+                      {status === "in_progress" ? "." : ":"}
+                    </p>
+                    {status !== "in_progress" && (
+                      <div className="flex flex-col gap-3 pl-6">
+                        {campaigns.map((campaign) => (
+                          <div
+                            key={campaign.campaign_id}
+                            className="flex items-center justify-between"
+                          >
+                            <span className="text-gray-700">{campaign.name}</span>
+                            <Button
+                              variant="contained"
+                              size="medium"
+                              onClick={() => {
+                                console.log(
+                                  `${config.buttonLabel}: "${campaign.name}" (ID: ${campaign.campaign_id})`,
+                                );
+                              }}
+                            >
+                              {config.buttonLabel}
+                            </Button>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+            </div>
+          </BaseModal>
+        );
+      })()}
+
+      <BaseAlert
+        open={toast}
+        onClose={() => setToast(false)}
+        title="Account has been deleted!"
+      />
     </div>
   );
 };
