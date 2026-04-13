@@ -15,7 +15,7 @@ type RawCampaignRow = Campaign & {
 function mapCampaignLeader(campaign:RawCampaignRow): CampaignWithLeader {
   const leaders = campaign.campaign_members || [];
 
-  const sortedLeaders = [...leaders].sort((a: any, b: any) => {
+  const sortedLeaders = [...leaders].sort((a, b) => {
     const userA = Array.isArray(a.users) ? a.users[0] : a.users;
     const userB = Array.isArray(b.users) ? b.users[0] : b.users;
     const nameA = `${userA?.first_name || ""} ${userA?.last_name || ""}`.trim().toLowerCase();
