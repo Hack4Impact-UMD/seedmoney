@@ -264,6 +264,7 @@ export default function EditCampaignPage() {
         country: formData.gardenCountry,
         project_category: formData.gardenCategory,
         project_beneficiaries: formData.gardenBeneficiaries,
+        organization_name: formData.organizationName,
         ein: formData.organizationIdentifier,
         mailing_street_1: formData.mailingStreet1,
         mailing_street_2: formData.mailingStreet2,
