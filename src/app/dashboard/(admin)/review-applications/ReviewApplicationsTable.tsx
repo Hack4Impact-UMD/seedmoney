@@ -11,14 +11,9 @@ import { Button } from "@mui/material";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import BaseModal from "@/src/components/bases/BaseModal";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
-import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
-import useReadCampaignsNotApproved from "@/src/hooks/campaigns/useReadCampaignsNotApproved";
 import type { Status } from "@/src/types/db/enums";
+import { ReviewApplicationRow } from "@/src/types/frontend/campaignsTable";
 
-
-type ReviewApplicationsTableProps = {
-  competitionId?: number;
-};
 
 const pageSizeOptions = [5, 10, 20];
 
@@ -31,9 +26,11 @@ const formatDate = (dateStr: string) => {
   return `${month}/${day}/${year}`;
 };
 
-export default function ReviewApplicationsTable({
-  competitionId: propCompetitionId,
-}: ReviewApplicationsTableProps) {
+interface Props {
+  applications: ReviewApplicationRow[];
+}
+
+export default function ReviewApplicationsTable({ applications }: Props) {
   const [tab, setTab] = useState<TabStatus>("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -47,11 +44,6 @@ export default function ReviewApplicationsTable({
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const router = useRouter();
   const queryClient = useQueryClient();
-  const { data: competition } = useReadCurrentCompetition();
-  const competitionId = propCompetitionId ?? competition?.competition_id ?? 0;
-  const {
-    data: applications = [],
-  } = useReadCampaignsNotApproved(competitionId);
   const updateCampaignMutation = useUpdateCampaign();
 
   useEffect(() => {
@@ -132,7 +124,7 @@ export default function ReviewApplicationsTable({
 
       // Invalidate the query to refresh the data
       await queryClient.invalidateQueries({
-        queryKey: ["campaigns-under-review", competitionId],
+        queryKey: ["campaigns"],
       });
     } catch (error) {
       console.error("Error updating campaigns:", error);
@@ -258,10 +250,8 @@ export default function ReviewApplicationsTable({
         </div>
       </BaseAlert>
 
-      <div className="mb-5 pt-8">
-        <h1 className="text-[40px] font-semibold tracking-[-0.04em] text-[#214E34] sm:text-[42px]">
-          Review Campaigns
-        </h1>
+      <div className="mb-5">
+
 
         <div className="mt-4 flex items-end gap-7 border-b border-[#d6e0d7]">
           {(["PENDING", "DENIED"] as TabStatus[]).map((status) => {

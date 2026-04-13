@@ -1,18 +1,8 @@
 import { createBrowserClient } from "@/src/lib/supabase-client";
-
-export type ReviewApplicationRow = {
-  campaignId: number;
-  campaignTitle: string;
-  campaignLeader: string;
-  raised: number;
-  goal: number;
-  goalProgress: number;
-  status: "submitted_under_review" | "not_approved";
-  submissionDate: string;
-};
+import { ReviewApplicationRow } from "@/src/types/frontend/campaignsTable";
 
 export async function readCampaignsUnderReview(
-  competitionId: number,
+  competitionId?: number,
 ): Promise<ReviewApplicationRow[]> {
   const supabase = createBrowserClient();
 

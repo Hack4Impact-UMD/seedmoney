@@ -12,12 +12,11 @@ import {
 import { CampaignWithLeader } from '../types/frontend/campaignsTable';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 
-
 interface Props {
   initialData: CampaignWithLeader[];
 }
 
-const CampaignsTable = ({ initialData }: Props) => {
+export default function CampaignsTable({ initialData }: Props) {
   const router = useRouter();
   const [campaignSearch, setCampaignSearch] = useState('');
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
@@ -218,5 +217,3 @@ const CampaignsTable = ({ initialData }: Props) => {
     </div>
   );
 }
-
-export default CampaignsTable;
