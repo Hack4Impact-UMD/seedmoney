@@ -1,7 +1,7 @@
 import { WebhookPayload } from "./types";
 import {
   updateCampaignGivebutterID,
-  createCampaign,
+  createCampaignGivebutter,
 } from "@/src/actions/db/campaigns";
 import moment from "moment";
 
@@ -22,7 +22,7 @@ export const campaignHandlers = {
   },
   "campaign.created": async (payload: WebhookPayload) => {
     if (!payload.data) return;
-    await createCampaign({
+    await createCampaignGivebutter({
       givebutter_id: String(payload.data.id),
       givebutter_slug: payload.data.slug,
       name: payload.data.title,

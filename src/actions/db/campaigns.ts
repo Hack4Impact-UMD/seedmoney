@@ -4,10 +4,7 @@ import { createBrowserClient, createServerClient } from "@/src/lib/supabase-clie
 export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase =
-    typeof window === "undefined"
-      ? await createServerClient()
-      : createBrowserClient();
+  const supabase = createBrowserClient();
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -65,6 +62,47 @@ export async function createCampaign(
       );
       return null;
     }
+  }
+
+  return insertedData as Campaign;
+}
+
+export async function createCampaignGivebutter(
+  data: Partial<Campaign>,
+): Promise<Campaign | null> {
+  const supabase = await createServerClient();
+  const campaignData = { ...data };
+
+  if (
+    campaignData.competition_id === undefined ||
+    campaignData.competition_id === null
+  ) {
+    const { data: currentCompetition, error: competitionError } = await supabase
+      .from("competition_metadata")
+      .select("competition_id")
+      .eq("is_current", true)
+      .single();
+
+    if (competitionError || !currentCompetition) {
+      console.error(
+        "Error reading current competition:",
+        competitionError?.message ?? "No current competition found",
+      );
+      return null;
+    }
+
+    campaignData.competition_id = currentCompetition.competition_id;
+  }
+
+  const { data: insertedData, error } = await supabase
+    .from("campaigns")
+    .insert(campaignData)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating Givebutter campaign:", error.message);
+    return null;
   }
 
   return insertedData as Campaign;
