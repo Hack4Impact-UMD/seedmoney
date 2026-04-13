@@ -1,9 +1,18 @@
 "use server"
 
 import { createServerClient } from "@/src/lib/supabase-client";
+import { Campaign } from "@/src/types";
 import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
 
-function mapCampaignLeader(campaign: any): CampaignWithLeader {
+// Temporary type
+type RawCampaignRow = Campaign & {
+  campaign_members: {
+    role: string;
+    users: { first_name: string; last_name: string } | { first_name: string; last_name: string }[];
+  }[];
+};
+
+function mapCampaignLeader(campaign:RawCampaignRow): CampaignWithLeader {
   const leaders = campaign.campaign_members || [];
 
   const sortedLeaders = [...leaders].sort((a: any, b: any) => {
