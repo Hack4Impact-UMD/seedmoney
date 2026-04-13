@@ -147,7 +147,7 @@ export default function ReviewSubmitPage() {
     });
 
     await form.handleSubmit();
-    router.push("/apply/submit");
+    router.push(`/dashboard/${campaignId}`);
   };
 
   return (
