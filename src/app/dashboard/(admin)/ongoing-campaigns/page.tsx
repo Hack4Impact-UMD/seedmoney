@@ -4,26 +4,21 @@ import CampaignsTable from "@/src/components/CampaignsTable";
 import Loading from "@/src/app/loading";
 import Error from "@/src/app/error";
 
-import useReadOngoingCampaigns from "@/src/hooks/campaigns/useReadOngoingCampaigns";
+import useReadOngoingCampaigns from "@/src/hooks/campaigns/table/useReadOngoingCampaigns";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 
 export default function OngoingApplicationsPage() {
-  const { data: currentCompetition, isLoading: isLoadingCompetition } = useReadCurrentCompetition();
-
+  const { data: currentCompetition, isLoading: isLoadingCompetition, error: competitionError } = useReadCurrentCompetition();
   const { data: campaigns, isLoading, error, refetch } = useReadOngoingCampaigns(currentCompetition?.competition_id);
 
-  if (isLoadingCompetition || isLoading) {
-    return (
-      <Loading />
-    );
-  }
+  if (isLoadingCompetition || isLoading) return <Loading />;
 
-  if (error) {
-    return (
-      <Error error={error} reset={() => refetch()} />
-    )
-  }
+  if (competitionError) return <Error error={competitionError} reset={() => {}} />;
 
+  if (!currentCompetition) return <Error error={{ name: "Not found", message: "Competition not found" }} reset={() => {}} />;
+
+  if (error) return <Error error={error} reset={() => refetch()} />;
+  
   return (
     <div className="flex min-h-screen">
       <Navbar/>

@@ -1,13 +1,14 @@
 import { useQuery } from "@tanstack/react-query";
-import { readOngoingChallengeApplications } from "@/src/actions/frontend/campaigns";
-import { CampaignWithLeader } from "@/src/types/frontend/campaigns";
+import { readOngoingCampaigns } from "@/src/actions/frontend/campaignsTable";
+import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
+
+// This hook is used for reading ongoing campaigns from an admin's perspective
 
 export default function useReadOngoingCampaigns(competitionId?: number) {
   return useQuery<CampaignWithLeader[]>({
     queryKey: ["campaigns", "ongoing-challenges", competitionId],
     queryFn: async () => {
-      if (competitionId === undefined) return [];
-      const campaigns = await readOngoingChallengeApplications(competitionId);
+      const campaigns = await readOngoingCampaigns(competitionId);
       if (!campaigns) return [];
       return campaigns as CampaignWithLeader[];
     },
