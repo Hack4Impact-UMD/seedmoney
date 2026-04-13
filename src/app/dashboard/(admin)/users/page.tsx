@@ -6,11 +6,7 @@ import { mockUsersTableRows } from "./mockUsersData";
 export default function Users() {
   return (
     <div className="flex min-h-screen">
-      <Navbar
-        campaigns={[]}
-        selectedCampaignId={0}
-        onCampaignSelect={() => {}}
-      />
+      <Navbar/>
       <div className="flex-1 bg-gray-50 p-10">
         <div className="flex items-center gap-4">
           <h3 className="text-4xl font-bold text-[#096B2E]">List of Users</h3>
