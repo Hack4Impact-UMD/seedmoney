@@ -28,7 +28,7 @@ const theme = createTheme({
         {
           props: { variant: "contained", size: "large" },
           style: {
-            backgroundColor: "#008832",
+            backgroundColor: "#2D7A45",
             color: "#fff",
             padding: "16px 32px",
             borderRadius: "8px",
@@ -39,7 +39,7 @@ const theme = createTheme({
         {
           props: { variant: "contained", size: "medium" },
           style: {
-            backgroundColor: "#008832",
+            backgroundColor: "#2D7A45",
             color: "#fff",
             padding: "12px 26px",
             borderRadius: "8px",
@@ -51,7 +51,7 @@ const theme = createTheme({
         {
           props: { variant: "contained", size: "small" },
           style: {
-            backgroundColor: "#008832",
+            backgroundColor: "#2D7A45",
             color: "#fff",
             padding: "10px 14px",
             borderRadius: "8px",
@@ -62,8 +62,8 @@ const theme = createTheme({
         {
           props: { variant: "outlined", size: "large" },
           style: {
-            borderColor: "#008832",
-            color: "#008832",
+            borderColor: "#123A1E",
+            color: "#123A1E",
             padding: "16px 32px",
             backgroundColor: "#FFFFFF",
             borderRadius: "8px",
@@ -74,8 +74,8 @@ const theme = createTheme({
         {
           props: { variant: "outlined", size: "medium" },
           style: {
-            borderColor: "#008832",
-            color: "#008832",
+            borderColor: "#123A1E",
+            color: "#123A1E",
             padding: "12px 26px",
             backgroundColor: "#FFFFFF",
             borderRadius: "8px",
@@ -88,8 +88,8 @@ const theme = createTheme({
         {
           props: { variant: "outlined", size: "small" },
           style: {
-            borderColor: "#008832",
-            color: "#008832",
+            borderColor: "#123A1E",
+            color: "#123A1E",
             padding: "10px 14px",
             backgroundColor: "#FFFFFF",
             borderRadius: "8px",
@@ -129,11 +129,12 @@ const theme = createTheme({
       },
       variants: [
         {
-          props: { severity: "success", variant: "outlined" },
+          props: { variant: "outlined" },
           style: {
             backgroundColor: "#EDF7ED",
             color: "#1e4620",
             border: "none",
+            width: "320px",
             fontWeight: 400,
           },
         },
