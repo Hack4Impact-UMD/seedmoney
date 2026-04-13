@@ -26,8 +26,10 @@ export default function Navbar() {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAuth();
   const { data: userData } = useUserByAuthId(user?.id || "");
-  const { data: campaigns = [], isLoading } = useReadCampaignsFromMembers(user?.id || "");
-  const { data: currentCompetitionData} = useReadCurrentCompetition();
+  const { data: campaigns = [], isLoading } = useReadCampaignsFromMembers(
+    user?.id || "",
+  );
+  const { data: currentCompetitionData } = useReadCurrentCompetition();
 
   const router = useRouter();
   const pathname = usePathname();
@@ -56,10 +58,7 @@ export default function Navbar() {
 
   const { currentYearCampaigns, previousCampaigns } = useMemo(() => {
     const currentYearCampaigns = campaigns
-      .filter(
-        (campaign) =>
-          campaign.competition_id === currentCompetitionId
-      )
+      .filter((campaign) => campaign.competition_id === currentCompetitionId)
       .sort(
         (a, b) =>
           moment(b.date_created, "YYYY-MM-DD").valueOf() -
@@ -67,10 +66,7 @@ export default function Navbar() {
       );
 
     const previousCampaigns = campaigns
-      .filter(
-        (campaign) =>
-          campaign.competition_id !== currentCompetitionId
-      )
+      .filter((campaign) => campaign.competition_id !== currentCompetitionId)
       .sort(
         (a, b) =>
           moment(b.date_created, "YYYY-MM-DD").valueOf() -
@@ -83,7 +79,9 @@ export default function Navbar() {
   const getItemClasses = (isSelected: boolean) =>
     clsx(
       "!p-0 !min-h-12",
-      isSelected ? "!bg-[#1A4A28] hover:!bg-black/30" : "!bg-transparent hover:!bg-[#43B45D]",
+      isSelected
+        ? "!bg-[#1A4A28] hover:!bg-black/30"
+        : "!bg-transparent hover:!bg-[#43B45D]",
       isCollapsed ? "!justify-center !px-0" : "!justify-start",
     );
 
@@ -100,7 +98,8 @@ export default function Navbar() {
   };
 
   const renderCampaignItem = (campaign: Campaign) => {
-    const isSelected = !isViewAllSelected && campaign.campaign_id === selectedCampaignId;
+    const isSelected =
+      !isViewAllSelected && campaign.campaign_id === selectedCampaignId;
     return (
       <ListItemButton
         key={campaign.campaign_id}
@@ -108,13 +107,19 @@ export default function Navbar() {
         className={getItemClasses(isSelected)}
       >
         {isCollapsed ? (
-          <div className={clsx("h-3 w-3 rounded-full", isSelected ? "bg-white" : "bg-gray-200/50")} />
+          <div
+            className={clsx(
+              "h-3 w-3 rounded-full",
+              isSelected ? "bg-white" : "bg-gray-200/50",
+            )}
+          />
         ) : (
           <ListItemText
             primary={getCampaignDisplayName(campaign)}
             slotProps={{
               primary: {
-                className: "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
+                className:
+                  "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
               },
             }}
           />
@@ -131,7 +136,12 @@ export default function Navbar() {
       )}
     >
       <div className="flex items-center px-5 pb-4 pt-6">
-        <div className={clsx("flex min-w-0 flex-1 items-center gap-4", isCollapsed && "justify-center")}>
+        <div
+          className={clsx(
+            "flex min-w-0 flex-1 items-center gap-4",
+            isCollapsed && "justify-center",
+          )}
+        >
           <div
             className={clsx(
               "flex shrink-0 items-center justify-center rounded-full bg-white",
@@ -151,7 +161,13 @@ export default function Navbar() {
                 {userData?.first_name ?? "SeedMoney"}
               </h6>
               <p className="text-sm text-white/80">
-                {isLoading ? "Loading..." : userData ? (isAdmin ? "Admin" : "Campaign Leader") : ""}
+                {isLoading
+                  ? "Loading..."
+                  : userData
+                    ? isAdmin
+                      ? "Admin"
+                      : "Campaign Leader"
+                    : ""}
               </p>
             </div>
           )}
@@ -164,7 +180,11 @@ export default function Navbar() {
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         className="!absolute !right-0 !top-[100px] !z-50 !h-9 !w-9 !translate-x-1/2 !border-2 !border-[#2D7A45] !bg-white !text-[#2D7A45] hover:!bg-gray-100"
       >
-        {isCollapsed ? <ChevronRightIcon fontSize="small" /> : <ChevronLeftIcon fontSize="small" />}
+        {isCollapsed ? (
+          <ChevronRightIcon fontSize="small" />
+        ) : (
+          <ChevronLeftIcon fontSize="small" />
+        )}
       </IconButton>
 
       {userData && isAdmin && (
@@ -172,21 +192,40 @@ export default function Navbar() {
           <List disablePadding>
             {[
               { label: "Home", path: "/dashboard" },
-              { label: "Ongoing Campaigns", path: "/dashboard/ongoing-campaigns" },
-              { label: "Review Applications", path: "/dashboard/review-applications" },
+              {
+                label: "Ongoing Campaigns",
+                path: "/dashboard/ongoing-campaigns",
+              },
+              {
+                label: "Review Applications",
+                path: "/dashboard/review-applications",
+              },
               { label: "List of Users", path: "/dashboard/users" },
             ].map(({ label, path }) => {
-              const isSelected = path === "/dashboard" ? pathname === path : pathname.startsWith(path);
+              const isSelected =
+                path === "/dashboard"
+                  ? pathname === path
+                  : pathname.startsWith(path);
               return (
-                <ListItemButton key={path} onClick={() => router.push(path)} className={getItemClasses(isSelected)}>
+                <ListItemButton
+                  key={path}
+                  onClick={() => router.push(path)}
+                  className={getItemClasses(isSelected)}
+                >
                   {isCollapsed ? (
-                    <div className={clsx("h-3 w-3 rounded-full", isSelected ? "bg-white" : "bg-gray-200/50")} />
+                    <div
+                      className={clsx(
+                        "h-3 w-3 rounded-full",
+                        isSelected ? "bg-white" : "bg-gray-200/50",
+                      )}
+                    />
                   ) : (
                     <ListItemText
                       primary={label}
                       slotProps={{
                         primary: {
-                          className: "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
+                          className:
+                            "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
                         },
                       }}
                     />
@@ -196,11 +235,21 @@ export default function Navbar() {
             })}
           </List>
           <div className="mt-auto flex flex-col gap-3 px-4 pb-6">
-            <Button onClick={() => console.log("settings")} size="medium" variant="text" className="!flex !justify-start !text-white">
+            <Button
+              onClick={() => console.log("settings")}
+              size="medium"
+              variant="text"
+              className="!flex !justify-start !text-white"
+            >
               <SettingsIcon className="!text-[28px]" />
               {!isCollapsed && <span className="ml-2">SETTINGS</span>}
             </Button>
-            <Button onClick={handleLogout} size="medium" variant="text" className="!flex !justify-start !text-white">
+            <Button
+              onClick={handleLogout}
+              size="medium"
+              variant="text"
+              className="!flex !justify-start !text-white"
+            >
               <LogoutIcon className="!text-[28px]" />
               {!isCollapsed && <span className="ml-2">LOG OUT</span>}
             </Button>
@@ -218,7 +267,9 @@ export default function Navbar() {
                     {currentYear} Campaigns
                   </div>
                 )}
-                <List disablePadding>{currentYearCampaigns.map(renderCampaignItem)}</List>
+                <List disablePadding>
+                  {currentYearCampaigns.map(renderCampaignItem)}
+                </List>
               </>
             )}
 
@@ -229,7 +280,9 @@ export default function Navbar() {
                     Previous Campaigns
                   </div>
                 )}
-                <List disablePadding>{previousCampaigns.map(renderCampaignItem)}</List>
+                <List disablePadding>
+                  {previousCampaigns.map(renderCampaignItem)}
+                </List>
               </>
             )}
 
@@ -239,13 +292,19 @@ export default function Navbar() {
                 className={clsx(getItemClasses(isViewAllSelected), "mt-2")}
               >
                 {isCollapsed ? (
-                  <div className={clsx("h-3 w-3 rounded-full", isViewAllSelected ? "bg-white" : "bg-gray-200/50")} />
+                  <div
+                    className={clsx(
+                      "h-3 w-3 rounded-full",
+                      isViewAllSelected ? "bg-white" : "bg-gray-200/50",
+                    )}
+                  />
                 ) : (
                   <ListItemText
                     primary="View all"
                     slotProps={{
                       primary: {
-                        className: "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
+                        className:
+                          "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
                       },
                     }}
                   />
@@ -255,14 +314,31 @@ export default function Navbar() {
           </div>
 
           <div className="flex flex-col gap-3 px-4 pb-6">
-            <Button size="large" variant="outlined" startIcon={!isCollapsed && <AddIcon />} onClick={() => console.log("new campaign")} fullWidth className="hover:!bg-gray-100">
+            <Button
+              size="large"
+              variant="outlined"
+              startIcon={!isCollapsed && <AddIcon />}
+              onClick={() => router.push("/apply")}
+              fullWidth
+              className="hover:!bg-gray-100"
+            >
               {isCollapsed ? <AddIcon /> : "New Campaign"}
             </Button>
-            <Button onClick={() => console.log("settings")} size="medium" variant="text" className="!flex !justify-start !text-white">
+            <Button
+              onClick={() => console.log("settings")}
+              size="medium"
+              variant="text"
+              className="!flex !justify-start !text-white"
+            >
               <SettingsIcon className="!text-[28px]" />
               {!isCollapsed && <span className="ml-2">SETTINGS</span>}
             </Button>
-            <Button onClick={handleLogout} size="medium" variant="text" className="!flex !justify-start !text-white">
+            <Button
+              onClick={handleLogout}
+              size="medium"
+              variant="text"
+              className="!flex !justify-start !text-white"
+            >
               <LogoutIcon className="!text-[28px]" />
               {!isCollapsed && <span className="ml-2">LOG OUT</span>}
             </Button>
