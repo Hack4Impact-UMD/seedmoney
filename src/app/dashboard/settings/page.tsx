@@ -9,7 +9,6 @@ import ChangePasswordModal from "@/src/components/settings-modals/ChangePassword
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import { createBrowserClient } from "@/src/lib/supabase-client";
-import { sampleCampaigns } from "../sampleCampaigns";
 
 type ActiveModal = "name" | "email" | "password" | null;
 
@@ -54,18 +53,13 @@ export default function SettingsPage() {
     lastName: string;
   } | null>(null);
 
-  const isAdmin = userData?.is_admin ?? false;
   const isGoogleAuth = user?.app_metadata?.provider === "google";
-  const firstName = savedName?.firstName || userData?.first_name || "John";
-  const lastName = savedName?.lastName || userData?.last_name || "Smith";
-  const email = userData?.email || user?.email || "johnsmith@gmail.com";
+  const firstName = savedName?.firstName || userData?.first_name || "SeedMoney";
+  const lastName = savedName?.lastName || userData?.last_name || "User";
+  const email = userData?.email || user?.email || "Could not fetch email.";
   const displayName = useMemo(() => {
     return [firstName, lastName].filter(Boolean).join(" ");
   }, [firstName, lastName]);
-
-  const handleCampaignSelect = (campaignId: number) => {
-    router.push(`/dashboard/${campaignId}`);
-  };
 
   const handleReauthenticate = async () => {
     const supabase = createBrowserClient();
@@ -76,11 +70,7 @@ export default function SettingsPage() {
 
   return (
     <div className="flex min-h-screen bg-[#f8fbf8]">
-      <Navbar
-        campaigns={isAdmin ? [] : sampleCampaigns}
-        selectedCampaignId={0}
-        onCampaignSelect={handleCampaignSelect}
-      />
+      <Navbar />
 
       <main className="flex-1 px-6 py-8 sm:px-10 md:px-12">
         <div className="mx-auto max-w-[760px]">
