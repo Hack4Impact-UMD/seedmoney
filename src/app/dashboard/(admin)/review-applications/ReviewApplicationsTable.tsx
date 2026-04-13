@@ -5,17 +5,19 @@ import clsx from "clsx";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
-import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import { useRouter } from "next/navigation";
-import { Button, Snackbar, Alert } from "@mui/material";
+import { useQueryClient } from "@tanstack/react-query";
+import { Button } from "@mui/material";
+import BaseAlert from "@/src/components/bases/BaseAlert";
+import BaseModal from "@/src/components/bases/BaseModal";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
-import type { ReviewApplicationRow } from "@/src/actions/frontend/campaigns";
+import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
+import useReadCampaignsNotApproved from "@/src/hooks/campaigns/useReadCampaignsNotApproved";
 import type { Status } from "@/src/types/db/enums";
 
 
 type ReviewApplicationsTableProps = {
-  applications: ReviewApplicationRow[];
+  competitionId?: number;
 };
 
 const pageSizeOptions = [5, 10, 20];
@@ -30,7 +32,7 @@ const formatDate = (dateStr: string) => {
 };
 
 export default function ReviewApplicationsTable({
-  applications,
+  competitionId: propCompetitionId,
 }: ReviewApplicationsTableProps) {
   const [tab, setTab] = useState<TabStatus>("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
@@ -44,7 +46,13 @@ export default function ReviewApplicationsTable({
   } | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const router = useRouter();
-  const updateCampaignMutation = useUpdateCampaign();
+  const queryClient = useQueryClient();
+  const { data: competition } = useReadCurrentCompetition();
+  const competitionId = propCompetitionId ?? competition?.competition_id ?? 0;
+  const {
+    data: applications = [],
+  } = useReadCampaignsNotApproved(competitionId);
+  const updateCampaignMutation = useUpdateCampaign(competitionId);
 
   useEffect(() => {
     if (!notification) return;
@@ -121,6 +129,11 @@ export default function ReviewApplicationsTable({
       setNotification({ action, campaignNames: names });
       setSelectedIds([]);
       setPendingAction(null);
+
+      // Invalidate the query to refresh the data
+      await queryClient.invalidateQueries({
+        queryKey: ["campaigns-under-review", competitionId],
+      });
     } catch (error) {
       console.error("Error updating campaigns:", error);
       setNotification({ action: "error", campaignNames: [] });
@@ -201,65 +214,49 @@ export default function ReviewApplicationsTable({
 
   return (
     <div className="relative w-full max-w-[1200px] pb-24 pt-2">
-      <Snackbar
+      <BaseAlert
         open={snackbarOpen}
-        autoHideDuration={4000}
         onClose={() => {
           setSnackbarOpen(false);
           setNotification(null);
         }}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        title={
+          notification?.action === "approved"
+            ? "Campaign Approved!"
+            : notification?.action === "denied"
+              ? "Campaign Denied!"
+              : notification?.action === "reverted"
+                ? "Campaign Restored!"
+                : "Something went wrong."
+        }
       >
-        <Alert
-          onClose={() => {
-            setSnackbarOpen(false);
-            setNotification(null);
-          }}
-          severity={notification?.action === "error" ? "error" : "success"}
-          variant="outlined"
-          icon={
-            notification?.action !== "error" ? (
-              <CheckCircleOutlineIcon sx={{ fontSize: 22 }} />
-            ) : undefined
-          }
-        >
-          <div>
-            <p className="font-bold">
-              {notification?.action === "approved"
-                ? "Campaign Approved!"
-                : notification?.action === "denied"
-                  ? "Campaign Denied!"
-                  : notification?.action === "reverted"
-                    ? "Campaign Restored!"
-                    : "Something went wrong."}
-            </p>
-            {notification?.action !== "error" && notification?.campaignNames && (
-              <>
+        <div>
+          {notification?.action !== "error" && notification?.campaignNames && (
+            <>
+              <p className="text-sm">
+                {notification.action === "approved"
+                  ? "You have successfully approved:"
+                  : notification.action === "denied"
+                    ? "You have successfully denied:"
+                    : "You have successfully restored:"}
+              </p>
+              <ul className="my-1 list-disc pl-5 text-sm">
+                {notification.campaignNames.map((name) => (
+                  <li key={name}>{name}</li>
+                ))}
+              </ul>
+              {notification.action === "approved" && (
                 <p className="text-sm">
-                  {notification.action === "approved"
-                    ? "You have successfully approved:"
-                    : notification.action === "denied"
-                      ? "You have successfully denied:"
-                      : "You have successfully restored:"}
+                  You can view it on the &ldquo;Ongoing Campaigns&rdquo; page.
                 </p>
-                <ul className="my-1 list-disc pl-5 text-sm">
-                  {notification.campaignNames.map((name) => (
-                    <li key={name}>{name}</li>
-                  ))}
-                </ul>
-                {notification.action === "approved" && (
-                  <p className="text-sm">
-                    You can view it on the &ldquo;Ongoing Campaigns&rdquo; page.
-                  </p>
-                )}
-              </>
-            )}
-            {notification?.action === "error" && (
-              <p className="text-sm">An error occurred. Please try again.</p>
-            )}
-          </div>
-        </Alert>
-      </Snackbar>
+              )}
+            </>
+          )}
+          {notification?.action === "error" && (
+            <p className="text-sm">An error occurred. Please try again.</p>
+          )}
+        </div>
+      </BaseAlert>
 
       <div className="mb-5 pt-8">
         <h1 className="text-[40px] font-semibold tracking-[-0.04em] text-[#214E34] sm:text-[42px]">
@@ -518,64 +515,49 @@ export default function ReviewApplicationsTable({
       </div>
 
       {isActionModalOpen && (
-        <div className="fixed inset-0 z-40 bg-[rgba(31,41,35,0.24)]">
-          <div className="ml-[240px] flex min-h-screen items-center justify-center px-4">
-            <div className="w-full max-w-[480px] rounded bg-white shadow-[0_18px_48px_rgba(0,0,0,0.2)]">
-              <div className="flex items-start justify-between px-4 pb-2 pt-4">
-                <h3 className="text-[18px] font-semibold text-[#214E34]">
-                  {modalTitle}
-                </h3>
-                <button
-                  type="button"
-                  onClick={handleCloseActionModal}
-                  disabled={isConfirming}
-                  className="rounded p-1 text-[#7d8480] transition-colors hover:bg-[#f2f4f2]"
-                  aria-label="Close dialog"
-                >
-                  <CloseOutlinedIcon />
-                </button>
-              </div>
-
-              <div className="px-4 pb-4 text-[14px] text-[#727873]">
-                <p>
-                  {pendingAction === "REVERT"
-                    ? "You are about to move these campaigns back to the pending list:"
-                    : `You are about to bulk ${modalVerb} these campaigns:`}
-                </p>
-                <ul className="mt-2 list-disc pl-6 text-[#222622]">
-                  {selectedApplications.map((application) => (
-                    <li key={application.campaignId}>
-                      {application.campaignTitle}
-                    </li>
-                  ))}
-                </ul>
-                <p className="mt-3">
-                  {pendingAction === "REVERT"
-                    ? "Are you sure you would like to revert them? This will move them back to the pending list."
-                    : `Are you sure you would like to ${modalVerb}? This action cannot be undone.`}
-                </p>
-              </div>
-
-              <div className="flex items-center justify-end gap-3 px-4 pb-4">
-                <Button
-                  onClick={handleCloseActionModal}
-                  disabled={isConfirming}
-                  variant="text"
-                >
-                  CANCEL
-                </Button>
-                <Button
-                  onClick={handleConfirmAction}
-                  disabled={isConfirming}
-                  variant="contained"
-                  size="small"
-                >
-                  {isConfirming ? "..." : pendingAction}
-                </Button>
-              </div>
-            </div>
+        <BaseModal
+          open={isActionModalOpen}
+          onClose={handleCloseActionModal}
+          title={modalTitle}
+        >
+          <div className="px-4 pb-4 text-[14px] text-[#727873]">
+            <p>
+              {pendingAction === "REVERT"
+                ? "You are about to move these campaigns back to the pending list:"
+                : `You are about to bulk ${modalVerb} these campaigns:`}
+            </p>
+            <ul className="mt-2 list-disc pl-6 text-[#222622]">
+              {selectedApplications.map((application) => (
+                <li key={application.campaignId}>
+                  {application.campaignTitle}
+                </li>
+              ))}
+            </ul>
+            <p className="mt-3">
+              {pendingAction === "REVERT"
+                ? "Are you sure you would like to revert them? This will move them back to the pending list."
+                : `Are you sure you would like to ${modalVerb}? This action cannot be undone.`}
+            </p>
           </div>
-        </div>
+
+          <div className="flex items-center justify-end gap-3 px-4 pb-4">
+            <Button
+              onClick={handleCloseActionModal}
+              disabled={isConfirming}
+              variant="text"
+            >
+              CANCEL
+            </Button>
+            <Button
+              onClick={handleConfirmAction}
+              disabled={isConfirming}
+              variant="contained"
+              size="small"
+            >
+              {isConfirming ? "..." : pendingAction}
+            </Button>
+          </div>
+        </BaseModal>
       )}
     </div>
   );
