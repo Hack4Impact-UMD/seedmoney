@@ -1,5 +1,11 @@
 import type { NewAnswer, Answers } from "@/src/types";
-import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
+import {
+  createServerClient,
+  createBrowserClient,
+} from "@/src/lib/supabase-client";
+import type { Questions } from "@/src/types/db/questions";
+
+export type AnswerWithQuestion = Answers & { questions: Questions | null };
 
 export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
   const supabase = await createBrowserClient();
@@ -121,7 +127,7 @@ export async function upsertAnswerByCampaignAndQuestion({
 export async function readAnswersByCampaign(
   campaignId: number,
 ): Promise<Answers[]> {
-  const supabase = await createServerClient();
+  const supabase = createBrowserClient();
 
   const { data, error } = await supabase
     .from("answers")
@@ -135,4 +141,62 @@ export async function readAnswersByCampaign(
   }
 
   return (data ?? []) as Answers[];
+}
+
+export async function readAnswersByCampaignId(
+  campaignId: number,
+): Promise<AnswerWithQuestion[]> {
+  const supabase = createBrowserClient();
+
+  // 1. Fetch answers for this explicit campaign
+  const { data: answersData, error: answersError } = await supabase
+    .from("answers")
+    .select("*")
+    .eq("campaign_id", campaignId);
+
+  if (answersError) {
+    console.error(
+      "Error fetching garden story answers: ",
+      answersError.message,
+    );
+    return [];
+  }
+
+  if (!answersData || answersData.length === 0) {
+    return [];
+  }
+
+  // 2. Gather distinct question IDs to fetch
+  const questionIds = answersData
+    .map((a) => a.question_id)
+    .filter((id) => id !== null && id !== undefined);
+
+  if (questionIds.length === 0) {
+    return answersData as unknown as AnswerWithQuestion[];
+  }
+
+  // 3. Fetch matched questions using the readQuestion logic
+  // Applying the logic from readQuestion pluralized for performance
+  const { data: questionsData, error: questionsError } = await supabase
+    .from("questions")
+    .select("*")
+    .in("question_id", questionIds);
+
+  if (questionsError) {
+    console.error("Error fetching questions: ", questionsError.message);
+    return answersData as unknown as AnswerWithQuestion[];
+  }
+
+  // 4. Map together consistently
+  const results: AnswerWithQuestion[] = answersData.map((answer) => {
+    const matchedQuestion =
+      questionsData?.find((q) => q.question_id === answer.question_id) || null;
+
+    return {
+      ...answer,
+      questions: matchedQuestion,
+    } as AnswerWithQuestion;
+  });
+
+  return results;
 }

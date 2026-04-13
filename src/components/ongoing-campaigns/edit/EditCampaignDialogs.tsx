@@ -110,6 +110,8 @@ interface EditCampaignDialogsProps {
   isCancelModalOpen: boolean;
   isDiscardModalOpen: boolean;
   showSuccessToast: boolean;
+  showErrorToast: boolean;
+  saveErrorMessage: string;
   onCloseSaveModal: () => void;
   onConfirmSave: () => void;
   onCloseCancelModal: () => void;
@@ -117,6 +119,7 @@ interface EditCampaignDialogsProps {
   onCloseDiscardModal: () => void;
   onConfirmDiscard: () => void;
   onCloseToast: () => void;
+  onCloseErrorToast: () => void;
 }
 
 export default function EditCampaignDialogs({
@@ -126,6 +129,8 @@ export default function EditCampaignDialogs({
   isCancelModalOpen,
   isDiscardModalOpen,
   showSuccessToast,
+  showErrorToast,
+  saveErrorMessage,
   onCloseSaveModal,
   onConfirmSave,
   onCloseCancelModal,
@@ -133,6 +138,7 @@ export default function EditCampaignDialogs({
   onCloseDiscardModal,
   onConfirmDiscard,
   onCloseToast,
+  onCloseErrorToast,
 }: EditCampaignDialogsProps) {
   const changedSections = useMemo(
     () => [
@@ -362,7 +368,25 @@ export default function EditCampaignDialogs({
           <AlertTitle sx={{ fontSize: "16px" }}>Campaigns Updated!</AlertTitle>
           <span className="text-[14px]">
             You have successfully updated this <br />
-            campaigns.
+            campaign.
+          </span>
+        </Alert>
+      </Snackbar>
+
+      <Snackbar
+        open={showErrorToast}
+        autoHideDuration={6000}
+        onClose={onCloseErrorToast}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+        sx={{ mt: 1, mr: 1 }}
+      >
+        <Alert
+          severity="error"
+          onClose={onCloseErrorToast}
+        >
+          <AlertTitle sx={{ fontSize: "16px" }}>Save Failed</AlertTitle>
+          <span className="text-[14px]">
+            {saveErrorMessage || "An error occurred while saving. Please try again."}
           </span>
         </Alert>
       </Snackbar>

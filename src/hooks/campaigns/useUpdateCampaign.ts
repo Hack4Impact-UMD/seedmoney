@@ -13,7 +13,7 @@ export default function useUpdateCampaign() {
         },
         onSuccess: (data, { campaignId }) => {
           // invalidate so useReadCampaign refetches fresh data
-          queryClient.invalidateQueries({ queryKey: [campaignId, 'campaign', 'update'] });
+          queryClient.invalidateQueries({ queryKey: [campaignId, 'campaign'] });
         }
     });
 }
