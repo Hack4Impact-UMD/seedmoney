@@ -1,14 +1,16 @@
 import type { NewUser, NewUserInternal, Users } from "@/src/types";
 import { createBrowserClient } from "@/src/lib/supabase-client";
+import type { UsersTableRow } from "@/src/types/frontend/usersTable";
+import type { Campaign } from "@/src/types/db/campaigns";
 
-export type JoinedCampaign = {
+type JoinedCampaign = {
   campaign_id: number;
   name: string;
   status: string;
   competition_id: number;
 };
 
-export type UserWithCampaigns = Pick<
+type UserWithCampaigns = Pick<
   Users,
   "id" | "first_name" | "last_name" | "email"
 > & {
@@ -17,9 +19,7 @@ export type UserWithCampaigns = Pick<
   }[];
 };
 
-export async function readAllUsersWithCampaigns(): Promise<
-  UserWithCampaigns[]
-> {
+export async function readAllUsersWithCampaigns(): Promise<UsersTableRow[]> {
   const supabase = createBrowserClient();
 
   const { data, error } = await supabase.from("users").select(`
@@ -34,7 +34,20 @@ export async function readAllUsersWithCampaigns(): Promise<
     return [];
   }
 
-  return (data ?? []) as unknown as UserWithCampaigns[];
+  const users = (data ?? []) as unknown as UserWithCampaigns[];
+
+  return users.map((user) => ({
+    id: user.id,
+    first_name: user.first_name,
+    last_name: user.last_name,
+    email: user.email,
+    campaigns: user.campaign_members.map((m) => ({
+      campaign_id: m.campaigns.campaign_id,
+      name: m.campaigns.name,
+      status: m.campaigns.status as Campaign["status"],
+      competition_id: m.campaigns.competition_id,
+    })),
+  }));
 }
 
 export async function createUser(user: NewUser): Promise<Users | null> {
