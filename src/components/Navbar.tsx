@@ -236,7 +236,7 @@ export default function Navbar() {
           </List>
           <div className="mt-auto flex flex-col gap-3 px-4 pb-6">
             <Button
-              onClick={() => console.log("settings")}
+              onClick={handleSettings}
               size="medium"
               variant="text"
               className="!flex !justify-start !text-white"
@@ -325,7 +325,7 @@ export default function Navbar() {
               {isCollapsed ? <AddIcon /> : "New Campaign"}
             </Button>
             <Button
-              onClick={() => console.log("settings")}
+              onClick={handleSettings}
               size="medium"
               variant="text"
               className="!flex !justify-start !text-white"
