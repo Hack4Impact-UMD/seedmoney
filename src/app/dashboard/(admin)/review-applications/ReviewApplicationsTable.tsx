@@ -52,7 +52,7 @@ export default function ReviewApplicationsTable({
   const {
     data: applications = [],
   } = useReadCampaignsNotApproved(competitionId);
-  const updateCampaignMutation = useUpdateCampaign(competitionId);
+  const updateCampaignMutation = useUpdateCampaign();
 
   useEffect(() => {
     if (!notification) return;
