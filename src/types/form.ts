@@ -13,6 +13,14 @@ export interface ApplicationFormData {
   storyChallenge: string;
   storySeasonActivity: string;
   storyCampaignImpact: string;
+  mainPhoto: string;
+  mainPhotoStoragePath: string;
+  mainPhotoName: string;
+  mainPhotoSize: number;
+  supportingPhotos: string[];
+  supportingPhotoStoragePaths: string[];
+  supportingPhotoNames: string[];
+  supportingPhotoSizes: number[];
   organizationName: string;
   organizationIdentifier: string;
   mailingStreet1: string;

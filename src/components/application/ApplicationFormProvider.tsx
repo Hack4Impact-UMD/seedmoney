@@ -1,35 +1,3 @@
-// "use client";
-
-// import { createContext, useContext } from "react";
-// import { useForm } from "@tanstack/react-form";
-// import type { NewAnswer } from "../../types/db/answers";
-
-// //allow multiples pages to view same form data
-// const ApplicationFormContext = createContext<unknown>(null);
-
-// export const ApplicationFormProvider = ({
-//   children,
-// }: {
-//   children: React.ReactNode;
-// }) => {
-//   //create tanstack form and state obj to track form vals
-//   const form = useForm({
-//     defaultValues: {} as NewAnswer,
-//   });
-
-//   return (
-//     //give all components thbat are wrapped access to same form state
-//     <ApplicationFormContext.Provider value={form}>
-//       {children}
-//     </ApplicationFormContext.Provider>
-//   );
-// };
-
-// //shortcut to access form easier
-// export const useApplicationForm = () => {
-//   return useContext(ApplicationFormContext);
-// };
-
 "use client";
 
 import {
@@ -42,7 +10,6 @@ import {
 } from "react";
 import { useForm } from "@tanstack/react-form";
 import { ApplicationFormData } from "@/src/types/form";
-import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
 
 const INITIAL_FORM_VALUES: ApplicationFormData = {
   campaignTitle: "",
@@ -59,6 +26,14 @@ const INITIAL_FORM_VALUES: ApplicationFormData = {
   storyChallenge: "",
   storySeasonActivity: "",
   storyCampaignImpact: "",
+  mainPhoto: "",
+  mainPhotoStoragePath: "",
+  mainPhotoName: "",
+  mainPhotoSize: 0,
+  supportingPhotos: [],
+  supportingPhotoStoragePaths: [],
+  supportingPhotoNames: [],
+  supportingPhotoSizes: [],
   organizationName: "",
   organizationIdentifier: "",
   mailingStreet1: "",
@@ -73,9 +48,14 @@ const INITIAL_FORM_VALUES: ApplicationFormData = {
   contactRole: "",
 };
 
-const useApplicationFormState = () =>
+const useApplicationFormState = (
+  initialFormValues: Partial<ApplicationFormData> = {},
+) =>
   useForm({
-    defaultValues: INITIAL_FORM_VALUES,
+    defaultValues: {
+      ...INITIAL_FORM_VALUES,
+      ...initialFormValues,
+    },
     onSubmit: async ({ value }) => {
       console.log("Submitted:", value);
     },
@@ -83,38 +63,83 @@ const useApplicationFormState = () =>
 
 type ApplicationFormApi = ReturnType<typeof useApplicationFormState>;
 
-interface AgreementSelectionsContextValue {
-  agreementSelections: boolean[];
-  setAgreementSelections: (value: SetStateAction<boolean[]>) => void;
+interface AgreementGateContextValue {
+  hasPassedAgreement: boolean;
+  setHasPassedAgreement: (value: SetStateAction<boolean>) => void;
+}
+
+interface DraftCampaignIdContextValue {
+  draftCampaignId: number | null;
+  setDraftCampaignId: (value: SetStateAction<number | null>) => void;
+}
+
+interface LastSavedContextValue {
+  lastSaved: string | null;
+  setLastSaved: (value: SetStateAction<string | null>) => void;
 }
 
 const ApplicationFormContext = createContext<ApplicationFormApi | null>(null);
-const AgreementSelectionsContext =
-  createContext<AgreementSelectionsContextValue | null>(null);
+const AgreementGateContext = createContext<AgreementGateContextValue | null>(
+  null,
+);
+const DraftCampaignIdContext =
+  createContext<DraftCampaignIdContextValue | null>(null);
+
+const LastSavedContext = createContext<LastSavedContextValue | null>(null);
 
 export const ApplicationFormProvider = ({
   children,
+  initialDraftCampaignId = null,
+  initialFormValues = {},
+  initialHasPassedAgreement = false,
 }: {
   children: ReactNode;
+  initialDraftCampaignId?: number | null;
+  initialFormValues?: Partial<ApplicationFormData>;
+  initialHasPassedAgreement?: boolean;
 }) => {
-  const form = useApplicationFormState();
-  const [agreementSelections, setAgreementSelections] = useState<boolean[]>(() =>
-    GRANT_AGREEMENT_ITEMS.map(() => false),
+  const form = useApplicationFormState(initialFormValues);
+  const [hasPassedAgreement, setHasPassedAgreement] = useState(
+    initialHasPassedAgreement,
+  );
+  const [draftCampaignId, setDraftCampaignId] = useState<number | null>(
+    initialDraftCampaignId,
+  );
+  const [lastSaved, setLastSaved] = useState<string | null>(null);
+
+  const agreementGateValue = useMemo(
+    () => ({
+      hasPassedAgreement,
+      setHasPassedAgreement,
+    }),
+    [hasPassedAgreement],
   );
 
-  const agreementSelectionsValue = useMemo(
+  const draftCampaignIdValue = useMemo(
     () => ({
-      agreementSelections,
-      setAgreementSelections,
+      draftCampaignId,
+      setDraftCampaignId,
     }),
-    [agreementSelections],
+    [draftCampaignId],
+  );
+
+  const lastSavedValue = useMemo(
+    () => ({
+      lastSaved,
+      setLastSaved,
+    }),
+    [lastSaved],
   );
 
   return (
     <ApplicationFormContext.Provider value={form}>
-      <AgreementSelectionsContext.Provider value={agreementSelectionsValue}>
-        {children}
-      </AgreementSelectionsContext.Provider>
+      <AgreementGateContext.Provider value={agreementGateValue}>
+        <DraftCampaignIdContext.Provider value={draftCampaignIdValue}>
+          <LastSavedContext.Provider value={lastSavedValue}>
+            {children}
+          </LastSavedContext.Provider>
+        </DraftCampaignIdContext.Provider>
+      </AgreementGateContext.Provider>
     </ApplicationFormContext.Provider>
   );
 };
@@ -129,11 +154,31 @@ export const useApplicationForm = () => {
   return form;
 };
 
-export const useAgreementSelections = () => {
-  const context = useContext(AgreementSelectionsContext);
+export const useAgreementGate = () => {
+  const context = useContext(AgreementGateContext);
   if (!context) {
     throw new Error(
-      "useAgreementSelections must be used within an ApplicationFormProvider",
+      "useAgreementGate must be used within an ApplicationFormProvider",
+    );
+  }
+  return context;
+};
+
+export const useDraftCampaignId = () => {
+  const context = useContext(DraftCampaignIdContext);
+  if (!context) {
+    throw new Error(
+      "useDraftCampaignId must be used within an ApplicationFormProvider",
+    );
+  }
+  return context;
+};
+
+export const useLastSaved = () => {
+  const context = useContext(LastSavedContext);
+  if (!context) {
+    throw new Error(
+      "useLastSaved must be used within an ApplicationFormProvider",
     );
   }
   return context;
