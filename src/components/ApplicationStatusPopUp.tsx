@@ -5,7 +5,7 @@ import Button from "@mui/material/Button";
 import type {
   UserCampaign,
   UsersTableRow,
-} from "@/src/hooks/users/useAllUsersWithCampaigns";
+} from "@/src/types/frontend/usersTable";
 import type { Status } from "@/src/types/db/enums";
 
 interface ApplicationStatusPopUpProps {

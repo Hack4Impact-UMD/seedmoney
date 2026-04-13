@@ -14,7 +14,7 @@ import { Avatar, Chip, Snackbar, Alert } from "@mui/material";
 import type {
   UserCampaign,
   UsersTableRow,
-} from "@/src/hooks/users/useAllUsersWithCampaigns";
+} from "@/src/types/frontend/usersTable";
 import useDeleteUser from "@/src/hooks/users/useDeleteUser";
 import type { Status } from "@/src/types/db/enums";
 
