@@ -4,27 +4,19 @@ import { useRouter } from "next/navigation";
 import CampaignsTable from "@/src/components/CampaignsTable";
 import Navbar from "@/src/components/Navbar";
 import { useAuth } from "@/src/context/AuthProvider";
-import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
 import Error from "@/src/app/error";
 import Loading from "@/src/app/loading";
+import useReadPreviousChallengeApplications from "@/src/hooks/campaigns/table/useReadPreviousChallengeApplications";
 
 export default function ViewAllCampaignsPage() {
-  const router = useRouter();
   const { user } = useAuth();
+  const { data: campaigns = [], isLoading, error } = useReadPreviousChallengeApplications(user?.id);
 
-  const { data: campaigns = [], isLoading, isError, error } = useReadCampaignsFromMembers(user?.id || "");
+  if(isLoading) return <Loading/>;
 
-  if(isLoading)
-    return <Loading/>;
-
-  if(isError)
-    return <Error error={error} reset = {() => {}}/>;
+  if(error) return <Error error={error} reset = {() => {}}/>;
 
   if (!user) return null;
-
-  const handleCampaignChange = (newCampaignId: number) => {
-    router.push(`/dashboard/${newCampaignId}`);
-  };
 
   return (
     <div className="flex min-h-screen">
@@ -39,7 +31,7 @@ export default function ViewAllCampaignsPage() {
             </p>
           </div>
 
-          <CampaignsTable initialData={campaigns} />
+          <CampaignsTable initialData={campaigns}/>
         </div>
       </div>
     </div>
