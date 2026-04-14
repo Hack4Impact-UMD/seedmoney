@@ -36,9 +36,9 @@ export default function DashboardIndexPage() {
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useReadCampaignsFromMembers(user?.id || "");
   const isAdmin = !!userData?.is_admin;
 
-  const { data: allCampaigns = [], isLoading: isLoadingAll } = useReadAllCampaigns({ enabled: isAdmin });
-  const { data: currentCompetitionData } = useReadCurrentCompetition({ enabled: isAdmin });
-  const { data: allCompetitions = [] } = useReadAllCompetitions({ enabled: isAdmin });
+  const { data: allCampaigns = [], isLoading: isLoadingAll } = useReadAllCampaigns();
+  const { data: currentCompetitionData } = useReadCurrentCompetition();
+  const { data: allCompetitions = [] } = useReadAllCompetitions();
 
   useEffect(() => {
     if (selectedCompetitionId === null && currentCompetitionData?.competition_id) {

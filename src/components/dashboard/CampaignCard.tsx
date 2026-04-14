@@ -35,9 +35,10 @@ function rankStyle(rank: number) {
 }
 
 export default function CampaignCard({ campaign, rank }: CampaignCardProps) {
-  const { campaign_id, name, raised, goal, donors, project_category } = campaign;
+  const { campaign_id, name, raised = 0, goal = 0, donors = 0, project_category } = campaign;
 
-  const percent = goal > 0 ? Math.round((raised / goal) * 100) : 0;
+  const percent = (goal ?? 0) > 0 ? Math.round(((raised ?? 0) / (goal ?? 0)) * 100) : 0;
+
   const barWidth = Math.min(100, percent);
 
   const description =
@@ -67,9 +68,9 @@ export default function CampaignCard({ campaign, rank }: CampaignCardProps) {
         <div className="mt-auto">
           <p className="text-sm text-gray-700 mb-2">
             <span className="font-semibold text-gray-900">
-              ${raised.toLocaleString()}
+              ${(raised ?? 0).toLocaleString()}
             </span>{" "}
-            of ${goal.toLocaleString()}
+            of of ${(goal ?? 0).toLocaleString()}
           </p>
 
           <div className="relative h-2 rounded-full bg-[#56bd604a] overflow-hidden mb-2">
@@ -80,7 +81,7 @@ export default function CampaignCard({ campaign, rank }: CampaignCardProps) {
           </div>
 
           <p className="text-xs text-gray-500 mb-4">
-            {donors.toLocaleString()} {donors === 1 ? "donor" : "donors"}
+            {(donors ?? 0).toLocaleString()} {(donors ?? 0) === 1 ? "donor" : "donors"}
           </p>
 
           <Link

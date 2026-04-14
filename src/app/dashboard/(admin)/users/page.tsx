@@ -9,6 +9,7 @@ export default function Users() {
   const { data: usersTableRows = [], isLoading: isLoadingUsers } = useAllUsersWithCampaigns();
   const { data: competitions = [], isLoading: isLoadingCompetitions } = useAllCompetitions();
 
+
   const competitionYearMap = useMemo(() => {
     const map = new Map<number, number>();
     for (const comp of competitions) {
