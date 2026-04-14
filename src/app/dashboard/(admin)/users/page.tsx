@@ -6,10 +6,8 @@ import useAllUsersWithCampaigns from "@/src/hooks/users/useAllUsersWithCampaigns
 import useAllCompetitions from "@/src/hooks/competition-metadata/useAllCompetitions";
 
 export default function Users() {
-  const { data: usersTableRows = [], isLoading: isLoadingUsers } =
-    useAllUsersWithCampaigns();
-  const { data: competitions = [], isLoading: isLoadingCompetitions } =
-    useAllCompetitions();
+  const { data: usersTableRows = [], isLoading: isLoadingUsers } = useAllUsersWithCampaigns();
+  const { data: competitions = [], isLoading: isLoadingCompetitions } = useAllCompetitions();
 
   const competitionYearMap = useMemo(() => {
     const map = new Map<number, number>();

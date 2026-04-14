@@ -18,6 +18,7 @@ import type {
 } from "@/src/types/frontend/usersTable";
 import useDeleteUser from "@/src/hooks/users/useDeleteUser";
 import type { Status } from "@/src/types/db/enums";
+import DeleteIcon from '@mui/icons-material/Delete';
 
 interface Props {
   initialData: UsersTableRow[];
@@ -229,17 +230,18 @@ function CampaignsSummaryBadge({
 
 const columnHelper = createColumnHelper<UsersTableRow>();
 
-const UsersTable = ({
+export default function UsersTable({
   initialData,
   competitionYearMap,
   selectedYear,
-}: Props) => {
+}: Props) {
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<UsersTableRow | null>(null);
   const [statusTarget, setStatusTarget] = useState<UsersTableRow | null>(null);
   const [toast, setToast] = useState(false);
   const { mutate: deleteUserMutate } = useDeleteUser();
+  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
 
   const handleConfirmDelete = useCallback(() => {
     if (!deleteTarget) return;
@@ -297,29 +299,27 @@ const UsersTable = ({
         header: "",
         cell: ({ row }) => (
           <span
-            className="flex justify-end"
+            className="flex justify-end cursor-pointer"
             onClick={() => setDeleteTarget(row.original)}
           >
-            <Image
-              src="/icons/trash.png"
-              alt="Delete"
-              width={20}
-              height={20}
-              className="cursor-pointer opacity-0 group-hover:opacity-100 transition-opacity"
+            <DeleteIcon
+              className="transition-opacity text-[#9E9E9E]"
+              style={{ opacity: hoveredRowId === row.id ? 1 : 0 }}
             />
           </span>
         ),
       }),
     ],
-    [],
+    [hoveredRowId],
   );
 
   const yearFilteredData = useMemo(() => {
     return initialData.map((user) => ({
       ...user,
-      campaigns: user.campaigns.filter(
-        (c) => competitionYearMap.get(c.competition_id) === selectedYear,
-      ),
+      campaigns: user.campaigns.filter((c) => {
+        if (!c || !c.competition_id) return false;
+        return competitionYearMap.get(c.competition_id) === selectedYear;
+      }),
     }));
   }, [initialData, competitionYearMap, selectedYear]);
 
@@ -424,7 +424,11 @@ const UsersTable = ({
               </thead>
               <tbody>
                 {table.getRowModel().rows.map((row) => (
-                  <tr key={row.id} className="group">
+                  <tr
+                    key={row.id}
+                    onMouseEnter={() => setHoveredRowId(row.id)}
+                    onMouseLeave={() => setHoveredRowId(null)}
+                  >
                     {row.getVisibleCells().map((cell) => (
                       <td
                         key={cell.id}
@@ -584,4 +588,3 @@ const UsersTable = ({
   );
 };
 
-export default UsersTable;

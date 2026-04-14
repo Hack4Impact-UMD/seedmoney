@@ -4,8 +4,12 @@ import type { UsersTableRow } from "@/src/types/frontend/usersTable";
 
 export default function useAllUsersWithCampaigns() {
   return useQuery<UsersTableRow[]>({
-    queryKey: ["all-users-with-campaigns"],
-    queryFn: readAllUsersWithCampaigns,
+    queryKey: ["campaigns", "all-users-with-campaigns"],
+    queryFn: async () => {
+      const users = await readAllUsersWithCampaigns();
+      if (!users) return [];
+      return users;
+    },
     staleTime: 1000 * 60 * 5,
     retry: 2,
   });
