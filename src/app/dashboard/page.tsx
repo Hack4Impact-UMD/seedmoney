@@ -49,13 +49,18 @@ export default function DashboardIndexPage() {
     ? Math.max(0, moment(currentCompetitionData.end_date).diff(moment(), "days"))
     : null;
 
+  const competitionCampaigns = useMemo(
+    () =>
+      allCampaigns.filter(
+        (c) =>
+          !currentCompetitionData?.competition_id ||
+          c.competition_id === currentCompetitionData.competition_id,
+      ),
+    [allCampaigns, currentCompetitionData?.competition_id],
+  );
+
   const sortedCampaigns = useMemo(() => {
-    const list = allCampaigns.filter(
-      (c) =>
-        !currentCompetitionData?.competition_id ||
-        c.competition_id === currentCompetitionData.competition_id,
-    );
-    const copy = [...list];
+    const copy = [...competitionCampaigns];
     switch (sortKey) {
       case "most_raised":
         copy.sort((a, b) => (b.raised ?? 0) - (a.raised ?? 0));
@@ -68,7 +73,22 @@ export default function DashboardIndexPage() {
         break;
     }
     return copy;
-  }, [allCampaigns, sortKey, currentCompetitionData?.competition_id]);
+  }, [competitionCampaigns, sortKey]);
+
+  const stats = useMemo(() => {
+    const donationsReceived = competitionCampaigns.reduce(
+      (sum, c) => sum + (c.donors ?? 0),
+      0,
+    );
+    const ongoingCampaigns = competitionCampaigns.filter(
+      (c) => c.status === "approved" || c.status === "published",
+    ).length;
+    const totalRaised = competitionCampaigns.reduce(
+      (sum, c) => sum + (c.raised ?? 0),
+      0,
+    );
+    return { donationsReceived, ongoingCampaigns, totalRaised };
+  }, [competitionCampaigns]);
 
   const isLoading = isLoadingUser || isLoadingCampaigns;
 
@@ -110,9 +130,18 @@ export default function DashboardIndexPage() {
               Quick Statistics
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <SummaryCard label="Donations Received" value="763" />
-              <SummaryCard label="Ongoing Campaigns" value="320" />
-              <SummaryCard label="Total Raised" value="$34,750" />
+              <SummaryCard
+                label="Donations Received"
+                value={stats.donationsReceived.toLocaleString()}
+              />
+              <SummaryCard
+                label="Ongoing Campaigns"
+                value={stats.ongoingCampaigns.toLocaleString()}
+              />
+              <SummaryCard
+                label="Total Raised"
+                value={`$${stats.totalRaised.toLocaleString()}`}
+              />
             </div>
 
             <div className="mt-10 flex items-center justify-between flex-wrap gap-4">
