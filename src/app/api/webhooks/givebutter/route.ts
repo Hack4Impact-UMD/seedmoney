@@ -1,16 +1,12 @@
 import { NextRequest, NextResponse } from "next/server";
 import { campaignHandlers } from "./campaign";
 import { transactionHandlers } from "./transactions";
+import { WebhookPayload } from "./types";
 
-interface WebhookPayload {
-  event: string;
-  data?: unknown;
-}
-
-const eventHandlers: Record<string, (payload: WebhookPayload) => Promise<void>> = {
+const eventHandlers = {
   ...campaignHandlers,
   ...transactionHandlers,
-};
+} as Record<string, (payload: WebhookPayload) => Promise<void>>;
 
 export async function POST(req: NextRequest) {
   let body: WebhookPayload;

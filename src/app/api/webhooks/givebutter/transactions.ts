@@ -1,20 +1,10 @@
-import { WebhookPayload } from "./types";
+import { TransactionPayload } from "./types";
 import { createTransaction } from "@/src/actions/db/transactions";
 
 export const transactionHandlers = {
-  "transaction.succeeded": async (payload: WebhookPayload) => {
+  "transaction.succeeded": async (payload: TransactionPayload) => {
     if (!payload.data) return;
-    const data = payload.data as {
-      campaign_id: number;
-      first_name: string;
-      last_name: string;
-      email: string;
-      phone: string;
-      donated: number;
-      payout: number;
-      status: string;
-      transacted_at: string;
-    };
+    const data = payload.data;
     await createTransaction({
       campaign_id: data.campaign_id,
       first_name: data.first_name,

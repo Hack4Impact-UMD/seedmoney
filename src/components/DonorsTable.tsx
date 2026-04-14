@@ -9,16 +9,7 @@ import {
 } from "@tanstack/table-core";
 import { flexRender, useReactTable } from "@tanstack/react-table";
 import useReadTransactionsByCampaign from "@/src/hooks/transactions/useReadTransactionsByCampaign";
-
-interface Donor {
-  id: number;
-  amount: number;
-  name: string;
-  email: string;
-  card_reference: string;
-  date: string;
-  status: string;
-}
+import { Donor } from "@/src/types/frontend/donorsTable";
 
 interface DonorsTableProps {
   campaignId: number;
@@ -37,7 +28,6 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
       amount: t.amount_donated,
       date: t.date,
       status: t.status,
-      card_reference: "0000000000000000",
     }));
   }, [transactions]);
 
@@ -82,13 +72,6 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
     columnHelper.accessor("email", {
       header: "Contributor Email",
       cell: (info) => info.getValue(),
-    }),
-    columnHelper.accessor("card_reference", {
-      header: "Card/Reference Number",
-      cell: (info) => {
-        const value = info.getValue();
-        return `•••• •••• •••• ${value.slice(-4)}`;
-      },
     }),
     columnHelper.accessor("date", {
       header: "Date",
