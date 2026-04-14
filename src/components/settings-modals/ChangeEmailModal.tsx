@@ -7,7 +7,9 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import ConfirmEditModalShell from "./ConfirmEditModalShell";
 import VerificationCodeStep from "./VerificationCodeStep";
-import useIsExistingEmail from "@/src/hooks/users/useIsExistingEmail";
+import useIsExistingEmail, {
+  useDebounce,
+} from "@/src/hooks/users/useIsExistingEmail";
 
 type ChangeEmailModalProps = {
   open: boolean;
@@ -34,7 +36,8 @@ export default function ChangeEmailModal({
     onClose();
   };
 
-  const isExistingEmail = useIsExistingEmail(newEmail).data;
+  const debouncedEmail = useDebounce(newEmail, 400);
+  const isExistingEmail = useIsExistingEmail(debouncedEmail).data;
 
   const normalizedNewEmail = newEmail.trim();
   const canContinueToEmailChange =
