@@ -8,7 +8,6 @@ export default function useReadCurrentCompetition() {
         queryKey: ['current-competition'],
         queryFn: async () => {
           const competition = await readCurrentCompetition();
-          console.log("current competition", competition);
           if (!competition) throw new Error("Error reading campaign");
           return competition as CompetitionMetadata
         },
