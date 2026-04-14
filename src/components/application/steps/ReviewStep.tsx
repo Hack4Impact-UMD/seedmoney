@@ -136,7 +136,9 @@ export default function ReviewSubmitPage() {
     contactComplete,
     reviewComplete,
   } = getApplicationCompletionState(values, hasPassedAgreement);
-  const canSubmit = reviewComplete && !!currentCompetitionData;
+  const goalValue = Number(values.fundraisingGoal);
+  const canSubmit = reviewComplete && !!currentCompetitionData && goalValue > 1;
+  
 
   const handleSubmitApplication = async () => {
     if (!currentCompetitionData) {
@@ -152,7 +154,6 @@ export default function ReviewSubmitPage() {
         competition_id: currentCompetitionData.competition_id,
         raised: 0,
         donors: 0,
-        goal: 0,
         givebutter_id: "",
         givebutter_slug: "",
         givebutterlink: "",
@@ -171,6 +172,12 @@ export default function ReviewSubmitPage() {
         <ReviewBanner
           href="/apply/campaign"
           message="Please complete campaign information"
+        />
+      )}
+      {goalValue < 1 && (
+        <ReviewBanner
+          href="/apply/campaign"
+          message="Fundraising goal must be greater than $1"
         />
       )}
 
@@ -260,6 +267,7 @@ export default function ReviewSubmitPage() {
         <ValueRow
           label="Fundraising Goal (USD)"
           value={values.fundraisingGoal}
+
           required
         />
       </div>

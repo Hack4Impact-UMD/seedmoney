@@ -211,22 +211,30 @@ export default function CampaignInformationStep() {
         </p>
 
         <form.Field name="fundraisingGoal">
-          {(field) => (
-            <TextField
-              label="Fundraising Goal (USD)"
-              variant="standard"
-              fullWidth
-              type="number"
-              value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveCampaignInformationDraft({
-                  fundraisingGoal: e.target.value,
-                });
-              }}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
-          )}
+          {(field) => {
+            const goalNum = Number(field.state.value);
+            const isInvalid = field.state.value !== '' && goalNum < 1;
+
+            return (
+              <TextField
+                label="Fundraising Goal (USD)"
+                variant="standard"
+                fullWidth
+                type="number"
+                value={field.state.value}
+                onBlur={async (e) => {
+                  field.handleBlur();
+                  await saveCampaignInformationDraft({
+                    fundraisingGoal: e.target.value,
+                  });
+                }}
+                onChange={(e) => field.handleChange(e.target.value)}
+                error={isInvalid}
+                helperText={isInvalid ? "Fundraising goal must be greater than $0" : ""}
+                inputProps={{ min: 2 }}
+              />
+            );
+          }}
         </form.Field>
       </div>
 

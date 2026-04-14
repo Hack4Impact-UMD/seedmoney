@@ -158,7 +158,7 @@ export default function CampaignsTable({ initialData }: Props) {
                 {table.getRowModel().rows.map(row => (
                   <tr
                     key={row.id}
-                    className="transition-colors cursor-pointer"
+                    className="transition-colors cursor-pointer hover:[&>td]:bg-gray-50"
                     onMouseEnter={() => setHoveredRowId(row.id)}
                     onMouseLeave={() => setHoveredRowId(null)}
                     onClick={() => {
@@ -167,7 +167,11 @@ export default function CampaignsTable({ initialData }: Props) {
                     }}
                   >
                     {row.getVisibleCells().map(cell => (
-                      <td key={cell.id} className="text-left px-5 py-4 border-b border-gray-300">
+                      <td
+                        key={cell.id}
+                        className="text-left px-5 py-4 border-b border-gray-300"
+                        style={{ backgroundColor: hoveredRowId === row.id ? '#f9fafb' : 'transparent' }}
+                      >
                         {flexRender(cell.column.columnDef.cell, cell.getContext())}
                       </td>
                     ))}
