@@ -3,9 +3,10 @@ import type { Existence, Status } from "./enums";
 export type Campaign = {
   campaign_id: number;
   name: string;
+  organization_name: string;
   givebutterlink: string;
-  givebutter_id?: string;
-  givebutter_slug?: string;
+  givebutter_id: string | null;
+  givebutter_slug: string | null;
   raised: number;
   donors: number;
   status: Status;
@@ -22,12 +23,17 @@ export type Campaign = {
   size: number;
   goal: number;
   ein: string;
-  mailing_street: string;
+  contact_first_name: string;
+  contact_last_name: string;
+  contact_email: string;
+  contact_role: string;
+  mailing_street_1: string | null;
+  mailing_street_2?: string | null;
   mailing_city: string;
   mailing_state: string;
   mailing_country: string;
   mailing_zipcode: string;
-  competition_id: number;
+  competition_id: number | null;
 };
 
 export type GivebutterCampaignPayload = {

@@ -4,7 +4,9 @@ import TextField from "@mui/material/TextField";
 import { Button } from "@mui/material";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
-import { useState } from "react";
+import { useState, useRef } from "react";
+import { useRouter } from "next/navigation";
+import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 const categoryOptions = [
   "Community Garden",
@@ -42,8 +44,73 @@ const beneficiaryOptions = [
 
 export default function GardenInformationStep() {
   const form = useApplicationForm();
+  const router = useRouter();
+  const { saveDraftCampaign } = useSaveDraftCampaign();
   const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(false);
-  const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] = useState(false);
+  const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] =
+    useState(false);
+
+  const gardenInformationRef = useRef({
+    city: form.state.values.gardenCity,
+    state: form.state.values.gardenState,
+    country: form.state.values.gardenCountry,
+    project_category: form.state.values.gardenCategory,
+    project_beneficiaries: form.state.values.gardenBeneficiaries,
+  });
+
+  const saveGardenInformationDraft = async (
+    overrides: Partial<typeof form.state.values> = {},
+  ) => {
+    const values = {
+      ...form.state.values,
+      ...overrides,
+    };
+
+    const currentPayload = {
+      city: values.gardenCity,
+      state: values.gardenState,
+      country: values.gardenCountry,
+      project_category: values.gardenCategory,
+      project_beneficiaries: values.gardenBeneficiaries,
+    };
+
+    const changedValues: Partial<typeof currentPayload> = {};
+
+    if (currentPayload.city !== gardenInformationRef.current.city) {
+      changedValues.city = currentPayload.city;
+    }
+
+    if (currentPayload.state !== gardenInformationRef.current.state) {
+      changedValues.state = currentPayload.state;
+    }
+
+    if (currentPayload.country !== gardenInformationRef.current.country) {
+      changedValues.country = currentPayload.country;
+    }
+
+    if (
+      currentPayload.project_category !==
+      gardenInformationRef.current.project_category
+    ) {
+      changedValues.project_category = currentPayload.project_category;
+    }
+
+    if (
+      JSON.stringify(currentPayload.project_beneficiaries) !==
+      JSON.stringify(gardenInformationRef.current.project_beneficiaries)
+    ) {
+      changedValues.project_beneficiaries =
+        currentPayload.project_beneficiaries;
+    }
+
+    if (Object.keys(changedValues).length === 0) {
+      return;
+    }
+
+    await saveDraftCampaign(changedValues);
+
+    gardenInformationRef.current = currentPayload;
+  };
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -62,7 +129,12 @@ export default function GardenInformationStep() {
               name="gardenCity"
               autoComplete="address-level2"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveGardenInformationDraft({
+                  gardenCity: e.target.value,
+                });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -80,7 +152,12 @@ export default function GardenInformationStep() {
               name="gardenState"
               autoComplete="address-level1"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveGardenInformationDraft({
+                  gardenState: e.target.value,
+                });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -98,7 +175,12 @@ export default function GardenInformationStep() {
               name="gardenCountry"
               autoComplete="country-name"
               value={field.state.value}
-              onBlur={field.handleBlur}
+              onBlur={async (e) => {
+                field.handleBlur();
+                await saveGardenInformationDraft({
+                  gardenCountry: e.target.value,
+                });
+              }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
                 field.handleChange((e.target as HTMLInputElement).value)
@@ -115,7 +197,6 @@ export default function GardenInformationStep() {
         </h2>
 
         <p className="text-sm">Select one:</p>
-
 
         <form.Field name="gardenCategory">
           {(field) => (
@@ -140,6 +221,9 @@ export default function GardenInformationStep() {
                       } else {
                         setIsOtherCategorySelected(false);
                         field.handleChange(option);
+                        void saveGardenInformationDraft({
+                          gardenCategory: option,
+                        });
                       }
                     }}
                     className="w-[20px] h-[20px] accent-blue-600 cursor-pointer transition-transform duration-150 group-hover:scale-105"
@@ -157,6 +241,12 @@ export default function GardenInformationStep() {
                   name="gardenCategoryOther"
                   placeholder="Please specify"
                   value={field.state.value}
+                  onBlur={async (e) => {
+                    field.handleBlur();
+                    await saveGardenInformationDraft({
+                      gardenCategory: e.target.value,
+                    });
+                  }}
                   onChange={(e) => field.handleChange(e.target.value)}
                   onInput={(e) =>
                     field.handleChange((e.target as HTMLInputElement).value)
@@ -204,23 +294,33 @@ export default function GardenInformationStep() {
                               setIsOtherBeneficiarySelected(true);
                             } else {
                               setIsOtherBeneficiarySelected(false);
-                              field.handleChange(
-                                field.state.value.filter((item) =>
-                                  beneficiaryOptions.includes(item)
-                                )
+                              const nextValue = field.state.value.filter(
+                                (item) => beneficiaryOptions.includes(item),
                               );
+                              field.handleChange(nextValue);
+                              void saveGardenInformationDraft({
+                                gardenBeneficiaries: nextValue,
+                              });
                             }
                             return;
                           }
 
                           if (e.target.checked) {
-                            field.handleChange([...field.state.value, option]);
+                            const nextValue = [...field.state.value, option];
+                            field.handleChange(nextValue);
+                            void saveGardenInformationDraft({
+                              gardenBeneficiaries: nextValue,
+                            });
                             return;
                           }
 
-                          field.handleChange(
-                            field.state.value.filter((item) => item !== option),
+                          const nextValue = field.state.value.filter(
+                            (item) => item !== option,
                           );
+                          field.handleChange(nextValue);
+                          void saveGardenInformationDraft({
+                            gardenBeneficiaries: nextValue,
+                          });
                         }}
                         className="
                           w-[18px] h-[18px]
@@ -261,6 +361,18 @@ export default function GardenInformationStep() {
                           : withoutCustom,
                       );
                     }}
+                    onBlur={async (e) => {
+                      field.handleBlur();
+                      const customValue = e.target.value;
+                      const withoutCustom = field.state.value.filter((item) =>
+                        beneficiaryOptions.includes(item),
+                      );
+                      await saveGardenInformationDraft({
+                        gardenBeneficiaries: customValue
+                          ? [...withoutCustom, customValue]
+                          : withoutCustom,
+                      });
+                    }}
                     className="mt-2 p-2 border border-gray-300 rounded-md text-sm"
                   />
                 )}
@@ -281,10 +393,13 @@ export default function GardenInformationStep() {
           Previous Step
         </Button>
         <Button
-          component={Link}
-          href="/apply/story"
+          component="button"
           variant="contained"
           size="medium"
+          onClick={async () => {
+            await saveGardenInformationDraft();
+            router.push("/apply/story");
+          }}
         >
           Next Step
         </Button>

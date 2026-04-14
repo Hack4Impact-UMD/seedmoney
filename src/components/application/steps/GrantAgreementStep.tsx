@@ -3,7 +3,9 @@
 import { Checkbox, FormControlLabel } from "@mui/material";
 import { Button } from "@mui/material";
 import Link from "next/link";
-import { useAgreementSelections } from "@/src/components/application/ApplicationFormProvider";
+import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { useAgreementGate } from "@/src/components/application/ApplicationFormProvider";
 import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
 
 const checkboxStyle = {
@@ -14,10 +16,11 @@ const checkboxStyle = {
 };
 
 export default function GrantAgreementStep() {
-  const {
-    agreementSelections,
-    setAgreementSelections,
-  } = useAgreementSelections();
+  const router = useRouter();
+  const { hasPassedAgreement, setHasPassedAgreement } = useAgreementGate();
+  const [agreementSelections, setAgreementSelections] = useState<boolean[]>(
+    () => GRANT_AGREEMENT_ITEMS.map(() => hasPassedAgreement),
+  );
   const allChecked = agreementSelections.every(Boolean);
 
   const toggle = (index: number) => {
@@ -26,6 +29,15 @@ export default function GrantAgreementStep() {
         currentIndex === index ? !value : value,
       ),
     );
+  };
+
+  const handleNext = () => {
+    if (!allChecked) {
+      return;
+    }
+
+    setHasPassedAgreement(true);
+    router.push("/apply/campaign");
   };
 
   return (
@@ -77,8 +89,7 @@ export default function GrantAgreementStep() {
         </Button>
 
         <Button
-          component={Link}
-          href="/apply/campaign"
+          onClick={handleNext}
           variant={allChecked ? "contained" : "text"}
           className={allChecked ? "!px-4" : "!bg-[#E0E0E0] !px-4"}
           size="medium"

@@ -1,5 +1,8 @@
 import { WebhookPayload } from "./types";
-import { updateCampaignGivebutterID, createCampaign } from "@/src/actions/db/campaigns";
+import {
+  updateCampaignGivebutterID,
+  createCampaignGivebutter,
+} from "@/src/actions/db/campaigns";
 import moment from "moment";
 
 export const campaignHandlers = {
@@ -15,15 +18,15 @@ export const campaignHandlers = {
       donors: payload.data.donors,
       goal: payload.data.goal ?? 0,
       status: "approved",
-      
     });
   },
   "campaign.created": async (payload: WebhookPayload) => {
     if (!payload.data) return;
-    await createCampaign({
+    await createCampaignGivebutter({
       givebutter_id: String(payload.data.id),
       givebutter_slug: payload.data.slug,
       name: payload.data.title,
+      organization_name: "",
       givebutterlink: payload.data.url,
       raised: payload.data.raised,
       donors: payload.data.donors,
@@ -40,13 +43,18 @@ export const campaignHandlers = {
       impact: 0,
       size: 0,
       ein: "",
-      mailing_street: "",
+      contact_first_name: "",
+      contact_last_name: "",
+      contact_email: "",
+      contact_role: "",
+      mailing_street_1: "",
+      mailing_street_2: "",
       mailing_city: "",
       mailing_state: "",
       mailing_country: "",
       mailing_zipcode: "",
       date_created: moment(payload.data.created_at).format("YYYY-MM-DD"),
-      competition_id: 1
+      competition_id: null,
     });
   },
 };

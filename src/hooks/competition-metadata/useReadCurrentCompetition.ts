@@ -6,7 +6,11 @@ export default function useReadCurrentCompetition(options?: { enabled?: boolean 
 
     return useQuery<CompetitionMetadata | null>({
         queryKey: ['current-competition'],
-        queryFn: readCurrentCompetition,
+        queryFn: async () => {
+          const competition = await readCurrentCompetition();
+          if (!competition) throw new Error("Error reading campaign");
+          return competition as CompetitionMetadata
+        },
         staleTime: 1000 * 60 * 5,
         retry: 2,
         enabled: options?.enabled ?? true,
