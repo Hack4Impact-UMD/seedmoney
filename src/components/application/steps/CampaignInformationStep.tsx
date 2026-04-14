@@ -16,9 +16,7 @@ export default function CampaignInformationStep() {
     impact: form.state.values.beneficiaryCount
       ? Number(form.state.values.beneficiaryCount)
       : undefined,
-    size: form.state.values.gardenSize
-      ? Number(form.state.values.gardenSize)
-      : undefined,
+    size: form.state.values.gardenSize || undefined,
     existence: form.state.values.gardenStatus || undefined,
     goal: form.state.values.fundraisingGoal
       ? Number(form.state.values.fundraisingGoal)
@@ -37,7 +35,7 @@ export default function CampaignInformationStep() {
       impact: values.beneficiaryCount
         ? Number(values.beneficiaryCount)
         : undefined,
-      size: values.gardenSize ? Number(values.gardenSize) : undefined,
+      size: values.gardenSize,
       existence: values.gardenStatus || undefined,
       goal: values.fundraisingGoal
         ? Number(values.fundraisingGoal)

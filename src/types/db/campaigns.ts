@@ -5,8 +5,8 @@ export type Campaign = {
   name: string;
   organization_name: string;
   givebutterlink: string;
-  givebutter_id: string | null;
-  givebutter_slug: string | null;
+  givebutter_id: string;
+  givebutter_slug: string;
   raised: number;
   donors: number;
   status: Status;
@@ -20,7 +20,7 @@ export type Campaign = {
   project_beneficiaries: string[];
   existence: Existence;
   impact: number;
-  size: number;
+  size: string;
   goal: number;
   ein: string;
   contact_first_name: string;

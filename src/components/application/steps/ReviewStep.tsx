@@ -150,6 +150,12 @@ export default function ReviewSubmitPage() {
       campaignData: {
         status: "submitted_under_review",
         competition_id: currentCompetitionData.competition_id,
+        raised: 0,
+        donors: 0,
+        goal: 0,
+        givebutter_id: "",
+        givebutter_slug: "",
+        givebutterlink: "",
       },
     });
 
