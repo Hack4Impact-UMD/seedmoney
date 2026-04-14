@@ -136,3 +136,20 @@ export async function deleteUser(userId: string): Promise<boolean> {
 
   return true;
 }
+
+export async function isExistingEmail(email: string): Promise<boolean> {
+  const supabase = await createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error checking email:", error.message);
+    return false;
+  }
+
+  return data !== null;
+}
