@@ -4,14 +4,9 @@ import { CompetitionMetadata } from "@/src/types/db/competitionMetadata";
 
 export default function useReadCurrentCompetition(options?: { enabled?: boolean }) {
 
-    return useQuery<CompetitionMetadata>({
+    return useQuery<CompetitionMetadata | null>({
         queryKey: ['current-competition'],
-        queryFn: async () => {
-          const competition = await readCurrentCompetition();
-          console.log("current competition", competition);
-          if (!competition) throw new Error("Error reading campaign");
-          return competition as CompetitionMetadata
-        },
+        queryFn: readCurrentCompetition,
         staleTime: 1000 * 60 * 5,
         retry: 2,
         enabled: options?.enabled ?? true,

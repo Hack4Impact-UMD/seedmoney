@@ -3,9 +3,38 @@ import type { Campaign } from "@/src/types/db/campaigns";
 
 type CampaignCardProps = {
   campaign: Campaign;
+  rank?: number;
 };
 
-export default function CampaignCard({ campaign }: CampaignCardProps) {
+function ordinal(n: number) {
+  const mod100 = n % 100;
+  if (mod100 >= 11 && mod100 <= 13) return `${n}th`;
+  switch (n % 10) {
+    case 1:
+      return `${n}st`;
+    case 2:
+      return `${n}nd`;
+    case 3:
+      return `${n}rd`;
+    default:
+      return `${n}th`;
+  }
+}
+
+function rankStyle(rank: number) {
+  switch (rank) {
+    case 1:
+      return "bg-[#F5C518] text-[#4A3A00]";
+    case 2:
+      return "bg-[#C0C0C0] text-[#2B2B2B]";
+    case 3:
+      return "bg-[#CD7F32] text-white";
+    default:
+      return "bg-[#2D7A45] text-white";
+  }
+}
+
+export default function CampaignCard({ campaign, rank }: CampaignCardProps) {
   const { campaign_id, name, raised, goal, donors, project_category } = campaign;
 
   const percent = goal > 0 ? Math.round((raised / goal) * 100) : 0;
@@ -19,6 +48,13 @@ export default function CampaignCard({ campaign }: CampaignCardProps) {
   return (
     <div className="bg-white rounded-lg border border-[#e5e5e5] overflow-hidden flex flex-col">
       <div className="relative h-36 bg-[#2D7A45] flex items-center justify-center">
+        {rank !== undefined && (
+          <span
+            className={`absolute top-3 left-3 rounded-full px-3 py-0.5 text-xs font-bold ${rankStyle(rank)}`}
+          >
+            {ordinal(rank)}
+          </span>
+        )}
         <span className="text-white text-lg font-semibold text-center px-4 line-clamp-2">
           {name}
         </span>

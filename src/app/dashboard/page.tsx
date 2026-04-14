@@ -4,6 +4,9 @@ import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import moment from "moment";
+import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
+import OutlinedFlagIcon from "@mui/icons-material/OutlinedFlag";
+import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
 import NotStarted from "@/src/components/dashboard/NotStarted";
 import Navbar from "@/src/components/Navbar";
 import SummaryCard from "@/src/components/dashboard/SummaryCard";
@@ -13,13 +16,21 @@ import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
 import useReadAllCampaigns from "@/src/hooks/campaigns/useReadAllCampaigns";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
+import useReadAllCompetitions from "@/src/hooks/competition-metadata/useReadAllCompetitions";
 
 type SortKey = "most_raised" | "least_raised" | "most_donors";
+
+const SORT_OPTIONS: { key: SortKey; label: string }[] = [
+  { key: "most_raised", label: "Most Raised" },
+  { key: "least_raised", label: "Least Raised" },
+  { key: "most_donors", label: "Most Donors" },
+];
 
 export default function DashboardIndexPage() {
   const { user } = useAuth();
   const router = useRouter();
   const [sortKey, setSortKey] = useState<SortKey>("most_raised");
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState<number | null>(null);
 
   const { data: userData, isLoading: isLoadingUser } = useUserByAuthId(user?.id || "");
   const { data: campaigns = [], isLoading: isLoadingCampaigns } = useReadCampaignsFromMembers(user?.id || "");
@@ -27,6 +38,21 @@ export default function DashboardIndexPage() {
 
   const { data: allCampaigns = [], isLoading: isLoadingAll } = useReadAllCampaigns({ enabled: isAdmin });
   const { data: currentCompetitionData } = useReadCurrentCompetition({ enabled: isAdmin });
+  const { data: allCompetitions = [] } = useReadAllCompetitions({ enabled: isAdmin });
+
+  useEffect(() => {
+    if (selectedCompetitionId === null && currentCompetitionData?.competition_id) {
+      setSelectedCompetitionId(currentCompetitionData.competition_id);
+    }
+  }, [selectedCompetitionId, currentCompetitionData?.competition_id]);
+
+  const selectedCompetition = useMemo(
+    () =>
+      allCompetitions.find((c) => c.competition_id === selectedCompetitionId) ??
+      currentCompetitionData ??
+      null,
+    [allCompetitions, selectedCompetitionId, currentCompetitionData],
+  );
 
   useEffect(() => {
     if (isLoadingUser || isLoadingCampaigns) return;
@@ -41,22 +67,33 @@ export default function DashboardIndexPage() {
     router.push("/apply");
   };
 
-  const currentYear = currentCompetitionData?.start_date
-    ? moment(currentCompetitionData.start_date).format("YYYY")
+  const selectedYear = selectedCompetition?.start_date
+    ? moment(selectedCompetition.start_date).format("YYYY")
     : moment().format("YYYY");
 
-  const daysLeft = currentCompetitionData?.end_date
-    ? Math.max(0, moment(currentCompetitionData.end_date).diff(moment(), "days"))
+  const daysLeft = selectedCompetition?.end_date
+    ? Math.max(0, moment(selectedCompetition.end_date).diff(moment(), "days"))
     : null;
+
+  const elapsedPercent = useMemo(() => {
+    if (!selectedCompetition?.start_date || !selectedCompetition?.end_date) return null;
+    const start = moment(selectedCompetition.start_date);
+    const end = moment(selectedCompetition.end_date);
+    const now = moment();
+    const total = end.diff(start);
+    if (total <= 0) return 100;
+    const elapsed = now.diff(start);
+    return Math.max(0, Math.min(100, (elapsed / total) * 100));
+  }, [selectedCompetition?.start_date, selectedCompetition?.end_date]);
 
   const competitionCampaigns = useMemo(
     () =>
       allCampaigns.filter(
         (c) =>
-          !currentCompetitionData?.competition_id ||
-          c.competition_id === currentCompetitionData.competition_id,
+          !selectedCompetition?.competition_id ||
+          c.competition_id === selectedCompetition.competition_id,
       ),
-    [allCampaigns, currentCompetitionData?.competition_id],
+    [allCampaigns, selectedCompetition?.competition_id],
   );
 
   const sortedCampaigns = useMemo(() => {
@@ -97,18 +134,37 @@ export default function DashboardIndexPage() {
       <Navbar />
       <div className="flex-1 bg-gray-50 p-10">
         <div className="flex items-center gap-4 flex-wrap">
-          <h3 className="text-4xl font-bold text-[#096B2E]">
+          <h3 className="text-4xl font-bold text-[#054A1F]">
             {isAdmin ? "Home" : "Dashboard"}
           </h3>
           {isAdmin && (
             <>
-              <span className="inline-flex items-center gap-1 bg-white border border-gray-300 rounded-md px-3 py-1 text-sm font-medium text-gray-700">
-                {currentYear}
-              </span>
+              <select
+                value={selectedCompetitionId ?? ""}
+                onChange={(e) => setSelectedCompetitionId(Number(e.target.value))}
+                className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm font-medium text-gray-700 outline-none cursor-pointer"
+              >
+                {allCompetitions.length === 0 && (
+                  <option value="">{selectedYear}</option>
+                )}
+                {allCompetitions.map((c) => (
+                  <option key={c.competition_id} value={c.competition_id}>
+                    {moment(c.start_date).format("YYYY")}
+                  </option>
+                ))}
+              </select>
               {daysLeft !== null && (
-                <span className="text-sm text-gray-500">
-                  {daysLeft} days left in this year&apos;s campaign
-                </span>
+                <div className="flex items-center gap-3 min-w-[420px]">
+                  <span className="text-sm text-gray-500 whitespace-nowrap">
+                    {daysLeft} days left in this year&apos;s campaign
+                  </span>
+                  <div className="relative h-2 w-40 rounded-full bg-[#56bd604a] overflow-hidden">
+                    <div
+                      className="absolute inset-y-0 left-0 bg-[#56BD60] rounded-full"
+                      style={{ width: `${elapsedPercent ?? 0}%` }}
+                    />
+                  </div>
+                </div>
               )}
             </>
           )}
@@ -126,51 +182,56 @@ export default function DashboardIndexPage() {
 
         {isAdmin && (
           <>
-            <h4 className="mt-8 mb-4 text-lg font-semibold text-gray-900">
+            <h4 className="mt-8 mb-4 text-lg font-semibold text-[#054A1F]">
               Quick Statistics
             </h4>
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
               <SummaryCard
                 label="Donations Received"
                 value={stats.donationsReceived.toLocaleString()}
+                icon={<VolunteerActivismIcon fontSize="small" />}
               />
               <SummaryCard
                 label="Ongoing Campaigns"
                 value={stats.ongoingCampaigns.toLocaleString()}
+                icon={<OutlinedFlagIcon fontSize="small" />}
               />
               <SummaryCard
                 label="Total Raised"
                 value={`$${stats.totalRaised.toLocaleString()}`}
+                icon={<AttachMoneyIcon fontSize="small" />}
               />
             </div>
 
             <div className="mt-10 flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3">
-                <h4 className="text-lg font-semibold text-gray-900">Top Campaigns</h4>
-                <span className="inline-flex items-center bg-[#56bd604a] text-[#2D7A45] rounded-full px-3 py-0.5 text-xs font-semibold">
-                  {currentYear}
-                </span>
+              <div className="flex items-center gap-3 flex-wrap">
+                <h4 className="text-lg font-semibold text-[#054A1F]">Top Campaigns</h4>
+                <div className="flex items-center gap-2">
+                  {SORT_OPTIONS.map((opt) => {
+                    const active = sortKey === opt.key;
+                    return (
+                      <button
+                        key={opt.key}
+                        type="button"
+                        onClick={() => setSortKey(opt.key)}
+                        className={`text-sm font-medium rounded-full px-4 py-1.5 border transition-colors ${
+                          active
+                            ? "bg-[#2D7A45] text-white border-[#2D7A45]"
+                            : "bg-white text-[#2D7A45] border-[#2D7A45] hover:bg-[#e8f5ec]"
+                        }`}
+                      >
+                        {opt.label}
+                      </button>
+                    );
+                  })}
+                </div>
               </div>
-              <div className="flex items-center gap-4">
-                <label className="flex items-center gap-2 text-sm text-gray-700">
-                  <span>Sort by:</span>
-                  <select
-                    value={sortKey}
-                    onChange={(e) => setSortKey(e.target.value as SortKey)}
-                    className="border border-gray-300 rounded px-3 py-2 bg-white outline-none cursor-pointer font-medium text-gray-700"
-                  >
-                    <option value="most_raised">Most Raised</option>
-                    <option value="least_raised">Least Raised</option>
-                    <option value="most_donors">Most Donors</option>
-                  </select>
-                </label>
-                <Link
-                  href="/dashboard/ongoing-campaigns"
-                  className="text-sm font-semibold text-[#2D7A45] hover:underline"
-                >
-                  VIEW ALL CAMPAIGNS →
-                </Link>
-              </div>
+              <Link
+                href="/dashboard/ongoing-campaigns"
+                className="text-sm font-semibold text-[#2D7A45] hover:underline"
+              >
+                VIEW ALL CAMPAIGNS →
+              </Link>
             </div>
 
             <div className="mt-6">
@@ -182,8 +243,8 @@ export default function DashboardIndexPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {sortedCampaigns.map((c) => (
-                    <CampaignCard key={c.campaign_id} campaign={c} />
+                  {sortedCampaigns.map((c, i) => (
+                    <CampaignCard key={c.campaign_id} campaign={c} rank={i + 1} />
                   ))}
                 </div>
               )}
