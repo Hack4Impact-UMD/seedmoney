@@ -20,6 +20,30 @@ type ChangePasswordModalProps = {
   onLogin?: () => void;
 };
 
+const validatePassword = (password: string) => {
+  if (!password) {
+    return null;
+  }
+
+  if (password.length < 8) {
+    return "Password must be at least 8 characters.";
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return "Password must include at least one capital letter.";
+  }
+
+  if (!/\d/.test(password)) {
+    return "Password must include at least one number.";
+  }
+
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return "Password must include at least one special character.";
+  }
+
+  return null;
+};
+
 export default function ChangePasswordModal({
   open,
   onClose,
@@ -69,6 +93,17 @@ export default function ChangePasswordModal({
       setCodeError(null);
       setIsUpdatingPassword(true);
 
+      const nextPasswordError = validatePassword(newPassword);
+
+      if (nextPasswordError) {
+        setPasswordError(nextPasswordError);
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        return;
+      }
+
       const supabase = createBrowserClient();
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
@@ -102,6 +137,8 @@ export default function ChangePasswordModal({
     !!newPassword &&
     !!confirmPassword &&
     newPassword === confirmPassword;
+  const localPasswordError = validatePassword(newPassword);
+  const newPasswordError = localPasswordError || passwordError;
   const showPasswordError =
     confirmPassword.length > 0 && newPassword !== confirmPassword;
   const modalTitle =
@@ -196,7 +233,12 @@ export default function ChangePasswordModal({
                   placeholder="New Password"
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    setPasswordError(null);
+                  }}
+                  error={!!newPasswordError}
+                  helperText={newPasswordError || ""}
                   slotProps={{
                     input: {
                       endAdornment: (
@@ -230,13 +272,9 @@ export default function ChangePasswordModal({
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
-                    setPasswordError(null);
                   }}
-                  error={!!passwordError || showPasswordError}
-                  helperText={
-                    passwordError ||
-                    (showPasswordError ? "Passwords do not match. Try again." : "")
-                  }
+                  error={showPasswordError}
+                  helperText={showPasswordError ? "Passwords do not match. Try again." : ""}
                   slotProps={{
                     input: {
                       endAdornment: (
@@ -272,7 +310,7 @@ export default function ChangePasswordModal({
               <Button
                 variant="contained"
                 size="medium"
-                disabled={!passwordsMatch || isUpdatingPassword}
+                disabled={!passwordsMatch || !!localPasswordError || isUpdatingPassword}
                 onClick={handleUpdatePassword}
               >
                 NEXT
