@@ -7,6 +7,7 @@ import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import ConfirmEditModalShell from "./ConfirmEditModalShell";
 import VerificationCodeStep from "./VerificationCodeStep";
+import useIsExistingEmail from "@/src/hooks/users/useIsExistingEmail";
 
 type ChangeEmailModalProps = {
   open: boolean;
@@ -21,7 +22,7 @@ const VALID_DEMO_VERIFICATION_CODE = "123456";
 export default function ChangeEmailModal({
   open,
   onClose,
-  userEmail = "johnsmith@gmail.com",
+  userEmail = "Could not fetch email.",
   onLogin,
 }: ChangeEmailModalProps) {
   const [step, setStep] = useState(0);
@@ -33,11 +34,14 @@ export default function ChangeEmailModal({
     onClose();
   };
 
+  const isExistingEmail = useIsExistingEmail(newEmail).data;
+
   const normalizedNewEmail = newEmail.trim();
   const canContinueToEmailChange =
     normalizedNewEmail.length > 0 &&
     normalizedNewEmail.toLowerCase() !== userEmail.toLowerCase() &&
-    EMAIL_REGEX.test(normalizedNewEmail);
+    EMAIL_REGEX.test(normalizedNewEmail) &&
+    !isExistingEmail;
   const modalTitle =
     step === 0
       ? "Change Email"
@@ -143,7 +147,9 @@ export default function ChangeEmailModal({
                 size="medium"
                 disabled={!verificationCode.trim()}
                 onClick={() => {
-                  if (verificationCode.trim() === VALID_DEMO_VERIFICATION_CODE) {
+                  if (
+                    verificationCode.trim() === VALID_DEMO_VERIFICATION_CODE
+                  ) {
                     setCodeError(null);
                     setStep(3);
                   } else {
