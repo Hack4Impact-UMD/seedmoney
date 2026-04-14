@@ -36,11 +36,16 @@ export default function ChangeEmailModal({
     onClose();
   };
 
-  const debouncedEmail = useDebounce(newEmail, 100);
+  const debouncedEmail = useDebounce(newEmail, 200);
   const { data: isExistingEmail, isLoading } =
     useIsExistingEmail(debouncedEmail);
 
   const normalizedNewEmail = newEmail.trim();
+  const normalizedDebouncedEmail = debouncedEmail.trim().toLowerCase();
+  const isWaitingForExistingEmailCheck =
+    EMAIL_REGEX.test(normalizedNewEmail) &&
+    normalizedNewEmail.toLowerCase() !== userEmail.toLowerCase() &&
+    normalizedNewEmail.toLowerCase() !== normalizedDebouncedEmail;
   const emailError =
     isExistingEmail &&
     normalizedNewEmail.toLowerCase() !== userEmail.toLowerCase()
@@ -51,6 +56,7 @@ export default function ChangeEmailModal({
     normalizedNewEmail.length > 0 &&
     normalizedNewEmail.toLowerCase() !== userEmail.toLowerCase() &&
     EMAIL_REGEX.test(normalizedNewEmail) &&
+    !isWaitingForExistingEmailCheck &&
     !isLoading &&
     isExistingEmail === false;
 
