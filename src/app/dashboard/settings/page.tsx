@@ -9,6 +9,7 @@ import ChangePasswordModal from "@/src/components/settings-modals/ChangePassword
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import { createBrowserClient } from "@/src/lib/supabase-client";
+import useUpdateUser from "@/src/hooks/users/useUpdateUser";
 
 type ActiveModal = "name" | "email" | "password" | null;
 
@@ -68,6 +69,20 @@ export default function SettingsPage() {
     router.push("/");
   };
 
+  const updateUser = useUpdateUser();
+
+  const handleSave = async (nextFirstName: string, nextLastName: string) => {
+    const userId = userData?.id || "";
+
+    await updateUser.mutateAsync({
+      userId,
+      userUpdateData: {
+        first_name: nextFirstName,
+        last_name: nextLastName,
+      },
+    });
+  };
+
   return (
     <div className="flex min-h-screen bg-[#f8fbf8]">
       <Navbar />
@@ -110,10 +125,7 @@ export default function SettingsPage() {
           lastName={lastName}
           title={isGoogleAuth ? "Confirm Edit" : "Change Name"}
           onSave={(nextFirstName, nextLastName) =>
-            setSavedName({
-              firstName: nextFirstName,
-              lastName: nextLastName,
-            })
+            handleSave(nextFirstName, nextLastName)
           }
         />
       )}

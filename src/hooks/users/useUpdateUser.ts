@@ -8,12 +8,12 @@ export default function useUpdateCampaign() {
   return useMutation<
     Users,
     Error,
-    { userId: string; userData: Partial<Users> }
+    { userId: string; userUpdateData: Partial<Users> }
   >({
-    mutationFn: async ({ userId, userData }) => {
-      const campaign = await updateUser(userId, userData);
-      if (!campaign) throw new Error("Error updating user");
-      return campaign;
+    mutationFn: async ({ userId, userUpdateData }) => {
+      const user = await updateUser(userId, userUpdateData);
+      if (!user) throw new Error("Error updating user");
+      return user;
     },
     onSuccess: (data, { userId }) => {
       queryClient.invalidateQueries({

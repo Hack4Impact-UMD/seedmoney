@@ -11,11 +11,12 @@ import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
 import CloseIcon from "@mui/icons-material/Close";
+import useUpdateUser from "@/src/hooks/users/useUpdateUser";
 
 type ChangeNameModalProps = {
   open: boolean;
   onClose: () => void;
-  onSave?: (firstName: string, lastName: string) => void;
+  onSave?: (firstName: string, lastName: string) => Promise<void>;
   firstName: string;
   lastName: string;
   title?: string;
