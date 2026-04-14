@@ -41,6 +41,10 @@ export default function ChangeEmailModal({
     useIsExistingEmail(debouncedEmail);
 
   const normalizedNewEmail = newEmail.trim();
+  const emailError =
+    isExistingEmail && normalizedNewEmail.toLowerCase() !== userEmail.toLowerCase()
+      ? "Email already exists. Try again."
+      : null;
 
   const canContinueToEmailChange =
     normalizedNewEmail.length > 0 &&
@@ -78,6 +82,8 @@ export default function ChangeEmailModal({
                 placeholder="New email address"
                 value={newEmail}
                 onChange={(e) => setNewEmail(e.target.value)}
+                error={!!emailError}
+                helperText={emailError}
               />
             </Box>
           ),
