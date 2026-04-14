@@ -1,5 +1,8 @@
+"use server";
+
 import type { Campaign } from "@/src/types";
 import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
+
 
 export async function createCampaign(
   data: Partial<Campaign>,
@@ -118,7 +121,7 @@ export async function createCampaignGivebutter(
 export async function readCampaign(
   ids?: number | number[],
 ): Promise<Campaign | Campaign[] | null> {
-  const supabase = createBrowserClient();
+  const supabase = await createBrowserClient();
 
   // Return ALL campaigns
   if (ids === undefined) {
@@ -194,6 +197,28 @@ export async function updateCampaign(
   return data as Campaign;
 }
 
+export async function deleteCampaign(id: number): Promise<boolean> {
+  const supabase = await createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .delete()
+    .eq("campaign_id", id)
+    .select("campaign_id");
+
+  if (error) {
+    console.error("Error deleting campaign:", error.message);
+    return false;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("Campaign not found for deletion:", id);
+    return false;
+  }
+
+  return true;
+}
+
 export async function updateCampaignGivebutterID(
   id: number,
   campaign: Partial<Campaign>,
@@ -219,28 +244,6 @@ export async function updateCampaignGivebutterID(
   }
 
   return data as Campaign;
-}
-
-export async function deleteCampaign(id: number): Promise<boolean> {
-  const supabase = await createBrowserClient();
-
-  const { data, error } = await supabase
-    .from("campaigns")
-    .delete()
-    .eq("campaign_id", id)
-    .select("campaign_id");
-
-  if (error) {
-    console.error("Error deleting campaign:", error.message);
-    return false;
-  }
-
-  if (!data || data.length === 0) {
-    console.warn("Campaign not found for deletion:", id);
-    return false;
-  }
-
-  return true;
 }
 
 export async function readCurrentDraftCampaignForUser(user_id: string) {

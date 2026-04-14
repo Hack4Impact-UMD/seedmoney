@@ -38,6 +38,8 @@ export default function Navbar() {
   const selectedCampaignId = Number(campaignId);
   const isAdmin = userData?.is_admin ?? false;
 
+  const firstName = userData?.first_name ?? user?.user_metadata.full_name;
+
   const handleCampaignClick = (id: number) => {
     router.push(`/dashboard/${id}`);
   };
@@ -49,6 +51,7 @@ export default function Navbar() {
   };
 
   const handleSettings = () => {
+    console.log(firstName);
     router.push("/dashboard/settings");
   };
 
@@ -158,7 +161,7 @@ export default function Navbar() {
           {!isCollapsed && (
             <div className="min-w-0">
               <h6 className="text-xl font-bold leading-[1.3] text-white">
-                {userData?.first_name ?? "SeedMoney"}
+                {firstName ?? "SeedMoney"}
               </h6>
               <p className="text-sm text-white/80">
                 {isLoading
