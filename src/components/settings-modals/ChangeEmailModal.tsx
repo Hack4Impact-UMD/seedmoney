@@ -37,14 +37,18 @@ export default function ChangeEmailModal({
   };
 
   const debouncedEmail = useDebounce(newEmail, 400);
-  const isExistingEmail = useIsExistingEmail(debouncedEmail).data;
+  const { data: isExistingEmail, isLoading } =
+    useIsExistingEmail(debouncedEmail);
 
   const normalizedNewEmail = newEmail.trim();
+
   const canContinueToEmailChange =
     normalizedNewEmail.length > 0 &&
     normalizedNewEmail.toLowerCase() !== userEmail.toLowerCase() &&
     EMAIL_REGEX.test(normalizedNewEmail) &&
-    !isExistingEmail;
+    !isLoading &&
+    isExistingEmail === false;
+
   const modalTitle =
     step === 0
       ? "Change Email"
