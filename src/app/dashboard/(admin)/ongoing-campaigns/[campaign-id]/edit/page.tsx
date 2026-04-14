@@ -67,39 +67,25 @@ const DEFAULT_CAMPAIGN_DATA: EditCampaignFormData = {
   storyCampaignImpactFinal: "",
 };
 
-function parseCampaignIdParam(value: string): number | null {
-  if (!/^\d+$/.test(value)) {
-    return null;
-  }
-
-  const parsedValue = Number(value);
-
-  return Number.isSafeInteger(parsedValue) ? parsedValue : null;
-}
 
 export default function EditCampaignPage() {
-  const params = useParams();
   const router = useRouter();
-  const rawCampaignId = params["campaign-id"];
-  const campaignId = Array.isArray(rawCampaignId)
-    ? rawCampaignId[0]
-    : (rawCampaignId ?? "");
-  const parsedCampaignId = parseCampaignIdParam(campaignId);
+
+  const { campaignId } = useParams<{ campaignId: string }>();
+  const parsedCampaignId = Number(campaignId);
+
   const queryClient = useQueryClient();
   const updateCampaignMutation = useUpdateCampaign();
 
-  const [initialData, setInitialData] = useState<EditCampaignFormData>(
-    DEFAULT_CAMPAIGN_DATA,
-  );
-  const [formData, setFormData] = useState<EditCampaignFormData>(
-    DEFAULT_CAMPAIGN_DATA,
-  );
+  const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
+  const [formData, setFormData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
   const [storyQuestions, setStoryQuestions] = useState({
     q1: "Where is your garden, and who does it serve?",
     q2: "What challenge does your garden help address, and why does it matter locally?",
     q3: "What happens in the garden during the growing season?",
     q4: "What will this year’s SeedMoney campaign make possible?",
   });
+
   const [isDataLoaded, setIsDataLoaded] = useState(false);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
@@ -110,27 +96,17 @@ export default function EditCampaignPage() {
 
   const isFormDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
 
-  const { data: campaignData, isLoading: isLoadingCampaign } = useReadCampaign(
-    parsedCampaignId ?? 0,
-  );
+  const { data: campaignData, isLoading: isLoadingCampaign } = useReadCampaign({
+    campaignId: parsedCampaignId ?? 0,
+  })
 
   const { data: answersData, isLoading: isLoadingAnswers } =
     useReadGardenStoryAnswers(parsedCampaignId ?? 0);
 
-  useEffect(() => {
-    if (parsedCampaignId === null) {
-      router.replace("/dashboard/ongoing-campaigns");
-    }
-  }, [parsedCampaignId, router]);
 
   useEffect(() => {
-    if (
-      campaignData &&
-      answersData &&
-      !Array.isArray(campaignData) &&
-      !isDataLoaded
-    ) {
-      const dbCampaign = campaignData as Campaign;
+    if (campaignData && answersData && !isDataLoaded ) {
+      const dbCampaign = campaignData[0] as Campaign;
 
       const mapAnswer = (questionNumber: number) => {
         return answersData.find(
@@ -207,6 +183,9 @@ export default function EditCampaignPage() {
         storyCampaignImpactAI: impactAI,
         storyCampaignImpactFinal: impactFinal,
       };
+
+      console.log("mappedData", mappedData);
+
 
       setInitialData(mappedData);
       setFormData(mappedData);
@@ -373,18 +352,7 @@ export default function EditCampaignPage() {
 
   return (
     <div className="flex min-h-screen">
-      <Navbar
-        campaigns={[
-          {
-            campaign_id: parsedCampaignId,
-            name: formData.campaignTitle,
-            status: "published",
-            date_created: new Date().toISOString(),
-          } as Campaign,
-        ]}
-        selectedCampaignId={parsedCampaignId}
-        onCampaignSelect={() => {}}
-      />
+      <Navbar/>
 
       <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
         <EditCampaignHeader
