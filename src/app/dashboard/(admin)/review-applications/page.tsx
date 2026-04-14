@@ -1,7 +1,7 @@
 "use client";
 
 import Navbar from "@/src/components/Navbar";
-import ReviewApplicationsTable from "@/src/app/dashboard/(admin)/review-applications/ReviewApplicationsTable";
+import ReviewApplicationsTable from "@/src/components/ReviewApplicationsTable";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import Loading from "@/src/app/loading";
 import Error from "@/src/app/error";
