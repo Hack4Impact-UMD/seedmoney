@@ -10,6 +10,7 @@ import VerificationCodeStep from "./VerificationCodeStep";
 import useIsExistingEmail, {
   useDebounce,
 } from "@/src/hooks/users/useIsExistingEmail";
+import { createBrowserClient } from "@/src/lib/supabase-client";
 
 type ChangeEmailModalProps = {
   open: boolean;
@@ -19,7 +20,6 @@ type ChangeEmailModalProps = {
 };
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-const VALID_DEMO_VERIFICATION_CODE = "123456";
 
 export default function ChangeEmailModal({
   open,
@@ -31,6 +31,15 @@ export default function ChangeEmailModal({
   const [newEmail, setNewEmail] = useState("");
   const [verificationCode, setVerificationCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSendingChangeEmail, setIsSendingChangeEmail] = useState(false);
+
+  const [oldEmailCode, setOldEmailCode] = useState("");
+  const [newEmailCode, setNewEmailCode] = useState("");
+  const [oldEmailError, setOldEmailError] = useState<string | null>(null);
+  const [newEmailError, setNewEmailError] = useState<string | null>(null);
+  const [isVerifyingOldEmail, setIsVerifyingOldEmail] = useState(false);
+  const [isVerifyingNewEmail, setIsVerifyingNewEmail] = useState(false);
 
   const handleCancel = () => {
     onClose();
@@ -60,6 +69,76 @@ export default function ChangeEmailModal({
     !isLoading &&
     isExistingEmail === false;
 
+  const handleSendEmailChange = async () => {
+    try {
+      setSubmitError(null);
+      setIsSendingChangeEmail(true);
+
+      const supabase = createBrowserClient();
+
+      const { error } = await supabase.auth.updateUser({
+        email: normalizedNewEmail,
+      });
+
+      if (error) {
+        setSubmitError(error.message);
+        return;
+      }
+
+      setStep(2);
+    } finally {
+      setIsSendingChangeEmail(false);
+    }
+  };
+
+  const handleVerifyOldEmailOtp = async () => {
+    try {
+      setOldEmailError(null);
+      setIsVerifyingOldEmail(true);
+
+      const supabase = createBrowserClient();
+
+      const { error } = await supabase.auth.verifyOtp({
+        email: userEmail ?? "",
+        token: oldEmailCode.trim(),
+        type: "email_change",
+      });
+
+      if (error) {
+        setOldEmailError(error.message);
+        return;
+      }
+
+      setStep(3);
+    } finally {
+      setIsVerifyingOldEmail(false);
+    }
+  };
+
+  const handleVerifyNewEmailOtp = async () => {
+    try {
+      setNewEmailError(null);
+      setIsVerifyingNewEmail(true);
+
+      const supabase = createBrowserClient();
+
+      const { error } = await supabase.auth.verifyOtp({
+        email: normalizedNewEmail,
+        token: newEmailCode.trim(),
+        type: "email_change",
+      });
+
+      if (error) {
+        setNewEmailError(error.message);
+        return;
+      }
+
+      setStep(4);
+    } finally {
+      setIsVerifyingNewEmail(false);
+    }
+  };
+
   const modalTitle =
     step === 0
       ? "Change Email"
@@ -79,7 +158,7 @@ export default function ChangeEmailModal({
                 variant="outlined"
                 fullWidth
                 label="Current Email"
-                value={userEmail || "johnsmith@gmail.com"}
+                value={userEmail}
                 disabled
               />
               <TextField
@@ -132,7 +211,7 @@ export default function ChangeEmailModal({
               <Button
                 variant="contained"
                 size="medium"
-                onClick={() => setStep(2)}
+                onClick={handleSendEmailChange}
               >
                 SEND VERIFICATION EMAIL
               </Button>
@@ -144,16 +223,16 @@ export default function ChangeEmailModal({
         return {
           body: (
             <VerificationCodeStep
-              message={`A code has been sent to your email ${userEmail}.`}
-              code={verificationCode}
+              message={`A code has been sent to your current email ${userEmail}.`}
+              code={oldEmailCode}
               onCodeChange={(val) => {
-                setVerificationCode(val);
-                setCodeError(null);
+                setOldEmailCode(val);
+                setOldEmailError(null);
               }}
-              error={codeError}
+              error={oldEmailError}
               onResend={() => {
-                setVerificationCode("");
-                setCodeError(null);
+                setOldEmailCode("");
+                setOldEmailError(null);
               }}
             />
           ),
@@ -165,60 +244,47 @@ export default function ChangeEmailModal({
               <Button
                 variant="contained"
                 size="medium"
-                disabled={!verificationCode.trim()}
-                onClick={() => {
-                  if (
-                    verificationCode.trim() === VALID_DEMO_VERIFICATION_CODE
-                  ) {
-                    setCodeError(null);
-                    setStep(3);
-                  } else {
-                    setCodeError("Invalid Code. Try again.");
-                    setVerificationCode("");
-                  }
-                }}
+                disabled={!oldEmailCode.trim() || isVerifyingOldEmail}
+                onClick={handleVerifyOldEmailOtp}
               >
                 NEXT
               </Button>
             </>
           ),
         };
-
       case 3:
         return {
           body: (
-            <Box>
-              <Typography variant="body1" sx={{ mb: 2 }}>
-                To complete your email change, verify your new address.
-                We&apos;ve sent a confirmation link to {normalizedNewEmail}.
-              </Typography>
-              <Typography variant="body2" sx={{ color: "#666" }}>
-                Didn&apos;t receive it?{" "}
-                <Typography
-                  component="span"
-                  variant="body2"
-                  onClick={() => console.log("Resend confirmation")}
-                  sx={{
-                    color: "#1976d2",
-                    cursor: "pointer",
-                    textDecoration: "underline",
-                    fontWeight: 600,
-                  }}
-                >
-                  Resend
-                </Typography>
-              </Typography>
-            </Box>
+            <VerificationCodeStep
+              message={`A code has been sent to your new email ${normalizedNewEmail}.`}
+              code={newEmailCode}
+              onCodeChange={(val) => {
+                setNewEmailCode(val);
+                setNewEmailError(null);
+              }}
+              error={newEmailError}
+              onResend={() => {
+                setNewEmailCode("");
+                setNewEmailError(null);
+              }}
+            />
           ),
           actions: (
             <>
               <Button variant="text" size="medium" onClick={handleCancel}>
                 CANCEL
               </Button>
+              <Button
+                variant="contained"
+                size="medium"
+                disabled={!newEmailCode.trim() || isVerifyingNewEmail}
+                onClick={handleVerifyNewEmailOtp}
+              >
+                VERIFY NEW EMAIL
+              </Button>
             </>
           ),
         };
-
       case 4:
         return {
           body: (
