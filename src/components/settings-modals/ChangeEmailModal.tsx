@@ -36,13 +36,14 @@ export default function ChangeEmailModal({
     onClose();
   };
 
-  const debouncedEmail = useDebounce(newEmail, 400);
+  const debouncedEmail = useDebounce(newEmail, 100);
   const { data: isExistingEmail, isLoading } =
     useIsExistingEmail(debouncedEmail);
 
   const normalizedNewEmail = newEmail.trim();
   const emailError =
-    isExistingEmail && normalizedNewEmail.toLowerCase() !== userEmail.toLowerCase()
+    isExistingEmail &&
+    normalizedNewEmail.toLowerCase() !== userEmail.toLowerCase()
       ? "Email already exists. Try again."
       : null;
 
