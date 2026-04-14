@@ -143,19 +143,7 @@ export default function EditCampaignPage() {
 
   return (
     <div className="flex min-h-screen">
-      <Navbar
-        campaigns={[
-          {
-            campaign_id: parsedCampaignId,
-            name: formData.campaignTitle,
-            status: "published",
-            date_created: new Date().toISOString(),
-            
-          } as Campaign,
-        ]}
-        selectedCampaignId={parsedCampaignId}
-        onCampaignSelect={() => {}}
-      />
+      <Navbar/>
 
       <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
         <EditCampaignHeader
