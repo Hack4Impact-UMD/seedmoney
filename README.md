@@ -1,6 +1,6 @@
 <h1 style="display: flex; align-items: center; justify-content: center; gap: 8px;">
   SeedMoney
-  <img src="src/public/1e091ff252f77230.png" alt="SeedMoney" width="20" />
+  <img src="public/seedMoneyLogo.png" alt="SeedMoney" width="20" />
 </h1>
  
 ## 📞 Team Contacts
