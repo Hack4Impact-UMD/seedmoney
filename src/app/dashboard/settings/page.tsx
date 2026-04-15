@@ -72,10 +72,12 @@ export default function SettingsPage() {
   const updateUser = useUpdateUser();
 
   const handleSave = async (nextFirstName: string, nextLastName: string) => {
-    const userId = userData?.id || "";
+    if (!userData?.id) {
+      return;
+    }
 
     await updateUser.mutateAsync({
-      userId,
+      userId: userData.id,
       userUpdateData: {
         first_name: nextFirstName,
         last_name: nextLastName,
