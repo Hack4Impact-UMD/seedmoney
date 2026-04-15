@@ -15,6 +15,7 @@ export default function useCreateCampaign() {
     ): Promise<Campaign> => {
       const campaign = await createCampaign(campaignData);
 
+
       if (!campaign) {
         throw new Error("Error creating campaign");
       }
