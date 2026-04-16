@@ -1,19 +1,11 @@
 "use client";
 
 import { useMemo } from "react";
-import {
-  Alert,
-  AlertTitle,
-  Button,
-  Dialog,
-  DialogActions,
-  DialogContent,
-  DialogTitle,
-  IconButton,
-  Snackbar,
-} from "@mui/material";
-import { CheckCircleOutline, Close } from "@mui/icons-material";
+import { Button, IconButton } from "@mui/material";
+import { Close } from "@mui/icons-material";
 import { EditCampaignFormData } from "./types";
+import BaseModal from "@/src/components/bases/BaseModal";
+import BaseAlert from "@/src/components/bases/BaseAlert";
 
 const SECTION_CHANGE_GROUPS: Array<{
   label: string;
@@ -154,242 +146,145 @@ export default function EditCampaignDialogs({
 
   return (
     <>
-      <Dialog open={isSaveModalOpen} onClose={onCloseSaveModal} fullWidth>
-        <DialogTitle
-          sx={{
-            m: 0,
-            p: 2,
-            pb: 1,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <span className="text-[#1A4A28] font-bold text-xl">Confirm Edit</span>
-          <IconButton
-            aria-label="close"
-            onClick={onCloseSaveModal}
-            sx={{ color: (theme) => theme.palette.grey[500] }}
-          >
-            <Close />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent sx={{ maxHeight: "60vh", overflowY: "auto" }}>
-          <p className="mb-4 text-gray-600">
-            You are about to edit this campaign:
-          </p>
-          {changedSections.length > 0 ? (
-            <ul className="mb-4 list-disc space-y-1 pl-6 text-black font-medium">
-              {changedSections.map((section) => (
-                <li key={section}>{section}</li>
-              ))}
-            </ul>
-          ) : (
-            <p className="mb-4 text-sm text-gray-500">
-              No editable fields were changed.
+      <BaseModal
+        open={isSaveModalOpen}
+        onClose={onCloseSaveModal}
+        title="Confirm Edit"
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex-1 overflow-y-auto pr-2">
+            <p className="mb-4 text-gray-600">
+              You are about to edit this campaign:
             </p>
-          )}
-          <p className="mt-4 text-sm text-gray-500">
-            Changes cannot be reversed unless edit is requested again. Are you
-            sure you would like to save changes?
-          </p>
-        </DialogContent>
-        <DialogActions>
-          <Button
-            onClick={onCloseSaveModal}
-            sx={{ color: "gray", fontWeight: "bold" }}
-          >
-            Cancel
-          </Button>
-          <Button
-            variant="contained"
-            onClick={() => {
-              console.log("Saving data:", formData);
-              onConfirmSave();
-            }}
-          >
-            Save
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={isCancelModalOpen}
-        onClose={onCloseCancelModal}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: "10px",
-          },
-        }}
-      >
-        <DialogTitle
-          sx={{
-            m: 0,
-            px: 4,
-            pt: 4,
-            pb: 0.5,
-            display: "flex",
-            justifyContent: "space-between",
-            alignItems: "center",
-          }}
-        >
-          <span className="text-[#1A4A28] text-[22px] font-bold leading-none">
-            Unsaved changes
-          </span>
-          <IconButton
-            aria-label="close"
-            onClick={onCloseCancelModal}
-            sx={{
-              color: "#9E9E9E",
-              mr: -1,
-              mt: -0.5,
-            }}
-          >
-            <Close />
-          </IconButton>
-        </DialogTitle>
-        <DialogContent
-          sx={{
-            px: 4,
-            pt: 4.5,
-            pb: 7,
-          }}
-        >
-          <p className="m-0 max-w-[660px] text-[16px] leading-[1.5] text-[#5F6368]">
-            You have unsaved changes. If you leave, your edits will be lost.
-          </p>
-        </DialogContent>
-        <DialogActions
-          sx={{
-            px: 4,
-            pb: 4,
-            pt: 0,
-            gap: 2,
-          }}
-        >
-          <Button
-            onClick={onConfirmCancel}
-            sx={{
-              color: "#666666",
-              fontWeight: 700,
-              fontSize: "16px",
-              letterSpacing: "0.02em",
-            }}
-          >
-            Leave without saving
-          </Button>
-          <Button
-            variant="contained"
-            onClick={onCloseCancelModal}
-            sx={{
-              px: 3,
-              py: 1.25,
-              minWidth: "84px",
-            }}
-          >
-            Stay
-          </Button>
-        </DialogActions>
-      </Dialog>
-
-      <Dialog
-        open={isDiscardModalOpen}
-        onClose={onCloseDiscardModal}
-        maxWidth="sm"
-        fullWidth
-        PaperProps={{
-          sx: {
-            borderRadius: "10px",
-          },
-        }}
-      >
-        <div className="relative px-8 pb-6 pt-8">
-          <IconButton
-            aria-label="close"
-            onClick={onCloseDiscardModal}
-            sx={{
-              position: "absolute",
-              top: 18,
-              right: 18,
-              color: "#9E9E9E",
-            }}
-          >
-            <Close />
-          </IconButton>
-          <span className="block pr-12 text-[22px] font-bold leading-none text-[#1A4A28]">
-            Discard changes?
-          </span>
-          <p className="m-0 mt-[38px] max-w-[660px] text-[16px] leading-[1.5] text-[#5F6368]">
-            You have unsaved changes. This will reset the form to its previous
-            state.
-          </p>
-          <div className="mt-[38px] flex justify-end gap-4">
-          <Button
-            onClick={onConfirmDiscard}
-            sx={{
-              color: "#666666",
-              fontWeight: 700,
-              fontSize: "16px",
-              letterSpacing: "0.02em",
-            }}
-          >
-            Discard changes
-          </Button>
-          <Button
-            variant="contained"
-            onClick={onCloseDiscardModal}
-            sx={{
-              px: 2.5,
-              py: 1.1,
-              minWidth: "128px",
-            }}
-          >
-            Keep editing
-          </Button>
+            {changedSections.length > 0 ? (
+              <ul className="mb-4 list-disc space-y-1 pl-6 text-black font-medium">
+                {changedSections.map((section) => (
+                  <li key={section}>{section}</li>
+                ))}
+              </ul>
+            ) : (
+              <p className="mb-4 text-sm text-gray-500">
+                No editable fields were changed.
+              </p>
+            )}
+            <p className="text-sm text-gray-500">
+              Changes cannot be reversed unless edit is requested again. Are you
+              sure you would like to save changes?
+            </p>
+          </div>
+          <div className="mt-6 flex justify-end gap-3">
+            <Button
+              onClick={onCloseSaveModal}
+              sx={{ color: "gray", fontWeight: "bold" }}
+            >
+              Cancel
+            </Button>
+            <Button
+              variant="contained"
+              onClick={() => {
+                console.log("Saving data:", formData);
+                onConfirmSave();
+              }}
+            >
+              Save
+            </Button>
           </div>
         </div>
-      </Dialog>
+      </BaseModal>
 
-      <Snackbar
+      <BaseModal
+        open={isCancelModalOpen}
+        onClose={onCloseCancelModal}
+        title="Unsaved changes"
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex-1 pt-2">
+            <p className="m-0 text-[16px] leading-[1.5] text-[#5F6368]">
+              You have unsaved changes. If you leave, your edits will be lost.
+            </p>
+          </div>
+          <div className="mt-8 flex justify-end gap-4">
+            <Button
+              onClick={onConfirmCancel}
+              sx={{
+                color: "#666666",
+                fontWeight: 700,
+                fontSize: "16px",
+                letterSpacing: "0.02em",
+              }}
+            >
+              Leave without saving
+            </Button>
+            <Button
+              variant="contained"
+              onClick={onCloseCancelModal}
+              sx={{
+                px: 3,
+                py: 1.25,
+                minWidth: "84px",
+              }}
+            >
+              Stay
+            </Button>
+          </div>
+        </div>
+      </BaseModal>
+
+      <BaseModal
+        open={isDiscardModalOpen}
+        onClose={onCloseDiscardModal}
+        title="Discard changes?"
+      >
+        <div className="flex flex-col h-full">
+          <div className="flex-1 pt-2">
+            <p className="m-0 text-[16px] leading-[1.5] text-[#5F6368]">
+              You have unsaved changes. This will reset the form to its previous
+              state.
+            </p>
+          </div>
+          <div className="mt-8 flex justify-end gap-4">
+            <Button
+              onClick={onConfirmDiscard}
+              sx={{
+                color: "#666666",
+                fontWeight: 700,
+                fontSize: "16px",
+                letterSpacing: "0.02em",
+              }}
+            >
+              Discard changes
+            </Button>
+            <Button
+              variant="contained"
+              onClick={onCloseDiscardModal}
+              sx={{
+                px: 2.5,
+                py: 1.1,
+                minWidth: "128px",
+              }}
+            >
+              Keep editing
+            </Button>
+          </div>
+        </div>
+      </BaseModal>
+
+      <BaseAlert
         open={showSuccessToast}
-        autoHideDuration={4000}
         onClose={onCloseToast}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        sx={{ mt: 1, mr: 1 }}
+        title="Campaigns Updated!"
       >
-        <Alert
-          icon={
-            <CheckCircleOutline fontSize="small" sx={{ color: "#1A4A28" }} />
-          }
-          severity="success"
-        >
-          <AlertTitle sx={{ fontSize: "16px" }}>Campaigns Updated!</AlertTitle>
-          <span className="text-[14px]">
-            You have successfully updated this <br />
-            campaign.
-          </span>
-        </Alert>
-      </Snackbar>
+        You have successfully updated this campaign.
+      </BaseAlert>
 
-      <Snackbar
+      <BaseAlert
         open={showErrorToast}
-        autoHideDuration={6000}
         onClose={onCloseErrorToast}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        sx={{ mt: 1, mr: 1 }}
+        title="Save Failed"
       >
-        <Alert
-          severity="error"
-          onClose={onCloseErrorToast}
-        >
-          <AlertTitle sx={{ fontSize: "16px" }}>Save Failed</AlertTitle>
-          <span className="text-[14px]">
-            {saveErrorMessage || "An error occurred while saving. Please try again."}
-          </span>
-        </Alert>
-      </Snackbar>
+        {saveErrorMessage ||
+          "An error occurred while saving. Please try again."}
+      </BaseAlert>
     </>
   );
 }

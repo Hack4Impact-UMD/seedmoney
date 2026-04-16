@@ -7,9 +7,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Campaign } from "@/src/types/db/campaigns";
 import type { Existence } from "@/src/types/db/enums";
 import Loading from "@/src/app/loading";
-import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
-import useReadGardenStoryAnswers from "@/src/hooks/answers/useReadGardenStoryAnswers";
 import { updateAnswer } from "@/src/actions/db/answers";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
@@ -19,9 +17,10 @@ import EditCampaignDialogs from "@/src/components/ongoing-campaigns/edit/EditCam
 import EditCampaignHeader from "@/src/components/ongoing-campaigns/edit/EditCampaignHeader";
 import GardenInformationSection from "@/src/components/ongoing-campaigns/edit/GardenInformationSection";
 import GardenStorySection from "@/src/components/ongoing-campaigns/edit/GardenStorySection";
-import type {
-  EditCampaignFormData,
-  TextFieldKey,
+import {
+  type EditCampaignFormData,
+  type TextFieldKey,
+  DEFAULT_CAMPAIGN_DATA,
 } from "@/src/components/ongoing-campaigns/edit/types";
 import {
   beneficiaryOptions,
@@ -29,64 +28,28 @@ import {
   COUNTRIES,
   US_STATES,
 } from "./options";
-
-const DEFAULT_CAMPAIGN_DATA: EditCampaignFormData = {
-  campaignTitle: "",
-  beneficiaryCount: "",
-  gardenSize: "",
-  gardenStatus: "existing",
-  fundraisingGoal: "",
-  gardenCity: "",
-  gardenState: "",
-  gardenCountry: "",
-  gardenCategory: "",
-  gardenBeneficiaries: [],
-  organizationName: "",
-  organizationIdentifier: "",
-  mailingStreet1: "",
-  mailingStreet2: "",
-  mailingCity: "",
-  mailingState: "",
-  mailingZip: "",
-  mailingCountry: "",
-  contactFirstName: "",
-  contactLastName: "",
-  contactEmail: "",
-  contactRole: "",
-  storyLocationAndAudience: "",
-  storyLocationAndAudienceAI: "",
-  storyLocationAndAudienceFinal: "",
-  storyChallengeOriginal: "",
-  storyChallengeAI: "",
-  storyChallengeFinal: "",
-  storySeasonActivityOriginal: "",
-  storySeasonActivityAI: "",
-  storySeasonActivityFinal: "",
-  storyCampaignImpactOriginal: "",
-  storyCampaignImpactAI: "",
-  storyCampaignImpactFinal: "",
-};
-
+import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
 
 export default function EditCampaignPage() {
   const router = useRouter();
 
-  const { campaignId } = useParams<{ campaignId: string }>();
+  const params = useParams();
+  const campaignId = params?.["campaign-id"] as string;
   const parsedCampaignId = Number(campaignId);
 
   const queryClient = useQueryClient();
   const updateCampaignMutation = useUpdateCampaign();
 
-  const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
-  const [formData, setFormData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
-  const [storyQuestions, setStoryQuestions] = useState({
-    q1: "Where is your garden, and who does it serve?",
-    q2: "What challenge does your garden help address, and why does it matter locally?",
-    q3: "What happens in the garden during the growing season?",
-    q4: "What will this year’s SeedMoney campaign make possible?",
-  });
+  const { mappedData, storyQuestions, isDataLoaded, isLoading, answersData } =
+    useCampaignEditData(parsedCampaignId);
 
-  const [isDataLoaded, setIsDataLoaded] = useState(false);
+  const [initialData, setInitialData] = useState<EditCampaignFormData>(
+    DEFAULT_CAMPAIGN_DATA,
+  );
+  const [formData, setFormData] = useState<EditCampaignFormData>(
+    DEFAULT_CAMPAIGN_DATA,
+  );
+
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
@@ -96,102 +59,13 @@ export default function EditCampaignPage() {
 
   const isFormDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
 
-  const { data: campaignData, isLoading: isLoadingCampaign } = useReadCampaign({
-    campaignId: parsedCampaignId ?? 0,
-  })
-
-  const { data: answersData, isLoading: isLoadingAnswers } =
-    useReadGardenStoryAnswers(parsedCampaignId ?? 0);
-
-
+  // Initialize form data once the data is fully loaded
   useEffect(() => {
-    if (campaignData && answersData && !isDataLoaded ) {
-      const dbCampaign = campaignData[0] as Campaign;
-
-      const mapAnswer = (questionNumber: number) => {
-        return answersData.find(
-          (a: any) => a.questions?.question_number === questionNumber,
-        );
-      };
-
-      const locAudAns = mapAnswer(1);
-      const locAudOrg = locAudAns?.pre_ai_answer || "";
-      const locAudAI = locAudAns?.ai_answer || "";
-      const locAudFinal = locAudAns?.final_answer || "";
-
-      const challengeAns = mapAnswer(2);
-      const challengeOrg = challengeAns?.pre_ai_answer || "";
-      const challengeAI = challengeAns?.ai_answer || "";
-      const challengeFinal = challengeAns?.final_answer || "";
-
-      const seasonAns = mapAnswer(3);
-      const seasonOrg = seasonAns?.pre_ai_answer || "";
-      const seasonAI = seasonAns?.ai_answer || "";
-      const seasonFinal = seasonAns?.final_answer || "";
-
-      const impactAns = mapAnswer(4);
-      const impactOrg = impactAns?.pre_ai_answer || "";
-      const impactAI = impactAns?.ai_answer || "";
-      const impactFinal = impactAns?.final_answer || "";
-
-      setStoryQuestions({
-        q1: locAudAns?.questions?.question || "",
-        q2: challengeAns?.questions?.question || "",
-        q3: seasonAns?.questions?.question || "",
-        q4: impactAns?.questions?.question || "",
-      });
-
-      const mappedData: EditCampaignFormData = {
-        ...DEFAULT_CAMPAIGN_DATA,
-        campaignTitle: dbCampaign.name || "",
-        beneficiaryCount: dbCampaign.impact?.toString() || "",
-        gardenSize: dbCampaign.size?.toString() || "",
-        gardenStatus:
-          (dbCampaign.existence as "new" | "existing") || "existing",
-        fundraisingGoal: dbCampaign.goal?.toString() || "",
-        gardenCity: dbCampaign.city || "",
-        gardenState: dbCampaign.state || "",
-        gardenCountry: dbCampaign.country || "",
-        gardenCategory: dbCampaign.project_category || "",
-        gardenBeneficiaries: dbCampaign.project_beneficiaries || [],
-        organizationName: dbCampaign.organization_name || "",
-        organizationIdentifier: dbCampaign.ein || "",
-        mailingStreet1: dbCampaign.mailing_street_1 || "",
-        mailingStreet2: dbCampaign.mailing_street_2 || "",
-        mailingCity: dbCampaign.mailing_city || "",
-        mailingState: dbCampaign.mailing_state || "",
-        mailingCountry: dbCampaign.mailing_country || "",
-        mailingZip: dbCampaign.mailing_zipcode || "",
-        contactFirstName: dbCampaign.contact_first_name || "",
-        contactLastName: dbCampaign.contact_last_name || "",
-        contactEmail: dbCampaign.contact_email || "",
-        contactRole: dbCampaign.contact_role || "",
-
-        storyLocationAndAudience: locAudOrg,
-        storyLocationAndAudienceAI: locAudAI,
-        storyLocationAndAudienceFinal: locAudFinal,
-
-        storyChallengeOriginal: challengeOrg,
-        storyChallengeAI: challengeAI,
-        storyChallengeFinal: challengeFinal,
-
-        storySeasonActivityOriginal: seasonOrg,
-        storySeasonActivityAI: seasonAI,
-        storySeasonActivityFinal: seasonFinal,
-
-        storyCampaignImpactOriginal: impactOrg,
-        storyCampaignImpactAI: impactAI,
-        storyCampaignImpactFinal: impactFinal,
-      };
-
-      console.log("mappedData", mappedData);
-
-
+    if (isDataLoaded && initialData.campaignTitle === "") {
       setInitialData(mappedData);
       setFormData(mappedData);
-      setIsDataLoaded(true);
     }
-  }, [campaignData, answersData, isDataLoaded]);
+  }, [isDataLoaded, mappedData, initialData.campaignTitle]);
 
   const setFieldValue = useCallback(
     <K extends keyof EditCampaignFormData>(
@@ -257,13 +131,11 @@ export default function EditCampaignPage() {
         contact_role: formData.contactRole,
       };
 
-      // 1. Update the campaign attributes
       await updateCampaignMutation.mutateAsync({
         campaignId: parsedCampaignId,
         campaignData: campaignPayload,
       });
 
-      // 2. Update answer attributes
       if (answersData) {
         const buildAnswerUpdate = (qNum: number, finalValue: string) => {
           const ans = answersData.find(
@@ -346,13 +218,13 @@ export default function EditCampaignPage() {
     return null;
   }
 
-  if (isLoadingCampaign || isLoadingAnswers || !isDataLoaded) {
+  if (isLoading || !isDataLoaded) {
     return <Loading />;
   }
 
   return (
     <div className="flex min-h-screen">
-      <Navbar/>
+      <Navbar />
 
       <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
         <EditCampaignHeader

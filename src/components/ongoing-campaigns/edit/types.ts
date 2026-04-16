@@ -39,6 +39,43 @@ export interface EditCampaignFormData {
   storyCampaignImpactFinal: string;
 }
 
+export const DEFAULT_CAMPAIGN_DATA: EditCampaignFormData = {
+  campaignTitle: "",
+  beneficiaryCount: "",
+  gardenSize: "",
+  gardenStatus: "existing",
+  fundraisingGoal: "",
+  gardenCity: "",
+  gardenState: "",
+  gardenCountry: "",
+  gardenCategory: "",
+  gardenBeneficiaries: [],
+  organizationName: "",
+  organizationIdentifier: "",
+  mailingStreet1: "",
+  mailingStreet2: "",
+  mailingCity: "",
+  mailingState: "",
+  mailingZip: "",
+  mailingCountry: "",
+  contactFirstName: "",
+  contactLastName: "",
+  contactEmail: "",
+  contactRole: "",
+  storyLocationAndAudience: "",
+  storyLocationAndAudienceAI: "",
+  storyLocationAndAudienceFinal: "",
+  storyChallengeOriginal: "",
+  storyChallengeAI: "",
+  storyChallengeFinal: "",
+  storySeasonActivityOriginal: "",
+  storySeasonActivityAI: "",
+  storySeasonActivityFinal: "",
+  storyCampaignImpactOriginal: "",
+  storyCampaignImpactAI: "",
+  storyCampaignImpactFinal: "",
+};
+
 export type TextFieldKey = {
   [K in keyof EditCampaignFormData]: EditCampaignFormData[K] extends string
     ? K
@@ -47,9 +84,7 @@ export type TextFieldKey = {
 
 export type TextChangeHandler = (
   field: TextFieldKey,
-) => (
-  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
-) => void;
+) => (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => void;
 
 export type SetFieldValue = <K extends keyof EditCampaignFormData>(
   field: K,

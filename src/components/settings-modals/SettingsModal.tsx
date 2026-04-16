@@ -1,14 +1,10 @@
 "use client";
 
-import Dialog from "@mui/material/Dialog";
-import DialogTitle from "@mui/material/DialogTitle";
-import DialogContent from "@mui/material/DialogContent";
-import IconButton from "@mui/material/IconButton";
-import Button from "@mui/material/Button";
 import Typography from "@mui/material/Typography";
 import Box from "@mui/material/Box";
-import CloseIcon from "@mui/icons-material/Close";
+import Button from "@mui/material/Button";
 import type { Users } from "@/src/types/db/users";
+import BaseModal from "@/src/components/bases/BaseModal";
 
 type SettingsModalProps = {
   open: boolean;
@@ -68,26 +64,8 @@ export default function SettingsModal({
   onEditPassword,
 }: SettingsModalProps) {
   return (
-    <Dialog
-      open={open}
-      onClose={onClose}
-      maxWidth="sm"
-      fullWidth
-      PaperProps={{ sx: { borderRadius: "12px" } }}
-    >
-      <DialogTitle sx={{ m: 0, p: 2, pl: 3, pr: 6 }}>
-        <Typography component="span" fontWeight={700} fontSize="1.25rem">
-          Settings
-        </Typography>
-        <IconButton
-          aria-label="close"
-          onClick={onClose}
-          sx={{ position: "absolute", right: 8, top: 8, color: "#666" }}
-        >
-          <CloseIcon />
-        </IconButton>
-      </DialogTitle>
-      <DialogContent sx={{ px: 3, pb: 3 }}>
+    <BaseModal open={open} onClose={onClose} title="Settings">
+      <Box sx={{ flex: 1 }}>
         <SettingsRow
           label="Name"
           value={`${userData?.first_name || "John"} ${userData?.last_name || "Smith"}`}
@@ -103,7 +81,7 @@ export default function SettingsModal({
           value="••••••••••••••••••"
           onEdit={onEditPassword}
         />
-      </DialogContent>
-    </Dialog>
+      </Box>
+    </BaseModal>
   );
 }
