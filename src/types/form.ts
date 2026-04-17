@@ -1,7 +1,7 @@
 export interface ApplicationFormData {
   campaignTitle: string;
   beneficiaryCount: string;
-  gardenSize: string;
+  gardenSize: number | "";
   gardenStatus: "new" | "existing" | "";
   fundraisingGoal: string;
   gardenCity: string;

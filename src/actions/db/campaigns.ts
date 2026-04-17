@@ -1,15 +1,10 @@
-"use server";
-
 import type { Campaign } from "@/src/types";
 import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
-import { redirect } from "next/navigation";
 
 export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createServerClient();
-  const { data: session } = await supabase.auth.getSession()
-console.log(session)
+  const supabase = createBrowserClient();
   const {
     data: { user },
     error: userError,

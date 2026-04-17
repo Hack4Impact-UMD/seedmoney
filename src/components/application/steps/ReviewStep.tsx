@@ -73,10 +73,11 @@ function ValueRow({
   required = false,
 }: {
   label: string;
-  value: string;
+  value: string | number;
   required?: boolean;
 }) {
-  const isMissing = required && value.trim().length === 0;
+  const displayValue = String(value ?? "");
+  const isMissing = required && displayValue.trim().length === 0;
 
   return (
     <div className="flex flex-col gap-1">
@@ -89,7 +90,7 @@ function ValueRow({
         <div className="border-b border-[#D32F2F] mt-2" />
       ) : (
         <>
-          <p>{value}</p>
+          <p>{displayValue}</p>
           <div className="border-b border-gray-300" />
         </>
       )}
