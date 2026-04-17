@@ -14,7 +14,7 @@ import { ApplicationFormData } from "@/src/types/form";
 const INITIAL_FORM_VALUES: ApplicationFormData = {
   campaignTitle: "",
   beneficiaryCount: "",
-  gardenSize: "",
+  gardenSize: 0,
   gardenStatus: "",
   fundraisingGoal: "",
   gardenCity: "",

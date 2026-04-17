@@ -35,7 +35,7 @@ export default function CampaignInformationStep() {
       impact: values.beneficiaryCount
         ? Number(values.beneficiaryCount)
         : undefined,
-      size: values.gardenSize,
+      size: values.gardenSize || undefined,
       existence: values.gardenStatus || undefined,
       goal: values.fundraisingGoal
         ? Number(values.fundraisingGoal)
@@ -140,17 +140,20 @@ export default function CampaignInformationStep() {
           {(field) => (
             <TextField
               label="Approximate garden size or scope"
-              helperText="Examples: one raised bed, multiple sites, two-acre farm."
+              helperText="Enter a whole number."
               variant="standard"
               fullWidth
-              value={field.state.value}
+              type="number"
+              value={field.state.value === 0 ? "" : field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
                 await saveCampaignInformationDraft({
-                  gardenSize: e.target.value,
+                  gardenSize: e.target.value === "" ? 0 : Number(e.target.value),
                 });
               }}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={(e) =>
+                field.handleChange(e.target.value === "" ? 0 : Number(e.target.value))
+              }
             />
           )}
         </form.Field>
