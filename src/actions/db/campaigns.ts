@@ -1,5 +1,8 @@
 import type { Campaign } from "@/src/types";
-import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
+import {
+  createBrowserClient,
+  createServerClient,
+} from "@/src/lib/supabase-client";
 
 export async function createCampaign(
   data: Partial<Campaign>,
@@ -10,7 +13,7 @@ export async function createCampaign(
     error: userError,
   } = await supabase.auth.getUser();
   const campaignData = { ...data };
-  
+
   if (userError || !user) {
     console.error(
       "Error reading authenticated user for campaign creation:",
@@ -118,7 +121,7 @@ export async function createCampaignGivebutter(
 export async function readCampaign(
   ids?: number | number[],
 ): Promise<Campaign | Campaign[] | null> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
 
   // Return ALL campaigns
   if (ids === undefined) {
@@ -171,7 +174,7 @@ export async function updateCampaign(
   id: number,
   campaign: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
   console.log("updateCampaign called", id, campaign);
 
   const { data, error } = await supabase
@@ -195,7 +198,7 @@ export async function updateCampaign(
 }
 
 export async function deleteCampaign(id: number): Promise<boolean> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
 
   const { data, error } = await supabase
     .from("campaigns")
@@ -220,7 +223,7 @@ export async function updateCampaignGivebutterID(
   id: number,
   campaign: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
   console.log("updateCampaign called", id, campaign);
 
   const { data, error } = await supabase

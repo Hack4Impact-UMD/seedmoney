@@ -252,7 +252,7 @@ export default function ReviewSubmitPage() {
 
         <ValueRow
           label="Approximate garden size or scope"
-          value={values.gardenSize}
+          value={values.gardenSize || ""}
         />
       </div>
 

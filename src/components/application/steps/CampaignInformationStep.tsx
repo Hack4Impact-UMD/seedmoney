@@ -16,10 +16,7 @@ export default function CampaignInformationStep() {
     impact: form.state.values.beneficiaryCount
       ? Number(form.state.values.beneficiaryCount)
       : undefined,
-    size:
-      form.state.values.gardenSize === ""
-        ? undefined
-        : form.state.values.gardenSize,
+    size: form.state.values.gardenSize || undefined,
     existence: form.state.values.gardenStatus || undefined,
     goal: form.state.values.fundraisingGoal
       ? Number(form.state.values.fundraisingGoal)
@@ -38,7 +35,7 @@ export default function CampaignInformationStep() {
       impact: values.beneficiaryCount
         ? Number(values.beneficiaryCount)
         : undefined,
-      size: values.gardenSize === "" ? undefined : values.gardenSize,
+      size: values.gardenSize || undefined,
       existence: values.gardenStatus || undefined,
       goal: values.fundraisingGoal
         ? Number(values.fundraisingGoal)
@@ -147,18 +144,15 @@ export default function CampaignInformationStep() {
               variant="standard"
               fullWidth
               type="number"
-              value={field.state.value}
+              value={field.state.value === 0 ? "" : field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
                 await saveCampaignInformationDraft({
-                  gardenSize:
-                    e.target.value === "" ? "" : Number(e.target.value),
+                  gardenSize: e.target.value === "" ? 0 : Number(e.target.value),
                 });
               }}
               onChange={(e) =>
-                field.handleChange(
-                  e.target.value === "" ? "" : Number(e.target.value),
-                )
+                field.handleChange(e.target.value === "" ? 0 : Number(e.target.value))
               }
             />
           )}
