@@ -86,7 +86,7 @@ export default function LeaderboardFilters({
             </button>
           </div>
 
-          <FormControl className="min-w-[250px] md:min-w-[346px]">
+          <FormControl className="w-full md:!w-[346px] md:!min-w-[346px] md:shrink-0">
             <Select
               value={selectedGarden}
               onChange={handleGardenChange}
@@ -96,20 +96,22 @@ export default function LeaderboardFilters({
               MenuProps={{
                 PaperProps: {
                   className:
-                    "!mt-2 !rounded-[28px] !border !border-[#D8D7D2] !shadow-[0_12px_32px_rgba(18,58,30,0.12)]",
+                    "!mt-2 !w-[346px] !max-w-[346px] !overflow-hidden !rounded-[28px] !border !border-[#D8D7D2] !shadow-[0_12px_32px_rgba(18,58,30,0.12)]",
                 },
                 MenuListProps: {
                   className: `!py-3 ${leaderboardTypography.openSans}`,
                 },
               }}
-              className={`${leaderboardTypography.openSans} !h-12 !rounded-full !bg-white !text-[16px] !text-[#1B1B1B] [&_.MuiOutlinedInput-notchedOutline]:!border-[#D8D7D2] [&_.MuiOutlinedInput-notchedOutline]:!border [&_.MuiSelect-icon]:!right-4 [&_.MuiSelect-icon]:!text-[#6B6B6B] [&_.MuiSelect-select]:!flex [&_.MuiSelect-select]:!items-center [&_.MuiSelect-select]:!pl-4 [&_.MuiSelect-select]:!pr-10 [&_.MuiSelect-select]:!py-0`}
+              className={`${leaderboardTypography.openSans} !h-12 !rounded-full !bg-white !text-[16px] !text-[#1B1B1B] [&_.MuiOutlinedInput-notchedOutline]:!border-[#D8D7D2] [&_.MuiOutlinedInput-notchedOutline]:!border [&_.MuiSelect-icon]:!right-4 [&_.MuiSelect-icon]:!text-[#6B6B6B] [&_.MuiSelect-select]:!flex [&_.MuiSelect-select]:!items-center [&_.MuiSelect-select]:!whitespace-nowrap [&_.MuiSelect-select]:!pl-4 [&_.MuiSelect-select]:!pr-10 [&_.MuiSelect-select]:!py-0`}
             >
-              <MenuItem value="all">All Gardens</MenuItem>
+              <MenuItem value="all" className="!whitespace-nowrap !px-6 !py-4 !text-[16px] !text-[#1B1B1B]">
+                All Gardens
+              </MenuItem>
               {gardenCategories.map((gardenCategory) => (
                 <MenuItem
                   key={gardenCategory}
                   value={gardenCategory}
-                  className="!px-6 !py-4 !text-[16px] !text-[#1B1B1B]"
+                  className="!whitespace-nowrap !px-6 !py-4 !text-[16px] !text-[#1B1B1B]"
                 >
                   {gardenCategory}
                 </MenuItem>
