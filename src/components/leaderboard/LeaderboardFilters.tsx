@@ -52,15 +52,16 @@ export default function LeaderboardFilters({
   return (
     <section className="bg-[#123A1E] px-6 pb-8 md:px-10 lg:px-16">
       <div className="mx-auto flex max-w-[1728px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
-        <label className="flex h-12 w-full items-center rounded-full border border-[#D8D7D2] bg-white px-4 text-[#666666] lg:max-w-[495px]">
+        <label className="flex h-12 w-full items-center rounded-full border border-[`#D8D7D2`] bg-white px-4 text-[`#666666`] lg:max-w-[495px]">
+          <span className="sr-only">Search campaigns</span>
           <input
             type="text"
             value={searchQuery}
             onChange={(event) => onSearchChange(event.target.value)}
             placeholder="Search value by campaign"
-            className={`${leaderboardTypography.openSans} w-full bg-transparent text-[16px] outline-none placeholder:text-[#777777]`}
+            className={`${leaderboardTypography.openSans} w-full bg-transparent text-[16px] outline-none placeholder:text-[`#777777`]`}
           />
-          <SearchIcon className="text-[#1B1B1B]" fontSize="small" />
+          <SearchIcon className="text-[`#1B1B1B`]" fontSize="small" />
         </label>
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
