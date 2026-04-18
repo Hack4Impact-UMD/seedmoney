@@ -17,6 +17,10 @@ export type PublicLeaderboardCampaign = {
   imageUrl: string | null;
 };
 
+export type PublicLeaderboardCampaignWithRank = PublicLeaderboardCampaign & {
+  displayRank: number;
+};
+
 export type PublicLeaderboardData = {
   challengeTitle: string;
   totalCampaigns: number;

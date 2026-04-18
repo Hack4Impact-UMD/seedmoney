@@ -5,6 +5,8 @@ import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
 import type { SelectChangeEvent } from "@mui/material/Select";
 import type { LeaderboardSort } from "@/src/types/frontend/leaderboard";
+import type { LeaderboardGrantStat } from "./grantStatOptions";
+import LeaderboardGrantStatPanel from "./LeaderboardGrantStatPanel";
 import leaderboardTypography from "./leaderboardTypography.module.css";
 
 type LeaderboardFiltersProps = {
@@ -12,9 +14,13 @@ type LeaderboardFiltersProps = {
   searchQuery: string;
   selectedGarden: string;
   selectedSort: LeaderboardSort;
+  selectedGrantStat: LeaderboardGrantStat | null;
+  isGrantPanelOpen: boolean;
   onSearchChange: (value: string) => void;
   onGardenChange: (value: string) => void;
   onSortChange: (value: LeaderboardSort) => void;
+  onGrantChipClick: () => void;
+  onGrantSelect: (value: LeaderboardGrantStat) => void;
 };
 
 const sortLabels: Record<Exclude<LeaderboardSort, "grantStat">, string> = {
@@ -28,13 +34,20 @@ export default function LeaderboardFilters({
   searchQuery,
   selectedGarden,
   selectedSort,
+  selectedGrantStat,
+  isGrantPanelOpen,
   onSearchChange,
   onGardenChange,
   onSortChange,
+  onGrantChipClick,
+  onGrantSelect,
 }: LeaderboardFiltersProps) {
   const handleGardenChange = (event: SelectChangeEvent<string>) => {
     onGardenChange(event.target.value);
   };
+
+  const isGrantStatActive =
+    selectedGrantStat !== null || isGrantPanelOpen;
 
   return (
     <section className="bg-[#123A1E] px-6 pb-8 md:px-10 lg:px-16">
@@ -51,7 +64,8 @@ export default function LeaderboardFilters({
         </label>
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-          <div className="flex flex-wrap gap-3">
+          <div className="relative">
+            <div className="flex flex-wrap gap-3">
             {Object.entries(sortLabels).map(([sortValue, label]) => {
               const isSelected = selectedSort === sortValue;
 
@@ -79,11 +93,27 @@ export default function LeaderboardFilters({
 
             <button
               type="button"
-              disabled
-              className={`${leaderboardTypography.openSans} h-[37px] rounded-full border border-white/15 bg-white/5 px-5 text-[16px] font-semibold text-white/45`}
+              onClick={onGrantChipClick}
+              className={[
+                leaderboardTypography.openSans,
+                "h-[37px] rounded-full border px-5 text-[16px] font-semibold transition-colors",
+                isGrantStatActive
+                  ? "border-[#55BD61] bg-[#55BD61] text-[#132B18]"
+                  : "border-white/20 bg-transparent text-white hover:border-[#55BD61]/60 hover:text-white",
+              ].join(" ")}
             >
               Grant Stat
             </button>
+            </div>
+
+            {isGrantPanelOpen && (
+              <div className="mt-4 w-full max-w-[360px] lg:absolute lg:right-0 lg:top-full lg:z-20 lg:mt-4">
+                <LeaderboardGrantStatPanel
+                  selectedGrantStat={selectedGrantStat}
+                  onGrantSelect={onGrantSelect}
+                />
+              </div>
+            )}
           </div>
 
           <FormControl className="w-full md:!w-[346px] md:!min-w-[346px] md:shrink-0">

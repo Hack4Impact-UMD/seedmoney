@@ -1,8 +1,8 @@
-import type { PublicLeaderboardCampaign } from "@/src/types/frontend/leaderboard";
+import type { PublicLeaderboardCampaignWithRank } from "@/src/types/frontend/leaderboard";
 import LeaderboardCard from "./LeaderboardCard";
 
 type LeaderboardGridProps = {
-  campaigns: PublicLeaderboardCampaign[];
+  campaigns: PublicLeaderboardCampaignWithRank[];
 };
 
 export default function LeaderboardGrid({
@@ -10,11 +10,11 @@ export default function LeaderboardGrid({
 }: LeaderboardGridProps) {
   return (
     <div className="grid gap-5 md:grid-cols-2 xl:grid-cols-3">
-      {campaigns.map((campaign, index) => (
+      {campaigns.map((campaign) => (
         <LeaderboardCard
           key={campaign.campaignId}
           campaign={campaign}
-          displayRank={index + 1}
+          displayRank={campaign.displayRank}
         />
       ))}
     </div>

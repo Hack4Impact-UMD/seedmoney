@@ -4,11 +4,14 @@ import { useMemo, useState } from "react";
 import type {
   LeaderboardSort,
   PublicLeaderboardData,
+  PublicLeaderboardCampaignWithRank,
 } from "@/src/types/frontend/leaderboard";
 import LeaderboardHero from "./LeaderboardHero";
 import LeaderboardFilters from "./LeaderboardFilters";
 import LeaderboardGrid from "./LeaderboardGrid";
 import LeaderboardEmptyState from "./LeaderboardEmptyState";
+import type { LeaderboardGrantStat } from "./grantStatOptions";
+import { grantStatOptions } from "./grantStatOptions";
 
 type LeaderboardPageProps = {
   data: PublicLeaderboardData;
@@ -19,19 +22,40 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
   const [selectedGarden, setSelectedGarden] = useState("all");
   const [selectedSort, setSelectedSort] =
     useState<LeaderboardSort>("mostRaised");
+  const [selectedGrantStat, setSelectedGrantStat] =
+    useState<LeaderboardGrantStat | null>(null);
+  const [isGrantPanelOpen, setIsGrantPanelOpen] = useState(false);
+
+  const rankedCampaigns = useMemo<PublicLeaderboardCampaignWithRank[]>(
+    () =>
+      [...data.campaigns]
+        .sort((left, right) => right.raised - left.raised)
+        .map((campaign, index) => ({
+          ...campaign,
+          displayRank: index + 1,
+        })),
+    [data.campaigns],
+  );
 
   const filteredCampaigns = useMemo(() => {
     const normalizedSearch = searchQuery.trim().toLowerCase();
+    const selectedGrantOption = grantStatOptions.find(
+      (grantOption) => grantOption.id === selectedGrantStat,
+    );
 
-    const visibleCampaigns = data.campaigns.filter((campaign) => {
+    const visibleCampaigns = rankedCampaigns.filter((campaign) => {
       const matchesSearch =
         normalizedSearch.length === 0 ||
         campaign.name.toLowerCase().includes(normalizedSearch);
       const matchesGarden =
         selectedGarden === "all" ||
         campaign.projectCategory === selectedGarden;
+      const matchesGrantStat =
+        selectedGrantOption === undefined ||
+        (campaign.displayRank >= selectedGrantOption.minRank &&
+          campaign.displayRank <= selectedGrantOption.maxRank);
 
-      return matchesSearch && matchesGarden;
+      return matchesSearch && matchesGarden && matchesGrantStat;
     });
 
     return [...visibleCampaigns].sort((left, right) => {
@@ -45,7 +69,38 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
 
       return right.raised - left.raised;
     });
-  }, [data.campaigns, searchQuery, selectedGarden, selectedSort]);
+  }, [
+    rankedCampaigns,
+    searchQuery,
+    selectedGarden,
+    selectedGrantStat,
+    selectedSort,
+  ]);
+
+  const handleSortChange = (value: LeaderboardSort) => {
+    if (selectedGrantStat !== null && value !== "mostRaised") {
+      return;
+    }
+
+    setSelectedSort(value);
+  };
+
+  const handleGrantChipClick = () => {
+    if (isGrantPanelOpen) {
+      setIsGrantPanelOpen(false);
+      setSelectedGrantStat(null);
+      return;
+    }
+
+    setSelectedSort("mostRaised");
+    setIsGrantPanelOpen(true);
+  };
+
+  const handleGrantSelect = (value: LeaderboardGrantStat) => {
+    setSelectedGrantStat(value);
+    setSelectedSort("mostRaised");
+    setIsGrantPanelOpen(false);
+  };
 
   return (
     <div className="min-h-screen bg-[#F6F4EE]">
@@ -62,9 +117,13 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
           searchQuery={searchQuery}
           selectedGarden={selectedGarden}
           selectedSort={selectedSort}
+          selectedGrantStat={selectedGrantStat}
+          isGrantPanelOpen={isGrantPanelOpen}
           onSearchChange={setSearchQuery}
           onGardenChange={setSelectedGarden}
-          onSortChange={setSelectedSort}
+          onSortChange={handleSortChange}
+          onGrantChipClick={handleGrantChipClick}
+          onGrantSelect={handleGrantSelect}
         />
       )}
 
