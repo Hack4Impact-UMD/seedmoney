@@ -78,10 +78,6 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
   ]);
 
   const handleSortChange = (value: LeaderboardSort) => {
-    if (selectedGrantStat !== null && value !== "mostRaised") {
-      return;
-    }
-
     setSelectedSort(value);
   };
 
@@ -92,13 +88,11 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
       return;
     }
 
-    setSelectedSort("mostRaised");
     setIsGrantPanelOpen(true);
   };
 
   const handleGrantSelect = (value: LeaderboardGrantStat) => {
     setSelectedGrantStat(value);
-    setSelectedSort("mostRaised");
     setIsGrantPanelOpen(false);
   };
 
