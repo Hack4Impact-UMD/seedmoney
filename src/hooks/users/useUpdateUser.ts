@@ -1,6 +1,6 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { updateUser } from "@/src/actions/db/users";
-import { Users } from "@/src/types/db/users";
+import type { EditableUser, Users } from "@/src/types/db/users";
 
 export default function useUpdateCampaign() {
   const queryClient = useQueryClient();
@@ -8,7 +8,7 @@ export default function useUpdateCampaign() {
   return useMutation<
     Users,
     Error,
-    { userId: string; userUpdateData: Partial<Users> }
+    { userId: string; userUpdateData: Partial<EditableUser> }
   >({
     mutationFn: async ({ userId, userUpdateData }) => {
       const user = await updateUser(userId, userUpdateData);
