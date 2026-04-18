@@ -9,7 +9,7 @@ type LeaderboardHeroProps = {
 };
 
 const heroDescription =
-  "Each campaign below is competing for SeedMoney challenge grants ranging from $100 to $1,000. Your donation helps a garden grow and improves its ranking- the more a project raises, the larger the grant it qualifies for.";
+  "Each campaign below is competing for SeedMoney challenge grants ranging from $100 to $1,000. Your donation helps a garden grow and improves its ranking - the more a project raises, the larger the grant it qualifies for.";
 
 export default function LeaderboardHero({
   challengeTitle,
