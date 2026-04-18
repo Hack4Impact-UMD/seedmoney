@@ -12,7 +12,7 @@ const campaigns = [
     raised: 10400,
     goal: 15000,
     donors: 43,
-    projectCategory: "Urban Garden",
+    projectCategory: "Urban Farm",
     donateUrl: "#",
     summary:
       "Planting 500 heirloom fruit trees across inner-city Portland to combat food deserts and provide shade.",
@@ -38,7 +38,7 @@ const campaigns = [
     raised: 9100,
     goal: 14000,
     donors: 36,
-    projectCategory: "School Garden",
+    projectCategory: "School or Youth Garden",
     donateUrl: "#",
     summary:
       "Building a campus garden that supports science education, nutrition lessons, and student leadership.",
@@ -51,7 +51,7 @@ const campaigns = [
     raised: 8300,
     goal: 12000,
     donors: 72,
-    projectCategory: "School Garden",
+    projectCategory: "Demonstration or Education Garden",
     donateUrl: "#",
     summary:
       "Restoring an underused lot into a teaching garden with raised beds, composting, and outdoor classrooms.",
@@ -64,7 +64,7 @@ const campaigns = [
     raised: 7600,
     goal: 13000,
     donors: 28,
-    projectCategory: "Food Forest",
+    projectCategory: "Food Pantry or Food Bank Garden",
     donateUrl: "#",
     summary:
       "Creating a perennial food forest that supports community harvesting and local pollinator habitat.",
@@ -77,7 +77,7 @@ const campaigns = [
     raised: 6900,
     goal: 11000,
     donors: 58,
-    projectCategory: "Community Garden",
+    projectCategory: "Refugee or Immigrant Garden",
     donateUrl: "#",
     summary:
       "Launching a resident-led growing space focused on fresh produce distribution and community workshops.",
