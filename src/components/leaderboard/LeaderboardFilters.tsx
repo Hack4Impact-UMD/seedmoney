@@ -17,7 +17,7 @@ type LeaderboardFiltersProps = {
   onSortChange: (value: LeaderboardSort) => void;
 };
 
-const SORT_LABELS: Record<Exclude<LeaderboardSort, "grantStat">, string> = {
+const sortLabels: Record<Exclude<LeaderboardSort, "grantStat">, string> = {
   mostRaised: "Most Raised",
   leastRaised: "Least Raised",
   mostDonors: "Most Donors",
@@ -52,7 +52,7 @@ export default function LeaderboardFilters({
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
           <div className="flex flex-wrap gap-3">
-            {Object.entries(SORT_LABELS).map(([sortValue, label]) => {
+            {Object.entries(sortLabels).map(([sortValue, label]) => {
               const isSelected = selectedSort === sortValue;
 
               return (

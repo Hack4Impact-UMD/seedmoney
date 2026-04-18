@@ -8,7 +8,7 @@ type LeaderboardHeroProps = {
   totalDonors: number;
 };
 
-const HERO_DESCRIPTION =
+const heroDescription =
   "Each campaign below is competing for SeedMoney challenge grants ranging from $100 to $1,000. Your donation helps a garden grow and improves its ranking- the more a project raises, the larger the grant it qualifies for.";
 
 export default function LeaderboardHero({
@@ -33,7 +33,7 @@ export default function LeaderboardHero({
             {challengeTitle}
           </h1>
           <p className="mt-4 text-sm leading-6 text-white/90 md:text-[18px] md:leading-[1.45]">
-            {HERO_DESCRIPTION}
+            {heroDescription}
           </p>
         </div>
 

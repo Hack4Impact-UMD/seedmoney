@@ -6,7 +6,7 @@ type LeaderboardCardProps = {
   displayRank: number;
 };
 
-const RANK_STYLES: Record<number, { label: string; className: string }> = {
+const rankStyles: Record<number, { label: string; className: string }> = {
   1: { label: "1st", className: "bg-[#FBBF24] text-black" },
   2: { label: "2nd", className: "bg-[#D4D4D4] text-black" },
   3: { label: "3rd", className: "bg-[#FB923C] text-black" },
@@ -24,7 +24,7 @@ export default function LeaderboardCard({
   campaign,
   displayRank,
 }: LeaderboardCardProps) {
-  const rankStyle = RANK_STYLES[displayRank];
+  const rankStyle = rankStyles[displayRank];
 
   return (
     <article className="rounded-[12px] bg-[#FCF9F2] px-[10px] py-5 shadow-[0_8px_24px_rgba(18,58,30,0.08)]">
