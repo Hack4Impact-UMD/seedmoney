@@ -1,5 +1,9 @@
 import SearchIcon from "@mui/icons-material/Search";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import FormControl from "@mui/material/FormControl";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import type { SelectChangeEvent } from "@mui/material/Select";
 import type { LeaderboardSort } from "@/src/types/frontend/leaderboard";
 import leaderboardTypography from "./leaderboardTypography.module.css";
 
@@ -28,6 +32,10 @@ export default function LeaderboardFilters({
   onGardenChange,
   onSortChange,
 }: LeaderboardFiltersProps) {
+  const handleGardenChange = (event: SelectChangeEvent<string>) => {
+    onGardenChange(event.target.value);
+  };
+
   return (
     <section className="bg-[#123A1E] px-6 pb-8 md:px-10 lg:px-16">
       <div className="mx-auto flex max-w-[1728px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
@@ -78,21 +86,36 @@ export default function LeaderboardFilters({
             </button>
           </div>
 
-          <label className="flex h-12 min-w-[250px] items-center rounded-full border border-[#D8D7D2] bg-white px-4 text-[#1B1B1B] md:min-w-[346px]">
-            <select
+          <FormControl className="min-w-[250px] md:min-w-[346px]">
+            <Select
               value={selectedGarden}
-              onChange={(event) => onGardenChange(event.target.value)}
-              className={`${leaderboardTypography.openSans} w-full appearance-none bg-transparent pr-8 text-[16px] outline-none`}
+              onChange={handleGardenChange}
+              displayEmpty
+              variant="outlined"
+              IconComponent={KeyboardArrowDownIcon}
+              MenuProps={{
+                PaperProps: {
+                  className:
+                    "!mt-2 !rounded-[28px] !border !border-[#D8D7D2] !shadow-[0_12px_32px_rgba(18,58,30,0.12)]",
+                },
+                MenuListProps: {
+                  className: `!py-3 ${leaderboardTypography.openSans}`,
+                },
+              }}
+              className={`${leaderboardTypography.openSans} !h-12 !rounded-full !bg-white !text-[16px] !text-[#1B1B1B] [&_.MuiOutlinedInput-notchedOutline]:!border-[#D8D7D2] [&_.MuiOutlinedInput-notchedOutline]:!border [&_.MuiSelect-icon]:!right-4 [&_.MuiSelect-icon]:!text-[#6B6B6B] [&_.MuiSelect-select]:!flex [&_.MuiSelect-select]:!items-center [&_.MuiSelect-select]:!pl-4 [&_.MuiSelect-select]:!pr-10 [&_.MuiSelect-select]:!py-0`}
             >
-              <option value="all">All Gardens</option>
+              <MenuItem value="all">All Gardens</MenuItem>
               {gardenCategories.map((gardenCategory) => (
-                <option key={gardenCategory} value={gardenCategory}>
+                <MenuItem
+                  key={gardenCategory}
+                  value={gardenCategory}
+                  className="!px-6 !py-4 !text-[16px] !text-[#1B1B1B]"
+                >
                   {gardenCategory}
-                </option>
+                </MenuItem>
               ))}
-            </select>
-            <KeyboardArrowDownIcon className="-ml-6 text-[#6B6B6B]" />
-          </label>
+            </Select>
+          </FormControl>
         </div>
       </div>
     </section>
