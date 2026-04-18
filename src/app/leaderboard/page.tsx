@@ -1,5 +1,4 @@
 import { Open_Sans } from "next/font/google";
-import LoginNavbar from "@/src/components/LoginNavbar";
 import LeaderboardPage from "@/src/components/leaderboard/LeaderboardPage";
 import mockLeaderboardData from "./mockLeaderboardData";
 
@@ -15,7 +14,6 @@ export default function PublicLeaderboardPage() {
       className={`${openSans.variable} min-h-screen bg-[#F6F4EE]`}
       style={{ fontFamily: "var(--font-open-sans), sans-serif" }}
     >
-      <LoginNavbar />
       <LeaderboardPage data={mockLeaderboardData} />
     </div>
   );
