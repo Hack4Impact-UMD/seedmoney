@@ -11,7 +11,7 @@ const campaigns = [
     location: "Portland, Oregon",
     raised: 10400,
     goal: 15000,
-    donors: 75,
+    donors: 43,
     projectCategory: "Urban Garden",
     donateUrl: "#",
     summary:
@@ -24,7 +24,7 @@ const campaigns = [
     location: "Seattle, Washington",
     raised: 9800,
     goal: 15000,
-    donors: 68,
+    donors: 91,
     projectCategory: "Community Garden",
     donateUrl: "#",
     summary:
@@ -37,7 +37,7 @@ const campaigns = [
     location: "Austin, Texas",
     raised: 9100,
     goal: 14000,
-    donors: 59,
+    donors: 36,
     projectCategory: "School Garden",
     donateUrl: "#",
     summary:
@@ -50,7 +50,7 @@ const campaigns = [
     location: "Detroit, Michigan",
     raised: 8300,
     goal: 12000,
-    donors: 52,
+    donors: 72,
     projectCategory: "School Garden",
     donateUrl: "#",
     summary:
@@ -63,7 +63,7 @@ const campaigns = [
     location: "Louisville, Kentucky",
     raised: 7600,
     goal: 13000,
-    donors: 44,
+    donors: 28,
     projectCategory: "Food Forest",
     donateUrl: "#",
     summary:
@@ -76,7 +76,7 @@ const campaigns = [
     location: "Philadelphia, Pennsylvania",
     raised: 6900,
     goal: 11000,
-    donors: 39,
+    donors: 58,
     projectCategory: "Community Garden",
     donateUrl: "#",
     summary:

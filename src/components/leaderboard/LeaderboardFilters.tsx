@@ -16,7 +16,7 @@ type LeaderboardFiltersProps = {
 const SORT_LABELS: Record<Exclude<LeaderboardSort, "grantStat">, string> = {
   mostRaised: "Most Raised",
   leastRaised: "Least Raised",
-  mostDonors: "Most Donor",
+  mostDonors: "Most Donors",
 };
 
 export default function LeaderboardFilters({
@@ -51,7 +51,11 @@ export default function LeaderboardFilters({
                 <button
                   key={sortValue}
                   type="button"
-                  onClick={() => onSortChange(sortValue as Exclude<LeaderboardSort, "grantStat">)}
+                  onClick={() =>
+                    onSortChange(
+                      sortValue as Exclude<LeaderboardSort, "grantStat">,
+                    )
+                  }
                   className={[
                     leaderboardTypography.openSans,
                     "h-[37px] rounded-full border px-5 text-[16px] font-semibold transition-colors",
