@@ -1,6 +1,9 @@
 import { Open_Sans } from "next/font/google";
 import LeaderboardPage from "@/src/components/leaderboard/LeaderboardPage";
 import mockLeaderboardData from "./mockLeaderboardData";
+import useReadCampaigns from "@/src/hooks/campaigns/useReadCampaign";
+import type { Campaign } from "@/src/types/db/campaigns";
+import { leaderboardGardenCategories } from "@/src/constants/gardenCategories";
 
 const openSans = Open_Sans({
   subsets: ["latin"],
@@ -8,13 +11,50 @@ const openSans = Open_Sans({
   weight: ["400", "700", "800"],
 });
 
+function mapCampaignsToLeaderboardData(campaigns: Campaign[]) {
+  const publicCampaigns = campaigns.map((campaign) => ({
+    campaignId: campaign.campaign_id,
+    name: campaign.name,
+    location: `${campaign.city}, ${campaign.state}`,
+    raised: campaign.raised,
+    goal: campaign.goal,
+    donors: campaign.donors,
+    projectCategory: campaign.project_category,
+    donateUrl: campaign.givebutterlink,
+    summary: campaign.organization_name || "",
+    imageUrl: null,
+  }));
+
+  return {
+    challengeTitle: "The 2026 SeedMoney Challenge",
+    totalCampaigns: publicCampaigns.length,
+    totalRaised: publicCampaigns.reduce(
+      (sum, campaign) => sum + campaign.raised,
+      0,
+    ),
+    totalDonors: publicCampaigns.reduce(
+      (sum, campaign) => sum + campaign.donors,
+      0,
+    ),
+    gardenCategories: [...leaderboardGardenCategories],
+    campaigns: publicCampaigns,
+  };
+}
+
 export default function PublicLeaderboardPage() {
+  const { data: campaignsData = [], isLoading, error } = useReadCampaigns();
+
+  if (isLoading) return null;
+  if (error) return null;
+
+  const leaderboardData = mapCampaignsToLeaderboardData(campaignsData);
+
   return (
     <div
       className={`${openSans.variable} min-h-screen bg-[#F6F4EE]`}
       style={{ fontFamily: "var(--font-open-sans), sans-serif" }}
     >
-      <LeaderboardPage data={mockLeaderboardData} />
+      <LeaderboardPage data={leaderboardData} />
     </div>
   );
 }
