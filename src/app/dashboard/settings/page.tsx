@@ -49,6 +49,7 @@ export default function SettingsPage() {
   const router = useRouter();
   const { data: userData } = useUserByAuthId(user?.id || "");
   const [activeModal, setActiveModal] = useState<ActiveModal>(null);
+  const [nameSaveError, setNameSaveError] = useState<string | null>(null);
   const [savedName, setSavedName] = useState<{
     firstName: string;
     lastName: string;
@@ -73,16 +74,31 @@ export default function SettingsPage() {
 
   const handleSave = async (nextFirstName: string, nextLastName: string) => {
     if (!userData?.id) {
-      return;
+      setNameSaveError("Unable to update name right now. Try again.");
+      return false;
     }
 
-    await updateUser.mutateAsync({
-      userId: userData.id,
-      userUpdateData: {
-        first_name: nextFirstName,
-        last_name: nextLastName,
-      },
-    });
+    try {
+      setNameSaveError(null);
+
+      await updateUser.mutateAsync({
+        userId: userData.id,
+        userUpdateData: {
+          first_name: nextFirstName,
+          last_name: nextLastName,
+        },
+      });
+
+      setSavedName({
+        firstName: nextFirstName,
+        lastName: nextLastName,
+      });
+      setActiveModal(null);
+      return true;
+    } catch {
+      setNameSaveError("Unable to update name. Try again.");
+      return false;
+    }
   };
 
   return (
@@ -122,13 +138,16 @@ export default function SettingsPage() {
       {activeModal === "name" && (
         <ChangeNameModal
           open
-          onClose={() => setActiveModal(null)}
+          onClose={() => {
+            setNameSaveError(null);
+            setActiveModal(null);
+          }}
           firstName={firstName}
           lastName={lastName}
           title={isGoogleAuth ? "Confirm Edit" : "Change Name"}
-          onSave={(nextFirstName, nextLastName) =>
-            handleSave(nextFirstName, nextLastName)
-          }
+          onSave={handleSave}
+          saveError={nameSaveError}
+          isSaving={updateUser.isPending}
         />
       )}
 
