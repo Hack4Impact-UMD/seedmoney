@@ -51,7 +51,6 @@ export default function Navbar() {
   };
 
   const handleSettings = () => {
-    console.log(firstName);
     router.push("/dashboard/settings");
   };
 
