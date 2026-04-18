@@ -7,21 +7,7 @@ import { useApplicationForm } from "@/src/components/application/ApplicationForm
 import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
-
-const categoryOptions = [
-  "Community Garden",
-  "School or Youth Garden",
-  "Food Pantry or Food Bank Garden",
-  "Urban Farm",
-  "Refugee or Immigrant Garden",
-  "Tribal or Indigenous Garden Project",
-  "Shelter or Transitional Housing Garden",
-  "Therapeutic or Healing Garden",
-  "Job Training or Vocational Garden",
-  "Demonstration or Education Garden",
-  "Multi-Site Garden Program",
-  "Other (please specify)",
-];
+import { applicationGardenCategories } from "@/src/constants/gardenCategories";
 
 const beneficiaryOptions = [
   "Children (ages 0–12)",
@@ -201,7 +187,7 @@ export default function GardenInformationStep() {
         <form.Field name="gardenCategory">
           {(field) => (
             <div className="flex flex-col gap-3">
-              {categoryOptions.map((option) => (
+              {applicationGardenCategories.map((option) => (
                 <label
                   key={option}
                   className="flex items-center gap-3 cursor-pointer group"

@@ -1,4 +1,5 @@
 import type { PublicLeaderboardData } from "@/src/types/frontend/leaderboard";
+import { leaderboardGardenCategories } from "@/src/constants/gardenCategories";
 
 const leaderboardImage =
   "https://www.figma.com/api/mcp/asset/828dd6ca-f2a6-4b8d-9ee8-9bdfce734f31";
@@ -84,16 +85,12 @@ const campaigns = [
   },
 ];
 
-const gardenCategories = Array.from(
-  new Set(campaigns.map((campaign) => campaign.projectCategory)),
-).sort((left, right) => left.localeCompare(right));
-
 const mockLeaderboardData: PublicLeaderboardData = {
   challengeTitle: "The 2026 SeedMoney Challenge",
   totalCampaigns: campaigns.length,
   totalRaised: campaigns.reduce((sum, campaign) => sum + campaign.raised, 0),
   totalDonors: campaigns.reduce((sum, campaign) => sum + campaign.donors, 0),
-  gardenCategories,
+  gardenCategories: [...leaderboardGardenCategories],
   campaigns,
 };
 
