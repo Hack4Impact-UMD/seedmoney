@@ -131,7 +131,7 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
           ) : filteredCampaigns.length === 0 ? (
             <LeaderboardEmptyState
               title="No campaigns match your filters"
-              description="Try a different search term or garden category to see more campaigns."
+              description="Try a different search term, garden category, or grant filter to see more campaigns."
             />
           ) : (
             <LeaderboardGrid campaigns={filteredCampaigns} />
