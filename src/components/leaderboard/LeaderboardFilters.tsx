@@ -1,0 +1,156 @@
+import SearchIcon from "@mui/icons-material/Search";
+import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import FormControl from "@mui/material/FormControl";
+import MenuItem from "@mui/material/MenuItem";
+import Select from "@mui/material/Select";
+import type { SelectChangeEvent } from "@mui/material/Select";
+import type { LeaderboardSort } from "@/src/types/frontend/leaderboard";
+import type { LeaderboardGrantStat } from "./grantStatOptions";
+import LeaderboardGrantStatPanel from "./LeaderboardGrantStatPanel";
+import leaderboardTypography from "./leaderboardTypography.module.css";
+
+type LeaderboardFiltersProps = {
+  gardenCategories: string[];
+  searchQuery: string;
+  selectedGarden: string;
+  selectedSort: LeaderboardSort;
+  selectedGrantStat: LeaderboardGrantStat | null;
+  isGrantPanelOpen: boolean;
+  onSearchChange: (value: string) => void;
+  onGardenChange: (value: string) => void;
+  onSortChange: (value: LeaderboardSort) => void;
+  onGrantChipClick: () => void;
+  onGrantSelect: (value: LeaderboardGrantStat) => void;
+};
+
+const sortLabels: Record<Exclude<LeaderboardSort, "grantStat">, string> = {
+  mostRaised: "Most Raised",
+  leastRaised: "Least Raised",
+  mostDonors: "Most Donors",
+};
+
+export default function LeaderboardFilters({
+  gardenCategories,
+  searchQuery,
+  selectedGarden,
+  selectedSort,
+  selectedGrantStat,
+  isGrantPanelOpen,
+  onSearchChange,
+  onGardenChange,
+  onSortChange,
+  onGrantChipClick,
+  onGrantSelect,
+}: LeaderboardFiltersProps) {
+  const handleGardenChange = (event: SelectChangeEvent<string>) => {
+    onGardenChange(event.target.value);
+  };
+
+  const isGrantStatActive =
+    selectedGrantStat !== null || isGrantPanelOpen;
+
+  return (
+    <section className="bg-[#123A1E] px-6 pb-8 md:px-10 lg:px-16">
+      <div className="mx-auto flex max-w-[1728px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+        <label className="flex h-12 w-full items-center rounded-full border border-[#D8D7D2] bg-white px-4 text-[#666666] lg:max-w-[495px]">
+          <span className="sr-only">Search campaigns</span>
+          <input
+            type="text"
+            value={searchQuery}
+            onChange={(event) => onSearchChange(event.target.value)}
+            placeholder="Search value by campaign"
+            className={`${leaderboardTypography.openSans} w-full bg-transparent text-[16px] outline-none placeholder:text-[#777777]`}
+          />
+          <SearchIcon className="text-[#1B1B1B]" fontSize="small" />
+        </label>
+
+        <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
+          <div className="relative">
+            <div className="flex flex-wrap gap-3">
+            {Object.entries(sortLabels).map(([sortValue, label]) => {
+              const isSelected = selectedSort === sortValue;
+
+              return (
+                <button
+                  key={sortValue}
+                  type="button"
+                  onClick={() =>
+                    onSortChange(
+                      sortValue as Exclude<LeaderboardSort, "grantStat">,
+                    )
+                  }
+                  className={[
+                    leaderboardTypography.openSans,
+                    "h-[37px] rounded-full border px-5 text-[16px] font-semibold transition-colors",
+                    isSelected
+                      ? "border-[#55BD61] bg-[#55BD61] text-[#132B18]"
+                      : "border-white/20 bg-transparent text-white hover:border-[#55BD61]/60 hover:text-white",
+                  ].join(" ")}
+                >
+                  {label}
+                </button>
+              );
+            })}
+
+            <button
+              type="button"
+              onClick={onGrantChipClick}
+              className={[
+                leaderboardTypography.openSans,
+                "h-[37px] rounded-full border px-5 text-[16px] font-semibold transition-colors",
+                isGrantStatActive
+                  ? "border-[#55BD61] bg-[#55BD61] text-[#132B18]"
+                  : "border-white/20 bg-transparent text-white hover:border-[#55BD61]/60 hover:text-white",
+              ].join(" ")}
+            >
+              Grant Stat
+            </button>
+            </div>
+
+            {isGrantPanelOpen && (
+              <div className="mt-4 w-full max-w-[360px] lg:absolute lg:right-0 lg:top-full lg:z-20 lg:mt-4">
+                <LeaderboardGrantStatPanel
+                  selectedGrantStat={selectedGrantStat}
+                  onGrantSelect={onGrantSelect}
+                />
+              </div>
+            )}
+          </div>
+
+          <FormControl className="w-full md:!w-[346px] md:!min-w-[346px] md:shrink-0">
+            <Select
+              value={selectedGarden}
+              onChange={handleGardenChange}
+              displayEmpty
+              variant="outlined"
+              IconComponent={KeyboardArrowDownIcon}
+              MenuProps={{
+                PaperProps: {
+                  className:
+                    "!mt-2 !w-[346px] !max-w-[346px] !overflow-hidden !rounded-[28px] !border !border-[#D8D7D2] !shadow-[0_12px_32px_rgba(18,58,30,0.12)]",
+                },
+                MenuListProps: {
+                  className: `!py-3 ${leaderboardTypography.openSans}`,
+                },
+              }}
+              className={`${leaderboardTypography.openSans} !h-12 !rounded-full !bg-white !text-[16px] !text-[#1B1B1B] [&_.MuiOutlinedInput-notchedOutline]:!border-[#D8D7D2] [&_.MuiOutlinedInput-notchedOutline]:!border [&_.MuiSelect-icon]:!right-4 [&_.MuiSelect-icon]:!text-[#6B6B6B] [&_.MuiSelect-select]:!flex [&_.MuiSelect-select]:!items-center [&_.MuiSelect-select]:!whitespace-nowrap [&_.MuiSelect-select]:!pl-4 [&_.MuiSelect-select]:!pr-10 [&_.MuiSelect-select]:!py-0`}
+            >
+              <MenuItem value="all" className="!whitespace-nowrap !px-6 !py-4 !text-[16px] !text-[#1B1B1B]">
+                All Gardens
+              </MenuItem>
+              {gardenCategories.map((gardenCategory) => (
+                <MenuItem
+                  key={gardenCategory}
+                  value={gardenCategory}
+                  className="!whitespace-nowrap !px-6 !py-4 !text-[16px] !text-[#1B1B1B]"
+                >
+                  {gardenCategory}
+                </MenuItem>
+              ))}
+            </Select>
+          </FormControl>
+        </div>
+      </div>
+    </section>
+  );
+}
