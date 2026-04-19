@@ -19,7 +19,7 @@ export function TotalRaisedCard({
       <CardHeader label="Total Raised" icon={<AttachMoneyIcon />} />
 
       {/* Progress bar */}
-      <div className="relative h-1/3 rounded-full bg-[#56bd604a] overflow-hidden my-13">
+      <div className="relative h-1/3 rounded-full bg-[#56bd604a] overflow-hidden my-10">
         <div
           className="absolute inset-y-0 left-0 bg-[#56BD60] rounded-full flex items-center pl-3 min-w-14"
           style={{ width: `${progressBarPercent}%` }}
