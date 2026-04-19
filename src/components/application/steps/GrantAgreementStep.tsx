@@ -38,17 +38,17 @@ export default function GrantAgreementStep() {
   );
 
   const toggle = (index: number) => {
-    setAgreementSelections((prev) => {
-      const nextSelections = prev.map((value, currentIndex) =>
-        currentIndex === index ? !value : value,
-      );
+    const nextValue = !agreementSelections[index];
 
-      if (index === aiOptInItemIndex) {
-        form.setFieldValue("aiOptIn", nextSelections[index]);
-      }
+    setAgreementSelections((prev) =>
+      prev.map((value, currentIndex) =>
+        currentIndex === index ? nextValue : value,
+      ),
+    );
 
-      return nextSelections;
-    });
+    if (index === aiOptInItemIndex) {
+      form.setFieldValue("aiOptIn", nextValue);
+    }
   };
 
   const handleNext = () => {

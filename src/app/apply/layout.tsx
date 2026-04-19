@@ -13,10 +13,10 @@ export default async function ApplyLayout({
 }>) {
   const supabase = await createServerClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const userId = session?.user.id;
+  const userId = user?.id;
   const draftCampaign = userId
     ? await readCurrentDraftCampaignForUser(userId)
     : null;
@@ -87,7 +87,7 @@ export default async function ApplyLayout({
   return (
     <div className="bg-[#F6FAF9] min-h-screen flex flex-col">
       <div className="flex min-h-0 flex-1 flex-col">
-        <AuthProvider initialUser={session?.user ?? null}>
+        <AuthProvider initialUser={user ?? null}>
           <ApplicationFormProvider
             initialDraftCampaignId={draftCampaign?.campaign_id ?? null}
             initialFormValues={initialFormValues}
