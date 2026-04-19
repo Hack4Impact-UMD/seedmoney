@@ -1,5 +1,5 @@
-import LoginNavbar from "@/src/components/LoginNavbar";
 import { ApplicationFormProvider } from "@/src/components/application/ApplicationFormProvider";
+import AuthProvider from "@/src/context/AuthProvider";
 import { createServerClient } from "@/src/lib/supabase-client";
 import { readCurrentDraftCampaignForUser } from "@/src/actions/db/campaigns";
 import { ApplicationFormData } from "@/src/types/form";
@@ -86,15 +86,16 @@ export default async function ApplyLayout({
 
   return (
     <div className="bg-[#F6FAF9] min-h-screen flex flex-col">
-      <LoginNavbar session={session} />
       <div className="flex min-h-0 flex-1 flex-col">
-        <ApplicationFormProvider
-          initialDraftCampaignId={draftCampaign?.campaign_id ?? null}
-          initialFormValues={initialFormValues}
-          initialHasPassedAgreement={Boolean(draftCampaign)}
-        >
-          {children}
-        </ApplicationFormProvider>
+        <AuthProvider initialUser={session?.user ?? null}>
+          <ApplicationFormProvider
+            initialDraftCampaignId={draftCampaign?.campaign_id ?? null}
+            initialFormValues={initialFormValues}
+            initialHasPassedAgreement={Boolean(draftCampaign)}
+          >
+            {children}
+          </ApplicationFormProvider>
+        </AuthProvider>
       </div>
     </div>
   );
