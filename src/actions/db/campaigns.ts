@@ -178,7 +178,8 @@ export async function readCampaignsByCompId(
   const { data, error } = await supabase
     .from("campaigns")
     .select("*")
-    .eq("competition_id", competitionId);
+    .eq("competition_id", competitionId)
+    .eq("status", "published");
 
   if (error) {
     console.error("Error reading campaigns by competition id:", error.message);
