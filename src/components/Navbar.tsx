@@ -88,15 +88,19 @@ export default function Navbar() {
     );
 
   const getCampaignDisplayName = (campaign: Campaign) => {
+    const hasName = typeof campaign.name === "string" && campaign.name.trim() !== "";
+
     if (campaign.status === "in_progress") {
-      return `${campaign.name} (Draft)`;
+      return hasName ? `${campaign.name} (Draft)` : "Untitled Draft";
     }
 
     if (campaign.status === "submitted_under_review") {
-      return `${campaign.name} (Pending)`;
+      return hasName
+        ? `${campaign.name} (Pending)`
+        : "Untitled Campaign (Pending)";
     }
 
-    return campaign.name;
+    return hasName ? campaign.name : "Untitled Campaign";
   };
 
   const renderCampaignItem = (campaign: Campaign) => {
