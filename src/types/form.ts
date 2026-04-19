@@ -2,7 +2,7 @@ export interface ApplicationFormData {
   aiOptIn: boolean;
   campaignTitle: string;
   beneficiaryCount: string;
-  gardenSize: number;
+  gardenSize: string;
   gardenStatus: "new" | "existing" | "";
   fundraisingGoal: string;
   gardenCity: string;

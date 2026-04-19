@@ -43,8 +43,8 @@ export default async function ApplyLayout({
             : "",
         gardenSize:
           draftCampaign.size !== null && draftCampaign.size !== undefined
-            ? draftCampaign.size
-            : 0,
+            ? String(draftCampaign.size)
+            : "",
         gardenStatus: draftCampaign.existence ?? "",
         fundraisingGoal:
           draftCampaign.goal !== null && draftCampaign.goal !== undefined

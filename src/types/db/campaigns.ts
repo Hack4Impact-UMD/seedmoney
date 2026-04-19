@@ -20,7 +20,7 @@ export type Campaign = {
   project_beneficiaries: string[];
   existence: Existence;
   impact: number;
-  size: number | null;
+  size: string;
   goal: number;
   ein: string;
   contact_first_name: string;
