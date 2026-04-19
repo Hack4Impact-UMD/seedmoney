@@ -87,7 +87,7 @@ export default async function ApplyLayout({
   return (
     <div className="bg-[#F6FAF9] min-h-screen flex flex-col">
       <LoginNavbar session={session} />
-      <div className="flex-1 flex flex-col">
+      <div className="flex min-h-0 flex-1 flex-col">
         <ApplicationFormProvider
           initialDraftCampaignId={draftCampaign?.campaign_id ?? null}
           initialFormValues={initialFormValues}
