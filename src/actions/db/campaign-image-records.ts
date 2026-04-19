@@ -141,3 +141,59 @@ export async function readCampaignImagesByCampaign(
     (image): image is HydratedCampaignImageRecord => image !== null,
   );
 }
+
+export async function readCampaignImageUrlsByCampaignIds(
+  campaignIds: number[],
+): Promise<Record<number, string | null>> {
+  if (campaignIds.length === 0) {
+    return {};
+  }
+
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaign_image_records")
+    .select("campaign_id, storage_path, display_order, is_main")
+    .in("campaign_id", campaignIds)
+    .order("campaign_id", { ascending: true })
+    .order("is_main", { ascending: false })
+    .order("display_order", { ascending: true });
+
+  if (error) {
+    console.error(
+      "Error reading campaign images by campaign ids:",
+      error.message,
+    );
+    return {};
+  }
+
+  const firstImageByCampaign = new Map<number, string>();
+  for (const imageRecord of data ?? []) {
+    if (!firstImageByCampaign.has(imageRecord.campaign_id)) {
+      firstImageByCampaign.set(imageRecord.campaign_id, imageRecord.storage_path);
+    }
+  }
+
+  const imageEntries = await Promise.all(
+    Array.from(firstImageByCampaign.entries()).map(
+      async ([campaignId, storagePath]) => {
+        const { data: signedUrlData, error: signedUrlError } =
+          await supabase.storage
+            .from("campaign_images")
+            .createSignedUrl(storagePath, 60 * 60);
+
+        if (signedUrlError) {
+          console.error(
+            `Error creating signed URL for ${storagePath}:`,
+            signedUrlError.message,
+          );
+          return [campaignId, null] as const;
+        }
+
+        return [campaignId, signedUrlData.signedUrl] as const;
+      },
+    ),
+  );
+
+  return Object.fromEntries(imageEntries);
+}

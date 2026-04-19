@@ -4,6 +4,7 @@ import { Open_Sans } from "next/font/google";
 import LeaderboardPage from "@/src/components/leaderboard/LeaderboardPage";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadCampaignsByCompId from "@/src/hooks/campaigns/useReadCampaignsByCompId";
+import useReadCampaignImageUrlsByCampaignIds from "@/src/hooks/campaign-image-records/useReadCampaignImageUrlsByCampaignIds";
 import type { Campaign } from "@/src/types/db/campaigns";
 import { leaderboardGardenCategories } from "@/src/constants/gardenCategories";
 
@@ -16,6 +17,7 @@ const openSans = Open_Sans({
 function mapCampaignsToLeaderboardData(
   campaigns: Campaign[],
   challengeTitle: string,
+  imageUrlsByCampaignId: Record<number, string | null>,
 ) {
   const publicCampaigns = campaigns.map((campaign) => {
     const raised =
@@ -34,7 +36,7 @@ function mapCampaignsToLeaderboardData(
       projectCategory: campaign.project_category,
       donateUrl: campaign.givebutterlink,
       summary: campaign.organization_name || "",
-      imageUrl: null,
+      imageUrl: imageUrlsByCampaignId[campaign.campaign_id] ?? null,
     };
   });
 
@@ -70,13 +72,19 @@ export default function PublicLeaderboardPage() {
     isLoading: isLoadingCampaigns,
     error,
   } = useReadCampaignsByCompId(competitionId);
+  const campaignIds = campaignsData.map((campaign) => campaign.campaign_id);
+  const {
+    data: imageUrlsByCampaignId = {},
+    isLoading: isLoadingImages,
+  } = useReadCampaignImageUrlsByCampaignIds(campaignIds);
 
-  if (isLoadingCompetition || isLoadingCampaigns) return null;
+  if (isLoadingCompetition || isLoadingCampaigns || isLoadingImages) return null;
   if (error) return null;
 
   const leaderboardData = mapCampaignsToLeaderboardData(
     campaignsData,
     challengeTitle,
+    imageUrlsByCampaignId,
   );
 
   return (
