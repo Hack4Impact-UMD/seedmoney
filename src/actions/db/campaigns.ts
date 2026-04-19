@@ -1,21 +1,29 @@
-"use server";
-
 import type { Campaign } from "@/src/types";
-import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
-import { redirect } from "next/navigation";
+import {
+  createBrowserClient,
+  createServerClient,
+} from "@/src/lib/supabase-client";
+
+function normalizeCampaignCreateData(data: Partial<Campaign>): Partial<Campaign> {
+  return {
+    raised: data.raised ?? 0,
+    donors: data.donors ?? 0,
+    goal: data.goal ?? 0,
+    impact: data.impact ?? 0,
+    ...data,
+  };
+}
 
 export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createServerClient();
-  const { data: session } = await supabase.auth.getSession()
-console.log(session)
+  const supabase = createBrowserClient();
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
-  const campaignData = { ...data };
-  
+  const campaignData = normalizeCampaignCreateData(data);
+
   if (userError || !user) {
     console.error(
       "Error reading authenticated user for campaign creation:",
@@ -83,7 +91,7 @@ export async function createCampaignGivebutter(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
   const supabase = await createServerClient();
-  const campaignData = { ...data };
+  const campaignData = normalizeCampaignCreateData(data);
 
   if (
     campaignData.competition_id === undefined ||
@@ -123,7 +131,7 @@ export async function createCampaignGivebutter(
 export async function readCampaign(
   ids?: number | number[],
 ): Promise<Campaign | Campaign[] | null> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
 
   // Return ALL campaigns
   if (ids === undefined) {
@@ -172,11 +180,30 @@ export async function readCampaign(
   return data as Campaign[];
 }
 
+export async function readCampaignsByCompId(
+  competitionId: number,
+): Promise<Campaign[]> {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("*")
+    .eq("competition_id", competitionId)
+    .eq("status", "published");
+
+  if (error) {
+    console.error("Error reading campaigns by competition id:", error.message);
+    return [];
+  }
+
+  return (data ?? []) as Campaign[];
+}
+
 export async function updateCampaign(
   id: number,
   campaign: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
   console.log("updateCampaign called", id, campaign);
 
   const { data, error } = await supabase
@@ -200,7 +227,7 @@ export async function updateCampaign(
 }
 
 export async function deleteCampaign(id: number): Promise<boolean> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
 
   const { data, error } = await supabase
     .from("campaigns")
@@ -225,7 +252,7 @@ export async function updateCampaignGivebutterID(
   id: number,
   campaign: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
   console.log("updateCampaign called", id, campaign);
 
   const { data, error } = await supabase
