@@ -28,7 +28,7 @@ export default function LeaderboardHero({
 
         <div className="mx-auto max-w-[920px] text-center">
           <h1
-            className={`${leaderboardTypography.goldplay} text-3xl font-bold md:text-[46px] md:leading-[1.1]`}
+            className={`${leaderboardTypography.openSans} text-3xl font-bold md:text-[46px] md:leading-[1.1]`}
           >
             {challengeTitle}
           </h1>

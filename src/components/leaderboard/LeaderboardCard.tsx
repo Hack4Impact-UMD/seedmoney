@@ -37,7 +37,7 @@ export default function LeaderboardCard({
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#163422_0%,#2D7A45_100%)] text-center text-white">
-            <span className={`${leaderboardTypography.goldplay} px-6 text-2xl font-bold`}>
+            <span className={`${leaderboardTypography.openSans} px-6 text-2xl font-bold`}>
               {campaign.name}
             </span>
           </div>
@@ -54,7 +54,7 @@ export default function LeaderboardCard({
 
       <div className="px-2 pt-4">
         <h2
-          className={`${leaderboardTypography.goldplay} text-[24px] font-bold leading-[1.1] text-[#163422]`}
+          className={`${leaderboardTypography.openSans} text-[24px] font-bold leading-[1.1] text-[#163422]`}
         >
           {campaign.name}
         </h2>
