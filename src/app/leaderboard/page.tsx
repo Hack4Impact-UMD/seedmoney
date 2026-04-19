@@ -1,7 +1,9 @@
+"use client";
+
 import { Open_Sans } from "next/font/google";
 import LeaderboardPage from "@/src/components/leaderboard/LeaderboardPage";
-import mockLeaderboardData from "./mockLeaderboardData";
-import useReadCampaigns from "@/src/hooks/campaigns/useReadCampaign";
+import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
+import useReadCampaignsByCompId from "@/src/hooks/campaigns/useReadCampaignsByCompId";
 import type { Campaign } from "@/src/types/db/campaigns";
 import { leaderboardGardenCategories } from "@/src/constants/gardenCategories";
 
@@ -11,22 +13,33 @@ const openSans = Open_Sans({
   weight: ["400", "700", "800"],
 });
 
-function mapCampaignsToLeaderboardData(campaigns: Campaign[]) {
-  const publicCampaigns = campaigns.map((campaign) => ({
-    campaignId: campaign.campaign_id,
-    name: campaign.name,
-    location: `${campaign.city}, ${campaign.state}`,
-    raised: campaign.raised,
-    goal: campaign.goal,
-    donors: campaign.donors,
-    projectCategory: campaign.project_category,
-    donateUrl: campaign.givebutterlink,
-    summary: campaign.organization_name || "",
-    imageUrl: null,
-  }));
+function mapCampaignsToLeaderboardData(
+  campaigns: Campaign[],
+  challengeTitle: string,
+) {
+  const publicCampaigns = campaigns.map((campaign) => {
+    const raised =
+      typeof campaign.raised === "number" ? campaign.raised : 0;
+    const goal = typeof campaign.goal === "number" ? campaign.goal : 0;
+    const donors =
+      typeof campaign.donors === "number" ? campaign.donors : 0;
+
+    return {
+      campaignId: campaign.campaign_id,
+      name: campaign.name,
+      location: `${campaign.city}, ${campaign.state}`,
+      raised,
+      goal,
+      donors,
+      projectCategory: campaign.project_category,
+      donateUrl: campaign.givebutterlink,
+      summary: campaign.organization_name || "",
+      imageUrl: null,
+    };
+  });
 
   return {
-    challengeTitle: "The 2026 SeedMoney Challenge",
+    challengeTitle,
     totalCampaigns: publicCampaigns.length,
     totalRaised: publicCampaigns.reduce(
       (sum, campaign) => sum + campaign.raised,
@@ -42,12 +55,29 @@ function mapCampaignsToLeaderboardData(campaigns: Campaign[]) {
 }
 
 export default function PublicLeaderboardPage() {
-  const { data: campaignsData = [], isLoading, error } = useReadCampaigns();
+  const { data: currentCompetitionData, isLoading: isLoadingCompetition } =
+    useReadCurrentCompetition();
+  const competitionId = currentCompetitionData?.competition_id;
+  const challengeYear = currentCompetitionData?.start_date
+    ? new Date(currentCompetitionData.start_date).getFullYear()
+    : null;
+  const challengeTitle =
+    challengeYear === null
+      ? "The SeedMoney Challenge"
+      : `The ${challengeYear} SeedMoney Challenge`;
+  const {
+    data: campaignsData = [],
+    isLoading: isLoadingCampaigns,
+    error,
+  } = useReadCampaignsByCompId(competitionId);
 
-  if (isLoading) return null;
+  if (isLoadingCompetition || isLoadingCampaigns) return null;
   if (error) return null;
 
-  const leaderboardData = mapCampaignsToLeaderboardData(campaignsData);
+  const leaderboardData = mapCampaignsToLeaderboardData(
+    campaignsData,
+    challengeTitle,
+  );
 
   return (
     <div

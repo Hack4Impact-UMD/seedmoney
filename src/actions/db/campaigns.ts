@@ -170,6 +170,24 @@ export async function readCampaign(
   return data as Campaign[];
 }
 
+export async function readCampaignsByCompId(
+  competitionId: number,
+): Promise<Campaign[]> {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("*")
+    .eq("competition_id", competitionId);
+
+  if (error) {
+    console.error("Error reading campaigns by competition id:", error.message);
+    return [];
+  }
+
+  return (data ?? []) as Campaign[];
+}
+
 export async function updateCampaign(
   id: number,
   campaign: Partial<Campaign>,
