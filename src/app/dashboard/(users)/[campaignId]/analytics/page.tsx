@@ -39,6 +39,7 @@ export default function CampaignAnalyticsPage() {
     ? null
     : (campaignData ?? null);
   const campaignEndDate = competitionData?.end_date;
+  const campaignStartDate = competitionData?.start_date;
 
   const earnings = useMemo(
     () => transactionsToDailyEarnings(transactions ?? []),
@@ -49,8 +50,8 @@ export default function CampaignAnalyticsPage() {
     if (earnings.length === 0 || !campaignEndDate) {
       return { dates: [], dailyValues: [], totalValues: [] };
     }
-    return buildEarningsTrendData(earnings, campaignEndDate);
-  }, [earnings, campaignEndDate]);
+    return buildEarningsTrendData(earnings, campaignEndDate, campaignStartDate);
+  }, [earnings, campaignEndDate, campaignStartDate]);
 
   const todayIso = moment().startOf("day").format("YYYY-MM-DD");
 

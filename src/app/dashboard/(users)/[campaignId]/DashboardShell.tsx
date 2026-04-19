@@ -39,12 +39,12 @@ export default function DashboardShell({
     percent: raisedPercent,
     isLoading: raisedLoading,
     isError: raisedError,
-  } = useRaisedChangePercent(Number(campaignId));
+  } = useRaisedChangePercent(Number(campaignId), currentCompetitionData?.start_date);
   const {
     percent: donorsPercent,
     isLoading: donorsLoading,
     isError: donorsError,
-  } = useDonorsChangePercent(Number(campaignId));
+  } = useDonorsChangePercent(Number(campaignId), currentCompetitionData?.start_date);
   const raisedChangePercent =
     raisedLoading || raisedError ? null : raisedPercent;
   const donorsChangePercent =

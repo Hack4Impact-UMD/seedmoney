@@ -37,6 +37,7 @@ export function transactionsToDailyEarnings(
 export function buildEarningsTrendData(
   earningsTrend: DailyEarning[],
   campaignEndDate: string,
+  campaignStartDate?: string,
 ) {
   // Empty input guard — no donations means no series to plot.
   if (earningsTrend.length === 0) {
@@ -46,9 +47,10 @@ export function buildEarningsTrendData(
   // Index the sparse data by date string for O(1) lookups during the loop.
   const dataByDate = new Map(earningsTrend.map((d) => [d.date, d]));
 
-  // Walk day-by-day from the first donation date to the campaign end date.
+  // Walk from competition start (if provided) or first donation date.
   const allDates: string[] = [];
-  const cur = moment(earningsTrend[0].date, "YYYY-MM-DD", true).startOf("day");
+  const walkStart = campaignStartDate ?? earningsTrend[0].date;
+  const cur = moment(walkStart, "YYYY-MM-DD", true).startOf("day");
   const end = moment(campaignEndDate, "YYYY-MM-DD", true).startOf("day");
   while (cur.isSameOrBefore(end, "day")) {
     allDates.push(cur.format("YYYY-MM-DD"));
