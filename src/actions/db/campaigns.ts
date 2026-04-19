@@ -4,6 +4,16 @@ import {
   createServerClient,
 } from "@/src/lib/supabase-client";
 
+function normalizeCampaignCreateData(data: Partial<Campaign>): Partial<Campaign> {
+  return {
+    raised: data.raised ?? 0,
+    donors: data.donors ?? 0,
+    goal: data.goal ?? 0,
+    impact: data.impact ?? 0,
+    ...data,
+  };
+}
+
 export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
@@ -12,7 +22,7 @@ export async function createCampaign(
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
-  const campaignData = { ...data };
+  const campaignData = normalizeCampaignCreateData(data);
 
   if (userError || !user) {
     console.error(
@@ -81,7 +91,7 @@ export async function createCampaignGivebutter(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
   const supabase = await createServerClient();
-  const campaignData = { ...data };
+  const campaignData = normalizeCampaignCreateData(data);
 
   if (
     campaignData.competition_id === undefined ||
