@@ -4,6 +4,16 @@ import {
   createServerClient,
 } from "@/src/lib/supabase-client";
 
+function normalizeCampaignCreateData(data: Partial<Campaign>): Partial<Campaign> {
+  return {
+    raised: data.raised ?? 0,
+    donors: data.donors ?? 0,
+    goal: data.goal ?? 0,
+    impact: data.impact ?? 0,
+    ...data,
+  };
+}
+
 export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
@@ -12,7 +22,7 @@ export async function createCampaign(
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
-  const campaignData = { ...data };
+  const campaignData = normalizeCampaignCreateData(data);
 
   if (userError || !user) {
     console.error(
@@ -81,7 +91,7 @@ export async function createCampaignGivebutter(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
   const supabase = await createServerClient();
-  const campaignData = { ...data };
+  const campaignData = normalizeCampaignCreateData(data);
 
   if (
     campaignData.competition_id === undefined ||
@@ -168,6 +178,25 @@ export async function readCampaign(
   }
 
   return data as Campaign[];
+}
+
+export async function readCampaignsByCompId(
+  competitionId: number,
+): Promise<Campaign[]> {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("*")
+    .eq("competition_id", competitionId)
+    .eq("status", "published");
+
+  if (error) {
+    console.error("Error reading campaigns by competition id:", error.message);
+    return [];
+  }
+
+  return (data ?? []) as Campaign[];
 }
 
 export async function updateCampaign(
