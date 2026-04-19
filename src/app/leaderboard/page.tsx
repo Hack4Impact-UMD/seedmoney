@@ -25,11 +25,16 @@ function mapCampaignsToLeaderboardData(
     const goal = typeof campaign.goal === "number" ? campaign.goal : 0;
     const donors =
       typeof campaign.donors === "number" ? campaign.donors : 0;
+    const locationParts = [campaign.city, campaign.state].filter(
+      (value): value is string => typeof value === "string" && value.trim() !== "",
+    );
+    const location =
+      locationParts.length > 0 ? locationParts.join(", ") : "Unknown location";
 
     return {
       campaignId: campaign.campaign_id,
       name: campaign.name,
-      location: `${campaign.city}, ${campaign.state}`,
+      location,
       raised,
       goal,
       donors,
