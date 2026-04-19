@@ -41,7 +41,7 @@ export const campaignHandlers = {
       project_beneficiaries: [],
       existence: "new",
       impact: 0,
-      size: "",
+      size: 0,
       ein: "",
       contact_first_name: "",
       contact_last_name: "",

@@ -7,6 +7,16 @@ import {
   TextChangeHandler,
 } from "./types";
 
+function normalizeNumericInput(value: string) {
+  const digitsOnly = value.replace(/\D/g, "");
+
+  if (digitsOnly === "") {
+    return "";
+  }
+
+  return digitsOnly.replace(/^0+(?=\d)/, "");
+}
+
 interface CampaignInformationSectionProps {
   formData: EditCampaignFormData;
   onTextChange: TextChangeHandler;
@@ -51,7 +61,12 @@ export default function CampaignInformationSection({
           variant="standard"
           fullWidth
           value={formData.beneficiaryCount}
-          onChange={onTextChange("beneficiaryCount")}
+          onChange={(event) =>
+            setFieldValue(
+              "beneficiaryCount",
+              normalizeNumericInput(event.target.value),
+            )
+          }
           type="number"
           inputProps={{ min: 0 }}
         />
@@ -89,7 +104,12 @@ export default function CampaignInformationSection({
           variant="standard"
           fullWidth
           value={formData.gardenSize}
-          onChange={onTextChange("gardenSize")}
+          onChange={(event) =>
+            setFieldValue(
+              "gardenSize",
+              normalizeNumericInput(event.target.value),
+            )
+          }
         />
       </div>
 
@@ -108,7 +128,12 @@ export default function CampaignInformationSection({
           fullWidth
           type="number"
           value={formData.fundraisingGoal}
-          onChange={onTextChange("fundraisingGoal")}
+          onChange={(event) =>
+            setFieldValue(
+              "fundraisingGoal",
+              normalizeNumericInput(event.target.value),
+            )
+          }
           inputProps={{ min: 0 }}
         />
       </div>
