@@ -12,6 +12,7 @@ import { useForm } from "@tanstack/react-form";
 import { ApplicationFormData } from "@/src/types/form";
 
 const INITIAL_FORM_VALUES: ApplicationFormData = {
+  aiOptIn: false,
   campaignTitle: "",
   beneficiaryCount: "",
   gardenSize: 0,

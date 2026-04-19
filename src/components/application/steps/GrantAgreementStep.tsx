@@ -6,7 +6,10 @@ import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import AiOptInModal from "@/src/components/application/AiOptInModal";
-import { useAgreementGate } from "@/src/components/application/ApplicationFormProvider";
+import {
+  useAgreementGate,
+  useApplicationForm,
+} from "@/src/components/application/ApplicationFormProvider";
 import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
 
 const checkboxStyle = {
@@ -17,12 +20,13 @@ const checkboxStyle = {
 };
 
 export default function GrantAgreementStep() {
+  const form = useApplicationForm();
   const router = useRouter();
   const { hasPassedAgreement, setHasPassedAgreement } = useAgreementGate();
   const [agreementSelections, setAgreementSelections] = useState<boolean[]>(
     () =>
       GRANT_AGREEMENT_ITEMS.map((item) =>
-        item.required ? hasPassedAgreement : false,
+        item.required ? hasPassedAgreement : form.state.values.aiOptIn,
       ),
   );
   const [isAiOptInModalOpen, setIsAiOptInModalOpen] = useState(false);
@@ -34,11 +38,17 @@ export default function GrantAgreementStep() {
   );
 
   const toggle = (index: number) => {
-    setAgreementSelections((prev) =>
-      prev.map((value, currentIndex) =>
+    setAgreementSelections((prev) => {
+      const nextSelections = prev.map((value, currentIndex) =>
         currentIndex === index ? !value : value,
-      ),
-    );
+      );
+
+      if (index === aiOptInItemIndex) {
+        form.setFieldValue("aiOptIn", nextSelections[index]);
+      }
+
+      return nextSelections;
+    });
   };
 
   const handleNext = () => {
@@ -55,6 +65,7 @@ export default function GrantAgreementStep() {
       setAgreementSelections((prev) =>
         prev.map((value, index) => (index === aiOptInItemIndex ? true : value)),
       );
+      form.setFieldValue("aiOptIn", true);
     }
 
     setIsAiOptInModalOpen(false);

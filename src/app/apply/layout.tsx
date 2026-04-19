@@ -35,6 +35,7 @@ export default async function ApplyLayout({
 
   const initialFormValues: Partial<ApplicationFormData> = draftCampaign
     ? {
+        aiOptIn: draftCampaign.opt_in_ai ?? false,
         campaignTitle: draftCampaign.name ?? "",
         beneficiaryCount:
           draftCampaign.impact !== null && draftCampaign.impact !== undefined
