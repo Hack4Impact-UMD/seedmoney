@@ -114,12 +114,7 @@ export default function CampaignInformationSection({
           variant="standard"
           fullWidth
           value={formData.gardenSize}
-          onChange={(event) =>
-            setFieldValue(
-              "gardenSize",
-              normalizeNumericInput(event.target.value),
-            )
-          }
+          onChange={(event) => setFieldValue("gardenSize", event.target.value)}
         />
       </div>
 

@@ -36,7 +36,7 @@ export default function CampaignInformationStep() {
     impact: form.state.values.beneficiaryCount
       ? Number(form.state.values.beneficiaryCount)
       : undefined,
-    size: form.state.values.gardenSize || undefined,
+    size: form.state.values.gardenSize.trim() || undefined,
     existence: form.state.values.gardenStatus || undefined,
     goal: form.state.values.fundraisingGoal
       ? Number(form.state.values.fundraisingGoal)
@@ -55,7 +55,7 @@ export default function CampaignInformationStep() {
       impact: values.beneficiaryCount
         ? Number(values.beneficiaryCount)
         : undefined,
-      size: values.gardenSize || undefined,
+      size: values.gardenSize.trim() || undefined,
       existence: values.gardenStatus || undefined,
       goal: values.fundraisingGoal
         ? Number(values.fundraisingGoal)
@@ -162,25 +162,17 @@ export default function CampaignInformationStep() {
           {(field) => (
             <TextField
               label="Approximate garden size or scope"
-              helperText="Enter a whole number."
               variant="standard"
               fullWidth
-              type="number"
-              value={field.state.value === 0 ? "" : field.state.value}
+              type="text"
+              value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
-                const normalizedValue = normalizeNumericInput(e.target.value);
                 await saveCampaignInformationDraft({
-                  gardenSize:
-                    normalizedValue === "" ? 0 : Number(normalizedValue),
+                  gardenSize: e.target.value,
                 });
               }}
-              onChange={(e) => {
-                const normalizedValue = normalizeNumericInput(e.target.value);
-                field.handleChange(
-                  normalizedValue === "" ? 0 : Number(normalizedValue),
-                );
-              }}
+              onChange={(e) => field.handleChange(e.target.value)}
             />
           )}
         </form.Field>

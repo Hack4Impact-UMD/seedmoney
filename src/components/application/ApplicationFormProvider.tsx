@@ -15,7 +15,7 @@ const INITIAL_FORM_VALUES: ApplicationFormData = {
   aiOptIn: false,
   campaignTitle: "",
   beneficiaryCount: "",
-  gardenSize: 0,
+  gardenSize: "",
   gardenStatus: "",
   fundraisingGoal: "",
   gardenCity: "",
