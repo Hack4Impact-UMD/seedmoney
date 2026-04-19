@@ -8,7 +8,17 @@ import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
 function normalizeNumericInput(value: string) {
-  const digitsOnly = value.replace(/\D/g, "");
+  const trimmedValue = value.trim();
+
+  if (trimmedValue === "") {
+    return "";
+  }
+
+  const decimalMatch = trimmedValue.match(/[.,](?=\d{1,2}$)/);
+  const integerPortion = decimalMatch
+    ? trimmedValue.slice(0, decimalMatch.index)
+    : trimmedValue;
+  const digitsOnly = integerPortion.replace(/\D/g, "");
 
   if (digitsOnly === "") {
     return "";
