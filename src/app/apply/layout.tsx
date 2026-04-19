@@ -1,5 +1,5 @@
-import LoginNavbar from "@/src/components/LoginNavbar";
 import { ApplicationFormProvider } from "@/src/components/application/ApplicationFormProvider";
+import AuthProvider from "@/src/context/AuthProvider";
 import { createServerClient } from "@/src/lib/supabase-client";
 import { readCurrentDraftCampaignForUser } from "@/src/actions/db/campaigns";
 import { ApplicationFormData } from "@/src/types/form";
@@ -13,10 +13,10 @@ export default async function ApplyLayout({
 }>) {
   const supabase = await createServerClient();
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  const userId = session?.user.id;
+  const userId = user?.id;
   const draftCampaign = userId
     ? await readCurrentDraftCampaignForUser(userId)
     : null;
@@ -35,6 +35,7 @@ export default async function ApplyLayout({
 
   const initialFormValues: Partial<ApplicationFormData> = draftCampaign
     ? {
+        aiOptIn: draftCampaign.opt_in_ai ?? false,
         campaignTitle: draftCampaign.name ?? "",
         beneficiaryCount:
           draftCampaign.impact !== null && draftCampaign.impact !== undefined
@@ -85,15 +86,16 @@ export default async function ApplyLayout({
 
   return (
     <div className="bg-[#F6FAF9] min-h-screen flex flex-col">
-      <LoginNavbar session={session} />
-      <div className="flex-1 flex flex-col">
-        <ApplicationFormProvider
-          initialDraftCampaignId={draftCampaign?.campaign_id ?? null}
-          initialFormValues={initialFormValues}
-          initialHasPassedAgreement={Boolean(draftCampaign)}
-        >
-          {children}
-        </ApplicationFormProvider>
+      <div className="flex min-h-0 flex-1 flex-col">
+        <AuthProvider initialUser={user ?? null}>
+          <ApplicationFormProvider
+            initialDraftCampaignId={draftCampaign?.campaign_id ?? null}
+            initialFormValues={initialFormValues}
+            initialHasPassedAgreement={Boolean(draftCampaign)}
+          >
+            {children}
+          </ApplicationFormProvider>
+        </AuthProvider>
       </div>
     </div>
   );

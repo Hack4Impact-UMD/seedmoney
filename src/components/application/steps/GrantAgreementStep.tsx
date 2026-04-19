@@ -5,7 +5,11 @@ import { Button } from "@mui/material";
 import Link from "next/link";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { useAgreementGate } from "@/src/components/application/ApplicationFormProvider";
+import AiOptInModal from "@/src/components/application/AiOptInModal";
+import {
+  useAgreementGate,
+  useApplicationForm,
+} from "@/src/components/application/ApplicationFormProvider";
 import { GRANT_AGREEMENT_ITEMS } from "@/src/components/application/grantAgreementItems";
 
 const checkboxStyle = {
@@ -16,19 +20,35 @@ const checkboxStyle = {
 };
 
 export default function GrantAgreementStep() {
+  const form = useApplicationForm();
   const router = useRouter();
   const { hasPassedAgreement, setHasPassedAgreement } = useAgreementGate();
   const [agreementSelections, setAgreementSelections] = useState<boolean[]>(
-    () => GRANT_AGREEMENT_ITEMS.map(() => hasPassedAgreement),
+    () =>
+      GRANT_AGREEMENT_ITEMS.map((item) =>
+        item.required ? hasPassedAgreement : form.state.values.aiOptIn,
+      ),
   );
-  const allChecked = agreementSelections.every(Boolean);
+  const [isAiOptInModalOpen, setIsAiOptInModalOpen] = useState(false);
+  const aiOptInItemIndex = GRANT_AGREEMENT_ITEMS.findIndex(
+    (item) => item.kind === "aiOptIn",
+  );
+  const allChecked = GRANT_AGREEMENT_ITEMS.every(
+    (item, index) => !item.required || agreementSelections[index],
+  );
 
   const toggle = (index: number) => {
+    const nextValue = !agreementSelections[index];
+
     setAgreementSelections((prev) =>
       prev.map((value, currentIndex) =>
-        currentIndex === index ? !value : value,
+        currentIndex === index ? nextValue : value,
       ),
     );
+
+    if (index === aiOptInItemIndex) {
+      form.setFieldValue("aiOptIn", nextValue);
+    }
   };
 
   const handleNext = () => {
@@ -38,6 +58,43 @@ export default function GrantAgreementStep() {
 
     setHasPassedAgreement(true);
     router.push("/apply/campaign");
+  };
+
+  const handleAiOptIn = () => {
+    if (aiOptInItemIndex !== -1) {
+      setAgreementSelections((prev) =>
+        prev.map((value, index) => (index === aiOptInItemIndex ? true : value)),
+      );
+      form.setFieldValue("aiOptIn", true);
+    }
+
+    setIsAiOptInModalOpen(false);
+  };
+
+  const renderAgreementLabel = (item: (typeof GRANT_AGREEMENT_ITEMS)[number]) => {
+    if (item.kind !== "aiOptIn") {
+      return item.text;
+    }
+
+    const [beforeOptInLink, afterOptInLink] = item.text.split("opt-in statement");
+
+    return (
+      <span>
+        {beforeOptInLink}
+        <button
+          type="button"
+          onClick={(event) => {
+            event.preventDefault();
+            event.stopPropagation();
+            setIsAiOptInModalOpen(true);
+          }}
+          className="cursor-pointer underline underline-offset-2 hover:text-[#123A1E]"
+        >
+          opt-in statement
+        </button>
+        {afterOptInLink}
+      </span>
+    );
   };
 
   return (
@@ -60,7 +117,7 @@ export default function GrantAgreementStep() {
           I confirm that:
         </p>
 
-        {GRANT_AGREEMENT_ITEMS.map((label, i) => (
+        {GRANT_AGREEMENT_ITEMS.map((item, i) => (
           <FormControlLabel
             key={i}
             control={
@@ -70,7 +127,7 @@ export default function GrantAgreementStep() {
                 onChange={() => toggle(i)}
               />
             }
-            label={label}
+            label={renderAgreementLabel(item)}
           />
         ))}
 
@@ -98,6 +155,12 @@ export default function GrantAgreementStep() {
           Next Step
         </Button>
       </div>
+
+      <AiOptInModal
+        open={isAiOptInModalOpen}
+        onClose={() => setIsAiOptInModalOpen(false)}
+        onOptIn={handleAiOptIn}
+      />
     </div>
   );
 }

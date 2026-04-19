@@ -20,7 +20,7 @@ export type Campaign = {
   project_beneficiaries: string[];
   existence: Existence;
   impact: number;
-  size: string;
+  size: number | null;
   goal: number;
   ein: string;
   contact_first_name: string;
@@ -34,6 +34,7 @@ export type Campaign = {
   mailing_country: string;
   mailing_zipcode: string;
   competition_id: number | null;
+  opt_in_ai: boolean;
 };
 
 export type GivebutterCampaignPayload = {

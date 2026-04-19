@@ -7,6 +7,26 @@ import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
+function normalizeNumericInput(value: string) {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue === "") {
+    return "";
+  }
+
+  const decimalMatch = trimmedValue.match(/[.,](?=\d{1,2}$)/);
+  const integerPortion = decimalMatch
+    ? trimmedValue.slice(0, decimalMatch.index)
+    : trimmedValue;
+  const digitsOnly = integerPortion.replace(/\D/g, "");
+
+  if (digitsOnly === "") {
+    return "";
+  }
+
+  return digitsOnly.replace(/^0+(?=\d)/, "");
+}
+
 export default function CampaignInformationStep() {
   const form = useApplicationForm();
   const router = useRouter();
@@ -127,10 +147,12 @@ export default function CampaignInformationStep() {
               onBlur={async (e) => {
                 field.handleBlur();
                 await saveCampaignInformationDraft({
-                  beneficiaryCount: e.target.value,
+                  beneficiaryCount: normalizeNumericInput(e.target.value),
                 });
               }}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={(e) =>
+                field.handleChange(normalizeNumericInput(e.target.value))
+              }
               type="number"
             />
           )}
@@ -147,13 +169,18 @@ export default function CampaignInformationStep() {
               value={field.state.value === 0 ? "" : field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
+                const normalizedValue = normalizeNumericInput(e.target.value);
                 await saveCampaignInformationDraft({
-                  gardenSize: e.target.value === "" ? 0 : Number(e.target.value),
+                  gardenSize:
+                    normalizedValue === "" ? 0 : Number(normalizedValue),
                 });
               }}
-              onChange={(e) =>
-                field.handleChange(e.target.value === "" ? 0 : Number(e.target.value))
-              }
+              onChange={(e) => {
+                const normalizedValue = normalizeNumericInput(e.target.value);
+                field.handleChange(
+                  normalizedValue === "" ? 0 : Number(normalizedValue),
+                );
+              }}
             />
           )}
         </form.Field>
@@ -228,10 +255,12 @@ export default function CampaignInformationStep() {
                 onBlur={async (e) => {
                   field.handleBlur();
                   await saveCampaignInformationDraft({
-                    fundraisingGoal: e.target.value,
+                    fundraisingGoal: normalizeNumericInput(e.target.value),
                   });
                 }}
-                onChange={(e) => field.handleChange(e.target.value)}
+                onChange={(e) =>
+                  field.handleChange(normalizeNumericInput(e.target.value))
+                }
                 error={isInvalid}
                 helperText={isInvalid ? "Fundraising goal must be greater than $0" : ""}
                 inputProps={{ min: 2 }}
