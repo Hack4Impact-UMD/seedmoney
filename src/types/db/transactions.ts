@@ -10,3 +10,18 @@ export type Transaction = {
   total_paid: number;
   status: string;
 }
+
+export interface TransactionPayload {
+  event: string;
+  data?: {
+    campaign_id: number;
+    first_name: string;
+    last_name: string;
+    email: string;
+    phone: string;
+    donated: number;
+    payout: number;
+    status: string;
+    transacted_at: string;
+  };
+}

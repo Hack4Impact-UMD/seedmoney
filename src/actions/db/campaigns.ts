@@ -2,18 +2,20 @@
 
 import type { Campaign } from "@/src/types";
 import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
-
+import { redirect } from "next/navigation";
 
 export async function createCampaign(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
+  const { data: session } = await supabase.auth.getSession()
+console.log(session)
   const {
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
   const campaignData = { ...data };
-
+  
   if (userError || !user) {
     console.error(
       "Error reading authenticated user for campaign creation:",

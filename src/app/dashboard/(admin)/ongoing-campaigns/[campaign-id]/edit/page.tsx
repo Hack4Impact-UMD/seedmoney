@@ -224,7 +224,7 @@ export default function EditCampaignPage() {
 
   return (
     <div className="flex min-h-screen">
-      <Navbar />
+      <Navbar/>
 
       <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
         <EditCampaignHeader
