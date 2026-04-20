@@ -14,9 +14,11 @@ export default function ContactInformationStep() {
   const form = useApplicationForm();
   const router = useRouter();
   const { saveDraftCampaign } = useSaveDraftCampaign();
+  const normalizeCountryValue = (value: string) => value.trim().toLowerCase();
   const isUsMailingCountry =
-    form.state.values.mailingCountry.trim().toLowerCase() === "us" ||
-    form.state.values.mailingCountry.trim().toLowerCase() === "united states";
+    normalizeCountryValue(form.state.values.mailingCountry) === "us" ||
+    normalizeCountryValue(form.state.values.mailingCountry) ===
+      "united states";
   const contactInformationRef = useRef({
     organization_name: form.state.values.organizationName,
     ein: form.state.values.organizationIdentifier,
@@ -255,8 +257,21 @@ export default function ContactInformationStep() {
               name="mailingCountry"
               value={field.state.value}
               onChange={async (e) => {
-                field.handleChange(e.target.value);
-                await saveContactDraft({ mailingCountry: e.target.value });
+                const nextCountry = e.target.value;
+                const shouldClearState =
+                  normalizeCountryValue(nextCountry) === "us" ||
+                  normalizeCountryValue(nextCountry) === "united states";
+
+                field.handleChange(nextCountry);
+
+                if (shouldClearState) {
+                  form.setFieldValue("mailingState", "");
+                }
+
+                await saveContactDraft({
+                  mailingCountry: nextCountry,
+                  ...(shouldClearState ? { mailingState: "" } : {}),
+                });
               }}
               SelectProps={{
                 displayEmpty: true,

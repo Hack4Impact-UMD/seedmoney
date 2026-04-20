@@ -52,6 +52,7 @@ export const STATES = [
 ];
 
 export const COUNTRIES = [
+  "United States",
   "Afghanistan",
   "Albania",
   "Algeria",
@@ -238,7 +239,6 @@ export const COUNTRIES = [
   "Ukraine",
   "United Arab Emirates",
   "United Kingdom",
-  "United States",
   "Uruguay",
   "Uzbekistan",
   "Vanuatu",
