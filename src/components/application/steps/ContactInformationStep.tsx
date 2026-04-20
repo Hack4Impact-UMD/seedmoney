@@ -119,7 +119,8 @@ export default function ContactInformationStep() {
     }
 
     if (
-      currentPayload.contact_email !== contactInformationRef.current.contact_email
+      currentPayload.contact_email !==
+      contactInformationRef.current.contact_email
     ) {
       changedValues.contact_email = currentPayload.contact_email;
     }
@@ -254,7 +255,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="Street 1"
+              label={<>Street 1*</>}
               fullWidth
               name="mailingStreet1"
               autoComplete="address-line1"
@@ -375,7 +376,7 @@ export default function ContactInformationStep() {
         <form.Field name="mailingCountry">
           {(field) => (
             <TextField
-              label="Country"
+              label="Country*"
               variant="standard"
               fullWidth
               name="mailingCountry"
