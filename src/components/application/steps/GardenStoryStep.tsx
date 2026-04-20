@@ -450,7 +450,7 @@ export default function GardenStoryStep() {
         </p>
 
         <form.Field name="storyLocationAndAudience">
-          {(field) => (
+          {(field) =>
             (() => {
               const valueLength = getStoryAnswerLength(field.state.value);
               const trimmedLength = getTrimmedStoryAnswerLength(
@@ -462,7 +462,7 @@ export default function GardenStoryStep() {
 
               return (
                 <TextField
-                  variant="standard"
+                  variant="filled"
                   label={question1.question}
                   fullWidth
                   multiline
@@ -493,11 +493,11 @@ export default function GardenStoryStep() {
                 />
               );
             })()
-          )}
+          }
         </form.Field>
 
         <form.Field name="storyChallenge">
-          {(field) => (
+          {(field) =>
             (() => {
               const valueLength = getStoryAnswerLength(field.state.value);
               const trimmedLength = getTrimmedStoryAnswerLength(
@@ -509,7 +509,7 @@ export default function GardenStoryStep() {
 
               return (
                 <TextField
-                  variant="standard"
+                  variant="filled"
                   label={question2.question}
                   fullWidth
                   multiline
@@ -540,11 +540,11 @@ export default function GardenStoryStep() {
                 />
               );
             })()
-          )}
+          }
         </form.Field>
 
         <form.Field name="storySeasonActivity">
-          {(field) => (
+          {(field) =>
             (() => {
               const valueLength = getStoryAnswerLength(field.state.value);
               const trimmedLength = getTrimmedStoryAnswerLength(
@@ -556,7 +556,7 @@ export default function GardenStoryStep() {
 
               return (
                 <TextField
-                  variant="standard"
+                  variant="filled"
                   label={question3.question}
                   fullWidth
                   multiline
@@ -587,11 +587,11 @@ export default function GardenStoryStep() {
                 />
               );
             })()
-          )}
+          }
         </form.Field>
 
         <form.Field name="storyCampaignImpact">
-          {(field) => (
+          {(field) =>
             (() => {
               const valueLength = getStoryAnswerLength(field.state.value);
               const trimmedLength = getTrimmedStoryAnswerLength(
@@ -603,7 +603,7 @@ export default function GardenStoryStep() {
 
               return (
                 <TextField
-                  variant="standard"
+                  variant="filled"
                   label={question4.question}
                   fullWidth
                   multiline
@@ -634,7 +634,7 @@ export default function GardenStoryStep() {
                 />
               );
             })()
-          )}
+          }
         </form.Field>
       </div>
 
