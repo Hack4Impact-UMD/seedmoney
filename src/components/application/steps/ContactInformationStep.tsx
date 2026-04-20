@@ -14,6 +14,9 @@ export default function ContactInformationStep() {
   const form = useApplicationForm();
   const router = useRouter();
   const { saveDraftCampaign } = useSaveDraftCampaign();
+  const isUsMailingCountry =
+    form.state.values.mailingCountry.trim().toLowerCase() === "us" ||
+    form.state.values.mailingCountry.trim().toLowerCase() === "united states";
   const contactInformationRef = useRef({
     organization_name: form.state.values.organizationName,
     ein: form.state.values.organizationIdentifier,
@@ -245,21 +248,40 @@ export default function ContactInformationStep() {
         <form.Field name="mailingCountry">
           {(field) => (
             <TextField
+              select
               label="Country*"
               variant="standard"
               fullWidth
               name="mailingCountry"
-              autoComplete="country-name"
               value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
+              onChange={async (e) => {
+                field.handleChange(e.target.value);
                 await saveContactDraft({ mailingCountry: e.target.value });
               }}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onInput={(e) =>
-                field.handleChange((e.target as HTMLInputElement).value)
-              }
-            />
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (selected) => {
+                  if (!selected) {
+                    return <span className="text-gray-400">Country*</span>;
+                  }
+                  return String(selected);
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+
+              {field.state.value && !COUNTRIES.includes(field.state.value) && (
+                <MenuItem value={field.state.value}>{field.state.value}</MenuItem>
+              )}
+
+              {COUNTRIES.map((country) => (
+                <MenuItem key={country} value={country}>
+                  {country}
+                </MenuItem>
+              ))}
+            </TextField>
           )}
         </form.Field>
 
@@ -287,39 +309,56 @@ export default function ContactInformationStep() {
         {/* State / Province */}
         <form.Field name="mailingState">
           {(field) => (
-            <TextField
-              select
-              variant="standard"
-              fullWidth
-              value={field.state.value}
-              onChange={async (e) => {
-                field.handleChange(e.target.value);
-                await saveContactDraft({ mailingState: e.target.value });
-              }}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (selected) => {
-                  if (!selected) {
-                    return (
-                      <span className="text-gray-400">
-                        State / Province* (Write N/A if not applicable)
-                      </span>
-                    );
-                  }
-                  return String(selected);
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-
-              {STATES.map((s) => (
-                <MenuItem key={s.code} value={s.code}>
-                  {s.name}
+            isUsMailingCountry ? (
+              <TextField
+                select
+                variant="standard"
+                fullWidth
+                value={field.state.value}
+                onChange={async (e) => {
+                  field.handleChange(e.target.value);
+                  await saveContactDraft({ mailingState: e.target.value });
+                }}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => {
+                    if (!selected) {
+                      return (
+                        <span className="text-gray-400">State / Province*</span>
+                      );
+                    }
+                    return String(selected);
+                  },
+                }}
+              >
+                <MenuItem value="">
+                  <em>None</em>
                 </MenuItem>
-              ))}
-            </TextField>
+
+                {STATES.map((s) => (
+                  <MenuItem key={s.code} value={s.code}>
+                    {s.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : (
+              <TextField
+                variant="standard"
+                label="State / Province*"
+                helperText="Write N/A if not applicable"
+                fullWidth
+                name="mailingState"
+                value={field.state.value}
+                onBlur={async (e) => {
+                  field.handleBlur();
+                  await saveContactDraft({ mailingState: e.target.value });
+                }}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onInput={(e) =>
+                  field.handleChange((e.target as HTMLInputElement).value)
+                }
+              />
+            )
           )}
         </form.Field>
 
