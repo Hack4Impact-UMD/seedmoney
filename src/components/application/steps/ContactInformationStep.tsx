@@ -331,7 +331,9 @@ export default function ContactInformationStep() {
                 renderValue: (selected) => {
                   if (!selected) {
                     return (
-                      <span className="text-gray-400">State / Province*</span>
+                      <span className="text-gray-400">
+                        State / Province* (Write N/A if not applicable)
+                      </span>
                     );
                   }
                   return String(selected);
