@@ -7,7 +7,9 @@ import { useQueryClient } from "@tanstack/react-query";
 import type { Campaign } from "@/src/types/db/campaigns";
 import type { Existence } from "@/src/types/db/enums";
 import Loading from "@/src/app/loading";
+import AppError from "@/src/app/error";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
+import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
 import { updateAnswer } from "@/src/actions/db/answers";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
@@ -21,18 +23,15 @@ import {
   type EditCampaignFormData,
   type TextFieldKey,
   DEFAULT_CAMPAIGN_DATA,
-} from "@/src/components/ongoing-campaigns/edit/types";
+} from "@/src/types/frontend/campaignEdit";
 import {
   beneficiaryOptions,
   categoryOptions,
-  COUNTRIES,
-  US_STATES,
-} from "./options";
+} from "@/src/components/ongoing-campaigns/options";
 import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
 
 export default function EditCampaignPage() {
   const router = useRouter();
-
   const params = useParams();
   const campaignId = params?.["campaign-id"] as string;
   const parsedCampaignId = Number(campaignId);
@@ -40,16 +39,12 @@ export default function EditCampaignPage() {
   const queryClient = useQueryClient();
   const updateCampaignMutation = useUpdateCampaign();
 
-  const { mappedData, storyQuestions, isDataLoaded, isLoading, answersData } =
-    useCampaignEditData(parsedCampaignId);
+  const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
+  const setMainImageMutation = useSetMainCampaignImage(parsedCampaignId);
 
-  const [initialData, setInitialData] = useState<EditCampaignFormData>(
-    DEFAULT_CAMPAIGN_DATA,
-  );
-  const [formData, setFormData] = useState<EditCampaignFormData>(
-    DEFAULT_CAMPAIGN_DATA,
-  );
 
+  const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
+  const [formData, setFormData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
@@ -59,23 +54,34 @@ export default function EditCampaignPage() {
 
   const isFormDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
 
-  // Initialize form data once the data is fully loaded
   useEffect(() => {
-    if (isDataLoaded && initialData.campaignTitle === "") {
-      setInitialData(mappedData);
-      setFormData(mappedData);
+    if (!campaignEditData) return;
+
+    if (initialData.campaignTitle === "") {
+      // First load — initialize everything
+      setInitialData(campaignEditData.mappedData);
+      setFormData(campaignEditData.mappedData);
+    } else {
+      // Subsequent updates — only sync imageRecords if not locally modified
+      const localChanged =
+        JSON.stringify(formData.imageRecords) !==
+        JSON.stringify(initialData.imageRecords);
+      if (!localChanged) {
+        setFormData((prev) => ({
+          ...prev,
+          imageRecords: campaignEditData.mappedData.imageRecords,
+        }));
+        setInitialData((prev) => ({
+          ...prev,
+          imageRecords: campaignEditData.mappedData.imageRecords,
+        }));
+      }
     }
-  }, [isDataLoaded, mappedData, initialData.campaignTitle]);
+  }, [campaignEditData]);
 
   const setFieldValue = useCallback(
-    <K extends keyof EditCampaignFormData>(
-      field: K,
-      value: EditCampaignFormData[K],
-    ) => {
-      setFormData((prev) => ({
-        ...prev,
-        [field]: value,
-      }));
+    <K extends keyof EditCampaignFormData,>(field: K, value: EditCampaignFormData[K]) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
     },
     [],
   );
@@ -94,16 +100,12 @@ export default function EditCampaignPage() {
       const next = current.includes(option)
         ? current.filter((item) => item !== option)
         : [...current, option];
-
-      return {
-        ...prev,
-        gardenBeneficiaries: next,
-      };
+      return { ...prev, gardenBeneficiaries: next };
     });
   }, []);
 
   const handleConfirmSave = useCallback(async () => {
-    if (parsedCampaignId === null) return;
+    if (!parsedCampaignId) return;
 
     try {
       const campaignPayload: Partial<Campaign> = {
@@ -136,14 +138,12 @@ export default function EditCampaignPage() {
         campaignData: campaignPayload,
       });
 
+      // Save answer changes
+      const answersData = campaignEditData?.answersData;
       if (answersData) {
         const buildAnswerUpdate = (qNum: number, finalValue: string) => {
-          const ans = answersData.find(
-            (a: any) => a.questions?.question_number === qNum,
-          );
-          if (ans && ans.answer_id) {
-            return updateAnswer(ans.answer_id, { final_answer: finalValue });
-          }
+          const ans = answersData.find((a: any) => a.questions?.question_number === qNum);
+          if (ans?.answer_id) return updateAnswer(ans.answer_id, { final_answer: finalValue });
           return Promise.resolve(null);
         };
 
@@ -153,37 +153,39 @@ export default function EditCampaignPage() {
           buildAnswerUpdate(3, formData.storySeasonActivityFinal),
           buildAnswerUpdate(4, formData.storyCampaignImpactFinal),
         ]);
-
-        queryClient.invalidateQueries({
-          queryKey: [parsedCampaignId, "answers", "read"],
-        });
       }
+
+      const imageChanged =
+        JSON.stringify(formData.imageRecords) !==
+        JSON.stringify(initialData.imageRecords);
+      if (imageChanged) {
+        const mainImage = formData.imageRecords.find((r) => r.is_main);
+        if (mainImage) {
+          await setMainImageMutation.mutateAsync(mainImage.id);
+        }
+      }
+
+      queryClient.invalidateQueries({
+        queryKey: ["campaigns"],
+      });
 
       setInitialData(formData);
       setIsSaveModalOpen(false);
       setShowSuccessToast(true);
-    } catch (error) {
-      const message =
-        error instanceof Error ? error.message : "An unknown error occurred.";
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An unknown error occurred.";
       console.error("Save error:", message);
       setSaveErrorMessage(message);
       setIsSaveModalOpen(false);
       setShowErrorToast(true);
     }
-  }, [
-    formData,
-    parsedCampaignId,
-    answersData,
-    updateCampaignMutation,
-    queryClient,
-  ]);
+  }, [formData, initialData, parsedCampaignId, campaignEditData, updateCampaignMutation, queryClient]);
 
   const navigateToCampaignPage = useCallback(() => {
-    if (parsedCampaignId === null) {
+    if (!parsedCampaignId) {
       router.push("/dashboard/ongoing-campaigns");
       return;
     }
-
     router.push(`/dashboard/ongoing-campaigns/${parsedCampaignId}`);
   }, [parsedCampaignId, router]);
 
@@ -192,7 +194,6 @@ export default function EditCampaignPage() {
       setIsCancelModalOpen(true);
       return;
     }
-
     navigateToCampaignPage();
   }, [isFormDirty, navigateToCampaignPage]);
 
@@ -202,10 +203,7 @@ export default function EditCampaignPage() {
   }, [navigateToCampaignPage]);
 
   const handleAttemptDiscard = useCallback(() => {
-    if (!isFormDirty) {
-      return;
-    }
-
+    if (!isFormDirty) return;
     setIsDiscardModalOpen(true);
   }, [isFormDirty]);
 
@@ -214,17 +212,14 @@ export default function EditCampaignPage() {
     setIsDiscardModalOpen(false);
   }, [initialData]);
 
-  if (parsedCampaignId === null) {
-    return null;
-  }
-
-  if (isLoading || !isDataLoaded) {
-    return <Loading />;
-  }
+  if (!parsedCampaignId) return null;
+  if (isLoading) return <Loading />;
+  if (error) return <AppError error={error as Error} reset={() => refetch()} />;
+  if (!campaignEditData) return <Loading />;
 
   return (
     <div className="flex min-h-screen">
-      <Navbar/>
+      <Navbar />
 
       <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
         <EditCampaignHeader
@@ -243,8 +238,6 @@ export default function EditCampaignPage() {
             <GardenInformationSection
               formData={formData}
               categoryOptions={categoryOptions}
-              usStates={US_STATES}
-              countries={COUNTRIES}
               beneficiaryOptions={beneficiaryOptions}
               onTextChange={handleTextChange}
               setFieldValue={setFieldValue}
@@ -254,15 +247,17 @@ export default function EditCampaignPage() {
             <GardenStorySection
               formData={formData}
               onTextChange={handleTextChange}
-              questions={storyQuestions}
+              questions={campaignEditData.storyQuestions}
             />
 
-            <CampaignMediaSection />
+            <CampaignMediaSection
+              formData={formData}
+              campaignId={parsedCampaignId}
+              setFieldValue={setFieldValue}
+            />
 
             <ContactInformationSection
               formData={formData}
-              usStates={US_STATES}
-              countries={COUNTRIES}
               onTextChange={handleTextChange}
               setFieldValue={setFieldValue}
             />

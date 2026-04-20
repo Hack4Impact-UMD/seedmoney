@@ -1,6 +1,9 @@
 "use client";
 
 import React from "react";
+import { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords"
+
+
 
 export interface EditCampaignFormData {
   campaignTitle: string;
@@ -37,6 +40,7 @@ export interface EditCampaignFormData {
   storyCampaignImpactOriginal: string;
   storyCampaignImpactAI: string;
   storyCampaignImpactFinal: string;
+  imageRecords: HydratedCampaignImageRecord[];
 }
 
 export const DEFAULT_CAMPAIGN_DATA: EditCampaignFormData = {
@@ -74,7 +78,9 @@ export const DEFAULT_CAMPAIGN_DATA: EditCampaignFormData = {
   storyCampaignImpactOriginal: "",
   storyCampaignImpactAI: "",
   storyCampaignImpactFinal: "",
+  imageRecords: [],
 };
+
 
 export type TextFieldKey = {
   [K in keyof EditCampaignFormData]: EditCampaignFormData[K] extends string

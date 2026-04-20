@@ -5,7 +5,7 @@ import {
   EditCampaignFormData,
   SetFieldValue,
   TextChangeHandler,
-} from "./types";
+} from "@/src/types/frontend/campaignEdit";
 
 interface CampaignInformationSectionProps {
   formData: EditCampaignFormData;

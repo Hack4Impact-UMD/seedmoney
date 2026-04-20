@@ -3,9 +3,9 @@ import {
   createServerClient,
   createBrowserClient,
 } from "@/src/lib/supabase-client";
-import type { Questions } from "@/src/types/db/questions";
+import type { Question } from "@/src/types/db/questions";
 
-export type AnswerWithQuestion = Answers & { questions: Questions | null };
+export type AnswerWithQuestion = Answers & { questions: Question | null };
 
 export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
   const supabase = await createBrowserClient();
@@ -126,21 +126,25 @@ export async function upsertAnswerByCampaignAndQuestion({
 
 export async function readAnswersByCampaign(
   campaignId: number,
-): Promise<Answers[]> {
+): Promise<AnswerWithQuestion[]> {
   const supabase = createBrowserClient();
 
-  const { data, error } = await supabase
-    .from("answers")
-    .select("*")
-    .eq("campaign_id", campaignId)
-    .order("question_id", { ascending: true });
+const { data, error } = await supabase
+  .from("answers")
+  .select("*, questions(*)")
+  .eq("campaign_id", campaignId);
+
+  const sorted = (data ?? []).sort(
+    (a, b) => (a.questions?.question_number ?? 0) - (b.questions?.question_number ?? 0)
+  );
 
   if (error) {
     console.error("Error reading answers by campaign:", error.message);
     return [];
   }
 
-  return (data ?? []) as Answers[];
+  return sorted as AnswerWithQuestion[];
+
 }
 
 export async function readAnswersByCampaignId(

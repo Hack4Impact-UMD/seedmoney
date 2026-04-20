@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, TextField } from "@mui/material";
-import { EditCampaignFormData, TextChangeHandler } from "./types";
+import { EditCampaignFormData, TextChangeHandler } from "@/src/types/frontend/campaignEdit";
 
 interface StoryComparisonBlockProps {
   question: string;

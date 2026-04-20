@@ -1,9 +1,8 @@
 "use client";
 
 import { useMemo } from "react";
-import { Button, IconButton } from "@mui/material";
-import { Close } from "@mui/icons-material";
-import { EditCampaignFormData } from "./types";
+import { Button } from "@mui/material";
+import { EditCampaignFormData } from "@/src/types/frontend/campaignEdit";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 
@@ -59,6 +58,10 @@ const SECTION_CHANGE_GROUPS: Array<{
       "contactRole",
     ],
   },
+  {
+    label: "Campaign Photos",
+    fields: ["imageRecords"],
+  }
 ];
 
 const STORY_QUESTION_CHANGES: Array<{
