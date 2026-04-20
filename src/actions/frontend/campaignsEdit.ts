@@ -5,9 +5,14 @@ import { readCampaignImagesByCampaign } from "@/src/actions/db/campaign-image-re
 import {
   EditCampaignFormData,
   DEFAULT_CAMPAIGN_DATA,
+  CampaignEditInformation
 } from "@/src/types/frontend/campaignEdit";
+import type { AnswerWithQuestion } from "@/src/actions/db/answers";
 
-export async function readCampaignEditInformation(campaignId: number) {
+
+
+
+export async function readCampaignEditInformation(campaignId: number): Promise<CampaignEditInformation | null> {
   const [campaignData, answersData, imageRecords] = await Promise.all([
     readCampaign(campaignId) as Promise<Campaign | null>,
     readAnswersByCampaign(campaignId),
@@ -17,7 +22,7 @@ export async function readCampaignEditInformation(campaignId: number) {
   if (!campaignData) return null;
 
   const dbCampaign = campaignData as Campaign;
-  const answers = answersData;
+  const answers = answersData as AnswerWithQuestion[];
 
   const mapAnswer = (questionNumber: number) =>
     answers.find((a: any) => a.questions?.question_number === questionNumber);

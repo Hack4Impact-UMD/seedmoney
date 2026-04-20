@@ -10,7 +10,7 @@ import AppError from "@/src/app/error";
 import NotFound from "@/src/app/not-found";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
-import { updateAnswer } from "@/src/actions/db/answers";
+import { AnswerWithQuestion, updateAnswer } from "@/src/actions/db/answers";
 import { Button } from "@mui/material";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
@@ -154,7 +154,7 @@ export default function CampaignReviewPage() {
       const answersData = campaignEditData?.answersData;
       if (answersData) {
         const buildAnswerUpdate = (qNum: number, finalValue: string) => {
-          const ans = answersData.find((a: any) => a.questions?.question_number === qNum);
+          const ans = answersData.find((a: AnswerWithQuestion) => a.questions?.question_number === qNum);
           if (ans?.answer_id) return updateAnswer(ans.answer_id, { final_answer: finalValue });
           return Promise.resolve(null);
         };

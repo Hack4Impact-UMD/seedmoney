@@ -3,8 +3,19 @@
 import React from "react";
 import { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords"
 import { Status } from "@/src/types/db/enums";
+import type { AnswerWithQuestion } from "@/src/actions/db/answers";
 
 
+export type CampaignEditInformation = {
+  mappedData: EditCampaignFormData;
+  storyQuestions: {
+    q1: string;
+    q2: string;
+    q3: string;
+    q4: string;
+  };
+  answersData: AnswerWithQuestion[];
+};
 
 export interface EditCampaignFormData {
   campaignTitle: string;
