@@ -58,7 +58,7 @@ export default function EditCampaignPage() {
     if (!campaignEditData) return;
 
     if (initialData.campaignTitle === "") {
-      // First load — initialize everything
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInitialData(campaignEditData.mappedData);
       setFormData(campaignEditData.mappedData);
     } else {
@@ -179,7 +179,7 @@ export default function EditCampaignPage() {
       setIsSaveModalOpen(false);
       setShowErrorToast(true);
     }
-  }, [formData, initialData, parsedCampaignId, campaignEditData, updateCampaignMutation, queryClient]);
+  }, [formData, initialData, parsedCampaignId, campaignEditData, updateCampaignMutation, queryClient, setMainImageMutation ]);
 
   const navigateToCampaignPage = useCallback(() => {
     if (!parsedCampaignId) {

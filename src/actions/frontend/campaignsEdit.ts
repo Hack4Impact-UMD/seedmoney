@@ -25,7 +25,7 @@ export async function readCampaignEditInformation(campaignId: number): Promise<C
   const answers = answersData as AnswerWithQuestion[];
 
   const mapAnswer = (questionNumber: number) =>
-    answers.find((a: any) => a.questions?.question_number === questionNumber);
+    answers.find((a: AnswerWithQuestion) => a.questions?.question_number === questionNumber);
 
   const locAudAns    = mapAnswer(1);
   const challengeAns = mapAnswer(2);

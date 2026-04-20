@@ -61,6 +61,7 @@ export default function CampaignReviewPage() {
     if (!campaignEditData) return;
 
     if (initialData.campaignTitle === "") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInitialData(campaignEditData.mappedData);
       setFormData(campaignEditData.mappedData);
     } else {
