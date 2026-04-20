@@ -223,7 +223,7 @@ export default function EditCampaignPage() {
 
       <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
         <EditCampaignHeader
-          campaignId={String(parsedCampaignId)}
+          text = {`Edit Campaign -${formData.campaignTitle}`}
           onBack={handleAttemptLeave}
         />
 

@@ -510,7 +510,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
           onClose={handleCloseActionModal}
           title={modalTitle}
         >
-          <div className="px-4 pb-4 text-[14px] text-[#727873]">
+          <div className="px-4 pb-4 text-[16px] text-[#727873]">
             <p>
               {pendingAction === "REVERT"
                 ? "You are about to move these campaigns back to the pending list:"

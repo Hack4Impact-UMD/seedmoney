@@ -2,6 +2,7 @@
 
 import React from "react";
 import { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords"
+import { Status } from "@/src/types/db/enums";
 
 
 
@@ -11,6 +12,7 @@ export interface EditCampaignFormData {
   gardenSize: string;
   gardenStatus: "new" | "existing";
   fundraisingGoal: string;
+  status: Status;
   gardenCity: string;
   gardenState: string;
   gardenCountry: string;
@@ -48,6 +50,7 @@ export const DEFAULT_CAMPAIGN_DATA: EditCampaignFormData = {
   beneficiaryCount: "",
   gardenSize: "",
   gardenStatus: "existing",
+  status: "submitted_under_review",
   fundraisingGoal: "",
   gardenCity: "",
   gardenState: "",

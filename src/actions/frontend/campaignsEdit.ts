@@ -14,10 +14,7 @@ export async function readCampaignEditInformation(campaignId: number) {
     readCampaignImagesByCampaign(campaignId).catch(() => []),
   ]);
 
-  const imageRecords1 = await readCampaignImagesByCampaign(campaignId).catch((err) => {
-  console.error("imageRecords fetch failed:", err);
-  return [];
-});
+  if (!campaignData) return null;
 
   const dbCampaign = campaignData as Campaign;
   const answers = answersData;
@@ -40,6 +37,7 @@ export async function readCampaignEditInformation(campaignId: number) {
   const mappedData: EditCampaignFormData = {
     ...DEFAULT_CAMPAIGN_DATA,
     campaignTitle:          dbCampaign?.name                    ?? "",
+    status:                 dbCampaign?.status                  ?? "submitted_under_review",
     beneficiaryCount:       dbCampaign?.impact?.toString()      ?? "",
     gardenSize:             dbCampaign?.size?.toString()        ?? "",
     gardenStatus:           (dbCampaign?.existence as "new" | "existing") ?? "existing",
