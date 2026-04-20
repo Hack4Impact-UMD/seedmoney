@@ -51,7 +51,7 @@ export async function readOngoingCampaigns(competition_id?: number): Promise<Cam
     .from("campaigns")
     .select(BASE_SELECT)
     .eq("competition_id", competition_id)
-    .eq("status", "approved")
+    .in("status", ["approved", "published"])
     .eq("campaign_members.role", "campaign_leader");
 
   if (error) throw error;
