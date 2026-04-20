@@ -138,6 +138,7 @@ export async function readCampaign(
   // Return ALL campaigns
   if (ids === undefined) {
     const { data, error } = await supabase.from("campaigns").select("*");
+    
 
     if (error) {
       console.error("Error fetching campaigns:", error.message);
@@ -155,7 +156,6 @@ export async function readCampaign(
       .select("*")
       .eq("campaign_id", ids)
       .maybeSingle();
-
     if (error) {
       console.error("Error reading campaign:", error.message);
       return null;

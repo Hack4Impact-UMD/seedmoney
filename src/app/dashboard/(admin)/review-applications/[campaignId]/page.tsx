@@ -1,978 +1,450 @@
 "use client";
 
-import { useMemo, useState } from "react";
-import Image from "next/image";
-import {
-  notFound,
-  useParams,
-  useRouter,
-} from "next/navigation";
-import {
-  Box,
-  Button,
-  Card,
-  CardContent,
-  Checkbox,
-  Chip,
-  FormControlLabel,
-  MenuItem,
-  Radio,
-  Stack,
-  TextField,
-  Typography,
-} from "@mui/material";
-import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import CloseOutlinedIcon from "@mui/icons-material/CloseOutlined";
-import UploadFileIcon from "@mui/icons-material/UploadFile";
-import DeleteIcon from "@mui/icons-material/Delete";
-import CheckIcon from "@mui/icons-material/Check";
+import { useCallback, useEffect, useState } from "react";
+import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/src/components/Navbar";
+import type { Campaign } from "@/src/types/db/campaigns";
+import type { Existence, Status } from "@/src/types/db/enums";
+import Loading from "@/src/app/loading";
+import AppError from "@/src/app/error";
+import NotFound from "@/src/app/not-found";
+import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
+import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
+import { AnswerWithQuestion, updateAnswer } from "@/src/actions/db/answers";
+import { Button } from "@mui/material";
+import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
+import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
+import ContactInformationSection from "@/src/components/ongoing-campaigns/edit/ContactInformationSection";
+import EditCampaignActions from "@/src/components/ongoing-campaigns/edit/EditCampaignActions";
+import EditCampaignDialogs from "@/src/components/ongoing-campaigns/edit/EditCampaignDialogs";
+import EditCampaignHeader from "@/src/components/ongoing-campaigns/edit/EditCampaignHeader";
+import GardenInformationSection from "@/src/components/ongoing-campaigns/edit/GardenInformationSection";
+import GardenStorySection from "@/src/components/ongoing-campaigns/edit/GardenStorySection";
+import { EditCampaignFormData, TextFieldKey, DEFAULT_CAMPAIGN_DATA} from "@/src/types/frontend/campaignEdit";
 import {
-  getReviewApplicationById,
-} from "@/src/app/dashboard/(admin)/review-applications/mockReviewApplications";
-
-type ModalType = "approve" | "deny" | "revert" | "unsaved" | null;
-
-type ReviewSectionCardProps = {
-  children: React.ReactNode;
-  subtitle?: React.ReactNode;
-  title: string;
-};
-
-type EditableFieldProps = {
-  label: string;
-  multiline?: boolean;
-  onChange: (value: string) => void;
-  rows?: number;
-  value: string;
-};
-
-type StoryEditorProps = {
-  finalValue: string;
-  aiValue: string;
-  onChange: (value: string) => void;
-  originalValue: string;
-  prompt: string;
-};
-
-const fieldSx = {
-  "& .MuiInputBase-root": {
-    fontSize: 16,
-    paddingTop: 1.5,
-  },
-  "& .MuiInputLabel-root": {
-    color: "#8b938d",
-    fontSize: 13,
-    transform: "translate(0, -1px) scale(0.85)",
-  },
-  "& .MuiInput-underline:before": {
-    borderBottomColor: "#cfd6cf",
-  },
-  "& .MuiInput-underline:after": {
-    borderBottomColor: "#2D7A45",
-  },
-};
-
-const sectionCardSx = {
-  borderRadius: "18px",
-  borderColor: "#dfe8df",
-  boxShadow: "0 8px 24px rgba(31,60,44,0.05)",
-};
-
-const sectionHeadingSx = {
-  color: "#1e2320",
-  fontSize: 28,
-  fontWeight: 700,
-  mb: 2,
-  lineHeight: 1.15,
-};
-
-const selectionControlSx = {
-  color: "#b7c1b8",
-  "&.Mui-checked": {
-    color: "#1976D2",
-  },
-};
-
-const initialReviewData = {
-  aiStory:
-    "The Full Belly Community Garden in Scarborough, Maine, provides over 300 pounds of organic produce annually to local food-insecure families and seniors. Beyond its harvest, it serves as an educational hub for at-risk youth and neighbors through nature exploration and hands-on workshops.",
-  beneficiaries: [
-    "Children (ages 0-12)",
-    "Families",
-    "Seniors / Older adults",
-    "Food-insecure individuals or households",
-  ],
-  contactEmail: "rogerdoiron@gmail.com",
-  contactFirstName: "Roger",
-  contactLastName: "Doiron",
-  contactRole: "Director",
-  ein: "81-9345210",
-  fundraisingGoal: "600",
-  gardenCity: "Scarborough",
-  gardenCountry: "United States",
-  gardenSize: "2000",
-  gardenState: "Maine",
-  impactCount: "250",
-  isExistingGarden: true,
-  locationStreet1: "123 Scarborough Dr",
-  locationStreet2: "",
-  mailingCity: "Scarborough",
-  mailingCountry: "United States",
-  mailingState: "Maine",
-  organizationName: "Fully Belly Community Garden",
-  projectCategory: "Community Garden",
-  storyChallenge:
-    "The Full Belly Community Garden addresses the challenge of food insecurity, specifically the difficulty many local families and seniors face in accessing fresh, affordable organic produce.",
-  storyChallengeAi:
-    "This garden helps address local food insecurity by improving access to fresh, affordable organic produce for families and seniors in the community.",
-  storyGrowingSeason:
-    "During the growing season, the garden becomes a vibrant oasis where volunteers host monthly workshops, teach hands-on gardening skills, and create a safe place for at-risk youth to explore nature.",
-  storyGrowingSeasonAi:
-    "Throughout the growing season, the garden becomes an active learning space where volunteers lead workshops, build gardening skills, and welcome youth into a safe outdoor environment.",
-  storyLocation:
-    "The Full Belly Community Garden in Scarborough, Maine, provides over 300 pounds of produce annually to local food-insecure families and seniors. Beyond its harvest, it serves as an educational hub for at-risk youth and neighbors through nature exploration and hands-on workshops.",
-  storyLocationAi:
-    "Located in Scarborough, Maine, the Full Belly Community Garden provides hundreds of pounds of produce each year while also serving as a hands-on learning space for neighbors, youth, and local families.",
-  zipcode: "98921",
-};
-
-const beneficiaryOptions = [
-  "Children (ages 0-12)",
-  "Youth / Adolescents (ages 13-18)",
-  "Families",
-  "Seniors / Older adults",
-  "Low-income individuals or households",
-  "Food-insecure individuals or households",
-  "Immigrants and refugees",
-  "Indigenous / Native communities",
-  "People with disabilities",
-  "Veterans and military families",
-  "People experiencing homelessness or housing insecurity",
-  "Unemployed or underemployed individuals",
-  "Justice-involved individuals",
-  "Rural communities",
-  "Urban communities",
-  "Other (please specify)",
-];
-
-const projectCategoryOptions = [
-  "Community Garden",
-  "School or Youth Garden",
-  "Food Pantry or Food Bank Garden",
-  "Urban Farm",
-  "Refugee or Immigrant Garden",
-  "Tribal or Indigenous Garden Project",
-  "Shelter or Transitional Housing Garden",
-  "Therapeutic or Healing Garden",
-  "Job Training or Vocational Garden",
-  "Demonstration or Education Garden",
-  "Multi-Site Garden Program",
-  "Other (please specify)",
-];
-
-function ReviewSectionCard({
-  children,
-  subtitle,
-  title,
-}: ReviewSectionCardProps) {
-  return (
-    <Card variant="outlined" sx={sectionCardSx}>
-      <CardContent sx={{ p: 3.5 }}>
-        <Typography
-          sx={{ color: "#1f2320", fontSize: 18, fontWeight: 700, mb: 0.25 }}
-        >
-          {title}
-          <Box component="span" sx={{ color: "#f4a13e", ml: 0.5 }}>
-            *
-          </Box>
-        </Typography>
-        {subtitle && (
-          <Typography sx={{ color: "#626963", fontSize: 13, mb: 2 }}>
-            {subtitle}
-          </Typography>
-        )}
-        {children}
-      </CardContent>
-    </Card>
-  );
-}
-
-function EditableField({
-  label,
-  multiline = false,
-  onChange,
-  rows,
-  value,
-}: EditableFieldProps) {
-  return (
-    <TextField
-      fullWidth
-      label={label}
-      multiline={multiline}
-      onChange={(event) => onChange(event.target.value)}
-      rows={rows}
-      slotProps={{ inputLabel: { shrink: true } }}
-      value={value}
-      variant="standard"
-      sx={fieldSx}
-    />
-  );
-}
-
-function StoryEditor({
-  finalValue,
-  aiValue,
-  onChange,
-  originalValue,
-  prompt,
-}: StoryEditorProps) {
-  return (
-    <Box sx={{ mb: 4 }}>
-      <Typography sx={{ color: "#1f2320", fontSize: 15, fontWeight: 700, mb: 2 }}>
-        {prompt}
-      </Typography>
-      <Stack spacing={2}>
-        {[
-          { editable: false, label: "Original Version", value: originalValue },
-          { editable: false, label: "AI Polished Version ", value: aiValue },
-          { editable: true, label: "Final Version", value: finalValue },
-        ].map((entry) => (
-          <Stack
-            key={entry.label}
-            direction={{ xs: "column", md: "row" }}
-            spacing={2}
-            alignItems={{ xs: "flex-start", md: "flex-start" }}
-          >
-            <Chip
-              label={entry.label}
-              variant="outlined"
-              sx={{
-                borderColor: "#d1d9d1",
-                color: "#5a625c",
-                fontSize: 12,
-                height: 30,
-                minWidth: 140,
-              }}
-            />
-            <TextField
-              fullWidth
-              InputProps={{ readOnly: !entry.editable }}
-              label={entry.label === "Final Version" ? prompt : " "}
-              multiline
-              onChange={(event) => onChange(event.target.value)}
-              rows={3}
-              slotProps={{ inputLabel: { shrink: true } }}
-              value={entry.value}
-              variant="standard"
-              sx={fieldSx}
-            />
-          </Stack>
-        ))}
-      </Stack>
-    </Box>
-  );
-}
-
-function ActionModal({
-  body,
-  confirmLabel,
-  onClose,
-  onConfirm,
-  secondaryLabel,
-  onSecondaryAction,
-  title,
-}: {
-  body: React.ReactNode;
-  confirmLabel: string;
-  onClose: () => void;
-  onConfirm: () => void;
-  onSecondaryAction?: () => void;
-  secondaryLabel?: string;
-  title: string;
-}) {
-  return (
-    <div className="fixed inset-0 z-40 bg-[rgba(31,41,35,0.24)]">
-      <div className="ml-[240px] flex min-h-screen items-center justify-center px-4">
-        <div className="w-full max-w-[760px] rounded bg-white shadow-[0_18px_48px_rgba(0,0,0,0.2)]">
-          <div className="flex items-start justify-between px-10 pb-2 pt-8">
-            <h3 className="text-[18px] font-semibold text-[#214E34]">{title}</h3>
-            <button
-              type="button"
-              onClick={onClose}
-              className="rounded p-1 text-[#7d8480] transition-colors hover:bg-[#f2f4f2]"
-              aria-label="Close dialog"
-            >
-              <CloseOutlinedIcon />
-            </button>
-          </div>
-
-          <div className="px-10 pb-8 pt-4 text-[14px] text-[#727873]">{body}</div>
-
-          <div className="flex items-center justify-end gap-4 px-10 pb-8">
-            <button
-              type="button"
-              onClick={onSecondaryAction ?? onClose}
-              className="px-2 py-2 text-[14px] font-semibold text-[#6e7570]"
-            >
-              {secondaryLabel ?? "CANCEL"}
-            </button>
-            <button
-              type="button"
-              onClick={onConfirm}
-              className="rounded-[12px] bg-[#2D7A45] px-5 py-3 text-[13px] font-semibold text-white"
-            >
-              {confirmLabel}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-function UploadedPhotoCard({
-  showSetAsMain = true,
-  title,
-}: {
-  showSetAsMain?: boolean;
-  title: string;
-}) {
-  return (
-    <Box sx={{ mb: 2.5 }}>
-      <Box
-        sx={{
-          overflow: "hidden",
-          borderRadius: "10px",
-          border: "1px solid #dfe7df",
-          mb: 1.5,
-          position: "relative",
-        }}
-      >
-        {showSetAsMain && (
-          <Box
-            sx={{
-              position: "absolute",
-              left: 12,
-              top: 12,
-              zIndex: 1,
-              border: "1px solid #98b79b",
-              borderRadius: "8px",
-              bgcolor: "white",
-              color: "#4f7e55",
-              fontSize: 11,
-              fontWeight: 700,
-              px: 1,
-              py: 0.5,
-            }}
-          >
-            SET AS MAIN PHOTO
-          </Box>
-        )}
-        <Image
-          alt={title}
-          height={420}
-          src="/seedmoneyTeam.png"
-          style={{ display: "block", height: "auto", width: "100%" }}
-          width={840}
-        />
-      </Box>
-
-      <Stack direction="row" justifyContent="space-between" alignItems="center">
-        <Stack direction="row" spacing={1.5} alignItems="flex-start">
-          <UploadFileIcon sx={{ color: "#4a7fe3", fontSize: 18, mt: 0.4 }} />
-          <Box>
-            <Typography sx={{ color: "#4a514c", fontSize: 14 }}>
-              document_file_name.pdf
-            </Typography>
-            <Typography sx={{ color: "#89918b", fontSize: 12 }}>
-              100kb • Complete
-            </Typography>
-          </Box>
-        </Stack>
-
-        <Stack direction="row" spacing={1.5} alignItems="center">
-          <DeleteIcon sx={{ color: "#5f665f", fontSize: 18 }} />
-          <CheckIcon sx={{ color: "#63a46b", fontSize: 18 }} />
-        </Stack>
-      </Stack>
-    </Box>
-  );
-}
+  beneficiaryOptions,
+  categoryOptions,
+} from "@/src/components/ongoing-campaigns/options";
+import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
+import BaseModal from "@/src/components/bases/BaseModal";
+import BaseAlert from "@/src/components/bases/BaseAlert";
 
 export default function CampaignReviewPage() {
-  const params = useParams<{ campaignId: string }>();
   const router = useRouter();
-  const baseApplication = getReviewApplicationById(Number(params.campaignId));
-  const [formData, setFormData] = useState(() => ({
-    ...initialReviewData,
-    campaignTitle:
-      baseApplication?.campaignTitle ?? initialReviewData.organizationName,
-    organizationName:
-      baseApplication?.campaignTitle ?? initialReviewData.organizationName,
-  }));
-  const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const params = useParams();
+  const campaignId = params?.["campaignId"] as string;
+  const parsedCampaignId = Number(campaignId);
 
-  if (!baseApplication) {
-    notFound();
+  const updateCampaignMutation = useUpdateCampaign();
+  const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
+  const setMainImageMutation = useSetMainCampaignImage(parsedCampaignId);
+
+  const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
+  const [formData, setFormData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
+  const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
+  const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+  const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
+  const [showSuccessToast, setShowSuccessToast] = useState(false);
+  const [showErrorToast, setShowErrorToast] = useState(false);
+  const [saveErrorMessage, setSaveErrorMessage] = useState("");
+
+  const [isApprovedModalOpen, setIsApprovedModalOpen] = useState(false);
+  const [isDeniedModalOpen, setIsDeniedModalOpen] = useState(false);
+  const [isRestoredModalOpen, setIsRestoredModalOpen] = useState(false);
+
+  const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
+
+  const isFormDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
+  const status = formData.status;
+
+  useEffect(() => {
+    if (!campaignEditData) return;
+
+    if (initialData.campaignTitle === "") {
+      // eslint-disable-next-line react-hooks/set-state-in-effect
+      setInitialData(campaignEditData.mappedData);
+      setFormData(campaignEditData.mappedData);
+    } else {
+      const localChanged =
+        JSON.stringify(formData.imageRecords) !==
+        JSON.stringify(initialData.imageRecords);
+      if (!localChanged) {
+        setFormData((prev) => ({
+          ...prev,
+          imageRecords: campaignEditData.mappedData.imageRecords,
+        }));
+        setInitialData((prev) => ({
+          ...prev,
+          imageRecords: campaignEditData.mappedData.imageRecords,
+        }));
+      }
+    }
+  }, [campaignEditData]);
+
+  const setFieldValue = useCallback(
+    <K extends keyof EditCampaignFormData,>(field: K, value: EditCampaignFormData[K]) => {
+      setFormData((prev) => ({ ...prev, [field]: value }));
+    }, [],
+  );
+
+  const handleTextChange = useCallback(
+    (field: TextFieldKey) =>
+      (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+        setFieldValue(field, e.target.value);
+      },
+    [setFieldValue],
+  );
+
+  const handleToggleBeneficiary = useCallback((option: string) => {
+    setFormData((prev) => {
+      const current = prev.gardenBeneficiaries;
+      const next = current.includes(option)
+        ? current.filter((item) => item !== option)
+        : [...current, option];
+      return { ...prev, gardenBeneficiaries: next };
+    });
+  }, []);
+
+  const handleStatusUpdate = useCallback(async (newStatus: Status) => {
+    if (isFormDirty) {
+      setIsSaveAlertOpen(true);
+      return;
+    }
+    await updateCampaignMutation.mutateAsync({
+      campaignId: parsedCampaignId,
+      campaignData: { status: newStatus },
+    });
+    setFieldValue("status", newStatus);
+    router.push("/dashboard/review-applications");
+  }, [isFormDirty, parsedCampaignId, updateCampaignMutation, setFieldValue, router]);
+
+  const handleConfirmSave = useCallback(async () => {
+    if (!parsedCampaignId) return;
+
+    try {
+      const campaignPayload: Partial<Campaign> = {
+        name: formData.campaignTitle,
+        impact: Number(formData.beneficiaryCount) || 0,
+        size: Number(formData.gardenSize) || 0,
+        existence: (formData.gardenStatus || "existing") as Existence,
+        goal: Number(formData.fundraisingGoal) || 0,
+        city: formData.gardenCity,
+        state: formData.gardenState,
+        country: formData.gardenCountry,
+        project_category: formData.gardenCategory,
+        project_beneficiaries: formData.gardenBeneficiaries,
+        organization_name: formData.organizationName,
+        ein: formData.organizationIdentifier,
+        mailing_street_1: formData.mailingStreet1,
+        mailing_street_2: formData.mailingStreet2,
+        mailing_city: formData.mailingCity,
+        mailing_state: formData.mailingState,
+        mailing_country: formData.mailingCountry,
+        mailing_zipcode: formData.mailingZip,
+        contact_first_name: formData.contactFirstName,
+        contact_last_name: formData.contactLastName,
+        contact_email: formData.contactEmail,
+        contact_role: formData.contactRole,
+      };
+
+      await updateCampaignMutation.mutateAsync({
+        campaignId: parsedCampaignId,
+        campaignData: campaignPayload,
+      });
+
+      const answersData = campaignEditData?.answersData;
+      if (answersData) {
+        const buildAnswerUpdate = (qNum: number, finalValue: string) => {
+          const ans = answersData.find((a: AnswerWithQuestion) => a.questions?.question_number === qNum);
+          if (ans?.answer_id) return updateAnswer(ans.answer_id, { final_answer: finalValue });
+          return Promise.resolve(null);
+        };
+
+        await Promise.all([
+          buildAnswerUpdate(1, formData.storyLocationAndAudienceFinal),
+          buildAnswerUpdate(2, formData.storyChallengeFinal),
+          buildAnswerUpdate(3, formData.storySeasonActivityFinal),
+          buildAnswerUpdate(4, formData.storyCampaignImpactFinal),
+        ]);
+      }
+
+      const imageChanged =
+        JSON.stringify(formData.imageRecords) !==
+        JSON.stringify(initialData.imageRecords);
+      if (imageChanged) {
+        const mainImage = formData.imageRecords.find((r) => r.is_main);
+        if (mainImage) {
+          await setMainImageMutation.mutateAsync(mainImage.id);
+        }
+      }
+
+      setInitialData(formData);
+      setIsSaveModalOpen(false);
+      setShowSuccessToast(true);
+    } catch (err) {
+      const message = err instanceof Error ? err.message : "An unknown error occurred.";
+      console.error("Save error:", message);
+      setSaveErrorMessage(message);
+      setIsSaveModalOpen(false);
+      setShowErrorToast(true);
+    }
+  }, [formData, initialData, parsedCampaignId, campaignEditData, updateCampaignMutation, setMainImageMutation]);
+
+  const navigateToCampaignPage = useCallback(() => {
+    if (!parsedCampaignId) {
+      router.push("/dashboard/ongoing-campaigns");
+      return;
+    }
+    router.push(`/dashboard/review-applications`);
+  }, [parsedCampaignId, router]);
+
+  const handleAttemptLeave = useCallback(() => {
+    if (isFormDirty) { setIsCancelModalOpen(true); return; }
+    navigateToCampaignPage();
+  }, [isFormDirty, navigateToCampaignPage]);
+
+  const handleConfirmCancel = useCallback(() => {
+    setIsCancelModalOpen(false);
+    navigateToCampaignPage();
+  }, [navigateToCampaignPage]);
+
+  const handleAttemptDiscard = useCallback(() => {
+    if (!isFormDirty) return;
+    setIsDiscardModalOpen(true);
+  }, [isFormDirty]);
+
+  const handleConfirmDiscard = useCallback(() => {
+    setFormData(initialData);
+    setIsDiscardModalOpen(false);
+  }, [initialData]);
+
+  if (!parsedCampaignId) return null;
+  if (isLoading) return <Loading />;
+  if (error) return <AppError error={error as Error} reset={() => refetch()} />;
+  if (!campaignEditData) return <NotFound />;
+  if (
+    campaignEditData.mappedData.status !== "submitted_under_review" &&
+    campaignEditData.mappedData.status !== "not_approved"
+  ) {
+    return <NotFound />;
   }
 
-  const application = baseApplication;
-  const isDeniedApplication = application.status === "DENIED";
-
-  const isDirty = useMemo(() => {
-    return JSON.stringify(formData) !== JSON.stringify({
-      ...initialReviewData,
-      campaignTitle: application.campaignTitle,
-      organizationName: application.campaignTitle,
-    });
-  }, [application.campaignTitle, formData]);
-
-  const handleFieldChange = <K extends keyof typeof formData>(
-    key: K,
-    value: (typeof formData)[K],
-  ) => {
-    setFormData((current) => ({ ...current, [key]: value }));
-  };
-
-  const handleBackClick = () => {
-    if (isDirty) {
-      setActiveModal("unsaved");
-      return;
-    }
-
-    router.push("/dashboard/review-applications");
-  };
-
-  const handleConfirmAction = () => {
-    if (activeModal === "unsaved") {
-      router.push("/dashboard/review-applications");
-      return;
-    }
-
-    if (
-      activeModal === "approve" ||
-      activeModal === "deny" ||
-      activeModal === "revert"
-    ) {
-      // Later this should call the backend to change this campaign's status.
-      // After that, load this page again so it shows the real database state.
-      setActiveModal(null);
-    }
-  };
-
   return (
-    <div className="flex min-h-screen bg-[#f8fbf8]">
-      <Navbar/>
+    <div className="flex min-h-screen">
+      <Navbar />
 
-      <main className="flex-1 px-6 py-8 sm:px-10 md:px-12">
-        <div className="mx-auto max-w-[1120px]">
-          <div className="relative z-20 flex flex-col gap-4 pb-6">
-            <div>
-              <Typography
-                sx={{
-                  color: "#214E34",
-                  fontSize: { xs: 30, md: 38 },
-                  fontWeight: 700,
-                  letterSpacing: "-0.04em",
-                  lineHeight: 1.1,
-                  mb: 2,
-                }}
-              >
-                Review Campaigns - {application.campaignTitle}
-              </Typography>
+      <BaseModal
+        open={!!isApprovedModalOpen}
+        onClose={() => setIsApprovedModalOpen(false)}
+        title="Confirm Approval"
+      >
+        <div className="px-4 pb-4 text-[16px] text-[#727873]">
+          <p>You are about to approve:</p>
+          <ul className="mt-2 mb-2 list-disc pl-6 text-[#222622]">
+            <li>
+              {campaignEditData.mappedData.campaignTitle}
+            </li>
+          </ul>
+          <p>Are you sure you would like to approve?</p>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-4 pb-4">
+          <Button
+            onClick={() => setIsApprovedModalOpen(false)}
+            variant="text"
+          >
+            CANCEL
+          </Button>
+          <Button
+            onClick= {() => handleStatusUpdate("approved")}
+            variant="contained"
+            color="success"
+          >
+            APPROVE
+          </Button>
+        </div>
 
-              <button
-                type="button"
-                onClick={handleBackClick}
-                className="inline-flex items-center gap-1 text-[12px] font-bold uppercase tracking-[0.05em] text-[#69736b] cursor-pointer"
-              >
-                <ArrowBackIcon sx={{ fontSize: 16 }} />
-                Back
-              </button>
-            </div>
+      </BaseModal>
+
+      <BaseModal
+        open={!!isDeniedModalOpen}
+        onClose={() => setIsDeniedModalOpen(false)}
+        title="Confirm Denial"
+      >
+        <div className="px-4 pb-4 text-[16px] text-[#727873]">
+          <p>You are about to deny:</p>
+          <ul className="mt-2 mb-2 list-disc pl-6 text-[#222622]">
+            <li>
+              {campaignEditData.mappedData.campaignTitle}
+            </li>
+          </ul>
+          <p>Are you sure you would like to deny? You can view denied campaigns using the “DENIED” tab. </p>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-4 pb-4">
+          <Button
+            onClick={() => setIsDeniedModalOpen(false)}
+            variant="text"
+          >
+            CANCEL
+          </Button>
+          <Button
+            onClick= {() => handleStatusUpdate("not_approved")}
+            variant="contained"
+            color="success"
+          >
+            DENY
+          </Button>
+        </div>
+      </BaseModal>
+
+      <BaseModal
+        open={!!isRestoredModalOpen}
+        onClose={() => setIsRestoredModalOpen(false)}
+        title="Confirm Restore"
+      >
+        <div className="px-4 pb-4 text-[16px] text-[#727873]">
+          <p>You are about to restore:</p>
+          <ul className="mt-2 mb-2 list-disc pl-6 text-[#222622]">
+            <li>
+              {campaignEditData.mappedData.campaignTitle}
+            </li>
+          </ul>
+          <p>Are you sure you would like to restore? You can view restored campaigns using the “PENDING” tab.</p>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-4 pb-4">
+          <Button
+            onClick={() => setIsRestoredModalOpen(false)}
+            variant="text"
+          >
+            CANCEL
+          </Button>
+          <Button
+            onClick= {() => handleStatusUpdate("submitted_under_review")}
+            variant="contained"
+          >
+            RESTORE
+          </Button>
+        </div>
+      </BaseModal>
+
+      <BaseAlert
+        open={!!isSaveAlertOpen}
+        onClose={() => setIsSaveAlertOpen(false)}
+        title="Reminder to save changes!"
+      >
+        Make sure to save your changes before making status changes!
+      </BaseAlert>
+
+      <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
+        <EditCampaignHeader
+          text={`Review Application - ${formData.campaignTitle}`}
+          onBack={handleAttemptLeave}
+        />
+
+        <div className="flex items-start gap-24">
+          <div className="flex-1 flex flex-col gap-6">
+            <CampaignInformationSection
+              formData={formData}
+              onTextChange={handleTextChange}
+              setFieldValue={setFieldValue}
+            />
+
+            <GardenInformationSection
+              formData={formData}
+              categoryOptions={categoryOptions}
+              beneficiaryOptions={beneficiaryOptions}
+              onTextChange={handleTextChange}
+              setFieldValue={setFieldValue}
+              onToggleBeneficiary={handleToggleBeneficiary}
+            />
+
+            <GardenStorySection
+              formData={formData}
+              onTextChange={handleTextChange}
+              questions={campaignEditData.storyQuestions}
+            />
+
+            <CampaignMediaSection
+              formData={formData}
+              campaignId={parsedCampaignId}
+              setFieldValue={setFieldValue}
+            />
+
+            <ContactInformationSection
+              formData={formData}
+              onTextChange={handleTextChange}
+              setFieldValue={setFieldValue}
+            />
           </div>
 
-          <div className="mt-8 flex flex-col gap-6 lg:flex-row lg:items-start lg:gap-8">
-            <div className="min-w-0 flex-1">
-              <Stack spacing={5}>
-            <Box>
-              <Typography sx={sectionHeadingSx}>
-                Campaign Information
-              </Typography>
-              <Stack spacing={2}>
-                <ReviewSectionCard
-                  subtitle="The name of your garden, e.g. Fairview Community Garden, Pleasantville Primary School Garden, Holy Jalapeno Church Garden, etc."
-                  title="Campaign Title"
+          <div className="flex flex-col gap-2 sticky top-10">
+            {status === "submitted_under_review" && (
+              <>
+                <Button
+                  variant="contained"
+                  disabled={updateCampaignMutation.isPending}
+                  onClick={() => setIsApprovedModalOpen(true)}
                 >
-                  <EditableField
-                    label="Campaign Title"
-                    value={formData.campaignTitle}
-                    onChange={(value) => handleFieldChange("campaignTitle", value)}
-                  />
-                </ReviewSectionCard>
-
-                <ReviewSectionCard title="Project Details & Impact">
-                  <Stack spacing={3}>
-                    <EditableField
-                      label="About how many people will benefit from this garden this year?"
-                      value={formData.impactCount}
-                      onChange={(value) => handleFieldChange("impactCount", value)}
-                    />
-
-                    <Box>
-                      <Typography sx={{ color: "#1f2320", fontSize: 14, fontWeight: 700, mb: 1 }}>
-                        Is this a new or existing garden?
-                      </Typography>
-                      <Stack spacing={0.5}>
-                        <FormControlLabel
-                          control={
-                            <Radio
-                              checked={!formData.isExistingGarden}
-                              onChange={() =>
-                                handleFieldChange("isExistingGarden", false)
-                              }
-                              sx={selectionControlSx}
-                            />
-                          }
-                          label="New garden"
-                          sx={{ ml: -0.5 }}
-                        />
-                        <FormControlLabel
-                          control={
-                            <Radio
-                              checked={formData.isExistingGarden}
-                              onChange={() =>
-                                handleFieldChange("isExistingGarden", true)
-                              }
-                              sx={selectionControlSx}
-                            />
-                          }
-                          label="Existing garden"
-                          sx={{ ml: -0.5 }}
-                        />
-                      </Stack>
-                    </Box>
-
-                    <EditableField
-                      label="Approximate garden size or scope"
-                      value={formData.gardenSize}
-                      onChange={(value) => handleFieldChange("gardenSize", value)}
-                    />
-                  </Stack>
-                </ReviewSectionCard>
-
-                <ReviewSectionCard
-                  subtitle="Most SeedMoney projects set goals between $500 and $5,000"
-                  title="Fundraising Goal"
+                  APPROVE
+                </Button>
+                <Button
+                  variant="outlined"
+                  disabled={updateCampaignMutation.isPending}
+                  onClick={() => setIsDeniedModalOpen(true)}
                 >
-                  <EditableField
-                    label="Fundraising Goal (USD)"
-                    value={formData.fundraisingGoal}
-                    onChange={(value) => handleFieldChange("fundraisingGoal", value)}
-                  />
-                </ReviewSectionCard>
-              </Stack>
-            </Box>
+                  DENY
+                </Button>
+              </>
+            )}
 
-            <Box>
-              <Typography sx={sectionHeadingSx}>
-                Garden Information
-              </Typography>
-              <Stack spacing={2}>
-                <ReviewSectionCard title="Garden Location">
-                  <Stack spacing={2}>
-                    <EditableField
-                      label="City"
-                      value={formData.gardenCity}
-                      onChange={(value) => handleFieldChange("gardenCity", value)}
-                    />
-                    <TextField
-                      fullWidth
-                      label="State / Province"
-                      select
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      value={formData.gardenState}
-                      variant="standard"
-                      sx={fieldSx}
-                      onChange={(event) =>
-                        handleFieldChange("gardenState", event.target.value)
-                      }
-                    >
-                      <MenuItem value="Maine">Maine</MenuItem>
-                      <MenuItem value="Maryland">Maryland</MenuItem>
-                    </TextField>
-                    <TextField
-                      fullWidth
-                      label="Country"
-                      select
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      value={formData.gardenCountry}
-                      variant="standard"
-                      sx={fieldSx}
-                      onChange={(event) =>
-                        handleFieldChange("gardenCountry", event.target.value)
-                      }
-                    >
-                      <MenuItem value="United States">United States</MenuItem>
-                      <MenuItem value="Canada">Canada</MenuItem>
-                    </TextField>
-                  </Stack>
-                </ReviewSectionCard>
+            {status === "not_approved" && (
+              <>
+                <Button
+                  variant="contained"
+                  color="success"
+                  disabled={updateCampaignMutation.isPending}
+                  onClick={() => setIsApprovedModalOpen(true)}
+                >
+                  APPROVE
+                </Button>
+                <Button
+                  variant="outlined"
+                  disabled={updateCampaignMutation.isPending}
+                  onClick={() => setIsRestoredModalOpen(true)}
+                >
+                  RESTORE
+                </Button>
+              </>
+            )}
 
-                <ReviewSectionCard title="Primary Project Category">
-                  <Typography sx={{ color: "#626963", fontSize: 13, mb: 1.5 }}>
-                    Select one:
-                  </Typography>
-                  <Stack spacing={0.5}>
-                    {projectCategoryOptions.map((label) => (
-                      <FormControlLabel
-                        key={label}
-                        control={
-                          <Radio
-                            checked={formData.projectCategory === label}
-                            onChange={() => handleFieldChange("projectCategory", label)}
-                            sx={selectionControlSx}
-                          />
-                        }
-                        label={label}
-                        sx={{ ml: -0.5 }}
-                      />
-                    ))}
-                  </Stack>
-                </ReviewSectionCard>
-
-                <ReviewSectionCard title="Beneficiary Populations Served">
-                  <Typography sx={{ color: "#626963", fontSize: 13, mb: 1.5 }}>
-                    Select all that apply:
-                  </Typography>
-                  <Stack spacing={0.5}>
-                    {beneficiaryOptions.map((label) => (
-                      <FormControlLabel
-                        key={label}
-                        control={
-                          <Checkbox
-                            checked={formData.beneficiaries.includes(label)}
-                            onChange={() =>
-                              handleFieldChange(
-                                "beneficiaries",
-                                formData.beneficiaries.includes(label)
-                                  ? formData.beneficiaries.filter((item) => item !== label)
-                                  : [...formData.beneficiaries, label],
-                              )
-                            }
-                            sx={selectionControlSx}
-                          />
-                        }
-                        label={label}
-                        sx={{ ml: -0.5 }}
-                      />
-                    ))}
-                  </Stack>
-                </ReviewSectionCard>
-              </Stack>
-            </Box>
-
-            <Box>
-              <Typography sx={sectionHeadingSx}>
-                Garden Story
-              </Typography>
-              <ReviewSectionCard subtitle="2–3 sentences each" title="Garden Story">
-                <StoryEditor
-                  finalValue={formData.storyLocation}
-                  aiValue={initialReviewData.storyLocationAi}
-                  originalValue={initialReviewData.storyLocation}
-                  prompt="Where is your garden, and who does it serve?"
-                  onChange={(value) => handleFieldChange("storyLocation", value)}
-                />
-                <StoryEditor
-                  finalValue={formData.storyChallenge}
-                  aiValue={initialReviewData.storyChallengeAi}
-                  originalValue={initialReviewData.storyChallenge}
-                  prompt="What challenge does your garden help address, and why does it matter locally?"
-                  onChange={(value) => handleFieldChange("storyChallenge", value)}
-                />
-                <StoryEditor
-                  finalValue={formData.storyGrowingSeason}
-                  aiValue={initialReviewData.storyGrowingSeasonAi}
-                  originalValue={initialReviewData.storyGrowingSeason}
-                  prompt="What happens in the garden during the growing season?"
-                  onChange={(value) => handleFieldChange("storyGrowingSeason", value)}
-                />
-              </ReviewSectionCard>
-            </Box>
-
-            <Box>
-              <ReviewSectionCard
-                subtitle="Upload one clear, high-quality photo that best represents your project. This photo will appear at the top of your campaign page."
-                title="Main Photo"
-              >
-                <UploadedPhotoCard showSetAsMain={false} title="Main Photo" />
-              </ReviewSectionCard>
-              <Box sx={{ height: 16 }} />
-              <ReviewSectionCard
-                subtitle={
-                  <>
-                    You may upload up to five additional photos that help tell your
-                    garden&apos;s story.
-                    <br />
-                    *Please choose real, authentic photos of your project — for
-                    example, people working in the garden, harvesting food,
-                    learning together, or the garden space itself.
-                    <br />
-                    *Do not upload logos, flyers, graphics, or AI-generated images.
-                    These photos should reflect real people and real places
-                    connected to your project.
-                  </>
-                }
-                title="Supporting Photos"
-              >
-                <UploadedPhotoCard title="Supporting Photo 1" />
-                <UploadedPhotoCard title="Supporting Photo 2" />
-                <UploadedPhotoCard title="Supporting Photo 3" />
-              </ReviewSectionCard>
-            </Box>
-
-            <Box>
-              <Typography sx={sectionHeadingSx}>
-                Contact Information
-              </Typography>
-              <Stack spacing={2}>
-                <ReviewSectionCard title="Organization Information">
-                  <Stack spacing={2}>
-                    <EditableField
-                      label="Legal Name of Beneficiary Organization"
-                      value={formData.organizationName}
-                      onChange={(value) => handleFieldChange("organizationName", value)}
-                    />
-                    <EditableField
-                      label="EIN or Public-Sector Identifier"
-                      value={formData.ein}
-                      onChange={(value) => handleFieldChange("ein", value)}
-                    />
-                  </Stack>
-                </ReviewSectionCard>
-
-                <ReviewSectionCard title="Beneficiary Organization Mailing Address">
-                  <Stack spacing={2}>
-                    <EditableField
-                      label="Street 1"
-                      value={formData.locationStreet1}
-                      onChange={(value) => handleFieldChange("locationStreet1", value)}
-                    />
-                    <EditableField
-                      label="Street 2"
-                      value={formData.locationStreet2}
-                      onChange={(value) => handleFieldChange("locationStreet2", value)}
-                    />
-                    <EditableField
-                      label="City"
-                      value={formData.mailingCity}
-                      onChange={(value) => handleFieldChange("mailingCity", value)}
-                    />
-                    <TextField
-                      fullWidth
-                      label="State / Province"
-                      select
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      value={formData.mailingState}
-                      variant="standard"
-                      sx={fieldSx}
-                      onChange={(event) =>
-                        handleFieldChange("mailingState", event.target.value)
-                      }
-                    >
-                      <MenuItem value="Maine">Maine</MenuItem>
-                      <MenuItem value="Maryland">Maryland</MenuItem>
-                    </TextField>
-                    <EditableField
-                      label="ZIP/Postal Code"
-                      value={formData.zipcode}
-                      onChange={(value) => handleFieldChange("zipcode", value)}
-                    />
-                    <TextField
-                      fullWidth
-                      label="Country"
-                      select
-                      slotProps={{ inputLabel: { shrink: true } }}
-                      value={formData.mailingCountry}
-                      variant="standard"
-                      sx={fieldSx}
-                      onChange={(event) =>
-                        handleFieldChange("mailingCountry", event.target.value)
-                      }
-                    >
-                      <MenuItem value="United States">United States</MenuItem>
-                      <MenuItem value="Canada">Canada</MenuItem>
-                    </TextField>
-                  </Stack>
-                </ReviewSectionCard>
-
-                <ReviewSectionCard title="Primary Contact Information">
-                  <Stack spacing={2}>
-                    <EditableField
-                      label="First Name"
-                      value={formData.contactFirstName}
-                      onChange={(value) => handleFieldChange("contactFirstName", value)}
-                    />
-                    <EditableField
-                      label="Last Name"
-                      value={formData.contactLastName}
-                      onChange={(value) => handleFieldChange("contactLastName", value)}
-                    />
-                    <EditableField
-                      label="Email"
-                      value={formData.contactEmail}
-                      onChange={(value) => handleFieldChange("contactEmail", value)}
-                    />
-                    <EditableField
-                      label="Role or Title"
-                      value={formData.contactRole}
-                      onChange={(value) => handleFieldChange("contactRole", value)}
-                    />
-                  </Stack>
-                </ReviewSectionCard>
-              </Stack>
-            </Box>
-              </Stack>
-            </div>
-
-            <aside className="w-full lg:sticky lg:top-8 lg:w-[132px] lg:shrink-0 lg:pt-[92px]">
-              <Stack direction="column" spacing={1.25}>
-                {isDeniedApplication ? (
-                  <Button
-                    variant="contained"
-                    onClick={() => setActiveModal("revert")}
-                    sx={{
-                      minHeight: 50,
-                      borderRadius: "10px",
-                      fontSize: 14,
-                      fontWeight: 700,
-                      letterSpacing: "0.08em",
-                      px: 2,
-                    }}
-                  >
-                    REVERT
-                  </Button>
-                ) : (
-                  <>
-                    <Button
-                      variant="contained"
-                      onClick={() => setActiveModal("approve")}
-                      sx={{
-                        minHeight: 50,
-                        borderRadius: "10px",
-                        fontSize: 14,
-                        fontWeight: 700,
-                        letterSpacing: "0.08em",
-                        px: 2,
-                      }}
-                    >
-                      APPROVE
-                    </Button>
-                    <Button
-                      variant="outlined"
-                      onClick={() => setActiveModal("deny")}
-                      sx={{
-                        minHeight: 50,
-                        borderRadius: "10px",
-                        fontSize: 14,
-                        fontWeight: 700,
-                        letterSpacing: "0.08em",
-                        px: 2,
-                      }}
-                    >
-                      DENY
-                    </Button>
-                  </>
-                )}
-              </Stack>
-            </aside>
+            <EditCampaignActions
+              isFormDirty={isFormDirty}
+              onSave={() => setIsSaveModalOpen(true)}
+              onCancel={handleAttemptDiscard}
+            />
           </div>
         </div>
-      </main>
 
-      {activeModal === "approve" && (
-        <ActionModal
-          title="Confirm Approval"
-          confirmLabel="APPROVE"
-          onClose={() => setActiveModal(null)}
-          onConfirm={handleConfirmAction}
-          secondaryLabel="CANCEL"
-          body={
-            <>
-              <p>You are about to approve this campaign:</p>
-              <ul className="mt-2 list-disc pl-6 text-[#222622]">
-                <li>{application.campaignTitle}</li>
-              </ul>
-              <p className="mt-3">
-                Are you sure you would like to approve? This action cannot be
-                undone.
-              </p>
-            </>
-          }
-        />
-      )}
+        <div className="h-20" />
+      </div>
 
-      {activeModal === "deny" && (
-        <ActionModal
-          title="Confirm Denial"
-          confirmLabel="DENY"
-          onClose={() => setActiveModal(null)}
-          onConfirm={handleConfirmAction}
-          secondaryLabel="CANCEL"
-          body={
-            <>
-              <p>You are about to deny this campaign:</p>
-              <ul className="mt-2 list-disc pl-6 text-[#222622]">
-                <li>{application.campaignTitle}</li>
-              </ul>
-              <p className="mt-3">
-                Are you sure you would like to deny? This action cannot be undone.
-              </p>
-            </>
-          }
-        />
-      )}
-
-      {activeModal === "revert" && (
-        <ActionModal
-          title="Confirm Revert"
-          confirmLabel="REVERT"
-          onClose={() => setActiveModal(null)}
-          onConfirm={handleConfirmAction}
-          secondaryLabel="CANCEL"
-          body={
-            <>
-              <p>You are about to move this campaign back to pending:</p>
-              <ul className="mt-2 list-disc pl-6 text-[#222622]">
-                <li>{application.campaignTitle}</li>
-              </ul>
-              <p className="mt-3">
-                Are you sure you would like to revert it? This will return the
-                campaign to the pending list.
-              </p>
-            </>
-          }
-        />
-      )}
-
-      {activeModal === "unsaved" && (
-        <ActionModal
-          title="Unsaved changes"
-          confirmLabel="STAY"
-          onClose={() => setActiveModal(null)}
-          onConfirm={() => setActiveModal(null)}
-          secondaryLabel="LEAVE WITHOUT SAVING"
-          onSecondaryAction={() => router.push("/dashboard/review-applications")}
-          body={
-            <p className="text-[16px]">
-              Are you sure you want to leave this form? Your changes will not be
-              saved.
-            </p>
-          }
-        />
-      )}
+      <EditCampaignDialogs
+        initialData={initialData}
+        formData={formData}
+        isSaveModalOpen={isSaveModalOpen}
+        isCancelModalOpen={isCancelModalOpen}
+        isDiscardModalOpen={isDiscardModalOpen}
+        showSuccessToast={showSuccessToast}
+        showErrorToast={showErrorToast}
+        saveErrorMessage={saveErrorMessage}
+        onCloseSaveModal={() => setIsSaveModalOpen(false)}
+        onConfirmSave={handleConfirmSave}
+        onCloseCancelModal={() => setIsCancelModalOpen(false)}
+        onConfirmCancel={handleConfirmCancel}
+        onCloseDiscardModal={() => setIsDiscardModalOpen(false)}
+        onConfirmDiscard={handleConfirmDiscard}
+        onCloseToast={() => setShowSuccessToast(false)}
+        onCloseErrorToast={() => setShowErrorToast(false)}
+      />
     </div>
   );
 }

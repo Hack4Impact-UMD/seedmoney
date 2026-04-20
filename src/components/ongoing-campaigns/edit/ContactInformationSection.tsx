@@ -11,20 +11,16 @@ import {
   EditCampaignFormData,
   SetFieldValue,
   TextChangeHandler,
-} from "./types";
+} from "@src/types/frontend/campaignEdit";
 
 interface ContactInformationSectionProps {
   formData: EditCampaignFormData;
-  usStates: string[];
-  countries: string[];
   onTextChange: TextChangeHandler;
   setFieldValue: SetFieldValue;
 }
 
 export default function ContactInformationSection({
   formData,
-  usStates,
-  countries,
   onTextChange,
   setFieldValue,
 }: ContactInformationSectionProps) {
@@ -83,20 +79,15 @@ export default function ContactInformationSection({
           onChange={onTextChange("mailingCity")}
         />
 
-        <FormControl variant="standard" fullWidth>
-          <InputLabel>State / Province*</InputLabel>
-          <Select
-            value={formData.mailingState}
-            onChange={(e) => setFieldValue("mailingState", String(e.target.value))}
-            label="State / Province*"
-          >
-            {usStates.map((state) => (
-              <MenuItem key={state} value={state}>
-                {state}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+
+        <TextField
+          variant="standard"
+          label="State / Province*"
+          fullWidth
+          value={formData.mailingState}
+          onChange={onTextChange("mailingState")}
+        />
+
 
         <TextField
           variant="standard"
@@ -106,22 +97,13 @@ export default function ContactInformationSection({
           onChange={onTextChange("mailingZip")}
         />
 
-        <FormControl variant="standard" fullWidth>
-          <InputLabel>Country*</InputLabel>
-          <Select
-            value={formData.mailingCountry}
-            onChange={(e) =>
-              setFieldValue("mailingCountry", String(e.target.value))
-            }
-            label="Country*"
-          >
-            {countries.map((country) => (
-              <MenuItem key={country} value={country}>
-                {country}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+        <TextField
+          variant="standard"
+          label="Country*"
+          fullWidth
+          value={formData.mailingCountry}
+          onChange={onTextChange("mailingCountry")}
+        />
       </div>
 
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">

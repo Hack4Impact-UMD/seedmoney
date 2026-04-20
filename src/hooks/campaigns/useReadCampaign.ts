@@ -8,6 +8,7 @@ export default function useReadCampaigns(params?: { campaignId?: number | number
         queryKey: [params, 'campaigns', 'read'],
         queryFn: async () =>  {
           const data = await readCampaign(params?.campaignId);
+          
           if (!data) return [];
           return Array.isArray(data) ? data : [data];
         },
