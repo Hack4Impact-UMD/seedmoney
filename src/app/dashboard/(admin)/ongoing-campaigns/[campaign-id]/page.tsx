@@ -70,7 +70,10 @@ export default function AdminCampaignPage() {
           <button className="bg-white border border-[#2c7a45] text-[#2c7a45] px-4 py-2 rounded-md font-bold text-xs uppercase hover:bg-emerald-50 transition">
             Copy Campaign Site Link
           </button>
-          <button className="bg-white border border-[#2c7a45] text-[#2c7a45] px-4 py-2 rounded-md font-bold text-xs uppercase hover:bg-emerald-50 transition">
+          <button
+            onClick={() => router.push("/leaderboard")}
+            className="bg-white border border-[#2c7a45] text-[#2c7a45] px-4 py-2 rounded-md font-bold text-xs uppercase hover:bg-emerald-50 transition"
+          >
             View Leaderboard
           </button>
           <Link

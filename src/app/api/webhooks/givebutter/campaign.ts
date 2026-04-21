@@ -1,4 +1,4 @@
-import { WebhookPayload } from "./types";
+import { GivebuttercampaignPayload } from "./types";
 import {
   updateCampaignGivebutterID,
   createCampaignGivebutter,
@@ -6,7 +6,7 @@ import {
 import moment from "moment";
 
 export const campaignHandlers = {
-  "campaign.updated": async (payload: WebhookPayload) => {
+  "campaign.updated": async (payload: GivebuttercampaignPayload) => {
     if (!payload.data) return;
     console.log(payload);
     await updateCampaignGivebutterID(Number(payload.data.id), {
@@ -20,7 +20,7 @@ export const campaignHandlers = {
       status: "approved",
     });
   },
-  "campaign.created": async (payload: WebhookPayload) => {
+  "campaign.created": async (payload: GivebuttercampaignPayload) => {
     if (!payload.data) return;
     await createCampaignGivebutter({
       givebutter_id: String(payload.data.id),
@@ -41,7 +41,7 @@ export const campaignHandlers = {
       project_beneficiaries: [],
       existence: "new",
       impact: 0,
-      size: 0,
+      size: "",
       ein: "",
       contact_first_name: "",
       contact_last_name: "",

@@ -129,7 +129,7 @@ export default function DashboardShell({
         <Button 
           size="small" 
           variant="outlined"
-          onClick={() => router.push(`/dashboard/${selectedCampaignId}/donors`)}
+          onClick={() => router.push("/leaderboard")}
         >
           View Leaderboard
           <OpenInNew fontSize="small" className="text-[#123A1E] ml-[5px]" />

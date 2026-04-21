@@ -1,4 +1,4 @@
-import type { NewUser, NewUserInternal, Users } from "@/src/types";
+import type { EditableUser, NewUser, NewUserInternal, Users } from "@/src/types";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import type { UsersTableRow } from "@/src/types/frontend/usersTable";
 import type { Campaign } from "@/src/types/db/campaigns";
@@ -91,13 +91,35 @@ export async function readUser(userId: string): Promise<Users | null> {
 
 export async function updateUser(
   userId: string,
-  updatedUser: Partial<NewUserInternal>,
+  updatedUser: Partial<EditableUser>,
 ): Promise<Users | null> {
   const supabase = await createBrowserClient();
+  const sanitizedUpdatedUser: Partial<EditableUser> = {};
+
+  if ("first_name" in updatedUser) {
+    sanitizedUpdatedUser.first_name = updatedUser.first_name;
+  }
+  if ("middle_name" in updatedUser) {
+    sanitizedUpdatedUser.middle_name = updatedUser.middle_name;
+  }
+  if ("last_name" in updatedUser) {
+    sanitizedUpdatedUser.last_name = updatedUser.last_name;
+  }
+  if ("email" in updatedUser) {
+    sanitizedUpdatedUser.email = updatedUser.email;
+  }
+  if ("phone_number" in updatedUser) {
+    sanitizedUpdatedUser.phone_number = updatedUser.phone_number;
+  }
+
+  if (Object.keys(sanitizedUpdatedUser).length === 0) {
+    console.warn("No editable user fields provided for update:", userId);
+    return readUser(userId);
+  }
 
   const { data, error } = await supabase
     .from("users")
-    .update(updatedUser)
+    .update(sanitizedUpdatedUser)
     .eq("id", userId)
     .select("*")
     .maybeSingle();
@@ -135,4 +157,21 @@ export async function deleteUser(userId: string): Promise<boolean> {
   }
 
   return true;
+}
+
+export async function isExistingEmail(email: string): Promise<boolean> {
+  const supabase = await createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("users")
+    .select("id")
+    .eq("email", email)
+    .maybeSingle();
+
+  if (error) {
+    console.error("Error checking email:", error.message);
+    return false;
+  }
+
+  return data !== null;
 }

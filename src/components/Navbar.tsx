@@ -51,7 +51,6 @@ export default function Navbar() {
   };
 
   const handleSettings = () => {
-    console.log(firstName);
     router.push("/dashboard/settings");
   };
 
@@ -89,15 +88,19 @@ export default function Navbar() {
     );
 
   const getCampaignDisplayName = (campaign: Campaign) => {
+    const hasName = typeof campaign.name === "string" && campaign.name.trim() !== "";
+
     if (campaign.status === "in_progress") {
-      return `${campaign.name} (Draft)`;
+      return hasName ? `${campaign.name} (Draft)` : "Untitled Draft";
     }
 
     if (campaign.status === "submitted_under_review") {
-      return `${campaign.name} (Pending)`;
+      return hasName
+        ? `${campaign.name} (Pending)`
+        : "Untitled Campaign (Pending)";
     }
 
-    return campaign.name;
+    return hasName ? campaign.name : "Untitled Campaign";
   };
 
   const renderCampaignItem = (campaign: Campaign) => {
@@ -134,7 +137,7 @@ export default function Navbar() {
   return (
     <nav
       className={clsx(
-        "sticky! top-0! flex h-screen flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
+        "!sticky !top-0 flex h-screen min-h-0 flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
         isCollapsed ? "!w-[105px]" : "!w-[300px] xl:!w-[300px]",
       )}
     >
@@ -191,7 +194,7 @@ export default function Navbar() {
       </IconButton>
 
       {userData && isAdmin && (
-        <div className="scrollbar-hide mt-5 flex flex-1 flex-col overflow-y-auto overscroll-contain">
+        <div className="scrollbar-hide mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
           <List disablePadding>
             {[
               { label: "Home", path: "/dashboard" },
@@ -237,7 +240,7 @@ export default function Navbar() {
               );
             })}
           </List>
-          <div className="mt-auto flex flex-col gap-3 px-4 pb-6">
+          <div className="mt-auto shrink-0 flex flex-col gap-3 px-4 pb-6">
             <Button
               onClick={handleSettings}
               size="medium"
@@ -262,7 +265,7 @@ export default function Navbar() {
 
       {userData && !isAdmin && (
         <>
-          <div className="scrollbar-hide mt-5 flex flex-1 flex-col overflow-y-auto overscroll-contain">
+          <div className="scrollbar-hide mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
             {currentYearCampaigns.length > 0 && (
               <>
                 {!isCollapsed && (
@@ -316,7 +319,7 @@ export default function Navbar() {
             </List>
           </div>
 
-          <div className="flex flex-col gap-3 px-4 pb-6">
+          <div className="shrink-0 flex flex-col gap-3 px-4 pb-6">
             <Button
               size="large"
               variant="outlined"

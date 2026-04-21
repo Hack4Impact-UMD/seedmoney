@@ -11,6 +11,7 @@ import Visibility from "@mui/icons-material/Visibility";
 import VisibilityOff from "@mui/icons-material/VisibilityOff";
 import ConfirmEditModalShell from "./ConfirmEditModalShell";
 import VerificationCodeStep from "./VerificationCodeStep";
+import { createBrowserClient } from "@/src/lib/supabase-client";
 
 type ChangePasswordModalProps = {
   open: boolean;
@@ -19,7 +20,29 @@ type ChangePasswordModalProps = {
   onLogin?: () => void;
 };
 
-const VALID_DEMO_VERIFICATION_CODE = "123456";
+const validatePassword = (password: string) => {
+  if (!password) {
+    return null;
+  }
+
+  if (password.length < 8) {
+    return "Password must be at least 8 characters.";
+  }
+
+  if (!/[A-Z]/.test(password)) {
+    return "Password must include at least one capital letter.";
+  }
+
+  if (!/\d/.test(password)) {
+    return "Password must include at least one number.";
+  }
+
+  if (!/[^A-Za-z0-9]/.test(password)) {
+    return "Password must include at least one special character.";
+  }
+
+  return null;
+};
 
 export default function ChangePasswordModal({
   open,
@@ -35,15 +58,87 @@ export default function ChangePasswordModal({
   const [showNewPassword, setShowNewPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [passwordError, setPasswordError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSendingVerificationEmail, setIsSendingVerificationEmail] =
+    useState(false);
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
 
   const handleCancel = () => {
     onClose();
+  };
+
+  const handleSendVerificationEmail = async () => {
+    try {
+      setSubmitError(null);
+      setCodeError(null);
+      setIsSendingVerificationEmail(true);
+
+      const supabase = createBrowserClient();
+      const { error } = await supabase.auth.reauthenticate();
+
+      if (error) {
+        setSubmitError(error.message);
+        return;
+      }
+
+      setStep(1);
+    } finally {
+      setIsSendingVerificationEmail(false);
+    }
+  };
+
+  const handleUpdatePassword = async () => {
+    try {
+      setPasswordError(null);
+      setCodeError(null);
+      setIsUpdatingPassword(true);
+
+      const nextPasswordError = validatePassword(newPassword);
+
+      if (nextPasswordError) {
+        setPasswordError(nextPasswordError);
+        return;
+      }
+
+      if (newPassword !== confirmPassword) {
+        return;
+      }
+
+      const supabase = createBrowserClient();
+      const { error } = await supabase.auth.updateUser({
+        password: newPassword,
+        nonce: verificationCode.trim(),
+      });
+
+      if (error) {
+        const normalizedMessage = error.message.toLowerCase();
+
+        if (
+          normalizedMessage.includes("nonce") ||
+          normalizedMessage.includes("otp") ||
+          normalizedMessage.includes("token")
+        ) {
+          setCodeError(error.message);
+          setStep(1);
+          return;
+        }
+
+        setPasswordError(error.message);
+        return;
+      }
+
+      setStep(3);
+    } finally {
+      setIsUpdatingPassword(false);
+    }
   };
 
   const passwordsMatch =
     !!newPassword &&
     !!confirmPassword &&
     newPassword === confirmPassword;
+  const localPasswordError = validatePassword(newPassword);
+  const newPasswordError = localPasswordError || passwordError;
   const showPasswordError =
     confirmPassword.length > 0 && newPassword !== confirmPassword;
   const modalTitle =
@@ -58,10 +153,17 @@ export default function ChangePasswordModal({
       case 0:
         return {
           body: (
-            <Typography variant="body1">
-              Please verify your email {userEmail} before changing your
-              password. We&apos;ll send a verification code to your email.
-            </Typography>
+            <Box>
+              <Typography variant="body1">
+                Please verify your email {userEmail} before changing your
+                password. We&apos;ll send a verification code to your email.
+              </Typography>
+              {submitError && (
+                <Typography variant="body2" sx={{ color: "#d32f2f", mt: 2 }}>
+                  {submitError}
+                </Typography>
+              )}
+            </Box>
           ),
           actions: (
             <>
@@ -71,7 +173,8 @@ export default function ChangePasswordModal({
               <Button
                 variant="contained"
                 size="medium"
-                onClick={() => setStep(1)}
+                disabled={isSendingVerificationEmail}
+                onClick={handleSendVerificationEmail}
               >
                 SEND VERIFICATION EMAIL
               </Button>
@@ -90,7 +193,11 @@ export default function ChangePasswordModal({
                 setCodeError(null);
               }}
               error={codeError}
-              onResend={() => console.log("Resend verification code")}
+              onResend={() => {
+                setVerificationCode("");
+                setCodeError(null);
+                void handleSendVerificationEmail();
+              }}
             />
           ),
           actions: (
@@ -102,15 +209,7 @@ export default function ChangePasswordModal({
                 variant="contained"
                 size="medium"
                 disabled={!verificationCode.trim()}
-                onClick={() => {
-                  if (verificationCode.trim() === VALID_DEMO_VERIFICATION_CODE) {
-                    setCodeError(null);
-                    setStep(2);
-                  } else {
-                    setCodeError("Invalid Code. Try again.");
-                    setVerificationCode("");
-                  }
-                }}
+                onClick={() => setStep(2)}
               >
                 NEXT
               </Button>
@@ -134,7 +233,12 @@ export default function ChangePasswordModal({
                   placeholder="New Password"
                   type={showNewPassword ? "text" : "password"}
                   value={newPassword}
-                  onChange={(e) => setNewPassword(e.target.value)}
+                  onChange={(e) => {
+                    setNewPassword(e.target.value);
+                    setPasswordError(null);
+                  }}
+                  error={!!newPasswordError}
+                  helperText={newPasswordError || ""}
                   slotProps={{
                     input: {
                       endAdornment: (
@@ -168,13 +272,9 @@ export default function ChangePasswordModal({
                   value={confirmPassword}
                   onChange={(e) => {
                     setConfirmPassword(e.target.value);
-                    setPasswordError(null);
                   }}
-                  error={!!passwordError || showPasswordError}
-                  helperText={
-                    passwordError ||
-                    (showPasswordError ? "Passwords do not match. Try again." : "")
-                  }
+                  error={showPasswordError}
+                  helperText={showPasswordError ? "Passwords do not match. Try again." : ""}
                   slotProps={{
                     input: {
                       endAdornment: (
@@ -210,15 +310,8 @@ export default function ChangePasswordModal({
               <Button
                 variant="contained"
                 size="medium"
-                disabled={!passwordsMatch}
-                onClick={() => {
-                  if (newPassword !== confirmPassword) {
-                    setPasswordError("Passwords do not match. Try again.");
-                  } else {
-                    setPasswordError(null);
-                    setStep(3);
-                  }
-                }}
+                disabled={!passwordsMatch || !!localPasswordError || isUpdatingPassword}
+                onClick={handleUpdatePassword}
               >
                 NEXT
               </Button>

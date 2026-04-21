@@ -1,7 +1,7 @@
 "use client";
 
 import { Button, TextField } from "@mui/material";
-import { EditCampaignFormData, TextChangeHandler } from "./types";
+import { EditCampaignFormData, TextChangeHandler } from "@/src/types/frontend/campaignEdit";
 
 interface StoryComparisonBlockProps {
   question: string;
@@ -91,11 +91,18 @@ function StoryComparisonBlock({
 interface GardenStorySectionProps {
   formData: EditCampaignFormData;
   onTextChange: TextChangeHandler;
+  questions?: {
+    q1: string;
+    q2: string;
+    q3: string;
+    q4: string;
+  };
 }
 
 export default function GardenStorySection({
   formData,
   onTextChange,
+  questions,
 }: GardenStorySectionProps) {
   return (
     <>
@@ -107,41 +114,49 @@ export default function GardenStorySection({
         <p className="text-sm">2-3 sentences each</p>
 
         <div className="mt-4 grid grid-cols-[max-content_1fr] items-start gap-x-8 gap-y-4">
-          <StoryComparisonBlock
-            question="Where is your garden, and who does it serve?"
-            originalValue={formData.storyLocationAndAudience}
-            aiValue={formData.storyLocationAndAudienceAI}
-            finalValue={formData.storyLocationAndAudienceFinal}
-            onFinalChange={onTextChange("storyLocationAndAudienceFinal")}
-            saveLabel="Saving final story:"
-          />
+          {questions?.q1 && (
+            <StoryComparisonBlock
+              question={questions.q1}
+              originalValue={formData.storyLocationAndAudience}
+              aiValue={formData.storyLocationAndAudienceAI}
+              finalValue={formData.storyLocationAndAudienceFinal}
+              onFinalChange={onTextChange("storyLocationAndAudienceFinal")}
+              saveLabel="Saving final story:"
+            />
+          )}
 
-          <StoryComparisonBlock
-            question="What challenge does your garden help address, and why does it matter locally?"
-            originalValue={formData.storyChallengeOriginal}
-            aiValue={formData.storyChallengeAI}
-            finalValue={formData.storyChallengeFinal}
-            onFinalChange={onTextChange("storyChallengeFinal")}
-            saveLabel="Saving final story challenge:"
-          />
+          {questions?.q2 && (
+            <StoryComparisonBlock
+              question={questions.q2}
+              originalValue={formData.storyChallengeOriginal}
+              aiValue={formData.storyChallengeAI}
+              finalValue={formData.storyChallengeFinal}
+              onFinalChange={onTextChange("storyChallengeFinal")}
+              saveLabel="Saving final story challenge:"
+            />
+          )}
 
-          <StoryComparisonBlock
-            question="What happens in the garden during the growing season?"
-            originalValue={formData.storySeasonActivityOriginal}
-            aiValue={formData.storySeasonActivityAI}
-            finalValue={formData.storySeasonActivityFinal}
-            onFinalChange={onTextChange("storySeasonActivityFinal")}
-            saveLabel="Saving final story season activity:"
-          />
+          {questions?.q3 && (
+            <StoryComparisonBlock
+              question={questions.q3}
+              originalValue={formData.storySeasonActivityOriginal}
+              aiValue={formData.storySeasonActivityAI}
+              finalValue={formData.storySeasonActivityFinal}
+              onFinalChange={onTextChange("storySeasonActivityFinal")}
+              saveLabel="Saving final story season activity:"
+            />
+          )}
 
-          <StoryComparisonBlock
-            question="What will this year’s SeedMoney campaign make possible?"
-            originalValue={formData.storyCampaignImpactOriginal}
-            aiValue={formData.storyCampaignImpactAI}
-            finalValue={formData.storyCampaignImpactFinal}
-            onFinalChange={onTextChange("storyCampaignImpactFinal")}
-            saveLabel="Saving final story campaign impact:"
-          />
+          {questions?.q4 && (
+            <StoryComparisonBlock
+              question={questions.q4}
+              originalValue={formData.storyCampaignImpactOriginal}
+              aiValue={formData.storyCampaignImpactAI}
+              finalValue={formData.storyCampaignImpactFinal}
+              onFinalChange={onTextChange("storyCampaignImpactFinal")}
+              saveLabel="Saving final story campaign impact:"
+            />
+          )}
         </div>
       </div>
     </>

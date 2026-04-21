@@ -10,20 +10,19 @@ export function TotalRaisedCard({
   campaignGoal: number;
   raisedChangePercent: number;
 }) {
-  const campaignPercent = Math.min(
-    100,
-    Math.round((totalRaised / campaignGoal) * 100),
-  );
+  const campaignPercent =
+    campaignGoal > 0 ? Math.round((totalRaised / campaignGoal) * 100) : 0;
+  const progressBarPercent = Math.min(100, Math.max(0, campaignPercent));
 
   return (
     <div className="bg-white rounded-lg border border-1 border-[#e5e5e5] p-6">
       <CardHeader label="Total Raised" icon={<AttachMoneyIcon />} />
 
       {/* Progress bar */}
-      <div className="relative h-1/3 rounded-full bg-[#56bd604a] overflow-hidden my-13">
+      <div className="relative h-1/3 rounded-full bg-[#56bd604a] overflow-hidden my-10">
         <div
           className="absolute inset-y-0 left-0 bg-[#56BD60] rounded-full flex items-center pl-3 min-w-14"
-          style={{ width: `${campaignPercent}%` }}
+          style={{ width: `${progressBarPercent}%` }}
         >
           <span className="text-white font-bold text-[0.95rem] whitespace-nowrap">
             {campaignPercent}%

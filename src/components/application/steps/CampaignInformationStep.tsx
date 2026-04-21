@@ -7,6 +7,26 @@ import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 
+function normalizeNumericInput(value: string) {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue === "") {
+    return "";
+  }
+
+  const decimalMatch = trimmedValue.match(/[.,](?=\d{1,2}$)/);
+  const integerPortion = decimalMatch
+    ? trimmedValue.slice(0, decimalMatch.index)
+    : trimmedValue;
+  const digitsOnly = integerPortion.replace(/\D/g, "");
+
+  if (digitsOnly === "") {
+    return "";
+  }
+
+  return digitsOnly.replace(/^0+(?=\d)/, "");
+}
+
 export default function CampaignInformationStep() {
   const form = useApplicationForm();
   const router = useRouter();
@@ -16,9 +36,7 @@ export default function CampaignInformationStep() {
     impact: form.state.values.beneficiaryCount
       ? Number(form.state.values.beneficiaryCount)
       : undefined,
-    size: form.state.values.gardenSize
-      ? Number(form.state.values.gardenSize)
-      : undefined,
+    size: form.state.values.gardenSize.trim() || undefined,
     existence: form.state.values.gardenStatus || undefined,
     goal: form.state.values.fundraisingGoal
       ? Number(form.state.values.fundraisingGoal)
@@ -37,7 +55,7 @@ export default function CampaignInformationStep() {
       impact: values.beneficiaryCount
         ? Number(values.beneficiaryCount)
         : undefined,
-      size: values.gardenSize ? Number(values.gardenSize) : undefined,
+      size: values.gardenSize.trim() || undefined,
       existence: values.gardenStatus || undefined,
       goal: values.fundraisingGoal
         ? Number(values.fundraisingGoal)
@@ -129,10 +147,12 @@ export default function CampaignInformationStep() {
               onBlur={async (e) => {
                 field.handleBlur();
                 await saveCampaignInformationDraft({
-                  beneficiaryCount: e.target.value,
+                  beneficiaryCount: normalizeNumericInput(e.target.value),
                 });
               }}
-              onChange={(e) => field.handleChange(e.target.value)}
+              onChange={(e) =>
+                field.handleChange(normalizeNumericInput(e.target.value))
+              }
               type="number"
             />
           )}
@@ -142,9 +162,9 @@ export default function CampaignInformationStep() {
           {(field) => (
             <TextField
               label="Approximate garden size or scope"
-              helperText="Examples: one raised bed, multiple sites, two-acre farm."
               variant="standard"
               fullWidth
+              type="text"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -213,22 +233,32 @@ export default function CampaignInformationStep() {
         </p>
 
         <form.Field name="fundraisingGoal">
-          {(field) => (
-            <TextField
-              label="Fundraising Goal (USD)"
-              variant="standard"
-              fullWidth
-              type="number"
-              value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveCampaignInformationDraft({
-                  fundraisingGoal: e.target.value,
-                });
-              }}
-              onChange={(e) => field.handleChange(e.target.value)}
-            />
-          )}
+          {(field) => {
+            const goalNum = Number(field.state.value);
+            const isInvalid = field.state.value !== '' && goalNum < 1;
+
+            return (
+              <TextField
+                label="Fundraising Goal (USD)"
+                variant="standard"
+                fullWidth
+                type="number"
+                value={field.state.value}
+                onBlur={async (e) => {
+                  field.handleBlur();
+                  await saveCampaignInformationDraft({
+                    fundraisingGoal: normalizeNumericInput(e.target.value),
+                  });
+                }}
+                onChange={(e) =>
+                  field.handleChange(normalizeNumericInput(e.target.value))
+                }
+                error={isInvalid}
+                helperText={isInvalid ? "Fundraising goal must be greater than $0" : ""}
+                inputProps={{ min: 2 }}
+              />
+            );
+          }}
         </form.Field>
       </div>
 

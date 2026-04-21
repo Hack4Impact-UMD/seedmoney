@@ -4,6 +4,7 @@ import { Campaign } from "@/src/types/db/campaigns";
 import {
   useDraftCampaignId,
   useLastSaved,
+  useApplicationForm,
 } from "@/src/components/application/ApplicationFormProvider";
 import useCreateCampaign from "@/src/hooks/campaigns/useCreateCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
@@ -16,21 +17,26 @@ function getFormattedSaveTime() {
 }
 
 export default function useSaveDraftCampaign() {
+  const form = useApplicationForm();
   const { draftCampaignId, setDraftCampaignId } = useDraftCampaignId();
   const { setLastSaved } = useLastSaved();
   const createCampaign = useCreateCampaign();
   const updateCampaign = useUpdateCampaign();
 
   const saveDraftCampaign = async (campaignData: Partial<Campaign>) => {
-    campaignData = Object.fromEntries(
+    const filteredCampaignData = Object.fromEntries(
       Object.entries(campaignData).filter(([, value]) => value !== undefined),
     ) as Partial<Campaign>;
+    const campaignPayload: Partial<Campaign> = {
+      ...filteredCampaignData,
+      opt_in_ai: form.state.values.aiOptIn,
+    };
 
     if (!draftCampaignId) {
       const draftCampaign = await createCampaign.mutateAsync({
         status: "in_progress",
         date_created: new Date().toISOString(),
-        ...campaignData,
+        ...campaignPayload,
       });
 
       setDraftCampaignId(draftCampaign.campaign_id);
@@ -38,13 +44,9 @@ export default function useSaveDraftCampaign() {
       return draftCampaign.campaign_id;
     }
 
-    if (Object.keys(campaignData).length === 0) {
-      return draftCampaignId;
-    }
-
     await updateCampaign.mutateAsync({
       campaignId: draftCampaignId,
-      campaignData: campaignData,
+      campaignData: campaignPayload,
     });
     setLastSaved(getFormattedSaveTime());
     return draftCampaignId;
