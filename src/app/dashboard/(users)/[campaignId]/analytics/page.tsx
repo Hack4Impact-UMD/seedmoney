@@ -27,7 +27,7 @@ export default function CampaignAnalyticsPage() {
     data: campaignData,
     isLoading: campaignLoading,
     isError: campaignError,
-  } = useReadCampaign(campaignIdNum);
+  } = useReadCampaign({ campaignId: campaignIdNum });
   const {
     data: competitionData,
     isLoading: competitionLoading,
@@ -36,11 +36,10 @@ export default function CampaignAnalyticsPage() {
 
   // useReadCampaign is typed as Campaign | Campaign[] — narrow to single.
   const campaign: Campaign | null = Array.isArray(campaignData)
-    ? null
+    ? (campaignData[0] ?? null)
     : (campaignData ?? null);
   const campaignEndDate = competitionData?.end_date;
   const campaignStartDate = competitionData?.start_date;
-
   const earnings = useMemo(
     () => transactionsToDailyEarnings(transactions ?? []),
     [transactions],
@@ -74,6 +73,7 @@ export default function CampaignAnalyticsPage() {
       <div className="flex flex-col gap-6 mt-6">
         <div className="bg-white rounded-lg border border-[#e5e5e5] p-6 h-[360px] flex items-center justify-center text-gray-500">
           Could not load earnings trend.
+
         </div>
       </div>
     );

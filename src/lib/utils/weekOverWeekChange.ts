@@ -6,7 +6,7 @@ const succeeded = (t: Transaction) => t.status === "succeeded";
 function partitionByWeek(
   transactions: Transaction[],
   competitionStartDate: string,
-  today: moment.Moment = moment().startOf("day"),
+  today: moment.Moment = moment().startOf("day")
 ): { thisWeek: Transaction[]; lastWeek: Transaction[] } {
   const start = moment(competitionStartDate, "YYYY-MM-DD", true).startOf("day");
   const daysSinceStart = today.diff(start, "days");
@@ -25,6 +25,8 @@ function partitionByWeek(
     else if (weekNum > 0 && d.isBetween(lastWeekStart, lastWeekEnd, "day", "[]"))
       lastWeek.push(t);
   }
+
+  
   return { thisWeek, lastWeek };
 }
 
@@ -48,7 +50,6 @@ export function calculateDonorsChangePercent(
   competitionStartDate: string,
 ): number {
   const { thisWeek, lastWeek } = partitionByWeek(transactions, competitionStartDate);
-  const unique = (rows: Transaction[]) =>
-    new Set(rows.map((r) => r.email)).size;
-  return pctChange(unique(thisWeek), unique(lastWeek));
+
+  return pctChange(thisWeek.length, lastWeek.length);
 }

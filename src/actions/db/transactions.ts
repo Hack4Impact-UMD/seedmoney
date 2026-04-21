@@ -1,5 +1,6 @@
 import type { Transaction } from "@/src/types/db/transactions";
 import { createBrowserClient } from "@/src/lib/supabase-client";
+import { updateCampaign, readCampaign } from "@/src/actions/db/campaigns";
 
 export async function readTransactionsByCampaign(
   campaignId: number,
@@ -31,9 +32,20 @@ export async function createTransaction(
     .select()
     .single();
 
-  if (error) {
-    console.error("Error creating transaction:", error.message);
+  if (error || !insertedData) {
+    console.error("Error creating transaction:", error?.message);
     return null;
+  }
+
+  // Only update if succeeded
+  if (insertedData.status === "succeeded") {
+    const campaign = await readCampaign(insertedData.campaign_id);
+    if (campaign && !Array.isArray(campaign)) {
+      await updateCampaign(insertedData.campaign_id, {
+        raised: campaign.raised + insertedData.amount_donated,
+        donors: campaign.donors + 1
+      });
+    }
   }
 
   return insertedData as Transaction;

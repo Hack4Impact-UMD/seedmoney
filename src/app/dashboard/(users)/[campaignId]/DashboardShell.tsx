@@ -52,7 +52,6 @@ export default function DashboardShell({
   const [toast, setToast] = useState(false);
   const [viewCampaignModal, setViewCampaignModal] = useState(false);
 
-
   if (!user) notFound();
   if (isLoading ) return <div>Loading...</div>;
   if (error) throw error;
