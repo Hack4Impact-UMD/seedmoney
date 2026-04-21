@@ -1,7 +1,9 @@
 "use client";
-import { useParams, useRouter } from "next/navigation";
 
+import { useState } from "react";
+import { useParams, useRouter, notFound } from "next/navigation";
 import Link from "next/link";
+
 import Navbar from "@/src/components/Navbar";
 import DonorsTable from "@/src/components/DonorsTable";
 import { TotalRaisedCard } from "@/src/components/dashboard/TotalRaisedCard";
@@ -9,38 +11,90 @@ import { TotalDonorsCard } from "@/src/components/dashboard/TotalDonorsCard";
 import { DaysRemainingCard } from "@/src/components/dashboard/DaysRemainingCard";
 import { EarningsTrendCard } from "@/src/components/dashboard/EarningsTrendCard";
 
-import { ArrowBack } from "@mui/icons-material";
+import {
+  buildEarningsTrendData,
+  transactionsToDailyEarnings,
+} from "@/src/lib/utils/buildEarningsTrend";
+
+import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
+import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
+import useReadCampaignTransactions from "@/src/hooks/transactions/useReadCampaignTransactions";
+import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
+import useDonorsChangePercent from "@/src/hooks/transactions/useDonorsChangePercent";
+
+import { ArrowBack, OpenInNew } from "@mui/icons-material";
+import Button from "@mui/material/Button";
+import BaseModal from "@/src/components/bases/BaseModal";
+import BaseAlert from "@/src/components/bases/BaseAlert";
+import LogoutIcon from "@mui/icons-material/Logout";
+
+import { useMemo } from "react";
 import moment from "moment";
 
 export default function AdminCampaignPage() {
   const params = useParams();
   const router = useRouter();
-  const campaignId = params["campaign-id"];
-  // TODO: Get actual campaign data
-  const mockCampaignData = {
-    campaign_title: "Full Belly Community Garden",
-    raised: 130,
-    goal: 1200,
-    total_donors: 12,
-    days_remaining: 23,
-    donors_change_percent: 12.5,
-    raised_change_percent: 12.5,
-    dates: [
-      "2026-03-20",
-      "2026-03-21",
-      "2026-03-22",
-      "2026-03-23",
-      "2026-03-24",
-      "2026-03-25",
-      "2026-03-26",
-      "2026-03-27",
-      "2026-03-28",
-      "2026-03-29",
-      "2026-03-30",
-    ],
-    dailyValues: [20, 15, 0, 45, 10, 30, 10],
-    totalValues: [20, 35, 35, 80, 90, 120, 130],
-  };
+
+  const campaignIdParam = params["campaign-id"];
+  const campaignId =
+    typeof campaignIdParam === "string" ? Number(campaignIdParam) : NaN;
+
+  const [toast, setToast] = useState(false);
+  const [viewCampaignModal, setViewCampaignModal] = useState(false);
+
+  const {
+    data: campaignsData,
+    isLoading: campaignLoading,
+    error: campaignError,
+  } = useReadCampaign({ campaignId });
+
+  const { data: currentCompetitionData, isLoading: competitionLoading } =
+    useReadCurrentCompetition();
+
+  const {
+    data: transactions,
+    isLoading: txnsLoading,
+    isError: txnsError,
+  } = useReadCampaignTransactions(campaignId);
+
+  const {
+    percent: raisedPercent,
+    isLoading: raisedLoading,
+    isError: raisedError,
+  } = useRaisedChangePercent(campaignId, currentCompetitionData?.start_date);
+
+  const {
+    percent: donorsPercent,
+    isLoading: donorsLoading,
+    isError: donorsError,
+  } = useDonorsChangePercent(campaignId, currentCompetitionData?.start_date);
+
+  const raisedChangePercent =
+    raisedLoading || raisedError ? null : raisedPercent;
+  const donorsChangePercent =
+    donorsLoading || donorsError ? null : donorsPercent;
+
+  const campaignData = campaignsData?.[0] ?? null;
+
+  const earnings = useMemo(
+    () => transactionsToDailyEarnings(transactions ?? []),
+    [transactions],
+  );
+
+  const { dates, dailyValues, totalValues } = useMemo(() => {
+    const startDate = currentCompetitionData?.start_date;
+    const endDate = currentCompetitionData?.end_date;
+
+    if (earnings.length === 0 || !startDate || !endDate) {
+      return { dates: [], dailyValues: [], totalValues: [] };
+    }
+
+    return buildEarningsTrendData(earnings, endDate, startDate);
+  }, [
+    earnings,
+    currentCompetitionData?.start_date,
+    currentCompetitionData?.end_date,
+  ]);
 
   const todayIso = moment().startOf("day").format("YYYY-MM-DD");
 
@@ -48,13 +102,41 @@ export default function AdminCampaignPage() {
     router.push("/dashboard/ongoing-campaigns");
   };
 
+  if (!Number.isFinite(campaignId)) {
+    notFound();
+  }
+
+  if (campaignLoading || competitionLoading || txnsLoading) {
+    return (
+      <div className="flex min-h-screen">
+        <Navbar />
+        <div className="flex-1 bg-gray-50 p-10">Loading...</div>
+      </div>
+    );
+  }
+
+  if (campaignError) {
+    throw campaignError;
+  }
+
+  if (!campaignData) {
+    return (
+      <div className="flex min-h-screen">
+        <Navbar />
+        <div className="flex-1 bg-gray-50 p-10">Unable to load campaign.</div>
+      </div>
+    );
+  }
+
   return (
     <div className="flex min-h-screen">
-      <Navbar/>
+      <Navbar />
+
       <div className="flex-1 flex-col bg-gray-50 p-10 space-y-3">
         <h3 className="text-4xl font-bold text-[#096B2E] mb-5">
-          Campaign {campaignId}
+          {campaignData.name}
         </h3>
+
         <p
           onClick={handleBack}
           className="cursor-pointer flex items-center uppercase !text-[#666666] text-sm font-bold"
@@ -64,53 +146,132 @@ export default function AdminCampaignPage() {
         </p>
 
         <div className="flex flex-wrap gap-3">
-          <button className="bg-[#2c7a45] text-white px-4 py-2 rounded-md font-bold text-xs uppercase hover:bg-[#2d5a43] transition">
+          <Button
+            size="small"
+            variant="contained"
+            onClick={() => setViewCampaignModal(true)}
+          >
             View Campaign Site
-          </button>
-          <button className="bg-white border border-[#2c7a45] text-[#2c7a45] px-4 py-2 rounded-md font-bold text-xs uppercase hover:bg-emerald-50 transition">
+            <OpenInNew fontSize="small" className="ml-[5px]" />
+          </Button>
+
+          <Button
+            size="small"
+            variant="outlined"
+            onClick={() => {
+              navigator.clipboard.writeText(campaignData.givebutterlink ?? "");
+              setToast(true);
+            }}
+          >
             Copy Campaign Site Link
-          </button>
-          <button
+          </Button>
+
+          <Button
+            size="small"
+            variant="outlined"
             onClick={() => router.push("/leaderboard")}
-            className="bg-white border border-[#2c7a45] text-[#2c7a45] px-4 py-2 rounded-md font-bold text-xs uppercase hover:bg-emerald-50 transition"
           >
             View Leaderboard
-          </button>
-          <Link
-            href={`/dashboard/ongoing-campaigns/${campaignId}/edit`}
-            className="bg-white border border-[#2c7a45] text-[#2c7a45] px-4 py-2 rounded-md font-bold text-xs uppercase hover:bg-emerald-50 transition"
+            <OpenInNew fontSize="small" className="ml-[5px]" />
+          </Button>
+
+           <Button
+            size="small"
+            variant="outlined"
+            onClick={() => router.push("/dashboard/ongoing-campaigns/${campaignId}/edit")}
           >
             Edit
-          </Link>
+          </Button>
+
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8 ">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <TotalRaisedCard
-            totalRaised={mockCampaignData.raised}
-            campaignGoal={mockCampaignData.goal}
-            raisedChangePercent={mockCampaignData.raised_change_percent}
+            totalRaised={campaignData.raised}
+            campaignGoal={campaignData.goal}
+            raisedChangePercent={raisedChangePercent}
           />
+
           <div className="grid grid-rows-2 gap-8">
             <TotalDonorsCard
-              totalDonors={mockCampaignData.total_donors}
-              donorsChangePercent={mockCampaignData.donors_change_percent}
+              totalDonors={campaignData.donors}
+              donorsChangePercent={donorsChangePercent}
             />
+
             <DaysRemainingCard
-              daysRemaining={mockCampaignData.days_remaining}
+              startDate={currentCompetitionData?.start_date ?? null}
+              endDate={currentCompetitionData?.end_date ?? null}
+              is_current={
+                campaignData.competition_id ===
+                currentCompetitionData?.competition_id
+              }
             />
           </div>
         </div>
 
-        <EarningsTrendCard
-          dates={mockCampaignData.dates}
-          dailyValues={mockCampaignData.dailyValues}
-          totalValues={mockCampaignData.totalValues}
-          campaignGoal={mockCampaignData.goal}
-          todayIso={todayIso}
-        />
+        {txnsError || dates.length === 0 ? (
+          <div className="bg-white rounded-lg border border-[#e5e5e5] p-6 h-[360px] flex flex-col items-center justify-center text-center">
+            <p className="font-medium text-black">No donations yet</p>
+            <p className="text-sm text-gray-500 mt-1">
+              Once donations start rolling in, you&apos;ll see your earnings
+              trend here.
+            </p>
+          </div>
+        ) : (
+          <EarningsTrendCard
+            dates={dates}
+            dailyValues={dailyValues}
+            totalValues={totalValues}
+            campaignGoal={campaignData.goal}
+            todayIso={todayIso}
+          />
+        )}
 
-        <DonorsTable campaignId={Number(campaignId)} />
+        <DonorsTable campaignId={campaignId} />
       </div>
+
+      <BaseModal
+        open={viewCampaignModal}
+        onClose={() => setViewCampaignModal(false)}
+        title="You are about to leave the site"
+      >
+        <p className="text-[#666666] !text-[16px]">
+          The link you have clicked will open a new website in a separate tab.
+          Would you like to proceed?
+        </p>
+
+        <div className="flex flex-row mt-5 w-full justify-end">
+          <Button
+            variant="outlined"
+            size="small"
+            className="mt-4 !border-none !text-[#666666]"
+            onClick={() => setViewCampaignModal(false)}
+          >
+            Cancel
+          </Button>
+
+          <Button
+            variant="contained"
+            size="small"
+            className="mt-4 !ml-3"
+            onClick={() => {
+              if (!campaignData.givebutterlink) return;
+              window.open(campaignData.givebutterlink, "_blank");
+            }}
+          >
+            Proceed
+            <LogoutIcon className="!ml-[5px] !text-[18px]" />
+          </Button>
+        </div>
+      </BaseModal>
+
+      <BaseAlert
+        open={toast}
+        onClose={() => setToast(false)}
+        title="Successfully Copied!"
+      >
+        <p>Link has been copied to clipboard</p>
+      </BaseAlert>
     </div>
   );
 }

@@ -1,15 +1,56 @@
 import moment from "moment";
+import type { Transaction } from "@/src/types/db/transactions";
+
+export type DailyEarning = {
+  date: string; // ISO date string, e.g. "2025-11-15"
+  daily: number; // dollars raised that day
+  total: number; // cumulative total raised
+};
+
+/**
+ * Aggregate raw transactions into per-day earnings with a running cumulative
+ * total. Filters out non-success rows and returns an empty array for empty
+ * input. The result plugs directly into buildEarningsTrendData.
+ */
+export function transactionsToDailyEarnings(
+  transactions: Transaction[],
+): DailyEarning[] {
+  if (transactions.length === 0) return [];
+
+  // Sum amount_donated per date, keeping only successful rows.
+  const dailyByDate = new Map<string, number>();
+  for (const t of transactions) {
+    if (t.status !== "succeeded") continue;
+    dailyByDate.set(t.date, (dailyByDate.get(t.date) ?? 0) + t.amount_donated);
+  }
+
+  // Sort dates ascending and build the cumulative series.
+  const sortedDates = [...dailyByDate.keys()].sort();
+  let running = 0;
+  return sortedDates.map((date) => {
+    const daily = dailyByDate.get(date)!;
+    running += daily;
+    return { date, daily, total: running };
+  });
+}
 
 export function buildEarningsTrendData(
-  earningsTrend: { date: string; daily: number; total: number }[],
+  earningsTrend: DailyEarning[],
   campaignEndDate: string,
+  campaignStartDate?: string,
 ) {
+  // Empty input guard — no donations means no series to plot.
+  if (earningsTrend.length === 0) {
+    return { dates: [], dailyValues: [], totalValues: [] };
+  }
+
   // Index the sparse data by date string for O(1) lookups during the loop.
   const dataByDate = new Map(earningsTrend.map((d) => [d.date, d]));
 
-  // Walk day-by-day from the first donation date to the campaign end date.
+  // Walk from competition start (if provided) or first donation date.
   const allDates: string[] = [];
-  const cur = moment(earningsTrend[0].date, "YYYY-MM-DD", true).startOf("day");
+  const walkStart = campaignStartDate ?? earningsTrend[0].date;
+  const cur = moment(walkStart, "YYYY-MM-DD", true).startOf("day");
   const end = moment(campaignEndDate, "YYYY-MM-DD", true).startOf("day");
   while (cur.isSameOrBefore(end, "day")) {
     allDates.push(cur.format("YYYY-MM-DD"));

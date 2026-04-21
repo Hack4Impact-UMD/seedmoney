@@ -8,7 +8,7 @@ export function TotalRaisedCard({
 }: {
   totalRaised: number;
   campaignGoal: number;
-  raisedChangePercent: number;
+  raisedChangePercent: number | null;
 }) {
   const campaignPercent =
     campaignGoal > 0 ? Math.round((totalRaised / campaignGoal) * 100) : 0;
@@ -40,8 +40,18 @@ export function TotalRaisedCard({
         <p className="text-sm text-gray-500">
           {campaignPercent}% of {`$${campaignGoal.toLocaleString()}`} goal
         </p>
-        <p className="text-sm text-[#00A63E] font-medium">
-          +{raisedChangePercent}% from last week
+        <p
+          className={`text-sm font-medium ${
+            raisedChangePercent === null
+              ? "text-gray-400"
+              : raisedChangePercent < 0
+                ? "text-[#D32F2F]"
+                : "text-[#00A63E]"
+          }`}
+        >
+          {raisedChangePercent === null
+            ? "—% from last week"
+            : `${raisedChangePercent > 0 ? "+" : ""}${raisedChangePercent}% from last week`}
         </p>
       </div>
     </div>
