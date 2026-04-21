@@ -8,11 +8,17 @@ import { useApplicationForm } from "@/src/components/application/ApplicationForm
 import { useRef } from "react";
 import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
+import { STATES, COUNTRIES } from "@/src/components/application/addressOptions";
 
 export default function ContactInformationStep() {
   const form = useApplicationForm();
   const router = useRouter();
   const { saveDraftCampaign } = useSaveDraftCampaign();
+  const normalizeCountryValue = (value: string) => value.trim().toLowerCase();
+  const isUsMailingCountry =
+    normalizeCountryValue(form.state.values.mailingCountry) === "us" ||
+    normalizeCountryValue(form.state.values.mailingCountry) ===
+      "united states";
   const contactInformationRef = useRef({
     organization_name: form.state.values.organizationName,
     ein: form.state.values.organizationIdentifier,
@@ -119,7 +125,8 @@ export default function ContactInformationStep() {
     }
 
     if (
-      currentPayload.contact_email !== contactInformationRef.current.contact_email
+      currentPayload.contact_email !==
+      contactInformationRef.current.contact_email
     ) {
       changedValues.contact_email = currentPayload.contact_email;
     }
@@ -137,59 +144,6 @@ export default function ContactInformationStep() {
     await saveDraftCampaign(changedValues);
     contactInformationRef.current = currentPayload;
   };
-
-  const states = [
-    { code: "AL", name: "Alabama" },
-    { code: "AK", name: "Alaska" },
-    { code: "AZ", name: "Arizona" },
-    { code: "AR", name: "Arkansas" },
-    { code: "CA", name: "California" },
-    { code: "CO", name: "Colorado" },
-    { code: "CT", name: "Connecticut" },
-    { code: "DE", name: "Delaware" },
-    { code: "FL", name: "Florida" },
-    { code: "GA", name: "Georgia" },
-    { code: "HI", name: "Hawaii" },
-    { code: "ID", name: "Idaho" },
-    { code: "IL", name: "Illinois" },
-    { code: "IN", name: "Indiana" },
-    { code: "IA", name: "Iowa" },
-    { code: "KS", name: "Kansas" },
-    { code: "KY", name: "Kentucky" },
-    { code: "LA", name: "Louisiana" },
-    { code: "ME", name: "Maine" },
-    { code: "MD", name: "Maryland" },
-    { code: "MA", name: "Massachusetts" },
-    { code: "MI", name: "Michigan" },
-    { code: "MN", name: "Minnesota" },
-    { code: "MS", name: "Mississippi" },
-    { code: "MO", name: "Missouri" },
-    { code: "MT", name: "Montana" },
-    { code: "NE", name: "Nebraska" },
-    { code: "NV", name: "Nevada" },
-    { code: "NH", name: "New Hampshire" },
-    { code: "NJ", name: "New Jersey" },
-    { code: "NM", name: "New Mexico" },
-    { code: "NY", name: "New York" },
-    { code: "NC", name: "North Carolina" },
-    { code: "ND", name: "North Dakota" },
-    { code: "OH", name: "Ohio" },
-    { code: "OK", name: "Oklahoma" },
-    { code: "OR", name: "Oregon" },
-    { code: "PA", name: "Pennsylvania" },
-    { code: "RI", name: "Rhode Island" },
-    { code: "SC", name: "South Carolina" },
-    { code: "SD", name: "South Dakota" },
-    { code: "TN", name: "Tennessee" },
-    { code: "TX", name: "Texas" },
-    { code: "UT", name: "Utah" },
-    { code: "VT", name: "Vermont" },
-    { code: "VA", name: "Virginia" },
-    { code: "WA", name: "Washington" },
-    { code: "WV", name: "West Virginia" },
-    { code: "WI", name: "Wisconsin" },
-    { code: "WY", name: "Wyoming" },
-  ];
 
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
@@ -254,7 +208,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="Street 1"
+              label={<>Street 1*</>}
               fullWidth
               name="mailingStreet1"
               autoComplete="address-line1"
@@ -292,6 +246,60 @@ export default function ContactInformationStep() {
           )}
         </form.Field>
 
+        {/* Country */}
+        <form.Field name="mailingCountry">
+          {(field) => (
+            <TextField
+              select
+              label="Country*"
+              variant="standard"
+              fullWidth
+              name="mailingCountry"
+              value={field.state.value}
+              onChange={async (e) => {
+                const nextCountry = e.target.value;
+                const shouldClearState =
+                  normalizeCountryValue(nextCountry) === "us" ||
+                  normalizeCountryValue(nextCountry) === "united states";
+
+                field.handleChange(nextCountry);
+
+                if (shouldClearState) {
+                  form.setFieldValue("mailingState", "");
+                }
+
+                await saveContactDraft({
+                  mailingCountry: nextCountry,
+                  ...(shouldClearState ? { mailingState: "" } : {}),
+                });
+              }}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (selected) => {
+                  if (!selected) {
+                    return <span className="text-gray-400">Country*</span>;
+                  }
+                  return String(selected);
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+
+              {field.state.value && !COUNTRIES.includes(field.state.value) && (
+                <MenuItem value={field.state.value}>{field.state.value}</MenuItem>
+              )}
+
+              {COUNTRIES.map((country) => (
+                <MenuItem key={country} value={country}>
+                  {country}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        </form.Field>
+
         <form.Field name="mailingCity">
           {(field) => (
             <TextField
@@ -316,37 +324,56 @@ export default function ContactInformationStep() {
         {/* State / Province */}
         <form.Field name="mailingState">
           {(field) => (
-            <TextField
-              select
-              variant="standard"
-              fullWidth
-              value={field.state.value}
-              onChange={async (e) => {
-                field.handleChange(e.target.value);
-                await saveContactDraft({ mailingState: e.target.value });
-              }}
-              SelectProps={{
-                displayEmpty: true,
-                renderValue: (selected) => {
-                  if (!selected) {
-                    return (
-                      <span className="text-gray-400">State / Province*</span>
-                    );
-                  }
-                  return String(selected);
-                },
-              }}
-            >
-              <MenuItem value="">
-                <em>None</em>
-              </MenuItem>
-
-              {states.map((s) => (
-                <MenuItem key={s.code} value={s.code}>
-                  {s.name}
+            isUsMailingCountry ? (
+              <TextField
+                select
+                variant="standard"
+                fullWidth
+                value={field.state.value}
+                onChange={async (e) => {
+                  field.handleChange(e.target.value);
+                  await saveContactDraft({ mailingState: e.target.value });
+                }}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => {
+                    if (!selected) {
+                      return (
+                        <span className="text-gray-400">State / Province*</span>
+                      );
+                    }
+                    return String(selected);
+                  },
+                }}
+              >
+                <MenuItem value="">
+                  <em>None</em>
                 </MenuItem>
-              ))}
-            </TextField>
+
+                {STATES.map((s) => (
+                  <MenuItem key={s.code} value={s.code}>
+                    {s.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : (
+              <TextField
+                variant="standard"
+                label="State / Province*"
+                helperText="Write N/A if not applicable"
+                fullWidth
+                name="mailingState"
+                value={field.state.value}
+                onBlur={async (e) => {
+                  field.handleBlur();
+                  await saveContactDraft({ mailingState: e.target.value });
+                }}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onInput={(e) =>
+                  field.handleChange((e.target as HTMLInputElement).value)
+                }
+              />
+            )
           )}
         </form.Field>
 
@@ -362,28 +389,6 @@ export default function ContactInformationStep() {
               onBlur={async (e) => {
                 field.handleBlur();
                 await saveContactDraft({ mailingZip: e.target.value });
-              }}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onInput={(e) =>
-                field.handleChange((e.target as HTMLInputElement).value)
-              }
-            />
-          )}
-        </form.Field>
-
-        {/* Country */}
-        <form.Field name="mailingCountry">
-          {(field) => (
-            <TextField
-              label="Country"
-              variant="standard"
-              fullWidth
-              name="mailingCountry"
-              autoComplete="country-name"
-              value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveContactDraft({ mailingCountry: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>

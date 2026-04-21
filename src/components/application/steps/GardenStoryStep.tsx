@@ -28,6 +28,10 @@ type UploadError = {
   message: string;
 };
 
+const storyAnswerMinChars = 200;
+const storyAnswerMaxChars = 1000;
+const storyAnswerHint = "Write a short paragraph (4-5 sentences).";
+
 function getFileKey(
   file: Pick<PreviewFile, "name" | "size"> | Pick<File, "name" | "size">,
 ) {
@@ -71,6 +75,23 @@ function hasDuplicateFiles(
   }
 
   return false;
+}
+
+function getStoryAnswerLength(value: string) {
+  return value.length;
+}
+
+function getTrimmedStoryAnswerLength(value: string) {
+  return value.trim().length;
+}
+
+function isStoryAnswerValid(value: string) {
+  const trimmedLength = getTrimmedStoryAnswerLength(value);
+
+  return (
+    trimmedLength >= storyAnswerMinChars &&
+    getStoryAnswerLength(value) <= storyAnswerMaxChars
+  );
 }
 
 export default function GardenStoryStep() {
@@ -410,6 +431,12 @@ export default function GardenStoryStep() {
     await saveStoryAnswer(4, form.state.values.storyCampaignImpact);
   };
 
+  const areStoryAnswersValid =
+    isStoryAnswerValid(values.storyLocationAndAudience) &&
+    isStoryAnswerValid(values.storyChallenge) &&
+    isStoryAnswerValid(values.storySeasonActivity) &&
+    isStoryAnswerValid(values.storyCampaignImpact);
+
   return (
     <div className="flex flex-col gap-6 w-[700px] m-15">
       {/* Garden Story */}
@@ -418,98 +445,196 @@ export default function GardenStoryStep() {
           Garden Story <span className="text-orange-500">*</span>
         </h2>
 
-        <p className="text-sm text-gray-600">2-3 sentences each</p>
+        <p className="text-sm text-gray-600">
+          Write a short paragraph for each response.
+        </p>
 
         <form.Field name="storyLocationAndAudience">
-          {(field) => (
-            <TextField
-              variant="standard"
-              label={question1.question}
-              fullWidth
-              multiline
-              minRows={1}
-              maxRows={10}
-              name="storyLocationAndAudience"
-              value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveStoryAnswer(1, e.target.value);
-              }}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onInput={(e) =>
-                field.handleChange((e.target as HTMLInputElement).value)
-              }
-            />
-          )}
+          {(field) =>
+            (() => {
+              const valueLength = getStoryAnswerLength(field.state.value);
+              const trimmedLength = getTrimmedStoryAnswerLength(
+                field.state.value,
+              );
+              const showError =
+                field.state.meta.isTouched &&
+                trimmedLength < storyAnswerMinChars;
+
+              return (
+                <TextField
+                  variant="filled"
+                  label={question1.question}
+                  fullWidth
+                  multiline
+                  minRows={5}
+                  maxRows={10}
+                  name="storyLocationAndAudience"
+                  value={field.state.value}
+                  error={showError}
+                  helperText={
+                    <span className="flex items-center justify-between gap-4">
+                      <span>
+                        {showError
+                          ? `Please write at least ${storyAnswerMinChars} characters.`
+                          : storyAnswerHint}
+                      </span>
+                      <span>{valueLength} / 1,000</span>
+                    </span>
+                  }
+                  onBlur={async (e) => {
+                    field.handleBlur();
+                    await saveStoryAnswer(1, e.target.value);
+                  }}
+                  onChange={(e) =>
+                    field.handleChange(
+                      e.target.value.slice(0, storyAnswerMaxChars),
+                    )
+                  }
+                />
+              );
+            })()
+          }
         </form.Field>
 
         <form.Field name="storyChallenge">
-          {(field) => (
-            <TextField
-              variant="standard"
-              label={question2.question}
-              fullWidth
-              multiline
-              minRows={1}
-              maxRows={10}
-              name="storyChallenge"
-              value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveStoryAnswer(2, e.target.value);
-              }}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onInput={(e) =>
-                field.handleChange((e.target as HTMLInputElement).value)
-              }
-            />
-          )}
+          {(field) =>
+            (() => {
+              const valueLength = getStoryAnswerLength(field.state.value);
+              const trimmedLength = getTrimmedStoryAnswerLength(
+                field.state.value,
+              );
+              const showError =
+                field.state.meta.isTouched &&
+                trimmedLength < storyAnswerMinChars;
+
+              return (
+                <TextField
+                  variant="filled"
+                  label={question2.question}
+                  fullWidth
+                  multiline
+                  minRows={5}
+                  maxRows={10}
+                  name="storyChallenge"
+                  value={field.state.value}
+                  error={showError}
+                  helperText={
+                    <span className="flex items-center justify-between gap-4">
+                      <span>
+                        {showError
+                          ? `Please write at least ${storyAnswerMinChars} characters.`
+                          : storyAnswerHint}
+                      </span>
+                      <span>{valueLength} / 1,000</span>
+                    </span>
+                  }
+                  onBlur={async (e) => {
+                    field.handleBlur();
+                    await saveStoryAnswer(2, e.target.value);
+                  }}
+                  onChange={(e) =>
+                    field.handleChange(
+                      e.target.value.slice(0, storyAnswerMaxChars),
+                    )
+                  }
+                />
+              );
+            })()
+          }
         </form.Field>
 
         <form.Field name="storySeasonActivity">
-          {(field) => (
-            <TextField
-              variant="standard"
-              label={question3.question}
-              fullWidth
-              multiline
-              minRows={1}
-              maxRows={10}
-              name="storySeasonActivity"
-              value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveStoryAnswer(3, e.target.value);
-              }}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onInput={(e) =>
-                field.handleChange((e.target as HTMLInputElement).value)
-              }
-            />
-          )}
+          {(field) =>
+            (() => {
+              const valueLength = getStoryAnswerLength(field.state.value);
+              const trimmedLength = getTrimmedStoryAnswerLength(
+                field.state.value,
+              );
+              const showError =
+                field.state.meta.isTouched &&
+                trimmedLength < storyAnswerMinChars;
+
+              return (
+                <TextField
+                  variant="filled"
+                  label={question3.question}
+                  fullWidth
+                  multiline
+                  minRows={5}
+                  maxRows={10}
+                  name="storySeasonActivity"
+                  value={field.state.value}
+                  error={showError}
+                  helperText={
+                    <span className="flex items-center justify-between gap-4">
+                      <span>
+                        {showError
+                          ? `Please write at least ${storyAnswerMinChars} characters.`
+                          : storyAnswerHint}
+                      </span>
+                      <span>{valueLength} / 1,000</span>
+                    </span>
+                  }
+                  onBlur={async (e) => {
+                    field.handleBlur();
+                    await saveStoryAnswer(3, e.target.value);
+                  }}
+                  onChange={(e) =>
+                    field.handleChange(
+                      e.target.value.slice(0, storyAnswerMaxChars),
+                    )
+                  }
+                />
+              );
+            })()
+          }
         </form.Field>
 
         <form.Field name="storyCampaignImpact">
-          {(field) => (
-            <TextField
-              variant="standard"
-              label={question4.question}
-              fullWidth
-              multiline
-              minRows={1}
-              maxRows={10}
-              name="storyCampaignImpact"
-              value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveStoryAnswer(4, e.target.value);
-              }}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onInput={(e) =>
-                field.handleChange((e.target as HTMLInputElement).value)
-              }
-            />
-          )}
+          {(field) =>
+            (() => {
+              const valueLength = getStoryAnswerLength(field.state.value);
+              const trimmedLength = getTrimmedStoryAnswerLength(
+                field.state.value,
+              );
+              const showError =
+                field.state.meta.isTouched &&
+                trimmedLength < storyAnswerMinChars;
+
+              return (
+                <TextField
+                  variant="filled"
+                  label={question4.question}
+                  fullWidth
+                  multiline
+                  minRows={5}
+                  maxRows={10}
+                  name="storyCampaignImpact"
+                  value={field.state.value}
+                  error={showError}
+                  helperText={
+                    <span className="flex items-center justify-between gap-4">
+                      <span>
+                        {showError
+                          ? `Please write at least ${storyAnswerMinChars} characters.`
+                          : storyAnswerHint}
+                      </span>
+                      <span>{valueLength} / 1,000</span>
+                    </span>
+                  }
+                  onBlur={async (e) => {
+                    field.handleBlur();
+                    await saveStoryAnswer(4, e.target.value);
+                  }}
+                  onChange={(e) =>
+                    field.handleChange(
+                      e.target.value.slice(0, storyAnswerMaxChars),
+                    )
+                  }
+                />
+              );
+            })()
+          }
         </form.Field>
       </div>
 
@@ -783,6 +908,7 @@ export default function GardenStoryStep() {
           component="button"
           variant="contained"
           size="medium"
+          disabled={!areStoryAnswersValid}
           onClick={async () => {
             await saveGardenStoryDraft();
             router.push("/apply/contact");

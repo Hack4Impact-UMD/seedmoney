@@ -44,6 +44,12 @@ function validateEmail(email: string): boolean {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
 }
 
+function hasValidStoryAnswer(value: string): boolean {
+  const trimmedLength = value.trim().length;
+
+  return trimmedLength >= 200 && value.length <= 1000;
+}
+
 export function getApplicationCompletionState(
   values: ApplicationProgressValues,
   hasPassedAgreement: boolean,
@@ -64,10 +70,10 @@ export function getApplicationCompletionState(
     values.gardenBeneficiaries.length > 0;
 
   const storyComplete =
-    values.storyLocationAndAudience.trim().length > 0 &&
-    values.storyChallenge.trim().length > 0 &&
-    values.storySeasonActivity.trim().length > 0 &&
-    values.storyCampaignImpact.trim().length > 0 &&
+    hasValidStoryAnswer(values.storyLocationAndAudience) &&
+    hasValidStoryAnswer(values.storyChallenge) &&
+    hasValidStoryAnswer(values.storySeasonActivity) &&
+    hasValidStoryAnswer(values.storyCampaignImpact) &&
     values.mainPhoto.trim().length > 0;
 
   const contactComplete =
