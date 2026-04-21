@@ -2,7 +2,6 @@
 
 import { useState } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
-import Link from "next/link";
 
 import Navbar from "@/src/components/Navbar";
 import DonorsTable from "@/src/components/DonorsTable";
@@ -175,10 +174,12 @@ export default function AdminCampaignPage() {
             <OpenInNew fontSize="small" className="ml-[5px]" />
           </Button>
 
-           <Button
+          <Button
             size="small"
             variant="outlined"
-            onClick={() => router.push("/dashboard/ongoing-campaigns/${campaignId}/edit")}
+            onClick={() =>
+              router.push(`/dashboard/ongoing-campaigns/${campaignId}/edit`)
+            }
           >
             Edit
           </Button>
