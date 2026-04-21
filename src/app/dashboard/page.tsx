@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import moment from "moment";
@@ -139,8 +139,25 @@ export default function DashboardIndexPage() {
 
   const isLoading = isLoadingUser || isLoadingCampaigns;
 
-  if (!isLoadingUser && !isLoadingCampaigns && userData && campaigns.length > 0 && !userData.is_admin) {
-    router.replace(`/dashboard/${campaigns[0].campaign_id}`);
+  useEffect(() => {
+    if (
+      !isLoadingUser &&
+      !isLoadingCampaigns &&
+      userData &&
+      campaigns.length > 0 &&
+      !userData.is_admin
+    ) {
+      router.replace(`/dashboard/${campaigns[0].campaign_id}`);
+    }
+  }, [campaigns, isLoadingCampaigns, isLoadingUser, router, userData]);
+
+  if (
+    !isLoadingUser &&
+    !isLoadingCampaigns &&
+    userData &&
+    campaigns.length > 0 &&
+    !userData.is_admin
+  ) {
     return null;
   }
 
