@@ -4,13 +4,29 @@ import moment from "moment";
 
 export function DaysRemainingCard({ startDate, endDate, is_current }: { startDate: string | null, endDate: string | null, is_current: boolean }) {
   function getDaysRemaining() {
-    const today = moment().startOf("day");
-    if (today.isAfter(moment(startDate)) && is_current) {
-      const end = moment(endDate);
-      return Math.max(0, end.diff(today, "days"));
-    } else {
+    if (!is_current || !startDate || !endDate) {
       return null;
     }
+
+    const today = moment().startOf("day");
+    const start = moment(startDate);
+    const end = moment(endDate);
+
+    if (!start.isValid() || !end.isValid()) {
+      return null;
+    }
+
+    if (!today.isAfter(start)) {
+      return null;
+    }
+
+    const daysRemaining = end.diff(today, "days");
+
+    if (Number.isNaN(daysRemaining)) {
+      return null;
+    }
+
+    return Math.max(0, daysRemaining);
   }
 
   const daysRemaining = getDaysRemaining();

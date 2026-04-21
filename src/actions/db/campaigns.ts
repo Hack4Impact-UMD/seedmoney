@@ -1,5 +1,20 @@
 import type { Campaign } from "@/src/types";
-import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
+import {
+  createBrowserClient,
+  createServerClient,
+} from "@/src/lib/supabase-client";
+
+function normalizeCampaignCreateData(data: Partial<Campaign>): Partial<Campaign> {
+  return {
+    raised: data.raised ?? 0,
+    donors: data.donors ?? 0,
+    goal: data.goal ?? 0,
+    impact: data.impact ?? 0,
+    size: data.size ?? "",
+    opt_in_ai: data.opt_in_ai ?? false,
+    ...data,
+  };
+}
 
 export async function createCampaign(
   data: Partial<Campaign>,
@@ -9,7 +24,7 @@ export async function createCampaign(
     data: { user },
     error: userError,
   } = await supabase.auth.getUser();
-  const campaignData = { ...data };
+  const campaignData = normalizeCampaignCreateData(data);
 
   if (userError || !user) {
     console.error(
@@ -78,7 +93,7 @@ export async function createCampaignGivebutter(
   data: Partial<Campaign>,
 ): Promise<Campaign | null> {
   const supabase = await createServerClient();
-  const campaignData = { ...data };
+  const campaignData = normalizeCampaignCreateData(data);
 
   if (
     campaignData.competition_id === undefined ||
@@ -123,6 +138,7 @@ export async function readCampaign(
   // Return ALL campaigns
   if (ids === undefined) {
     const { data, error } = await supabase.from("campaigns").select("*");
+    
 
     if (error) {
       console.error("Error fetching campaigns:", error.message);
@@ -140,7 +156,6 @@ export async function readCampaign(
       .select("*")
       .eq("campaign_id", ids)
       .maybeSingle();
-
     if (error) {
       console.error("Error reading campaign:", error.message);
       return null;
@@ -167,11 +182,30 @@ export async function readCampaign(
   return data as Campaign[];
 }
 
+export async function readCampaignsByCompId(
+  competitionId: number,
+): Promise<Campaign[]> {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("*")
+    .eq("competition_id", competitionId)
+    .eq("status", "published");
+
+  if (error) {
+    console.error("Error reading campaigns by competition id:", error.message);
+    return [];
+  }
+
+  return (data ?? []) as Campaign[];
+}
+
 export async function updateCampaign(
   id: number,
   campaign: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
   console.log("updateCampaign called", id, campaign);
 
   const { data, error } = await supabase
@@ -194,11 +228,33 @@ export async function updateCampaign(
   return data as Campaign;
 }
 
+export async function deleteCampaign(id: number): Promise<boolean> {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .delete()
+    .eq("campaign_id", id)
+    .select("campaign_id");
+
+  if (error) {
+    console.error("Error deleting campaign:", error.message);
+    return false;
+  }
+
+  if (!data || data.length === 0) {
+    console.warn("Campaign not found for deletion:", id);
+    return false;
+  }
+
+  return true;
+}
+
 export async function updateCampaignGivebutterID(
   id: number,
   campaign: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = await createBrowserClient();
+  const supabase = createBrowserClient();
   console.log("updateCampaign called", id, campaign);
 
   const { data, error } = await supabase
@@ -219,28 +275,6 @@ export async function updateCampaignGivebutterID(
   }
 
   return data as Campaign;
-}
-
-export async function deleteCampaign(id: number): Promise<boolean> {
-  const supabase = await createBrowserClient();
-
-  const { data, error } = await supabase
-    .from("campaigns")
-    .delete()
-    .eq("campaign_id", id)
-    .select("campaign_id");
-
-  if (error) {
-    console.error("Error deleting campaign:", error.message);
-    return false;
-  }
-
-  if (!data || data.length === 0) {
-    console.warn("Campaign not found for deletion:", id);
-    return false;
-  }
-
-  return true;
 }
 
 export async function readCurrentDraftCampaignForUser(user_id: string) {

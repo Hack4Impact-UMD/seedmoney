@@ -7,17 +7,12 @@ import {
   Select,
   TextField,
 } from "@mui/material";
-import {
-  EditCampaignFormData,
-  SetFieldValue,
-  TextChangeHandler,
-} from "./types";
+
+import { EditCampaignFormData, SetFieldValue, TextChangeHandler } from "@/src/types/frontend/campaignEdit";
 
 interface GardenInformationSectionProps {
   formData: EditCampaignFormData;
   categoryOptions: string[];
-  usStates: string[];
-  countries: string[];
   beneficiaryOptions: string[];
   onTextChange: TextChangeHandler;
   setFieldValue: SetFieldValue;
@@ -27,8 +22,6 @@ interface GardenInformationSectionProps {
 export default function GardenInformationSection({
   formData,
   categoryOptions,
-  usStates,
-  countries,
   beneficiaryOptions,
   onTextChange,
   setFieldValue,
@@ -50,37 +43,24 @@ export default function GardenInformationSection({
           onChange={onTextChange("gardenCity")}
         />
 
-        <FormControl variant="standard" fullWidth>
-          <InputLabel>State / Province</InputLabel>
-          <Select
-            value={formData.gardenState}
-            onChange={(e) => setFieldValue("gardenState", String(e.target.value))}
-            label="State / Province"
-          >
-            {usStates.map((state) => (
-              <MenuItem key={state} value={state}>
-                {state}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+ 
+        <TextField
+          label="State / Province"
+          variant="standard"
+          fullWidth
+          value={formData.gardenState}
+          onChange={onTextChange("gardenState")}
+        />
 
-        <FormControl variant="standard" fullWidth>
-          <InputLabel>Country</InputLabel>
-          <Select
-            value={formData.gardenCountry}
-            onChange={(e) =>
-              setFieldValue("gardenCountry", String(e.target.value))
-            }
-            label="Country"
-          >
-            {countries.map((country) => (
-              <MenuItem key={country} value={country}>
-                {country}
-              </MenuItem>
-            ))}
-          </Select>
-        </FormControl>
+
+
+        <TextField
+          label="Country"
+          variant="standard"
+          fullWidth
+          value={formData.gardenCountry}
+          onChange={onTextChange("gardenCountry")}
+        />
       </div>
 
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">

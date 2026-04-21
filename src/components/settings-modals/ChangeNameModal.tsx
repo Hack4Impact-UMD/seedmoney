@@ -15,10 +15,12 @@ import CloseIcon from "@mui/icons-material/Close";
 type ChangeNameModalProps = {
   open: boolean;
   onClose: () => void;
-  onSave?: (firstName: string, lastName: string) => void;
+  onSave?: (firstName: string, lastName: string) => Promise<boolean>;
   firstName: string;
   lastName: string;
   title?: string;
+  saveError?: string | null;
+  isSaving?: boolean;
 };
 
 export default function ChangeNameModal({
@@ -28,11 +30,14 @@ export default function ChangeNameModal({
   firstName,
   lastName,
   title = "Change Name",
+  saveError = null,
+  isSaving = false,
 }: ChangeNameModalProps) {
   const [first, setFirst] = useState(firstName);
   const [last, setLast] = useState(lastName);
 
   const isDisabled =
+    isSaving ||
     !first.trim() ||
     !last.trim() ||
     (first.trim() === firstName.trim() && last.trim() === lastName.trim());
@@ -52,6 +57,7 @@ export default function ChangeNameModal({
         <IconButton
           aria-label="close"
           onClick={onClose}
+          disabled={isSaving}
           sx={{ position: "absolute", right: 8, top: 8, color: "#666" }}
         >
           <CloseIcon />
@@ -73,22 +79,26 @@ export default function ChangeNameModal({
             value={last}
             onChange={(e) => setLast(e.target.value)}
           />
+          {saveError && (
+            <Typography color="error" variant="body2">
+              {saveError}
+            </Typography>
+          )}
         </Box>
       </DialogContent>
       <DialogActions sx={{ px: 3, pb: 2 }}>
-        <Button variant="text" size="medium" onClick={onClose}>
+        <Button variant="text" size="medium" onClick={onClose} disabled={isSaving}>
           CANCEL
         </Button>
         <Button
           variant="contained"
           size="medium"
           disabled={isDisabled}
-          onClick={() => {
-            onSave?.(first.trim(), last.trim());
-            onClose();
+          onClick={async () => {
+            await onSave?.(first.trim(), last.trim());
           }}
         >
-          SAVE
+          {isSaving ? "SAVING..." : "SAVE"}
         </Button>
       </DialogActions>
     </Dialog>

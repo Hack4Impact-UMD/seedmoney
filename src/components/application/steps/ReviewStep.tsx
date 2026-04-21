@@ -73,10 +73,11 @@ function ValueRow({
   required = false,
 }: {
   label: string;
-  value: string;
+  value: string | number;
   required?: boolean;
 }) {
-  const isMissing = required && value.trim().length === 0;
+  const displayValue = String(value ?? "");
+  const isMissing = required && displayValue.trim().length === 0;
 
   return (
     <div className="flex flex-col gap-1">
@@ -89,7 +90,7 @@ function ValueRow({
         <div className="border-b border-[#D32F2F] mt-2" />
       ) : (
         <>
-          <p>{value}</p>
+          <p>{displayValue}</p>
           <div className="border-b border-gray-300" />
         </>
       )}
@@ -136,7 +137,9 @@ export default function ReviewSubmitPage() {
     contactComplete,
     reviewComplete,
   } = getApplicationCompletionState(values, hasPassedAgreement);
-  const canSubmit = reviewComplete && !!currentCompetitionData;
+  const goalValue = Number(values.fundraisingGoal);
+  const canSubmit = reviewComplete && !!currentCompetitionData && goalValue > 1;
+  
 
   const handleSubmitApplication = async () => {
     if (!currentCompetitionData) {
@@ -150,6 +153,11 @@ export default function ReviewSubmitPage() {
       campaignData: {
         status: "submitted_under_review",
         competition_id: currentCompetitionData.competition_id,
+        raised: 0,
+        donors: 0,
+        givebutter_id: "",
+        givebutter_slug: "",
+        givebutterlink: "",
       },
     });
 
@@ -165,6 +173,12 @@ export default function ReviewSubmitPage() {
         <ReviewBanner
           href="/apply/campaign"
           message="Please complete campaign information"
+        />
+      )}
+      {goalValue < 1 && (
+        <ReviewBanner
+          href="/apply/campaign"
+          message="Fundraising goal must be greater than $1"
         />
       )}
 
@@ -238,7 +252,7 @@ export default function ReviewSubmitPage() {
 
         <ValueRow
           label="Approximate garden size or scope"
-          value={values.gardenSize}
+          value={values.gardenSize || ""}
         />
       </div>
 
@@ -254,6 +268,7 @@ export default function ReviewSubmitPage() {
         <ValueRow
           label="Fundraising Goal (USD)"
           value={values.fundraisingGoal}
+
           required
         />
       </div>

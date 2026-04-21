@@ -5,8 +5,8 @@ export type Campaign = {
   name: string;
   organization_name: string;
   givebutterlink: string;
-  givebutter_id: string | null;
-  givebutter_slug: string | null;
+  givebutter_id: string;
+  givebutter_slug: string;
   raised: number;
   donors: number;
   status: Status;
@@ -34,6 +34,7 @@ export type Campaign = {
   mailing_country: string;
   mailing_zipcode: string;
   competition_id: number | null;
+  opt_in_ai: boolean;
 };
 
 export type GivebutterCampaignPayload = {

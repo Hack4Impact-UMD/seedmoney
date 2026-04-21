@@ -1,4 +1,5 @@
 export interface ApplicationFormData {
+  aiOptIn: boolean;
   campaignTitle: string;
   beneficiaryCount: string;
   gardenSize: string;

@@ -426,6 +426,9 @@ export default function GardenStoryStep() {
               variant="standard"
               label={question1.question}
               fullWidth
+              multiline
+              minRows={1}
+              maxRows={10}
               name="storyLocationAndAudience"
               value={field.state.value}
               onBlur={async (e) => {
@@ -446,6 +449,9 @@ export default function GardenStoryStep() {
               variant="standard"
               label={question2.question}
               fullWidth
+              multiline
+              minRows={1}
+              maxRows={10}
               name="storyChallenge"
               value={field.state.value}
               onBlur={async (e) => {
@@ -466,6 +472,9 @@ export default function GardenStoryStep() {
               variant="standard"
               label={question3.question}
               fullWidth
+              multiline
+              minRows={1}
+              maxRows={10}
               name="storySeasonActivity"
               value={field.state.value}
               onBlur={async (e) => {
@@ -486,6 +495,9 @@ export default function GardenStoryStep() {
               variant="standard"
               label={question4.question}
               fullWidth
+              multiline
+              minRows={1}
+              maxRows={10}
               name="storyCampaignImpact"
               value={field.state.value}
               onBlur={async (e) => {

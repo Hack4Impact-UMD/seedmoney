@@ -12,6 +12,7 @@ import { useForm } from "@tanstack/react-form";
 import { ApplicationFormData } from "@/src/types/form";
 
 const INITIAL_FORM_VALUES: ApplicationFormData = {
+  aiOptIn: false,
   campaignTitle: "",
   beneficiaryCount: "",
   gardenSize: "",
@@ -19,7 +20,7 @@ const INITIAL_FORM_VALUES: ApplicationFormData = {
   fundraisingGoal: "",
   gardenCity: "",
   gardenState: "",
-  gardenCountry: "US",
+  gardenCountry: "",
   gardenCategory: "",
   gardenBeneficiaries: [],
   storyLocationAndAudience: "",
@@ -41,7 +42,7 @@ const INITIAL_FORM_VALUES: ApplicationFormData = {
   mailingCity: "",
   mailingState: "",
   mailingZip: "",
-  mailingCountry: "US",
+  mailingCountry: "",
   contactFirstName: "",
   contactLastName: "",
   contactEmail: "",

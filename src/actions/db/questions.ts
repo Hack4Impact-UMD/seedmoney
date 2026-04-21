@@ -79,3 +79,21 @@ export async function deleteQuestion(id: number): Promise<boolean> {
 
   return true;
 }
+
+export async function readActiveQuestions(): Promise<Question[]> {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("questions")
+    .select()
+    .eq("is_active", true)
+    .order("question_number", { ascending: true });
+
+  if (error) {
+    console.error("Error fetching active questions: ", error.message);
+    return [];
+  }
+
+  return data as Question[];
+}
+

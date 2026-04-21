@@ -19,3 +19,22 @@ export async function readTransactionsByCampaign(
 
   return data as Transaction[];
 }
+
+export async function createTransaction(
+  data: Partial<Transaction>,
+): Promise<Transaction | null> {
+  const supabase = createBrowserClient();
+
+  const { data: insertedData, error } = await supabase
+    .from("transactions")
+    .insert(data)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error creating transaction:", error.message);
+    return null;
+  }
+
+  return insertedData as Transaction;
+}

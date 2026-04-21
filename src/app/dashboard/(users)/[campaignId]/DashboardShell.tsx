@@ -33,7 +33,7 @@ export default function DashboardShell({
   const pathname = usePathname();
   const { campaignId } = useParams<{ campaignId: string }>();
   const { user } = useAuth();
-  const { data: campaignData, isLoading } = useReadCampaign(Number(campaignId));
+  const { data: campaignsData, isLoading, error} = useReadCampaign({ campaignId: Number(campaignId) });
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const {
     percent: raisedPercent,
@@ -55,11 +55,13 @@ export default function DashboardShell({
 
   if (!user) notFound();
   if (isLoading ) return <div>Loading...</div>;
-  if (!campaignData) notFound();
-  if (Array.isArray(campaignData)) notFound();
+  if (error) throw error;
+  if (!campaignsData) return <div className="flex min-h-screen" >Unable to load campaign.</div>;
+  if (campaignsData.length === 0) notFound();
+
+  const campaignData = campaignsData[0];
 
   const selectedCampaignId = Number(campaignId);
-  if (Array.isArray(campaignData)) notFound();
 
   const selectedTab: DashboardTab = pathname.endsWith("/donors")
     ? "Donors"
@@ -143,7 +145,7 @@ export default function DashboardShell({
         <Button 
           size="small" 
           variant="outlined"
-          onClick={() => router.push(`/dashboard/${selectedCampaignId}/donors`)}
+          onClick={() => router.push("/leaderboard")}
         >
           View Leaderboard
           <OpenInNew fontSize="small" className="text-[#123A1E] ml-[5px]" />

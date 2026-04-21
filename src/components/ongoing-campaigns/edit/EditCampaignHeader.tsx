@@ -3,18 +3,18 @@
 import { ArrowBack } from "@mui/icons-material";
 
 interface EditCampaignHeaderProps {
-  campaignId: string;
+  text: string;
   onBack: () => void;
 }
 
 export default function EditCampaignHeader({
-  campaignId,
+  text,
   onBack,
 }: EditCampaignHeaderProps) {
   return (
     <>
       <h3 className="mb-5 text-4xl font-bold text-[#096B2E]">
-        Edit Campaign - {campaignId}
+        {text}
       </h3>
       <button
         onClick={onBack}
