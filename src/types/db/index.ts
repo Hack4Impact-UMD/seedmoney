@@ -4,3 +4,4 @@ export * from './campaigns';
 export * from './campaignMembers';
 export * from './questions';
 export * from './answers';
+export * from './transactions';
