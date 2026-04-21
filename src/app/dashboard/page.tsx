@@ -34,12 +34,17 @@ export default function DashboardIndexPage() {
   const router = useRouter();
 
   const [sortKey, setSortKey] = useState<SortKey>("most_raised");
-  const [selectedCompetitionId, setSelectedCompetitionId] = useState<number | null>(null);
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState<
+    number | null
+  >(null);
 
-  const { data: userData, isLoading: isLoadingUser } = useUserByAuthId(user?.id || "");
+  const { data: userData, isLoading: isLoadingUser } = useUserByAuthId(
+    user?.id || "",
+  );
   const { data: campaigns = [], isLoading: isLoadingCampaigns } =
     useReadCampaignsFromMembers(user?.id || "");
-  const { data: allCampaigns = [], isLoading: isLoadingAll } = useReadAllCampaigns();
+  const { data: allCampaigns = [], isLoading: isLoadingAll } =
+    useReadAllCampaigns();
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const { data: allCompetitions = [] } = useReadAllCompetitions();
 
@@ -50,7 +55,9 @@ export default function DashboardIndexPage() {
 
   const selectedCompetition = useMemo(() => {
     return (
-      allCompetitions.find((c) => c.competition_id === effectiveCompetitionId) ??
+      allCompetitions.find(
+        (c) => c.competition_id === effectiveCompetitionId,
+      ) ??
       currentCompetitionData ??
       null
     );
@@ -85,8 +92,7 @@ export default function DashboardIndexPage() {
   const competitionCampaigns = useMemo(() => {
     return allCampaigns.filter(
       (c) =>
-        !selectedCompetitionKey ||
-        c.competition_id === selectedCompetitionKey,
+        !selectedCompetitionKey || c.competition_id === selectedCompetitionKey,
     );
   }, [allCampaigns, selectedCompetitionKey]);
 
@@ -139,23 +145,66 @@ export default function DashboardIndexPage() {
 
   const isLoading = isLoadingUser || isLoadingCampaigns;
 
+  const preferredUserCampaign = useMemo(() => {
+    if (campaigns.length === 0) {
+      return null;
+    }
+
+    const currentCompetitionId = currentCompetitionData?.competition_id;
+    const statusPriority: Record<string, number> = {
+      in_progress: 0,
+      submitted_under_review: 1,
+      approved: 2,
+      not_approved: 3,
+    };
+
+    return [...campaigns].sort((a, b) => {
+      const aIsCurrent = a.competition_id === currentCompetitionId ? 1 : 0;
+      const bIsCurrent = b.competition_id === currentCompetitionId ? 1 : 0;
+
+      if (aIsCurrent !== bIsCurrent) {
+        return bIsCurrent - aIsCurrent;
+      }
+
+      const aStatusPriority =
+        statusPriority[a.status] ?? Number.MAX_SAFE_INTEGER;
+      const bStatusPriority =
+        statusPriority[b.status] ?? Number.MAX_SAFE_INTEGER;
+
+      if (aStatusPriority !== bStatusPriority) {
+        return aStatusPriority - bStatusPriority;
+      }
+
+      return (
+        moment(b.date_created, "YYYY-MM-DD").valueOf() -
+        moment(a.date_created, "YYYY-MM-DD").valueOf()
+      );
+    })[0];
+  }, [campaigns, currentCompetitionData?.competition_id]);
+
   useEffect(() => {
     if (
       !isLoadingUser &&
       !isLoadingCampaigns &&
       userData &&
-      campaigns.length > 0 &&
+      preferredUserCampaign &&
       !userData.is_admin
     ) {
-      router.replace(`/dashboard/${campaigns[0].campaign_id}`);
+      router.replace(`/dashboard/${preferredUserCampaign.campaign_id}`);
     }
-  }, [campaigns, isLoadingCampaigns, isLoadingUser, router, userData]);
+  }, [
+    isLoadingCampaigns,
+    isLoadingUser,
+    preferredUserCampaign,
+    router,
+    userData,
+  ]);
 
   if (
     !isLoadingUser &&
     !isLoadingCampaigns &&
     userData &&
-    campaigns.length > 0 &&
+    preferredUserCampaign &&
     !userData.is_admin
   ) {
     return null;
@@ -178,7 +227,9 @@ export default function DashboardIndexPage() {
             <>
               <select
                 value={effectiveCompetitionId ?? ""}
-                onChange={(e) => setSelectedCompetitionId(Number(e.target.value))}
+                onChange={(e) =>
+                  setSelectedCompetitionId(Number(e.target.value))
+                }
                 className="bg-white border border-gray-300 rounded-md px-3 py-1 text-sm font-medium text-gray-700 outline-none cursor-pointer"
               >
                 {allCompetitions.length === 0 && (
