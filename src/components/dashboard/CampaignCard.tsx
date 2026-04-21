@@ -4,6 +4,7 @@ import type { Campaign } from "@/src/types/db/campaigns";
 type CampaignCardProps = {
   campaign: Campaign;
   rank?: number;
+  imageUrl?: string | null;
 };
 
 function ordinal(n: number) {
@@ -34,7 +35,7 @@ function rankStyle(rank: number) {
   }
 }
 
-export default function CampaignCard({ campaign, rank }: CampaignCardProps) {
+export default function CampaignCard({ campaign, rank, imageUrl }: CampaignCardProps) {
   const { campaign_id, name, raised = 0, goal = 0, donors = 0, project_category } = campaign;
 
   const percent = (goal ?? 0) > 0 ? Math.round(((raised ?? 0) / (goal ?? 0)) * 100) : 0;
@@ -48,15 +49,23 @@ export default function CampaignCard({ campaign, rank }: CampaignCardProps) {
 
   return (
     <div className="bg-white rounded-lg border border-[#e5e5e5] overflow-hidden flex flex-col">
-      <div className="relative h-36 bg-[#2D7A45] flex items-center justify-center">
+      <div
+        className="relative h-36 bg-[#2D7A45] bg-cover bg-center flex items-center justify-center"
+        style={
+          imageUrl
+            ? { backgroundImage: `url(${imageUrl})` }
+            : undefined
+        }
+      >
+        {imageUrl && <div className="absolute inset-0 bg-black/50" />}
         {rank !== undefined && (
           <span
-            className={`absolute top-3 left-3 rounded-full px-3 py-0.5 text-xs font-bold ${rankStyle(rank)}`}
+            className={`absolute top-3 left-3 rounded-full px-3 py-0.5 text-xs font-bold z-10 ${rankStyle(rank)}`}
           >
             {ordinal(rank)}
           </span>
         )}
-        <span className="text-white text-lg font-semibold text-center px-4 line-clamp-2">
+        <span className="text-white text-lg font-semibold text-center px-4 line-clamp-2 relative z-10">
           {name}
         </span>
       </div>

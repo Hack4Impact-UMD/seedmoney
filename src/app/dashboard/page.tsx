@@ -17,6 +17,7 @@ import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCam
 import useReadAllCampaigns from "@/src/hooks/campaigns/useReadAllCampaigns";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadAllCompetitions from "@/src/hooks/competition-metadata/useReadAllCompetitions";
+import useReadCampaignImageUrlsByCampaignIds from "@/src/hooks/campaign-image-records/useReadCampaignImageUrlsByCampaignIds";
 
 type SortKey = "most_raised" | "least_raised" | "most_donors";
 
@@ -39,6 +40,7 @@ export default function DashboardIndexPage() {
   const { data: allCampaigns = [], isLoading: isLoadingAll } = useReadAllCampaigns();
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const { data: allCompetitions = [] } = useReadAllCompetitions();
+
 
   useEffect(() => {
     if (selectedCompetitionId === null && currentCompetitionData?.competition_id) {
@@ -97,7 +99,7 @@ export default function DashboardIndexPage() {
   );
 
   const sortedCampaigns = useMemo(() => {
-    const copy = [...competitionCampaigns];
+    let copy = [...competitionCampaigns].filter((c) => c.status === "published");
     switch (sortKey) {
       case "most_raised":
         copy.sort((a, b) => (b.raised ?? 0) - (a.raised ?? 0));
@@ -113,19 +115,28 @@ export default function DashboardIndexPage() {
   }, [competitionCampaigns, sortKey]);
 
   const stats = useMemo(() => {
-    const donationsReceived = competitionCampaigns.reduce(
+    const donationsReceived = sortedCampaigns.reduce(
       (sum, c) => sum + (c.donors ?? 0),
       0,
     );
-    const ongoingCampaigns = competitionCampaigns.filter(
-      (c) => c.status === "approved" || c.status === "published",
+    const ongoingCampaigns = sortedCampaigns.filter(
+      (c) => c.status === "published",
     ).length;
-    const totalRaised = competitionCampaigns.reduce(
+    const totalRaised = sortedCampaigns.reduce(
       (sum, c) => sum + (c.raised ?? 0),
       0,
     );
     return { donationsReceived, ongoingCampaigns, totalRaised };
   }, [competitionCampaigns]);
+
+  const topCampaigns = useMemo(() => sortedCampaigns.slice(0, 6), [sortedCampaigns]);
+
+  const topCampaignIds = useMemo(
+    () => topCampaigns.map((c) => c.campaign_id),
+    [topCampaigns],
+  );
+
+  const { data: imageUrlsByCampaignId = {} } = useReadCampaignImageUrlsByCampaignIds(topCampaignIds);
 
   const isLoading = isLoadingUser || isLoadingCampaigns;
 
@@ -243,8 +254,12 @@ export default function DashboardIndexPage() {
                 </div>
               ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {sortedCampaigns.map((c, i) => (
-                    <CampaignCard key={c.campaign_id} campaign={c} rank={i + 1} />
+                  {sortedCampaigns.slice(0, 6).map((c, i) => (
+                    <CampaignCard
+                      campaign={c}
+                      rank={i + 1}
+                      imageUrl={imageUrlsByCampaignId[c.campaign_id] ?? null}
+                    />
                   ))}
                 </div>
               )}
