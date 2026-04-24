@@ -183,7 +183,10 @@ function UploadedAssetCard({
 interface CampaignMediaSectionProps {
   formData: EditCampaignFormData;
   campaignId: number;
-  syncImageRecords: (records: HydratedCampaignImageRecord[]) => void;
+  syncImageRecords: (
+    records: HydratedCampaignImageRecord[],
+    options?: { syncInitialData?: boolean },
+  ) => void;
 }
 
 export default function CampaignMediaSection({
@@ -378,6 +381,7 @@ export default function CampaignMediaSection({
             is_main: imageRecord.id === record.id,
           })),
         ),
+        { syncInitialData: false },
       );
     } catch (error) {
       console.error(error);

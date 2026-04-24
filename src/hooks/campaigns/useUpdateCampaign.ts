@@ -11,9 +11,15 @@ export default function useUpdateCampaign() {
           if (!campaign) throw new Error("Error updating campaign");
           return campaign;
         },
-        onSuccess: (data, { campaignId }) => {
-          // invalidate so useReadCampaign refetches fresh data
-          queryClient.invalidateQueries({ queryKey: [campaignId, 'campaign'] });
+        onSuccess: (_data, { campaignId }) => {
+          queryClient.invalidateQueries({
+            predicate: (query) =>
+              Array.isArray(query.queryKey) &&
+              query.queryKey.some((part) => part === "campaigns"),
+          });
+          queryClient.invalidateQueries({
+            queryKey: ["campaign-images", campaignId],
+          });
         }
     });
 }

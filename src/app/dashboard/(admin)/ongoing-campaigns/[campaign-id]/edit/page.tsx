@@ -95,9 +95,14 @@ export default function EditCampaignPage() {
   );
 
   const syncImageRecords = useCallback(
-    (imageRecords: HydratedCampaignImageRecord[]) => {
+    (
+      imageRecords: HydratedCampaignImageRecord[],
+      options?: { syncInitialData?: boolean },
+    ) => {
       setFormData((prev) => ({ ...prev, imageRecords }));
-      setInitialData((prev) => ({ ...prev, imageRecords }));
+      if (options?.syncInitialData !== false) {
+        setInitialData((prev) => ({ ...prev, imageRecords }));
+      }
     },
     [],
   );
