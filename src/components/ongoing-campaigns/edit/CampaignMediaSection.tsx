@@ -251,17 +251,8 @@ export default function CampaignMediaSection({
           file: nextFile,
           campaignId,
           displayOrder: 0,
-          isMain: !mainPhoto,
+          isMain: true,
         });
-
-        if (mainPhoto?.storage_path) {
-          await setMainCampaignImage.mutateAsync(uploadedImage.id);
-          await deleteCampaignImage.mutateAsync({
-            campaignId,
-            storagePath: mainPhoto.storage_path,
-          });
-          revokePreviewUrl(mainPhoto.signedUrl);
-        }
 
         setUploadError(null);
         syncImageRecords(
