@@ -205,6 +205,13 @@ export default function GardenInformationStep() {
                   <em>None</em>
                 </MenuItem>
 
+                {field.state.value &&
+                  !STATES.some((s) => s.code === field.state.value) && (
+                    <MenuItem value={field.state.value}>
+                      {field.state.value}
+                    </MenuItem>
+                  )}
+
                 {STATES.map((s) => (
                   <MenuItem key={s.code} value={s.code}>
                     {s.name}
