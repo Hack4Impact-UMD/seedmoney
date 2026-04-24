@@ -1,8 +1,19 @@
 import type { NewAnswer, Answers } from "@/src/types";
-import { createBrowserClient } from "@/src/lib/supabase-client";
+import {
+  createBrowserClient,
+  createServerClient,
+} from "@/src/lib/supabase-client";
 import type { Question } from "@/src/types/db/questions";
 
 export type AnswerWithQuestion = Answers & { questions: Question | null };
+
+async function createReadClient() {
+  if (typeof window === "undefined") {
+    return await createServerClient();
+  }
+
+  return createBrowserClient();
+}
 
 export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
   const supabase = await createBrowserClient();
@@ -182,7 +193,7 @@ export async function createOriginalAnswer({
 export async function readAnswersByCampaign(
   campaignId: number,
 ): Promise<AnswerWithQuestion[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createReadClient();
 
   const { data, error } = await supabase
     .from("answers")
@@ -205,7 +216,7 @@ export async function readAnswersByCampaign(
 export async function readAnswersByCampaignId(
   campaignId: number,
 ): Promise<AnswerWithQuestion[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createReadClient();
 
   // 1. Fetch answers for this explicit campaign
   const { data: answersData, error: answersError } = await supabase
