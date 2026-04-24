@@ -121,6 +121,35 @@ export async function createFinalAnswer({
   });
 }
 
+export async function createAiAnswer({
+  campaignId,
+  questionId,
+  aiAnswer,
+}: {
+  campaignId: number;
+  questionId: number;
+  aiAnswer: string;
+}): Promise<Answers | null> {
+  const existingAnswer = await readAnswerByCampaignAndQuestion(
+    campaignId,
+    questionId,
+  );
+
+  if (existingAnswer) {
+    return updateAnswer(existingAnswer.answer_id, {
+      ai_answer: aiAnswer,
+    });
+  }
+
+  return createAnswer({
+    campaign_id: campaignId,
+    question_id: questionId,
+    pre_ai_answer: "",
+    ai_answer: aiAnswer,
+    final_answer: "",
+  });
+}
+
 export async function createOriginalAnswer({
   campaignId,
   questionId,
