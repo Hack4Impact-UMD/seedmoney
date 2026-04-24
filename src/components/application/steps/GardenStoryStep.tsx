@@ -13,7 +13,7 @@ import { notFound, useRouter } from "next/navigation";
 import { useDropzone } from "react-dropzone";
 import { useRef, useState } from "react";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
-import useUpsertAnswer from "@/src/hooks/answers/useUpsertAnswer";
+import useCreateOriginalAnswer from "@/src/hooks/answers/useCreateOriginalAnswer";
 import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
 import useDeleteCampaignImage from "@/src/hooks/campaign-image-records/useDeleteCampaignImage";
 
@@ -101,7 +101,7 @@ export default function GardenStoryStep() {
   const router = useRouter();
   const { setLastSaved } = useLastSaved();
   const { draftCampaignId, saveDraftCampaign } = useSaveDraftCampaign();
-  const upsertAnswer = useUpsertAnswer();
+  const upsertAnswer = useCreateOriginalAnswer();
   const uploadCampaignImage = useUploadCampaignImage();
   const deleteCampaignImage = useDeleteCampaignImage();
   const values = form.state.values;
@@ -408,8 +408,13 @@ export default function GardenStoryStep() {
     setSupportingUploadError(null);
   };
 
-  const saveStoryAnswer = async (questionId: number, finalAnswer: string) => {
-    if (storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] === finalAnswer) {
+  const saveStoryAnswer = async (
+    questionId: number,
+    originalAnswer: string,
+  ) => {
+    if (
+      storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] === originalAnswer
+    ) {
       return;
     }
 
@@ -418,9 +423,9 @@ export default function GardenStoryStep() {
     await upsertAnswer.mutateAsync({
       campaignId,
       questionId,
-      finalAnswer,
+      originalAnswer,
     });
-    storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] = finalAnswer;
+    storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] = originalAnswer;
     setLastSaved(getFormattedSaveTime());
   };
 

@@ -1,22 +1,22 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { upsertAnswerByCampaignAndQuestion } from "@/src/actions/db/answers";
+import { createOriginalAnswer } from "@/src/actions/db/answers";
 import { Answers } from "@/src/types/db/answers";
 
-export default function useUpsertAnswer() {
+export default function useUpsertOriginalAnswer() {
   const queryClient = useQueryClient();
 
   return useMutation<
     Answers,
     Error,
-    { campaignId: number; questionId: number; finalAnswer: string }
+    { campaignId: number; questionId: number; originalAnswer: string }
   >({
-    mutationFn: async ({ campaignId, questionId, finalAnswer }) => {
-      const answer = await upsertAnswerByCampaignAndQuestion({
+    mutationFn: async ({ campaignId, questionId, originalAnswer }) => {
+      const answer = await createOriginalAnswer({
         campaignId,
         questionId,
-        finalAnswer,
+        originalAnswer,
       });
 
       if (!answer) {

@@ -95,7 +95,7 @@ export async function readAnswerByCampaignAndQuestion(
   return data as Answers;
 }
 
-export async function upsertAnswerByCampaignAndQuestion({
+export async function createFinalAnswer({
   campaignId,
   questionId,
   finalAnswer,
@@ -124,18 +124,48 @@ export async function upsertAnswerByCampaignAndQuestion({
   });
 }
 
+export async function createOriginalAnswer({
+  campaignId,
+  questionId,
+  originalAnswer,
+}: {
+  campaignId: number;
+  questionId: number;
+  originalAnswer: string;
+}): Promise<Answers | null> {
+  const existingAnswer = await readAnswerByCampaignAndQuestion(
+    campaignId,
+    questionId,
+  );
+
+  if (existingAnswer) {
+    return updateAnswer(existingAnswer.answer_id, {
+      pre_ai_answer: originalAnswer,
+    });
+  }
+
+  return createAnswer({
+    campaign_id: campaignId,
+    question_id: questionId,
+    pre_ai_answer: originalAnswer,
+    ai_answer: "",
+    final_answer: "//WHAT GOES HERE?",
+  });
+}
+
 export async function readAnswersByCampaign(
   campaignId: number,
 ): Promise<AnswerWithQuestion[]> {
   const supabase = createBrowserClient();
 
-const { data, error } = await supabase
-  .from("answers")
-  .select("*, questions(*)")
-  .eq("campaign_id", campaignId);
+  const { data, error } = await supabase
+    .from("answers")
+    .select("*, questions(*)")
+    .eq("campaign_id", campaignId);
 
   const sorted = (data ?? []).sort(
-    (a, b) => (a.questions?.question_number ?? 0) - (b.questions?.question_number ?? 0)
+    (a, b) =>
+      (a.questions?.question_number ?? 0) - (b.questions?.question_number ?? 0),
   );
 
   if (error) {
@@ -144,7 +174,6 @@ const { data, error } = await supabase
   }
 
   return sorted as AnswerWithQuestion[];
-
 }
 
 export async function readAnswersByCampaignId(
