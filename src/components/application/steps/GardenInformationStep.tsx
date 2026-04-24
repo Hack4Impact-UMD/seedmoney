@@ -35,9 +35,11 @@ export default function GardenInformationStep() {
   const router = useRouter();
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const normalizeCountryValue = (value: string) => value.trim().toLowerCase();
-  const isUsGardenCountry =
-    normalizeCountryValue(form.state.values.gardenCountry) === "us" ||
-    normalizeCountryValue(form.state.values.gardenCountry) === "united states";
+  const isUsCountry = (value: string) => {
+    const normalizedValue = normalizeCountryValue(value);
+    return normalizedValue === "us" || normalizedValue === "united states";
+  };
+  const isUsGardenCountry = isUsCountry(form.state.values.gardenCountry);
   const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(false);
   const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] =
     useState(false);
@@ -124,8 +126,8 @@ export default function GardenInformationStep() {
               onChange={async (e) => {
                 const nextCountry = e.target.value;
                 const shouldClearState =
-                  normalizeCountryValue(nextCountry) === "us" ||
-                  normalizeCountryValue(nextCountry) === "united states";
+                  normalizeCountryValue(field.state.value) !==
+                  normalizeCountryValue(nextCountry);
 
                 field.handleChange(nextCountry);
 
