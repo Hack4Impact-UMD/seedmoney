@@ -328,8 +328,10 @@ export default function ContactInformationStep() {
             isUsMailingCountry ? (
               <TextField
                 select
+                label="State / Province*"
                 variant="standard"
                 fullWidth
+                name="mailingState"
                 autoComplete="new-password"
                 value={field.state.value}
                 onChange={async (e) => {
@@ -344,7 +346,10 @@ export default function ContactInformationStep() {
                         <span className="text-gray-400">State / Province*</span>
                       );
                     }
-                    return String(selected);
+                    const selectedState = STATES.find(
+                      (state) => state.code === selected,
+                    );
+                    return selectedState?.name ?? String(selected);
                   },
                 }}
               >
