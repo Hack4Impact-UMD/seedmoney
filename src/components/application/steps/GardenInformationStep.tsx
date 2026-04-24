@@ -113,7 +113,7 @@ export default function GardenInformationStep() {
               variant="standard"
               fullWidth
               name="gardenCity"
-              autoComplete="address-level2"
+              autoComplete="new-password"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -136,7 +136,7 @@ export default function GardenInformationStep() {
               variant="standard"
               fullWidth
               name="gardenState"
-              autoComplete="address-level1"
+              autoComplete="new-password"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -159,7 +159,7 @@ export default function GardenInformationStep() {
               variant="standard"
               fullWidth
               name="gardenCountry"
-              autoComplete="country-name"
+              autoComplete="new-password"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
