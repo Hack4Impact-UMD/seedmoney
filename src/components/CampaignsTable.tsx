@@ -1,218 +1,343 @@
-'use client';
-import React, { useMemo, useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { 
-  flexRender, 
-  useReactTable, 
-  createColumnHelper, 
-  getCoreRowModel, 
-  getPaginationRowModel 
-} from '@tanstack/react-table';
+"use client";
 
-import { CampaignWithLeader } from '../types/frontend/campaignsTable';
-import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
+import { useMemo, useState } from "react";
+import { IconButton, MenuItem, TextField } from "@mui/material";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
+import { useRouter } from "next/navigation";
+import type { Status } from "@/src/types/db/enums";
+import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
 
 interface Props {
   initialData: CampaignWithLeader[];
 }
 
-export default function CampaignsTable({ initialData }: Props) {
-  const router = useRouter();
-  const [campaignSearch, setCampaignSearch] = useState('');
-  const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
+const pageSizeOptions = [5, 10, 20];
 
-  const handleCampaignClick = (id: number) => {
-    router.push(`/dashboard/ongoing-campaigns/${id}`);
+const statusConfig: Record<
+  Status,
+  { label: string; borderClass: string; textClass: string }
+> = {
+  approved: {
+    label: "Approved",
+    borderClass: "border-[#1976D2]",
+    textClass: "text-[#1976D2]",
+  },
+  archived: {
+    label: "Archived",
+    borderClass: "border-[#A6A6A6]",
+    textClass: "text-[#A6A6A6]",
+  },
+  denied: {
+    label: "Denied",
+    borderClass: "border-[#ED6C02]",
+    textClass: "text-[#ED6C02]",
+  },
+  in_progress: {
+    label: "Draft",
+    borderClass: "border-[#6A7282]",
+    textClass: "text-[#6A7282]",
+  },
+  pending: {
+    label: "Pending",
+    borderClass: "border-[#883280]",
+    textClass: "text-[#883280]",
+  },
+  publish_failed: {
+    label: "Publish Failed",
+    borderClass: "border-[#D32F2F]",
+    textClass: "text-[#D32F2F]",
+  },
+  published: {
+    label: "Published",
+    borderClass: "border-[#2E7D32]",
+    textClass: "text-[#2E7D32]",
+  },
+};
+
+function getCampaignYear(dateCreated: string) {
+  const year = new Date(dateCreated).getFullYear();
+  return Number.isNaN(year) ? "N/A" : String(year);
+}
+
+function formatCurrency(value: number | null | undefined) {
+  return `$${Number(value ?? 0).toLocaleString()}`;
+}
+
+function getGoalProgress(raised: number | null | undefined, goal: number | null | undefined) {
+  if (!goal || goal <= 0) {
+    return 0;
   }
 
+  return Math.max(0, Math.round(((raised ?? 0) / goal) * 100));
+}
+
+function StatusChip({ status }: { status: Status }) {
+  const config = statusConfig[status];
+
+  return (
+    <span
+      className={`inline-flex min-h-8 items-center rounded-full border px-[10px] py-1 text-[13px] leading-[1.1] ${config.borderClass} ${config.textClass}`}
+    >
+      {config.label}
+    </span>
+  );
+}
+
+export default function CampaignsTable({ initialData }: Props) {
+  const router = useRouter();
+  const [campaignSearch, setCampaignSearch] = useState("");
+  const [yearFilter, setYearFilter] = useState("all");
+  const [pageIndex, setPageIndex] = useState(0);
+  const [pageSize, setPageSize] = useState(10);
+
+  const years = useMemo(
+    () =>
+      [...new Set((initialData ?? []).map((campaign) => getCampaignYear(campaign.date_created)))].sort(
+        (a, b) => Number(b) - Number(a),
+      ),
+    [initialData],
+  );
+
   const filteredData = useMemo(() => {
-    return (initialData ?? []).filter(campaign => {
-      const name = campaign?.name ?? '';
-      const leader = campaign?.campaign_leader ?? '';
-      const search = campaignSearch.toLowerCase();
-      return name.toLowerCase().includes(search) || leader.toLowerCase().includes(search);
+    const normalizedSearch = campaignSearch.trim().toLowerCase();
+
+    return (initialData ?? []).filter((campaign) => {
+      const campaignYear = getCampaignYear(campaign.date_created);
+      const matchesYear = yearFilter === "all" || campaignYear === yearFilter;
+
+      if (!matchesYear) {
+        return false;
+      }
+
+      if (!normalizedSearch) {
+        return true;
+      }
+
+      const statusLabel = statusConfig[campaign.status].label.toLowerCase();
+
+      return (
+        campaign.name.toLowerCase().includes(normalizedSearch) ||
+        campaign.campaign_leader.toLowerCase().includes(normalizedSearch) ||
+        statusLabel.includes(normalizedSearch)
+      );
     });
-  }, [campaignSearch, initialData]);
+  }, [campaignSearch, initialData, yearFilter]);
 
-  const columnHelper = createColumnHelper<CampaignWithLeader>();
+  const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
+  const currentPageIndex = Math.min(pageIndex, totalPages - 1);
 
-  const columns = [
-    columnHelper.accessor('name', {
-      header: 'Campaign Title',
-      size: 200,
-      cell: info => {
-        const val = info.getValue();
-        if (val == null) return null;
-        return <span className="font-medium text-gray-700">{val}</span>;
-      }
-    }),
-    columnHelper.accessor('campaign_leader', {
-      header: 'Campaign Leader',
-      size: 180,
-      cell: info => info.getValue() ?? null
-    }),
-    columnHelper.accessor('raised', {
-      header: '$ Raised',
-      size: 120,
-      cell: info => {
-        const val = info.getValue();
-        if (val == null) return null;
-        return `$${val.toLocaleString()}`;
-      }
-    }),
-    columnHelper.accessor('goal', {
-      header: 'Goal',
-      size: 120,
-      cell: info => {
-        const val = info.getValue();
-        if (val == null) return null;
-        return `$${val.toLocaleString()}`;
-      }
-    }),
-    columnHelper.accessor(row => ({
-      percentage: (row?.raised != null && row?.goal != null && row.goal > 0)
-        ? row.raised / row.goal * 100
-        : null
-    }), {
-      id: 'progress',
-      size: 200,
-      header: 'Goal Progress',
-      cell: ({ row }) => {
-        const campaign = row.original;
-        if (campaign?.raised == null || campaign?.goal == null || campaign.goal === 0) return null;
+  const paginatedData = useMemo(() => {
+    const start = currentPageIndex * pageSize;
+    return filteredData.slice(start, start + pageSize);
+  }, [currentPageIndex, filteredData, pageSize]);
 
-        const percentage = Math.round((campaign.raised / campaign.goal) * 100);
-        const displayPercentage = Math.min(percentage, 100);
-        const isHovered = hoveredRowId === row.id;
+  const firstRow = filteredData.length === 0 ? 0 : currentPageIndex * pageSize + 1;
+  const lastRow = Math.min((currentPageIndex + 1) * pageSize, filteredData.length);
 
-        return (
-          <div className="flex items-center gap-3 w-full min-w-[180px]">
-            <div className="w-full bg-blue-100 rounded-full h-2">
-              <div
-                className="bg-blue-600 h-2 rounded-full"
-                style={{ width: `${displayPercentage}%` }}
-              />
-            </div>
-            <span className="text-sm text-gray-600">{displayPercentage}%</span>
-            <span
-              className="ml-1 text-xl font-bold text-[#1e1e1e] transition-opacity duration-150"
-              style={{ opacity: isHovered ? 1 : 0 }}
-            >
-              <KeyboardArrowRightIcon />
-            </span>
-          </div>
-        );
-      }
-    })
-  ];
+  const handleCampaignClick = (campaignId: number) => {
+    router.push(`/dashboard/${campaignId}`);
+  };
 
-  const table = useReactTable({
-    data: filteredData,
-    columns,
-    getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-  });
+  const handleResetFilters = () => {
+    setCampaignSearch("");
+    setYearFilter("all");
+    setPageIndex(0);
+  };
 
   return (
     <div className="w-full">
-      <div className="md:w-full md:mx-auto bg-white rounded-xl overflow-x-auto">
-        <div className="pt-8 px-5">
-          <h2 className="text-black sm:text-left text-center">Full Campaign List</h2>
-          <p className="text-sm text-gray-500 sm:text-left text-center">{initialData?.length ?? 0} Applications</p>
+      <div className="overflow-hidden rounded-2xl border border-[#EAECF0] bg-white shadow-[0px_1px_2px_rgba(16,24,40,0.05)]">
+        <div className="px-4 pt-6">
+          <h2 className="text-[16px] font-bold leading-6 text-[rgba(0,0,0,0.87)]">
+            Campaign List
+          </h2>
+          <p className="mt-1 text-sm text-[#6A7282]">
+            {initialData.length} Campaign{initialData.length === 1 ? "" : "s"}
+          </p>
+        </div>
 
-          <div className="relative my-6">
-            <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs text-gray-400">Search</label>
-            <div className="flex items-center border border-gray-200 rounded-lg px-3 py-2.5 focus-within:border-blue-500 transition-colors">
-              <input
-                type="text"
-                value={campaignSearch}
-                onChange={(e) => setCampaignSearch(e.target.value)}
-                placeholder='Start typing...'
-                className="w-full bg-transparent outline-none text-md p-1 overflow-x-auto"
-              />
-            </div>
-          </div>
+        <div className="flex flex-wrap items-center gap-4 px-4 pb-4 pt-6">
+          <TextField
+            label="Search"
+            placeholder="Name, email, etc..."
+            variant="outlined"
+            fullWidth
+            value={campaignSearch}
+            onChange={(event) => {
+              setCampaignSearch(event.target.value);
+              setPageIndex(0);
+            }}
+            sx={{ flex: "1 1 320px", minWidth: 220 }}
+          />
+
+          <TextField
+            select
+            label="Filter By Year"
+            variant="outlined"
+            fullWidth
+            value={yearFilter}
+            onChange={(event) => {
+              setYearFilter(event.target.value);
+              setPageIndex(0);
+            }}
+            sx={{ flex: "1 1 280px", minWidth: 220 }}
+          >
+            <MenuItem value="all">None</MenuItem>
+            {years.map((year) => (
+              <MenuItem key={year} value={year}>
+                {year}
+              </MenuItem>
+            ))}
+          </TextField>
+
+          <IconButton
+            aria-label="Reset filters"
+            onClick={handleResetFilters}
+            className="!h-[53px] !w-[60px] !rounded !border !border-[rgba(0,0,0,0.23)] !text-[rgba(0,0,0,0.6)]"
+          >
+            <FilterAltOutlinedIcon />
+          </IconButton>
         </div>
 
         {filteredData.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No campaigns available.</div>
+          <div className="px-4 py-12 text-center text-sm text-[#6A7282]">
+            No campaigns found.
+          </div>
         ) : (
           <>
-            <table className="w-full">
-              <thead>
-                {table.getHeaderGroups().map(headerGroup => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map(header => (
+            <div className="overflow-x-auto">
+              <table className="min-w-full border-collapse">
+                <thead>
+                  <tr className="border-b border-[rgba(0,0,0,0.12)]">
+                    {[
+                      "Year",
+                      "Campaign Title",
+                      "Campaign Leader",
+                      "$ Raised",
+                      "Goal",
+                      "Goal Progress",
+                      "Status",
+                      "",
+                    ].map((header, index) => (
                       <th
-                        key={header.id}
-                        style={{ width: header.getSize() !== 150 ? header.getSize() : 'auto' }}
-                        className="text-left px-5 py-4 border-b border-gray-300"
+                        key={header || "actions"}
+                        className={`px-4 py-4 text-left text-sm font-bold tracking-[0.17px] text-[rgba(0,0,0,0.87)] ${
+                          index === 7 ? "w-10" : "whitespace-nowrap"
+                        }`}
                       >
-                        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+                        {header}
                       </th>
                     ))}
                   </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.map(row => (
-                  <tr
-                    key={row.id}
-                    className="transition-colors cursor-pointer hover:[&>td]:bg-gray-50"
-                    onMouseEnter={() => setHoveredRowId(row.id)}
-                    onMouseLeave={() => setHoveredRowId(null)}
-                    onClick={() => {
-                      const id = row.original?.campaign_id;
-                      if (id != null) handleCampaignClick(id);
-                    }}
-                  >
-                    {row.getVisibleCells().map(cell => (
-                      <td
-                        key={cell.id}
-                        className="text-left px-5 py-4 border-b border-gray-300"
-                        style={{ backgroundColor: hoveredRowId === row.id ? '#f9fafb' : 'transparent' }}
-                      >
-                        {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+                </thead>
+                <tbody>
+                  {paginatedData.map((campaign) => {
+                    const progress = getGoalProgress(campaign.raised, campaign.goal);
+                    const displayedProgress = Math.min(progress, 100);
 
-            <div className="px-6 py-4 flex items-center justify-end gap-6 text-sm text-gray-500 border-t border-gray-100">
+                    return (
+                      <tr
+                        key={campaign.campaign_id}
+                        className="cursor-pointer border-b border-[rgba(0,0,0,0.12)] transition-colors hover:bg-[#F9FAFB]"
+                        onClick={() => handleCampaignClick(campaign.campaign_id)}
+                      >
+                        <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
+                          {getCampaignYear(campaign.date_created)}
+                        </td>
+                        <td className="max-w-[180px] px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
+                          <span className="block truncate">{campaign.name || "Untitled Campaign"}</span>
+                        </td>
+                        <td className="max-w-[150px] px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
+                          <span className="block truncate">
+                            {campaign.campaign_leader || "N/A"}
+                          </span>
+                        </td>
+                        <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
+                          {formatCurrency(campaign.raised)}
+                        </td>
+                        <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
+                          {formatCurrency(campaign.goal)}
+                        </td>
+                        <td className="min-w-[150px] px-4 py-4">
+                          <div className="flex items-center gap-4">
+                            <div className="h-1 min-w-[72px] flex-1 overflow-hidden rounded-full bg-[rgba(25,118,210,0.3)]">
+                              <div
+                                className="h-full rounded-full bg-[#1976D2]"
+                                style={{ width: `${displayedProgress}%` }}
+                              />
+                            </div>
+                            <span className="text-sm text-[rgba(0,0,0,0.87)]">
+                              {displayedProgress}%
+                            </span>
+                          </div>
+                        </td>
+                        <td className="px-4 py-4">
+                          <StatusChip status={campaign.status} />
+                        </td>
+                        <td className="px-2 py-2">
+                          <IconButton
+                            aria-label={`Open ${campaign.name || "campaign"}`}
+                            onClick={(event) => {
+                              event.stopPropagation();
+                              handleCampaignClick(campaign.campaign_id);
+                            }}
+                          >
+                            <KeyboardArrowRightIcon className="text-[rgba(0,0,0,0.54)]" />
+                          </IconButton>
+                        </td>
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
+
+            <div className="flex flex-wrap items-center justify-end gap-6 px-4 py-3 text-xs tracking-[0.4px] text-[rgba(0,0,0,0.6)]">
               <div className="flex items-center gap-2">
                 <span>Rows per page:</span>
                 <select
-                  value={table.getState().pagination.pageSize}
-                  onChange={e => table.setPageSize(Number(e.target.value))}
-                  className="outline-none cursor-pointer font-medium text-gray-700"
+                  value={pageSize}
+                  onChange={(event) => {
+                    setPageSize(Number(event.target.value));
+                    setPageIndex(0);
+                  }}
+                  className="bg-transparent text-xs text-[rgba(0,0,0,0.87)] outline-none"
                 >
-                  {[5, 10, 20].map(size => <option key={size} value={size}>{size}</option>)}
+                  {pageSizeOptions.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
                 </select>
               </div>
 
-              <span>
-                {table.getState().pagination.pageIndex * table.getState().pagination.pageSize + 1}-
-                {Math.min((table.getState().pagination.pageIndex + 1) * table.getState().pagination.pageSize, filteredData.length)}
-                {' of '} {filteredData.length}
+              <span className="text-[rgba(0,0,0,0.87)]">
+                {firstRow}-{lastRow} of {filteredData.length}
               </span>
 
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={e => { e.stopPropagation(); table.previousPage(); }}
-                  disabled={!table.getCanPreviousPage()}
-                  className="cursor-pointer p-1 text-2xl font-bold text-black disabled:cursor-not-allowed disabled:opacity-30"
+              <div className="flex items-center">
+                <IconButton
+                  aria-label="Previous page"
+                  disabled={currentPageIndex === 0}
+                  onClick={() =>
+                    setPageIndex((current) => Math.max(current - 1, 0))
+                  }
                 >
-                  &lt;
-                </button>
-                <button
-                  onClick={e => { e.stopPropagation(); table.nextPage(); }}
-                  disabled={!table.getCanNextPage()}
-                  className="cursor-pointer p-1 text-2xl font-bold text-black disabled:cursor-not-allowed disabled:opacity-30"
+                  <KeyboardArrowLeftIcon />
+                </IconButton>
+                <IconButton
+                  aria-label="Next page"
+                  disabled={currentPageIndex >= totalPages - 1}
+                  onClick={() =>
+                    setPageIndex((current) =>
+                      Math.min(current + 1, totalPages - 1),
+                    )
+                  }
                 >
-                  &gt;
-                </button>
+                  <KeyboardArrowRightIcon />
+                </IconButton>
               </div>
             </div>
           </>

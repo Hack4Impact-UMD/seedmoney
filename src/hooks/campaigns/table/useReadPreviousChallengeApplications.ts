@@ -2,11 +2,9 @@ import { useQuery } from "@tanstack/react-query";
 import { readPreviousChallengeApplications } from "@/src/actions/frontend/campaignsTable";
 import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
 
-// This hook is used for reading previous challenge applications for a user
-
 export default function useReadPreviousChallengeApplications(user_id?: string) {
   return useQuery<CampaignWithLeader[]>({
-    queryKey: ["campaigns", "previous-challenges", user_id],
+    queryKey: ["campaigns", "view-all", user_id],
     queryFn: async () => {
       const campaigns = await readPreviousChallengeApplications(user_id);
       if (!campaigns) return [];

@@ -61,12 +61,17 @@ export async function readOngoingCampaigns(competition_id?: number): Promise<Cam
 export async function readPreviousChallengeApplications(user_id?: string): Promise<CampaignWithLeader[]> {
   const supabase = await createServerClient();
 
-  const { data, error } = await supabase
+  let query = supabase
     .from("campaigns")
     .select(BASE_SELECT)
-    .eq("status", "archived")
     .eq("campaign_members.role", "campaign_leader")
-    .eq("campaign_members.user_id", user_id);
+    .order("date_created", { ascending: false });
+
+  if (user_id) {
+    query = query.eq("campaign_members.user_id", user_id);
+  }
+
+  const { data, error } = await query;
 
   if (error) throw error;
   return (data ?? []).map(mapCampaignLeader);
