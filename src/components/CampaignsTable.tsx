@@ -65,7 +65,10 @@ function formatCurrency(value: number | null | undefined) {
   return `$${Number(value ?? 0).toLocaleString()}`;
 }
 
-function getGoalProgress(raised: number | null | undefined, goal: number | null | undefined) {
+function getGoalProgress(
+  raised: number | null | undefined,
+  goal: number | null | undefined,
+) {
   if (!goal || goal <= 0) {
     return 0;
   }
@@ -94,9 +97,13 @@ export default function CampaignsTable({ initialData }: Props) {
 
   const years = useMemo(
     () =>
-      [...new Set((initialData ?? []).map((campaign) => getCampaignYear(campaign.date_created)))].sort(
-        (a, b) => Number(b) - Number(a),
-      ),
+      [
+        ...new Set(
+          (initialData ?? []).map((campaign) =>
+            getCampaignYear(campaign.date_created),
+          ),
+        ),
+      ].sort((a, b) => Number(b) - Number(a)),
     [initialData],
   );
 
@@ -133,8 +140,12 @@ export default function CampaignsTable({ initialData }: Props) {
     return filteredData.slice(start, start + pageSize);
   }, [currentPageIndex, filteredData, pageSize]);
 
-  const firstRow = filteredData.length === 0 ? 0 : currentPageIndex * pageSize + 1;
-  const lastRow = Math.min((currentPageIndex + 1) * pageSize, filteredData.length);
+  const firstRow =
+    filteredData.length === 0 ? 0 : currentPageIndex * pageSize + 1;
+  const lastRow = Math.min(
+    (currentPageIndex + 1) * pageSize,
+    filteredData.length,
+  );
 
   const handleCampaignClick = (campaignId: number) => {
     router.push(`/dashboard/${campaignId}`);
@@ -161,7 +172,7 @@ export default function CampaignsTable({ initialData }: Props) {
         <div className="flex flex-wrap items-center gap-4 px-4 pb-4 pt-6">
           <TextField
             label="Search"
-            placeholder="Name, email, etc..."
+            placeholder="Search by title or name"
             variant="outlined"
             fullWidth
             value={campaignSearch}
@@ -234,20 +245,27 @@ export default function CampaignsTable({ initialData }: Props) {
                 </thead>
                 <tbody>
                   {paginatedData.map((campaign) => {
-                    const progress = getGoalProgress(campaign.raised, campaign.goal);
+                    const progress = getGoalProgress(
+                      campaign.raised,
+                      campaign.goal,
+                    );
                     const displayedProgress = Math.min(progress, 100);
 
                     return (
                       <tr
                         key={campaign.campaign_id}
                         className="cursor-pointer border-b border-[rgba(0,0,0,0.12)] transition-colors hover:bg-[#F9FAFB]"
-                        onClick={() => handleCampaignClick(campaign.campaign_id)}
+                        onClick={() =>
+                          handleCampaignClick(campaign.campaign_id)
+                        }
                       >
                         <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
                           {getCampaignYear(campaign.date_created)}
                         </td>
                         <td className="max-w-[180px] px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
-                          <span className="block truncate">{campaign.name || "Untitled Campaign"}</span>
+                          <span className="block truncate">
+                            {campaign.name || "Untitled Campaign"}
+                          </span>
                         </td>
                         <td className="max-w-[150px] px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
                           <span className="block truncate">
@@ -322,7 +340,7 @@ export default function CampaignsTable({ initialData }: Props) {
                   aria-label="Previous page"
                   disabled={currentPageIndex === 0}
                   onClick={() =>
-                    setPageIndex((current) => Math.max(current - 1, 0))
+                    setPageIndex(() => Math.max(currentPageIndex - 1, 0))
                   }
                 >
                   <KeyboardArrowLeftIcon />
@@ -331,8 +349,8 @@ export default function CampaignsTable({ initialData }: Props) {
                   aria-label="Next page"
                   disabled={currentPageIndex >= totalPages - 1}
                   onClick={() =>
-                    setPageIndex((current) =>
-                      Math.min(current + 1, totalPages - 1),
+                    setPageIndex(() =>
+                      Math.min(currentPageIndex + 1, totalPages - 1),
                     )
                   }
                 >
