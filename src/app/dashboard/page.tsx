@@ -152,10 +152,13 @@ export default function DashboardIndexPage() {
 
     const currentCompetitionId = currentCompetitionData?.competition_id;
     const statusPriority: Record<string, number> = {
-      in_progress: 0,
-      pending: 1,
-      approved: 2,
-      denied: 3,
+      published: 0,
+      in_progress: 1,
+      pending: 2,
+      approved: 3,
+      denied: 4,
+      publish_failed: 5,
+      archived: 6,
     };
 
     return [...campaigns].sort((a, b) => {
