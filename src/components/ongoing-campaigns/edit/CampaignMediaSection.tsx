@@ -394,27 +394,47 @@ export default function CampaignMediaSection({
   };
 
   const handleDeleteMainPhoto = async (record: HydratedCampaignImageRecord) => {
-    await deleteCampaignImage.mutateAsync({
-      campaignId,
-      storagePath: record.storage_path,
-    });
-    revokePreviewUrl(record.signedUrl);
-    syncImageRecords(
-      sortImageRecords(formData.imageRecords.filter((image) => image.id !== record.id)),
-    );
+    try {
+      await deleteCampaignImage.mutateAsync({
+        campaignId,
+        storagePath: record.storage_path,
+      });
+      revokePreviewUrl(record.signedUrl);
+      syncImageRecords(
+        sortImageRecords(
+          formData.imageRecords.filter((image) => image.id !== record.id),
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+      setUploadError({
+        fileName: record.fileName || "Uploaded image",
+        message: "Delete failed",
+      });
+    }
   };
 
   const handleDeleteSupportingPhoto = async (
     record: HydratedCampaignImageRecord,
   ) => {
-    await deleteCampaignImage.mutateAsync({
-      campaignId,
-      storagePath: record.storage_path,
-    });
-    revokePreviewUrl(record.signedUrl);
-    syncImageRecords(
-      sortImageRecords(formData.imageRecords.filter((image) => image.id !== record.id)),
-    );
+    try {
+      await deleteCampaignImage.mutateAsync({
+        campaignId,
+        storagePath: record.storage_path,
+      });
+      revokePreviewUrl(record.signedUrl);
+      syncImageRecords(
+        sortImageRecords(
+          formData.imageRecords.filter((image) => image.id !== record.id),
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+      setSupportingUploadError({
+        fileName: record.fileName || "Uploaded image",
+        message: "Delete failed",
+      });
+    }
   };
 
   return (
