@@ -5,11 +5,11 @@ import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/src/components/Navbar";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Campaign } from "@/src/types/db/campaigns";
+import type { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords";
 import type { Existence } from "@/src/types/db/enums";
 import Loading from "@/src/app/loading";
 import AppError from "@/src/app/error";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
-import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
 import { AnswerWithQuestion, updateAnswer } from "@/src/actions/db/answers";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
@@ -40,7 +40,6 @@ export default function EditCampaignPage() {
   const updateCampaignMutation = useUpdateCampaign();
 
   const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
-  const setMainImageMutation = useSetMainCampaignImage(parsedCampaignId);
 
 
   const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
@@ -58,7 +57,6 @@ export default function EditCampaignPage() {
     if (!campaignEditData) return;
 
     if (initialData.campaignTitle === "") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInitialData(campaignEditData.mappedData);
       setFormData(campaignEditData.mappedData);
     } else {
@@ -77,6 +75,7 @@ export default function EditCampaignPage() {
         }));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignEditData]);
 
   const setFieldValue = useCallback(
@@ -92,6 +91,14 @@ export default function EditCampaignPage() {
         setFieldValue(field, e.target.value);
       },
     [setFieldValue],
+  );
+
+  const syncImageRecords = useCallback(
+    (imageRecords: HydratedCampaignImageRecord[]) => {
+      setFormData((prev) => ({ ...prev, imageRecords }));
+      setInitialData((prev) => ({ ...prev, imageRecords }));
+    },
+    [],
   );
 
   const handleToggleBeneficiary = useCallback((option: string) => {
@@ -111,7 +118,7 @@ export default function EditCampaignPage() {
       const campaignPayload: Partial<Campaign> = {
         name: formData.campaignTitle,
         impact: Number(formData.beneficiaryCount) || 0,
-        size: Number(formData.gardenSize) || 0,
+        size: formData.gardenSize,
         existence: (formData.gardenStatus || "existing") as Existence,
         goal: Number(formData.fundraisingGoal) || 0,
         city: formData.gardenCity,
@@ -155,16 +162,6 @@ export default function EditCampaignPage() {
         ]);
       }
 
-      const imageChanged =
-        JSON.stringify(formData.imageRecords) !==
-        JSON.stringify(initialData.imageRecords);
-      if (imageChanged) {
-        const mainImage = formData.imageRecords.find((r) => r.is_main);
-        if (mainImage) {
-          await setMainImageMutation.mutateAsync(mainImage.id);
-        }
-      }
-
       queryClient.invalidateQueries({
         queryKey: ["campaigns"],
       });
@@ -179,7 +176,7 @@ export default function EditCampaignPage() {
       setIsSaveModalOpen(false);
       setShowErrorToast(true);
     }
-  }, [formData, initialData, parsedCampaignId, campaignEditData, updateCampaignMutation, queryClient, setMainImageMutation ]);
+  }, [formData, parsedCampaignId, campaignEditData, updateCampaignMutation, queryClient]);
 
   const navigateToCampaignPage = useCallback(() => {
     if (!parsedCampaignId) {
@@ -253,7 +250,7 @@ export default function EditCampaignPage() {
             <CampaignMediaSection
               formData={formData}
               campaignId={parsedCampaignId}
-              setFieldValue={setFieldValue}
+              syncImageRecords={syncImageRecords}
             />
 
             <ContactInformationSection

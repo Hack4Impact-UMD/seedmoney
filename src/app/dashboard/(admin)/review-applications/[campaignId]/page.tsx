@@ -4,12 +4,12 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/src/components/Navbar";
 import type { Campaign } from "@/src/types/db/campaigns";
+import type { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords";
 import type { Existence, Status } from "@/src/types/db/enums";
 import Loading from "@/src/app/loading";
 import AppError from "@/src/app/error";
 import NotFound from "@/src/app/not-found";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
-import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
 import { AnswerWithQuestion, updateAnswer } from "@/src/actions/db/answers";
 import { Button } from "@mui/material";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
@@ -20,7 +20,11 @@ import EditCampaignDialogs from "@/src/components/ongoing-campaigns/edit/EditCam
 import EditCampaignHeader from "@/src/components/ongoing-campaigns/edit/EditCampaignHeader";
 import GardenInformationSection from "@/src/components/ongoing-campaigns/edit/GardenInformationSection";
 import GardenStorySection from "@/src/components/ongoing-campaigns/edit/GardenStorySection";
-import { EditCampaignFormData, TextFieldKey, DEFAULT_CAMPAIGN_DATA} from "@/src/types/frontend/campaignEdit";
+import {
+  DEFAULT_CAMPAIGN_DATA,
+  EditCampaignFormData,
+  TextFieldKey,
+} from "@/src/types/frontend/campaignEdit";
 import {
   beneficiaryOptions,
   categoryOptions,
@@ -37,7 +41,6 @@ export default function CampaignReviewPage() {
 
   const updateCampaignMutation = useUpdateCampaign();
   const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
-  const setMainImageMutation = useSetMainCampaignImage(parsedCampaignId);
 
   const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
   const [formData, setFormData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
@@ -61,7 +64,6 @@ export default function CampaignReviewPage() {
     if (!campaignEditData) return;
 
     if (initialData.campaignTitle === "") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInitialData(campaignEditData.mappedData);
       setFormData(campaignEditData.mappedData);
     } else {
@@ -79,6 +81,7 @@ export default function CampaignReviewPage() {
         }));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignEditData]);
 
   const setFieldValue = useCallback(
@@ -93,6 +96,14 @@ export default function CampaignReviewPage() {
         setFieldValue(field, e.target.value);
       },
     [setFieldValue],
+  );
+
+  const syncImageRecords = useCallback(
+    (imageRecords: HydratedCampaignImageRecord[]) => {
+      setFormData((prev) => ({ ...prev, imageRecords }));
+      setInitialData((prev) => ({ ...prev, imageRecords }));
+    },
+    [],
   );
 
   const handleToggleBeneficiary = useCallback((option: string) => {
@@ -125,7 +136,7 @@ export default function CampaignReviewPage() {
       const campaignPayload: Partial<Campaign> = {
         name: formData.campaignTitle,
         impact: Number(formData.beneficiaryCount) || 0,
-        size: Number(formData.gardenSize) || 0,
+        size: formData.gardenSize,
         existence: (formData.gardenStatus || "existing") as Existence,
         goal: Number(formData.fundraisingGoal) || 0,
         city: formData.gardenCity,
@@ -168,16 +179,6 @@ export default function CampaignReviewPage() {
         ]);
       }
 
-      const imageChanged =
-        JSON.stringify(formData.imageRecords) !==
-        JSON.stringify(initialData.imageRecords);
-      if (imageChanged) {
-        const mainImage = formData.imageRecords.find((r) => r.is_main);
-        if (mainImage) {
-          await setMainImageMutation.mutateAsync(mainImage.id);
-        }
-      }
-
       setInitialData(formData);
       setIsSaveModalOpen(false);
       setShowSuccessToast(true);
@@ -188,7 +189,7 @@ export default function CampaignReviewPage() {
       setIsSaveModalOpen(false);
       setShowErrorToast(true);
     }
-  }, [formData, initialData, parsedCampaignId, campaignEditData, updateCampaignMutation, setMainImageMutation]);
+  }, [formData, parsedCampaignId, campaignEditData, updateCampaignMutation]);
 
   const navigateToCampaignPage = useCallback(() => {
     if (!parsedCampaignId) {
@@ -366,7 +367,7 @@ export default function CampaignReviewPage() {
             <CampaignMediaSection
               formData={formData}
               campaignId={parsedCampaignId}
-              setFieldValue={setFieldValue}
+              syncImageRecords={syncImageRecords}
             />
 
             <ContactInformationSection

@@ -1,25 +1,179 @@
 "use client";
+/* eslint-disable @next/next/no-img-element */
 
-import { Button } from "@mui/material";
-import { CheckCircle, Delete, UploadFile } from "@mui/icons-material";
-import type { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords";
-import type { EditCampaignFormData, SetFieldValue } from "@/src/types/frontend/campaignEdit";
+import Image from "next/image";
+import { CheckCircle, Delete } from "@mui/icons-material";
+import { Button, IconButton } from "@mui/material";
+import { useState } from "react";
+import { useDropzone } from "react-dropzone";
+import useDeleteCampaignImage from "@/src/hooks/campaign-image-records/useDeleteCampaignImage";
+import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
+import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
+import type {
+  CampaignImageRecord,
+  HydratedCampaignImageRecord,
+} from "@/src/types/db/campaignImageRecords";
+import type { EditCampaignFormData } from "@/src/types/frontend/campaignEdit";
 
-function UploadedAssetCard({ record, onDelete }: { record: HydratedCampaignImageRecord; onDelete?: () => void }) {
+type UploadError = {
+  fileName: string;
+  message: string;
+};
+
+function getFileKey(
+  file:
+    | Pick<HydratedCampaignImageRecord, "fileName" | "fileSize">
+    | Pick<File, "name" | "size">,
+) {
+  if ("fileName" in file) {
+    return `${file.fileName}-${file.fileSize}`;
+  }
+
+  return `${file.name}-${file.size}`;
+}
+
+function revokePreviewUrl(preview: string) {
+  if (preview.startsWith("blob:")) {
+    URL.revokeObjectURL(preview);
+  }
+}
+
+function hasDuplicateFiles(
+  nextFiles: File[],
+  existingFiles: Pick<HydratedCampaignImageRecord, "fileName" | "fileSize">[],
+) {
+  const seen = new Set(existingFiles.map(getFileKey));
+
+  for (const file of nextFiles) {
+    const fileKey = getFileKey(file);
+    if (seen.has(fileKey)) {
+      return true;
+    }
+
+    seen.add(fileKey);
+  }
+
+  return false;
+}
+
+function hydrateUploadedRecord(
+  record: CampaignImageRecord,
+  file: File,
+): HydratedCampaignImageRecord {
+  return {
+    ...record,
+    signedUrl: URL.createObjectURL(file),
+    fileName: file.name,
+    fileSize: file.size,
+  };
+}
+
+function sortImageRecords(records: HydratedCampaignImageRecord[]) {
+  return [...records].sort((left, right) => {
+    if (left.is_main !== right.is_main) {
+      return Number(right.is_main) - Number(left.is_main);
+    }
+
+    return left.display_order - right.display_order;
+  });
+}
+
+function UploadErrorCard({
+  error,
+  onClear,
+  errorIconFilter,
+}: {
+  error: UploadError;
+  onClear: () => void;
+  errorIconFilter: string;
+}) {
   return (
-    <div className="mb-2 mt-6 mx-2 flex items-center justify-between">
+    <div className="mt-2 flex items-center justify-between rounded-lg border border-[#D32F2F]/20 px-4 py-3">
       <div className="flex items-center gap-3">
-        <UploadFile sx={{ color: "#1976D2", fontSize: 32 }} />
+        <Image
+          src="/icons/upload-icon.svg"
+          alt="Upload failed"
+          width={20}
+          height={24}
+          style={{ filter: errorIconFilter }}
+        />
         <div className="flex flex-col">
-          <span className="text-sm font-medium text-gray-800">{record.fileName}</span>
-          <span className="flex items-center text-[13px] text-gray-500">
-            {record.fileSize ? `${Math.round(record.fileSize / 1024)}kb` : ""}
-            <span className="mx-1.5 text-[10px]">&bull;</span> Complete
+          <span className="text-sm font-medium text-[#D32F2F]">
+            Upload failed.
+          </span>
+          <span className="flex items-center text-[13px] text-[#D32F2F]">
+            {error.message}
+            <span className="mx-1.5 text-[10px]">&bull;</span>
+            Failed
           </span>
         </div>
       </div>
+
+      <IconButton
+        size="small"
+        aria-label={`Clear failed upload ${error.fileName}`}
+        onClick={onClear}
+        sx={{
+          p: 0,
+          color: "rgba(0, 0, 0, 0.54)",
+          cursor: "pointer",
+          "& .MuiSvgIcon-root": {
+            pointerEvents: "none",
+          },
+        }}
+      >
+        <Delete />
+      </IconButton>
+    </div>
+  );
+}
+
+function UploadedAssetCard({
+  fileName,
+  fileSize,
+  onDelete,
+  deleteLabel,
+}: {
+  fileName: string;
+  fileSize: number;
+  onDelete: () => void;
+  deleteLabel: string;
+}) {
+  return (
+    <div className="mt-2 flex items-center justify-between rounded-lg border border-black/10 px-4 py-3">
+      <div className="flex items-center gap-3">
+        <Image
+          src="/icons/upload-icon.svg"
+          alt="Upload icon"
+          width={20}
+          height={24}
+        />
+        <div className="flex flex-col">
+          <span className="text-sm font-medium text-gray-800">{fileName}</span>
+          <span className="flex items-center text-[13px] text-gray-500">
+            {Math.round(fileSize / 1000)}kb
+            <span className="mx-1.5 text-[10px]">&bull;</span>
+            Complete
+          </span>
+        </div>
+      </div>
+
       <div className="flex items-center gap-4">
-        <Delete sx={{ opacity: 0.54, cursor: "pointer" }} onClick={onDelete} />
+        <IconButton
+          size="small"
+          aria-label={deleteLabel}
+          onClick={onDelete}
+          sx={{
+            p: 0,
+            color: "rgba(0, 0, 0, 0.54)",
+            cursor: "pointer",
+            "& .MuiSvgIcon-root": {
+              pointerEvents: "none",
+            },
+          }}
+        >
+          <Delete />
+        </IconButton>
         <CheckCircle color="success" />
       </div>
     </div>
@@ -29,19 +183,210 @@ function UploadedAssetCard({ record, onDelete }: { record: HydratedCampaignImage
 interface CampaignMediaSectionProps {
   formData: EditCampaignFormData;
   campaignId: number;
-  setFieldValue: SetFieldValue;
+  syncImageRecords: (records: HydratedCampaignImageRecord[]) => void;
 }
 
-export default function CampaignMediaSection({ formData, campaignId, setFieldValue }: CampaignMediaSectionProps) {
+export default function CampaignMediaSection({
+  formData,
+  campaignId,
+  syncImageRecords,
+}: CampaignMediaSectionProps) {
+  const ERROR_ICON_FILTER =
+    "brightness(0) saturate(100%) invert(24%) sepia(95%) saturate(2815%) hue-rotate(347deg) brightness(93%) contrast(100%)";
+  const uploadCampaignImage = useUploadCampaignImage();
+  const deleteCampaignImage = useDeleteCampaignImage();
+  const setMainCampaignImage = useSetMainCampaignImage(campaignId);
+  const [uploadError, setUploadError] = useState<UploadError | null>(null);
+  const [supportingUploadError, setSupportingUploadError] =
+    useState<UploadError | null>(null);
   const mainPhoto = formData.imageRecords.find((r) => r.is_main);
   const supportingPhotos = formData.imageRecords.filter((r) => !r.is_main);
 
-  const handleSetAsMain = (record: HydratedCampaignImageRecord) => {
-    const updated = formData.imageRecords.map((r) => ({
-      ...r,
-      is_main: r.id === record.id,
-    }));
-    setFieldValue("imageRecords", updated);
+  const { getRootProps, getInputProps } = useDropzone({
+    accept: {
+      "image/*": [".png", ".gif", ".jpeg", ".jpg", ".svg"],
+    },
+    multiple: false,
+    maxFiles: 1,
+    onDropAccepted: async (acceptedFiles) => {
+      const nextFile = acceptedFiles[0];
+      if (!nextFile) {
+        return;
+      }
+
+      if (hasDuplicateFiles(acceptedFiles, supportingPhotos)) {
+        setUploadError({
+          fileName: nextFile.name,
+          message: "Duplicate image",
+        });
+        return;
+      }
+
+      try {
+        if (mainPhoto?.storage_path) {
+          await deleteCampaignImage.mutateAsync({
+            campaignId,
+            storagePath: mainPhoto.storage_path,
+          });
+          revokePreviewUrl(mainPhoto.signedUrl);
+        }
+
+        const uploadedImage = await uploadCampaignImage.mutateAsync({
+          file: nextFile,
+          campaignId,
+          displayOrder: 0,
+          isMain: true,
+        });
+
+        setUploadError(null);
+        syncImageRecords(
+          sortImageRecords([
+            hydrateUploadedRecord(uploadedImage, nextFile),
+            ...supportingPhotos,
+          ]),
+        );
+      } catch (error) {
+        console.error(error);
+        setUploadError({
+          fileName: nextFile.name,
+          message: "Upload failed",
+        });
+      }
+    },
+    onDropRejected: (fileRejections) => {
+      const firstRejection = fileRejections[0];
+      if (!firstRejection) {
+        return;
+      }
+
+      const isFileTooLarge = firstRejection.errors.some(
+        (error) => error.code === "file-too-large",
+      );
+
+      setUploadError({
+        fileName: firstRejection.file.name,
+        message: isFileTooLarge ? "File too large" : "Upload failed",
+      });
+    },
+    maxSize: 3000000,
+  });
+
+  const {
+    getRootProps: getSupportingRootProps,
+    getInputProps: getSupportingInputProps,
+  } = useDropzone({
+    accept: {
+      "image/*": [".png", ".gif", ".jpeg", ".jpg", ".svg"],
+    },
+    multiple: true,
+    maxFiles: 5 - supportingPhotos.length,
+    onDropAccepted: async (acceptedFiles) => {
+      const existingFiles = mainPhoto
+        ? [mainPhoto, ...supportingPhotos]
+        : supportingPhotos;
+      const nextFile = acceptedFiles[0];
+
+      if (!nextFile) {
+        return;
+      }
+
+      if (hasDuplicateFiles(acceptedFiles, existingFiles)) {
+        setSupportingUploadError({
+          fileName: nextFile.name,
+          message: "Duplicate image",
+        });
+        return;
+      }
+
+      try {
+        const uploadedFiles: HydratedCampaignImageRecord[] = [];
+        const nextDisplayOrderBase =
+          formData.imageRecords.reduce(
+            (maxDisplayOrder, imageRecord) =>
+              Math.max(maxDisplayOrder, imageRecord.display_order),
+            0,
+          ) + 1;
+
+        for (const [index, file] of acceptedFiles.entries()) {
+          const uploadedImage = await uploadCampaignImage.mutateAsync({
+            file,
+            campaignId,
+            displayOrder: nextDisplayOrderBase + index,
+            isMain: false,
+          });
+
+          uploadedFiles.push(hydrateUploadedRecord(uploadedImage, file));
+        }
+
+        setSupportingUploadError(null);
+        syncImageRecords(
+          sortImageRecords([...formData.imageRecords, ...uploadedFiles]),
+        );
+      } catch (error) {
+        console.error(error);
+        setSupportingUploadError({
+          fileName: nextFile.name,
+          message: "Upload failed",
+        });
+      }
+    },
+    onDropRejected: (fileRejections) => {
+      const firstRejection = fileRejections[0];
+      if (!firstRejection) {
+        return;
+      }
+
+      const isFileTooLarge = firstRejection.errors.some(
+        (error) => error.code === "file-too-large",
+      );
+
+      setSupportingUploadError({
+        fileName: firstRejection.file.name,
+        message: isFileTooLarge ? "File too large" : "Upload failed",
+      });
+    },
+    maxSize: 3000000,
+    disabled: supportingPhotos.length >= 5,
+  });
+
+  const handleSetAsMain = async (record: HydratedCampaignImageRecord) => {
+    try {
+      await setMainCampaignImage.mutateAsync(record.id);
+      syncImageRecords(
+        sortImageRecords(
+          formData.imageRecords.map((imageRecord) => ({
+            ...imageRecord,
+            is_main: imageRecord.id === record.id,
+          })),
+        ),
+      );
+    } catch (error) {
+      console.error(error);
+    }
+  };
+
+  const handleDeleteMainPhoto = async (record: HydratedCampaignImageRecord) => {
+    await deleteCampaignImage.mutateAsync({
+      campaignId,
+      storagePath: record.storage_path,
+    });
+    revokePreviewUrl(record.signedUrl);
+    syncImageRecords(
+      sortImageRecords(formData.imageRecords.filter((image) => image.id !== record.id)),
+    );
+  };
+
+  const handleDeleteSupportingPhoto = async (
+    record: HydratedCampaignImageRecord,
+  ) => {
+    await deleteCampaignImage.mutateAsync({
+      campaignId,
+      storagePath: record.storage_path,
+    });
+    revokePreviewUrl(record.signedUrl);
+    syncImageRecords(
+      sortImageRecords(formData.imageRecords.filter((image) => image.id !== record.id)),
+    );
   };
 
   return (
@@ -55,16 +400,48 @@ export default function CampaignMediaSection({ formData, campaignId, setFieldVal
         </p>
         {mainPhoto ? (
           <>
-            <img
-              src={mainPhoto.signedUrl}
-              alt="Main campaign photo"
-              className="h-80 w-full rounded-lg object-cover"
+            <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+              <img
+                src={mainPhoto.signedUrl}
+                alt={mainPhoto.fileName || "Main campaign photo"}
+                className="w-full h-full object-cover"
+              />
+            </div>
+            <UploadedAssetCard
+              fileName={mainPhoto.fileName || "Uploaded image"}
+              fileSize={mainPhoto.fileSize ?? 0}
+              deleteLabel={`Delete ${mainPhoto.fileName || "main photo"}`}
+              onDelete={() => handleDeleteMainPhoto(mainPhoto)}
             />
-            <UploadedAssetCard record={mainPhoto} />
           </>
+        ) : uploadError ? (
+          <UploadErrorCard
+            error={uploadError}
+            onClear={() => setUploadError(null)}
+            errorIconFilter={ERROR_ICON_FILTER}
+          />
         ) : (
-          <div className="h-80 w-full rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-            No main photo uploaded
+          <div {...getRootProps({ className: "dropzone" })}>
+            <input {...getInputProps()} />
+            <div className="border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center py-10 gap-3 text-center">
+              <Image
+                src="/icons/upload-icon.svg"
+                alt="Upload icon"
+                width={16}
+                height={20}
+              />
+
+              <p className="text-sm">
+                <span className="text-blue-600 cursor-pointer hover:underline">
+                  Link
+                </span>{" "}
+                or drag and drop
+              </p>
+
+              <p className="text-xs text-gray-500">
+                SVG, PNG, JPG or GIF (max. 3MB)
+              </p>
+            </div>
           </div>
         )}
       </div>
@@ -78,29 +455,63 @@ export default function CampaignMediaSection({ formData, campaignId, setFieldVal
           *Please choose real, authentic photos of your project — for example, people working in the garden, harvesting food, learning together, or the garden space itself.
           <br /> *Do not upload logos, flyers, graphics, or AI-generated images. These photos should reflect real people and real places connected to your project.
         </p>
-        {supportingPhotos.length === 0 ? (
-          <div className="h-80 w-full rounded-lg bg-gray-100 flex items-center justify-center text-gray-400 text-sm">
-            No supporting photos uploaded
+        {supportingUploadError && (
+          <UploadErrorCard
+            error={supportingUploadError}
+            onClear={() => setSupportingUploadError(null)}
+            errorIconFilter={ERROR_ICON_FILTER}
+          />
+        )}
+
+        {supportingPhotos.length < 5 && (
+          <div {...getSupportingRootProps({ className: "dropzone" })}>
+            <input {...getSupportingInputProps()} />
+            <div className="border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center py-10 gap-3 text-center">
+              <Image
+                src="/icons/upload-icon.svg"
+                alt="Upload icon"
+                width={16}
+                height={20}
+              />
+
+              <p className="text-sm">
+                <span className="text-blue-600 cursor-pointer hover:underline">
+                  Link
+                </span>{" "}
+                or drag and drop
+              </p>
+
+              <p className="text-xs text-gray-500">
+                SVG, PNG, JPG or GIF (max. 3MB)
+              </p>
+            </div>
           </div>
-        ) : (
-          supportingPhotos.map((record) => (
-            <div key={record.id} className="relative">
+        )}
+
+        {supportingPhotos.map((record) => (
+          <div key={record.id} className="flex flex-col gap-2">
+            <div className="relative w-[650px] h-[358px] overflow-hidden border border-gray-300">
               <Button
                 variant="outlined"
                 onClick={() => handleSetAsMain(record)}
-                sx={{ position: "absolute", top: 12, left: 12, px: 1, py: 0.5, minWidth: 0 }}
+                sx={{ position: "absolute", top: 12, left: 12, px: 1, py: 0.5, minWidth: 0, zIndex: 1 }}
               >
                 Set as Main Photo
               </Button>
               <img
                 src={record.signedUrl}
-                alt={record.fileName}
-                className="h-80 w-full rounded-lg object-cover"
+                alt={record.fileName || "Supporting campaign photo"}
+                className="w-full h-full object-cover"
               />
-              <UploadedAssetCard record={record} />
             </div>
-          ))
-        )}
+            <UploadedAssetCard
+              fileName={record.fileName || "Uploaded image"}
+              fileSize={record.fileSize ?? 0}
+              deleteLabel={`Delete ${record.fileName || "supporting photo"}`}
+              onDelete={() => handleDeleteSupportingPhoto(record)}
+            />
+          </div>
+        ))}
       </div>
     </>
   );
