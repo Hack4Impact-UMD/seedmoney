@@ -247,7 +247,15 @@ export default function CampaignMediaSection({
       }
 
       try {
+        const uploadedImage = await uploadCampaignImage.mutateAsync({
+          file: nextFile,
+          campaignId,
+          displayOrder: 0,
+          isMain: !mainPhoto,
+        });
+
         if (mainPhoto?.storage_path) {
+          await setMainCampaignImage.mutateAsync(uploadedImage.id);
           await deleteCampaignImage.mutateAsync({
             campaignId,
             storagePath: mainPhoto.storage_path,
@@ -255,17 +263,13 @@ export default function CampaignMediaSection({
           revokePreviewUrl(mainPhoto.signedUrl);
         }
 
-        const uploadedImage = await uploadCampaignImage.mutateAsync({
-          file: nextFile,
-          campaignId,
-          displayOrder: 0,
-          isMain: true,
-        });
-
         setUploadError(null);
         syncImageRecords(
           sortImageRecords([
-            hydrateUploadedRecord(uploadedImage, nextFile),
+            hydrateUploadedRecord(
+              { ...uploadedImage, is_main: true, display_order: 0 },
+              nextFile,
+            ),
             ...supportingPhotos,
           ]),
         );
