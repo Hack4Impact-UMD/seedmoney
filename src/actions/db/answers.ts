@@ -1,11 +1,19 @@
 import type { NewAnswer, Answers } from "@/src/types";
 import {
-  createServerClient,
   createBrowserClient,
+  createServerClient,
 } from "@/src/lib/supabase-client";
 import type { Question } from "@/src/types/db/questions";
 
 export type AnswerWithQuestion = Answers & { questions: Question | null };
+
+async function createReadClient() {
+  if (typeof window === "undefined") {
+    return await createServerClient();
+  }
+
+  return createBrowserClient();
+}
 
 export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
   const supabase = await createBrowserClient();
@@ -95,7 +103,7 @@ export async function readAnswerByCampaignAndQuestion(
   return data as Answers;
 }
 
-export async function upsertAnswerByCampaignAndQuestion({
+export async function createFinalAnswer({
   campaignId,
   questionId,
   finalAnswer,
@@ -124,18 +132,77 @@ export async function upsertAnswerByCampaignAndQuestion({
   });
 }
 
+export async function createAiAnswer({
+  campaignId,
+  questionId,
+  aiAnswer,
+}: {
+  campaignId: number;
+  questionId: number;
+  aiAnswer: string;
+}): Promise<Answers | null> {
+  const existingAnswer = await readAnswerByCampaignAndQuestion(
+    campaignId,
+    questionId,
+  );
+
+  if (existingAnswer) {
+    return updateAnswer(existingAnswer.answer_id, {
+      ai_answer: aiAnswer,
+    });
+  }
+
+  return createAnswer({
+    campaign_id: campaignId,
+    question_id: questionId,
+    pre_ai_answer: "",
+    ai_answer: aiAnswer,
+    final_answer: "",
+  });
+}
+
+export async function createOriginalAnswer({
+  campaignId,
+  questionId,
+  originalAnswer,
+}: {
+  campaignId: number;
+  questionId: number;
+  originalAnswer: string;
+}): Promise<Answers | null> {
+  const existingAnswer = await readAnswerByCampaignAndQuestion(
+    campaignId,
+    questionId,
+  );
+
+  if (existingAnswer) {
+    return updateAnswer(existingAnswer.answer_id, {
+      pre_ai_answer: originalAnswer,
+    });
+  }
+
+  return createAnswer({
+    campaign_id: campaignId,
+    question_id: questionId,
+    pre_ai_answer: originalAnswer,
+    ai_answer: "",
+    final_answer: "",
+  });
+}
+
 export async function readAnswersByCampaign(
   campaignId: number,
 ): Promise<AnswerWithQuestion[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createReadClient();
 
-const { data, error } = await supabase
-  .from("answers")
-  .select("*, questions(*)")
-  .eq("campaign_id", campaignId);
+  const { data, error } = await supabase
+    .from("answers")
+    .select("*, questions(*)")
+    .eq("campaign_id", campaignId);
 
   const sorted = (data ?? []).sort(
-    (a, b) => (a.questions?.question_number ?? 0) - (b.questions?.question_number ?? 0)
+    (a, b) =>
+      (a.questions?.question_number ?? 0) - (b.questions?.question_number ?? 0),
   );
 
   if (error) {
@@ -144,13 +211,12 @@ const { data, error } = await supabase
   }
 
   return sorted as AnswerWithQuestion[];
-
 }
 
 export async function readAnswersByCampaignId(
   campaignId: number,
 ): Promise<AnswerWithQuestion[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createReadClient();
 
   // 1. Fetch answers for this explicit campaign
   const { data: answersData, error: answersError } = await supabase

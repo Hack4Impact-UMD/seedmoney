@@ -5,12 +5,12 @@ import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/src/components/Navbar";
 import { useQueryClient } from "@tanstack/react-query";
 import type { Campaign } from "@/src/types/db/campaigns";
+import type { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords";
 import type { Existence } from "@/src/types/db/enums";
 import Loading from "@/src/app/loading";
 import AppError from "@/src/app/error";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
-import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
-import { AnswerWithQuestion, updateAnswer } from "@/src/actions/db/answers";
+import useCreateFinalAnswer from "@/src/hooks/answers/useCreateFinalAnswer";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
 import ContactInformationSection from "@/src/components/ongoing-campaigns/edit/ContactInformationSection";
@@ -38,9 +38,9 @@ export default function EditCampaignPage() {
 
   const queryClient = useQueryClient();
   const updateCampaignMutation = useUpdateCampaign();
+  const createFinalAnswerMutation = useCreateFinalAnswer();
 
   const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
-  const setMainImageMutation = useSetMainCampaignImage(parsedCampaignId);
 
 
   const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
@@ -58,7 +58,6 @@ export default function EditCampaignPage() {
     if (!campaignEditData) return;
 
     if (initialData.campaignTitle === "") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInitialData(campaignEditData.mappedData);
       setFormData(campaignEditData.mappedData);
     } else {
@@ -77,6 +76,7 @@ export default function EditCampaignPage() {
         }));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignEditData]);
 
   const setFieldValue = useCallback(
@@ -92,6 +92,14 @@ export default function EditCampaignPage() {
         setFieldValue(field, e.target.value);
       },
     [setFieldValue],
+  );
+
+  const syncImageRecords = useCallback(
+    (imageRecords: HydratedCampaignImageRecord[]) => {
+      setFormData((prev) => ({ ...prev, imageRecords }));
+      setInitialData((prev) => ({ ...prev, imageRecords }));
+    },
+    [],
   );
 
   const handleToggleBeneficiary = useCallback((option: string) => {
@@ -111,7 +119,7 @@ export default function EditCampaignPage() {
       const campaignPayload: Partial<Campaign> = {
         name: formData.campaignTitle,
         impact: Number(formData.beneficiaryCount) || 0,
-        size: Number(formData.gardenSize) || 0,
+        size: formData.gardenSize,
         existence: (formData.gardenStatus || "existing") as Existence,
         goal: Number(formData.fundraisingGoal) || 0,
         city: formData.gardenCity,
@@ -133,37 +141,69 @@ export default function EditCampaignPage() {
         contact_role: formData.contactRole,
       };
 
+      const finalAnswerCandidates = [
+        {
+          questionNumber: 1,
+          questionId: formData.storyLocationAndAudienceQuestionId,
+          before: initialData.storyLocationAndAudienceFinal,
+          after: formData.storyLocationAndAudienceFinal,
+        },
+        {
+          questionNumber: 2,
+          questionId: formData.storyChallengeQuestionId,
+          before: initialData.storyChallengeFinal,
+          after: formData.storyChallengeFinal,
+        },
+        {
+          questionNumber: 3,
+          questionId: formData.storySeasonActivityQuestionId,
+          before: initialData.storySeasonActivityFinal,
+          after: formData.storySeasonActivityFinal,
+        },
+        {
+          questionNumber: 4,
+          questionId: formData.storyCampaignImpactQuestionId,
+          before: initialData.storyCampaignImpactFinal,
+          after: formData.storyCampaignImpactFinal,
+        },
+      ];
+
+      const changedFinalAnswerCandidates = finalAnswerCandidates.filter(
+        (update) => update.before !== update.after,
+      );
+
+      const missingQuestionNumbers = changedFinalAnswerCandidates
+        .filter((update) => update.questionId === null)
+        .map((update) => update.questionNumber);
+
+      if (missingQuestionNumbers.length > 0) {
+        const message = `Missing final answer question IDs for campaign ${parsedCampaignId}: ${missingQuestionNumbers.join(", ")}`;
+        console.error(message);
+        setSaveErrorMessage(message);
+        setIsSaveModalOpen(false);
+        setShowErrorToast(true);
+        return;
+      }
+
+      const finalAnswerUpdates = changedFinalAnswerCandidates.filter(
+        (update): update is { questionNumber: number; questionId: number; before: string; after: string } =>
+          update.questionId !== null,
+      );
+
       await updateCampaignMutation.mutateAsync({
         campaignId: parsedCampaignId,
         campaignData: campaignPayload,
       });
 
-      // Save answer changes
-      const answersData = campaignEditData?.answersData;
-      if (answersData) {
-        const buildAnswerUpdate = (qNum: number, finalValue: string) => {
-          const ans = answersData.find((a: AnswerWithQuestion) => a.questions?.question_number === qNum);
-          if (ans?.answer_id) return updateAnswer(ans.answer_id, { final_answer: finalValue });
-          return Promise.resolve(null);
-        };
-
-        await Promise.all([
-          buildAnswerUpdate(1, formData.storyLocationAndAudienceFinal),
-          buildAnswerUpdate(2, formData.storyChallengeFinal),
-          buildAnswerUpdate(3, formData.storySeasonActivityFinal),
-          buildAnswerUpdate(4, formData.storyCampaignImpactFinal),
-        ]);
-      }
-
-      const imageChanged =
-        JSON.stringify(formData.imageRecords) !==
-        JSON.stringify(initialData.imageRecords);
-      if (imageChanged) {
-        const mainImage = formData.imageRecords.find((r) => r.is_main);
-        if (mainImage) {
-          await setMainImageMutation.mutateAsync(mainImage.id);
-        }
-      }
+      await Promise.all(
+        finalAnswerUpdates.map(({ questionId, after }) =>
+          createFinalAnswerMutation.mutateAsync({
+            campaignId: parsedCampaignId,
+            questionId,
+            finalAnswer: after,
+          }),
+        ),
+      );
 
       queryClient.invalidateQueries({
         queryKey: ["campaigns"],
@@ -179,7 +219,14 @@ export default function EditCampaignPage() {
       setIsSaveModalOpen(false);
       setShowErrorToast(true);
     }
-  }, [formData, initialData, parsedCampaignId, campaignEditData, updateCampaignMutation, queryClient, setMainImageMutation ]);
+  }, [
+    createFinalAnswerMutation,
+    formData,
+    initialData,
+    parsedCampaignId,
+    updateCampaignMutation,
+    queryClient,
+  ]);
 
   const navigateToCampaignPage = useCallback(() => {
     if (!parsedCampaignId) {
@@ -253,7 +300,7 @@ export default function EditCampaignPage() {
             <CampaignMediaSection
               formData={formData}
               campaignId={parsedCampaignId}
-              setFieldValue={setFieldValue}
+              syncImageRecords={syncImageRecords}
             />
 
             <ContactInformationSection

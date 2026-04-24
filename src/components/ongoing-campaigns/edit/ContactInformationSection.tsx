@@ -11,7 +11,7 @@ import {
   EditCampaignFormData,
   SetFieldValue,
   TextChangeHandler,
-} from "@src/types/frontend/campaignEdit";
+} from "@/src/types/frontend/campaignEdit";
 
 interface ContactInformationSectionProps {
   formData: EditCampaignFormData;
@@ -57,7 +57,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="Street 1"
+          label="Street 1*"
           fullWidth
           value={formData.mailingStreet1}
           onChange={onTextChange("mailingStreet1")}
@@ -73,12 +73,11 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="City*"
+          label="Country*"
           fullWidth
-          value={formData.mailingCity}
-          onChange={onTextChange("mailingCity")}
+          value={formData.mailingCountry}
+          onChange={onTextChange("mailingCountry")}
         />
-
 
         <TextField
           variant="standard"
@@ -88,6 +87,13 @@ export default function ContactInformationSection({
           onChange={onTextChange("mailingState")}
         />
 
+        <TextField
+          variant="standard"
+          label="City*"
+          fullWidth
+          value={formData.mailingCity}
+          onChange={onTextChange("mailingCity")}
+        />
 
         <TextField
           variant="standard"
@@ -95,14 +101,6 @@ export default function ContactInformationSection({
           fullWidth
           value={formData.mailingZip}
           onChange={onTextChange("mailingZip")}
-        />
-
-        <TextField
-          variant="standard"
-          label="Country*"
-          fullWidth
-          value={formData.mailingCountry}
-          onChange={onTextChange("mailingCountry")}
         />
       </div>
 

@@ -151,7 +151,7 @@ export default function ReviewSubmitPage() {
     await updateCampaign.mutateAsync({
       campaignId,
       campaignData: {
-        status: "submitted_under_review",
+        status: "pending",
         competition_id: currentCompetitionData.competition_id,
         raised: 0,
         donors: 0,

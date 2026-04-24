@@ -1,7 +1,10 @@
 "use client";
 
-import { Button, TextField } from "@mui/material";
-import { EditCampaignFormData, TextChangeHandler } from "@/src/types/frontend/campaignEdit";
+import { TextField } from "@mui/material";
+import {
+  EditCampaignFormData,
+  TextChangeHandler,
+} from "@/src/types/frontend/campaignEdit";
 
 interface StoryComparisonBlockProps {
   question: string;
@@ -74,15 +77,6 @@ function StoryComparisonBlock({
           value={finalValue}
           onChange={onFinalChange}
         />
-        <div className="mt-4 flex justify-end">
-          <Button
-            variant="outlined"
-            sx={{ px: 2, py: 0.5, minWidth: 0 }}
-            onClick={() => console.log(saveLabel, finalValue)}
-          >
-            Save
-          </Button>
-        </div>
       </div>
     </>
   );

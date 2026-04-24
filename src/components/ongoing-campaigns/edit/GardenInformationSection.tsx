@@ -8,7 +8,11 @@ import {
   TextField,
 } from "@mui/material";
 
-import { EditCampaignFormData, SetFieldValue, TextChangeHandler } from "@/src/types/frontend/campaignEdit";
+import {
+  EditCampaignFormData,
+  SetFieldValue,
+  TextChangeHandler,
+} from "@/src/types/frontend/campaignEdit";
 
 interface GardenInformationSectionProps {
   formData: EditCampaignFormData;
@@ -36,14 +40,13 @@ export default function GardenInformationSection({
         </h2>
 
         <TextField
-          label="City"
+          label="Country"
           variant="standard"
           fullWidth
-          value={formData.gardenCity}
-          onChange={onTextChange("gardenCity")}
+          value={formData.gardenCountry}
+          onChange={onTextChange("gardenCountry")}
         />
 
- 
         <TextField
           label="State / Province"
           variant="standard"
@@ -52,14 +55,12 @@ export default function GardenInformationSection({
           onChange={onTextChange("gardenState")}
         />
 
-
-
         <TextField
-          label="Country"
+          label="City"
           variant="standard"
           fullWidth
-          value={formData.gardenCountry}
-          onChange={onTextChange("gardenCountry")}
+          value={formData.gardenCity}
+          onChange={onTextChange("gardenCity")}
         />
       </div>
 
@@ -83,7 +84,9 @@ export default function GardenInformationSection({
                 onChange={() => setFieldValue("gardenCategory", option)}
                 className="w-5 h-5 cursor-pointer"
               />
-              <span className="text-sm group-hover:text-gray-900">{option}</span>
+              <span className="text-sm group-hover:text-gray-900">
+                {option}
+              </span>
             </label>
           ))}
         </div>

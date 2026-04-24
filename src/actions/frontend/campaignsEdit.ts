@@ -42,7 +42,7 @@ export async function readCampaignEditInformation(campaignId: number): Promise<C
   const mappedData: EditCampaignFormData = {
     ...DEFAULT_CAMPAIGN_DATA,
     campaignTitle:          dbCampaign?.name                    ?? "",
-    status:                 dbCampaign?.status                  ?? "submitted_under_review",
+    status:                 dbCampaign?.status                  ?? "pending",
     beneficiaryCount:       dbCampaign?.impact?.toString()      ?? "",
     gardenSize:             dbCampaign?.size?.toString()        ?? "",
     gardenStatus:           (dbCampaign?.existence as "new" | "existing") ?? "existing",
@@ -68,21 +68,25 @@ export async function readCampaignEditInformation(campaignId: number): Promise<C
     storyLocationAndAudience:      locAudAns?.pre_ai_answer ?? "",
     storyLocationAndAudienceAI:    locAudAns?.ai_answer     ?? "",
     storyLocationAndAudienceFinal: locAudAns?.final_answer  ?? "",
+    storyLocationAndAudienceQuestionId: locAudAns?.question_id ?? null,
 
     storyChallengeOriginal: challengeAns?.pre_ai_answer ?? "",
     storyChallengeAI:       challengeAns?.ai_answer     ?? "",
     storyChallengeFinal:    challengeAns?.final_answer  ?? "",
+    storyChallengeQuestionId: challengeAns?.question_id ?? null,
 
     storySeasonActivityOriginal: seasonAns?.pre_ai_answer ?? "",
     storySeasonActivityAI:       seasonAns?.ai_answer     ?? "",
     storySeasonActivityFinal:    seasonAns?.final_answer  ?? "",
+    storySeasonActivityQuestionId: seasonAns?.question_id ?? null,
 
     storyCampaignImpactOriginal: impactAns?.pre_ai_answer ?? "",
     storyCampaignImpactAI:       impactAns?.ai_answer     ?? "",
     storyCampaignImpactFinal:    impactAns?.final_answer  ?? "",
+    storyCampaignImpactQuestionId: impactAns?.question_id ?? null,
 
     imageRecords: imageRecords ?? [],
   };
 
-  return { mappedData, storyQuestions, answersData: answers };
+  return { mappedData, storyQuestions };
 }

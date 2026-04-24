@@ -94,7 +94,7 @@ export default function Navbar() {
       return hasName ? `${campaign.name} (Draft)` : "Untitled Draft";
     }
 
-    if (campaign.status === "submitted_under_review") {
+    if (campaign.status === "pending") {
       return hasName
         ? `${campaign.name} (Pending)`
         : "Untitled Campaign (Pending)";

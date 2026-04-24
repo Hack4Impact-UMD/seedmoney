@@ -148,7 +148,7 @@ export const sampleCampaigns: Campaign[] = [
     givebutterlink: "https://givebutter.com/clean-rivers",
     givebutter_id: null,
     givebutter_slug: null,
-    status: "submitted_under_review",
+    status: "pending",
     date_created: "2026-04-12",
     street: "901 River Rd",
     city: "Madison",

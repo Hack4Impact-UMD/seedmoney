@@ -4,13 +4,13 @@ import { useCallback, useEffect, useState } from "react";
 import { useParams, useRouter } from "next/navigation";
 import Navbar from "@/src/components/Navbar";
 import type { Campaign } from "@/src/types/db/campaigns";
+import type { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords";
 import type { Existence, Status } from "@/src/types/db/enums";
 import Loading from "@/src/app/loading";
 import AppError from "@/src/app/error";
 import NotFound from "@/src/app/not-found";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
-import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
-import { AnswerWithQuestion, updateAnswer } from "@/src/actions/db/answers";
+import useCreateFinalAnswer from "@/src/hooks/answers/useCreateFinalAnswer";
 import { Button } from "@mui/material";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
@@ -20,7 +20,11 @@ import EditCampaignDialogs from "@/src/components/ongoing-campaigns/edit/EditCam
 import EditCampaignHeader from "@/src/components/ongoing-campaigns/edit/EditCampaignHeader";
 import GardenInformationSection from "@/src/components/ongoing-campaigns/edit/GardenInformationSection";
 import GardenStorySection from "@/src/components/ongoing-campaigns/edit/GardenStorySection";
-import { EditCampaignFormData, TextFieldKey, DEFAULT_CAMPAIGN_DATA} from "@/src/types/frontend/campaignEdit";
+import {
+  DEFAULT_CAMPAIGN_DATA,
+  EditCampaignFormData,
+  TextFieldKey,
+} from "@/src/types/frontend/campaignEdit";
 import {
   beneficiaryOptions,
   categoryOptions,
@@ -36,8 +40,8 @@ export default function CampaignReviewPage() {
   const parsedCampaignId = Number(campaignId);
 
   const updateCampaignMutation = useUpdateCampaign();
+  const createFinalAnswerMutation = useCreateFinalAnswer();
   const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
-  const setMainImageMutation = useSetMainCampaignImage(parsedCampaignId);
 
   const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
   const [formData, setFormData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
@@ -61,7 +65,6 @@ export default function CampaignReviewPage() {
     if (!campaignEditData) return;
 
     if (initialData.campaignTitle === "") {
-      // eslint-disable-next-line react-hooks/set-state-in-effect
       setInitialData(campaignEditData.mappedData);
       setFormData(campaignEditData.mappedData);
     } else {
@@ -79,6 +82,7 @@ export default function CampaignReviewPage() {
         }));
       }
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [campaignEditData]);
 
   const setFieldValue = useCallback(
@@ -93,6 +97,14 @@ export default function CampaignReviewPage() {
         setFieldValue(field, e.target.value);
       },
     [setFieldValue],
+  );
+
+  const syncImageRecords = useCallback(
+    (imageRecords: HydratedCampaignImageRecord[]) => {
+      setFormData((prev) => ({ ...prev, imageRecords }));
+      setInitialData((prev) => ({ ...prev, imageRecords }));
+    },
+    [],
   );
 
   const handleToggleBeneficiary = useCallback((option: string) => {
@@ -125,7 +137,7 @@ export default function CampaignReviewPage() {
       const campaignPayload: Partial<Campaign> = {
         name: formData.campaignTitle,
         impact: Number(formData.beneficiaryCount) || 0,
-        size: Number(formData.gardenSize) || 0,
+        size: formData.gardenSize,
         existence: (formData.gardenStatus || "existing") as Existence,
         goal: Number(formData.fundraisingGoal) || 0,
         city: formData.gardenCity,
@@ -147,36 +159,69 @@ export default function CampaignReviewPage() {
         contact_role: formData.contactRole,
       };
 
+      const finalAnswerCandidates = [
+        {
+          questionNumber: 1,
+          questionId: formData.storyLocationAndAudienceQuestionId,
+          before: initialData.storyLocationAndAudienceFinal,
+          after: formData.storyLocationAndAudienceFinal,
+        },
+        {
+          questionNumber: 2,
+          questionId: formData.storyChallengeQuestionId,
+          before: initialData.storyChallengeFinal,
+          after: formData.storyChallengeFinal,
+        },
+        {
+          questionNumber: 3,
+          questionId: formData.storySeasonActivityQuestionId,
+          before: initialData.storySeasonActivityFinal,
+          after: formData.storySeasonActivityFinal,
+        },
+        {
+          questionNumber: 4,
+          questionId: formData.storyCampaignImpactQuestionId,
+          before: initialData.storyCampaignImpactFinal,
+          after: formData.storyCampaignImpactFinal,
+        },
+      ];
+
+      const changedFinalAnswerCandidates = finalAnswerCandidates.filter(
+        (update) => update.before !== update.after,
+      );
+
+      const missingQuestionNumbers = changedFinalAnswerCandidates
+        .filter((update) => update.questionId === null)
+        .map((update) => update.questionNumber);
+
+      if (missingQuestionNumbers.length > 0) {
+        const message = `Missing final answer question IDs for campaign ${parsedCampaignId}: ${missingQuestionNumbers.join(", ")}`;
+        console.error(message);
+        setSaveErrorMessage(message);
+        setIsSaveModalOpen(false);
+        setShowErrorToast(true);
+        return;
+      }
+
+      const finalAnswerUpdates = changedFinalAnswerCandidates.filter(
+        (update): update is { questionNumber: number; questionId: number; before: string; after: string } =>
+          update.questionId !== null,
+      );
+
       await updateCampaignMutation.mutateAsync({
         campaignId: parsedCampaignId,
         campaignData: campaignPayload,
       });
 
-      const answersData = campaignEditData?.answersData;
-      if (answersData) {
-        const buildAnswerUpdate = (qNum: number, finalValue: string) => {
-          const ans = answersData.find((a: AnswerWithQuestion) => a.questions?.question_number === qNum);
-          if (ans?.answer_id) return updateAnswer(ans.answer_id, { final_answer: finalValue });
-          return Promise.resolve(null);
-        };
-
-        await Promise.all([
-          buildAnswerUpdate(1, formData.storyLocationAndAudienceFinal),
-          buildAnswerUpdate(2, formData.storyChallengeFinal),
-          buildAnswerUpdate(3, formData.storySeasonActivityFinal),
-          buildAnswerUpdate(4, formData.storyCampaignImpactFinal),
-        ]);
-      }
-
-      const imageChanged =
-        JSON.stringify(formData.imageRecords) !==
-        JSON.stringify(initialData.imageRecords);
-      if (imageChanged) {
-        const mainImage = formData.imageRecords.find((r) => r.is_main);
-        if (mainImage) {
-          await setMainImageMutation.mutateAsync(mainImage.id);
-        }
-      }
+      await Promise.all(
+        finalAnswerUpdates.map(({ questionId, after }) =>
+          createFinalAnswerMutation.mutateAsync({
+            campaignId: parsedCampaignId,
+            questionId,
+            finalAnswer: after,
+          }),
+        ),
+      );
 
       setInitialData(formData);
       setIsSaveModalOpen(false);
@@ -188,7 +233,13 @@ export default function CampaignReviewPage() {
       setIsSaveModalOpen(false);
       setShowErrorToast(true);
     }
-  }, [formData, initialData, parsedCampaignId, campaignEditData, updateCampaignMutation, setMainImageMutation]);
+  }, [
+    createFinalAnswerMutation,
+    formData,
+    initialData,
+    parsedCampaignId,
+    updateCampaignMutation,
+  ]);
 
   const navigateToCampaignPage = useCallback(() => {
     if (!parsedCampaignId) {
@@ -223,8 +274,8 @@ export default function CampaignReviewPage() {
   if (error) return <AppError error={error as Error} reset={() => refetch()} />;
   if (!campaignEditData) return <NotFound />;
   if (
-    campaignEditData.mappedData.status !== "submitted_under_review" &&
-    campaignEditData.mappedData.status !== "not_approved"
+    campaignEditData.mappedData.status !== "pending" &&
+    campaignEditData.mappedData.status !== "denied"
   ) {
     return <NotFound />;
   }
@@ -287,7 +338,7 @@ export default function CampaignReviewPage() {
             CANCEL
           </Button>
           <Button
-            onClick= {() => handleStatusUpdate("not_approved")}
+            onClick= {() => handleStatusUpdate("denied")}
             variant="contained"
             color="success"
           >
@@ -318,7 +369,7 @@ export default function CampaignReviewPage() {
             CANCEL
           </Button>
           <Button
-            onClick= {() => handleStatusUpdate("submitted_under_review")}
+            onClick= {() => handleStatusUpdate("pending")}
             variant="contained"
           >
             RESTORE
@@ -366,7 +417,7 @@ export default function CampaignReviewPage() {
             <CampaignMediaSection
               formData={formData}
               campaignId={parsedCampaignId}
-              setFieldValue={setFieldValue}
+              syncImageRecords={syncImageRecords}
             />
 
             <ContactInformationSection
@@ -377,7 +428,7 @@ export default function CampaignReviewPage() {
           </div>
 
           <div className="flex flex-col gap-2 sticky top-10">
-            {status === "submitted_under_review" && (
+            {status === "pending" && (
               <>
                 <Button
                   variant="contained"
@@ -396,7 +447,7 @@ export default function CampaignReviewPage() {
               </>
             )}
 
-            {status === "not_approved" && (
+            {status === "denied" && (
               <>
                 <Button
                   variant="contained"

@@ -18,7 +18,7 @@ export async function readCampaignsUnderReview(
         )
       )`
     ,)
-    .in("status", ["submitted_under_review", "not_approved"])
+    .in("status", ["pending", "denied"])
     .eq("competition_id", competitionId)
     .eq("campaign_members.role", "campaign_leader");
 
@@ -54,9 +54,8 @@ export async function readCampaignsUnderReview(
       raised: c.raised ?? 0,
       goal: c.goal ?? 0,
       goalProgress: c.goal > 0 ? Math.round((c.raised / c.goal) * 100) : 0,
-      status: c.status as "submitted_under_review" | "not_approved",
+      status: c.status as "pending" | "denied",
       submissionDate: c.date_created ?? "",
     };
   });
 }
-

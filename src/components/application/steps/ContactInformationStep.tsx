@@ -211,7 +211,7 @@ export default function ContactInformationStep() {
               label={<>Street 1*</>}
               fullWidth
               name="mailingStreet1"
-              autoComplete="address-line1"
+              autoComplete="new-password"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -232,7 +232,7 @@ export default function ContactInformationStep() {
               label="Street 2"
               fullWidth
               name="mailingStreet2"
-              autoComplete="address-line2"
+              autoComplete="new-password"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -255,6 +255,7 @@ export default function ContactInformationStep() {
               variant="standard"
               fullWidth
               name="mailingCountry"
+              autoComplete="new-password"
               value={field.state.value}
               onChange={async (e) => {
                 const nextCountry = e.target.value;
@@ -307,7 +308,7 @@ export default function ContactInformationStep() {
               label="City*"
               fullWidth
               name="mailingCity"
-              autoComplete="address-level2"
+              autoComplete="new-password"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -327,8 +328,11 @@ export default function ContactInformationStep() {
             isUsMailingCountry ? (
               <TextField
                 select
+                label="State / Province*"
                 variant="standard"
                 fullWidth
+                name="mailingState"
+                autoComplete="new-password"
                 value={field.state.value}
                 onChange={async (e) => {
                   field.handleChange(e.target.value);
@@ -342,7 +346,10 @@ export default function ContactInformationStep() {
                         <span className="text-gray-400">State / Province*</span>
                       );
                     }
-                    return String(selected);
+                    const selectedState = STATES.find(
+                      (state) => state.code === selected,
+                    );
+                    return selectedState?.name ?? String(selected);
                   },
                 }}
               >
@@ -363,6 +370,7 @@ export default function ContactInformationStep() {
                 helperText="Write N/A if not applicable"
                 fullWidth
                 name="mailingState"
+                autoComplete="new-password"
                 value={field.state.value}
                 onBlur={async (e) => {
                   field.handleBlur();
@@ -384,7 +392,7 @@ export default function ContactInformationStep() {
               label="ZIP/Postal Code*"
               fullWidth
               name="mailingZip"
-              autoComplete="postal-code"
+              autoComplete="new-password"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
