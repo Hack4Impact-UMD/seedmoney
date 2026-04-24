@@ -56,6 +56,16 @@ const statusConfig: Record<
   },
 };
 
+const unknownStatusConfig = {
+  label: "N/A",
+  borderClass: "border-[#D32F2F]",
+  textClass: "text-[#D32F2F]",
+};
+
+function getStatusConfig(status: string) {
+  return statusConfig[status as Status] ?? unknownStatusConfig;
+}
+
 function getCampaignYear(dateCreated: string) {
   const year = new Date(dateCreated).getFullYear();
   return Number.isNaN(year) ? "N/A" : String(year);
@@ -76,8 +86,8 @@ function getGoalProgress(
   return Math.max(0, Math.round(((raised ?? 0) / goal) * 100));
 }
 
-function StatusChip({ status }: { status: Status }) {
-  const config = statusConfig[status];
+function StatusChip({ status }: { status: string }) {
+  const config = getStatusConfig(status);
 
   return (
     <span
@@ -122,7 +132,7 @@ export default function CampaignsTable({ initialData }: Props) {
         return true;
       }
 
-      const statusLabel = statusConfig[campaign.status].label.toLowerCase();
+      const statusLabel = getStatusConfig(campaign.status).label.toLowerCase();
 
       return (
         campaign.name.toLowerCase().includes(normalizedSearch) ||
