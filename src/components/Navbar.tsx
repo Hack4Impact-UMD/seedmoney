@@ -100,6 +100,12 @@ export default function Navbar() {
         : "Untitled Campaign (Pending)";
     }
 
+    if (campaign.status === "denied") {
+      return hasName
+        ? `${campaign.name} (Denied)`
+        : "Untitled Campaign (Denied)";
+    }
+
     return hasName ? campaign.name : "Untitled Campaign";
   };
 
