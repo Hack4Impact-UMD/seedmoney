@@ -1,6 +1,7 @@
 "use client";
 
 import TextField from "@mui/material/TextField";
+import MenuItem from "@mui/material/MenuItem";
 import { Button } from "@mui/material";
 import Link from "next/link";
 import { useApplicationForm } from "@/src/components/application/ApplicationFormProvider";
@@ -8,6 +9,7 @@ import { useState, useRef } from "react";
 import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import { applicationGardenCategories } from "@/src/constants/gardenCategories";
+import { STATES, COUNTRIES } from "@/src/components/application/addressOptions";
 
 const beneficiaryOptions = [
   "Children (ages 0–12)",
@@ -32,6 +34,10 @@ export default function GardenInformationStep() {
   const form = useApplicationForm();
   const router = useRouter();
   const { saveDraftCampaign } = useSaveDraftCampaign();
+  const normalizeCountryValue = (value: string) => value.trim().toLowerCase();
+  const isUsGardenCountry =
+    normalizeCountryValue(form.state.values.gardenCountry) === "us" ||
+    normalizeCountryValue(form.state.values.gardenCountry) === "united states";
   const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(false);
   const [isOtherBeneficiarySelected, setIsOtherBeneficiarySelected] =
     useState(false);
@@ -105,11 +111,127 @@ export default function GardenInformationStep() {
         <h2 className="text-[20px] font-medium">
           Garden Location <span className="text-orange-500">*</span>
         </h2>
+        <form.Field name="gardenCountry">
+          {(field) => (
+            <TextField
+              select
+              label="Country*"
+              variant="standard"
+              fullWidth
+              name="gardenCountry"
+              autoComplete="new-password"
+              value={field.state.value}
+              onChange={async (e) => {
+                const nextCountry = e.target.value;
+                const shouldClearState =
+                  normalizeCountryValue(nextCountry) === "us" ||
+                  normalizeCountryValue(nextCountry) === "united states";
+
+                field.handleChange(nextCountry);
+
+                if (shouldClearState) {
+                  form.setFieldValue("gardenState", "");
+                }
+
+                await saveGardenInformationDraft({
+                  gardenCountry: nextCountry,
+                  ...(shouldClearState ? { gardenState: "" } : {}),
+                });
+              }}
+              SelectProps={{
+                displayEmpty: true,
+                renderValue: (selected) => {
+                  if (!selected) {
+                    return <span className="text-gray-400">Country*</span>;
+                  }
+                  return String(selected);
+                },
+              }}
+            >
+              <MenuItem value="">
+                <em>None</em>
+              </MenuItem>
+
+              {field.state.value && !COUNTRIES.includes(field.state.value) && (
+                <MenuItem value={field.state.value}>
+                  {field.state.value}
+                </MenuItem>
+              )}
+
+              {COUNTRIES.map((country) => (
+                <MenuItem key={country} value={country}>
+                  {country}
+                </MenuItem>
+              ))}
+            </TextField>
+          )}
+        </form.Field>
+
+        <form.Field name="gardenState">
+          {(field) =>
+            isUsGardenCountry ? (
+              <TextField
+                select
+                variant="standard"
+                fullWidth
+                autoComplete="new-password"
+                value={field.state.value}
+                onChange={async (e) => {
+                  field.handleChange(e.target.value);
+                  await saveGardenInformationDraft({
+                    gardenState: e.target.value,
+                  });
+                }}
+                SelectProps={{
+                  displayEmpty: true,
+                  renderValue: (selected) => {
+                    if (!selected) {
+                      return (
+                        <span className="text-gray-400">State / Province*</span>
+                      );
+                    }
+                    return String(selected);
+                  },
+                }}
+              >
+                <MenuItem value="">
+                  <em>None</em>
+                </MenuItem>
+
+                {STATES.map((s) => (
+                  <MenuItem key={s.code} value={s.code}>
+                    {s.name}
+                  </MenuItem>
+                ))}
+              </TextField>
+            ) : (
+              <TextField
+                variant="standard"
+                label="State / Province*"
+                helperText="Write N/A if not applicable"
+                fullWidth
+                name="gardenState"
+                autoComplete="new-password"
+                value={field.state.value}
+                onBlur={async (e) => {
+                  field.handleBlur();
+                  await saveGardenInformationDraft({
+                    gardenState: e.target.value,
+                  });
+                }}
+                onChange={(e) => field.handleChange(e.target.value)}
+                onInput={(e) =>
+                  field.handleChange((e.target as HTMLInputElement).value)
+                }
+              />
+            )
+          }
+        </form.Field>
 
         <form.Field name="gardenCity">
           {(field) => (
             <TextField
-              label="City"
+              label="City*"
               variant="standard"
               fullWidth
               name="gardenCity"
@@ -119,52 +241,6 @@ export default function GardenInformationStep() {
                 field.handleBlur();
                 await saveGardenInformationDraft({
                   gardenCity: e.target.value,
-                });
-              }}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onInput={(e) =>
-                field.handleChange((e.target as HTMLInputElement).value)
-              }
-            />
-          )}
-        </form.Field>
-
-        <form.Field name="gardenState">
-          {(field) => (
-            <TextField
-              label="State / Province"
-              variant="standard"
-              fullWidth
-              name="gardenState"
-              autoComplete="new-password"
-              value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveGardenInformationDraft({
-                  gardenState: e.target.value,
-                });
-              }}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onInput={(e) =>
-                field.handleChange((e.target as HTMLInputElement).value)
-              }
-            />
-          )}
-        </form.Field>
-
-        <form.Field name="gardenCountry">
-          {(field) => (
-            <TextField
-              label="Country"
-              variant="standard"
-              fullWidth
-              name="gardenCountry"
-              autoComplete="new-password"
-              value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveGardenInformationDraft({
-                  gardenCountry: e.target.value,
                 });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
