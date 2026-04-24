@@ -101,7 +101,7 @@ export default function GardenStoryStep() {
   const router = useRouter();
   const { setLastSaved } = useLastSaved();
   const { draftCampaignId, saveDraftCampaign } = useSaveDraftCampaign();
-  const upsertAnswer = useCreateOriginalAnswer();
+  const createOriginalAnswerMutation = useCreateOriginalAnswer();
   const uploadCampaignImage = useUploadCampaignImage();
   const deleteCampaignImage = useDeleteCampaignImage();
   const values = form.state.values;
@@ -420,7 +420,7 @@ export default function GardenStoryStep() {
 
     const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
 
-    await upsertAnswer.mutateAsync({
+    await createOriginalAnswerMutation.mutateAsync({
       campaignId,
       questionId,
       originalAnswer,

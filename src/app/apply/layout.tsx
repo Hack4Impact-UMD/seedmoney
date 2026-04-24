@@ -28,7 +28,10 @@ export default async function ApplyLayout({
     : [[], []];
 
   const storyAnswersByQuestionId = new Map(
-    draftAnswers.map((answer) => [answer.question_id, answer.final_answer]),
+    draftAnswers.map((answer) => [
+      answer.question_id,
+      answer.pre_ai_answer || answer.final_answer,
+    ]),
   );
   const mainImage = draftImages.find((image) => image.is_main) ?? null;
   const supportingImages = draftImages.filter((image) => !image.is_main);

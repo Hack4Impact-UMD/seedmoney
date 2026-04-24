@@ -1,8 +1,5 @@
 import type { NewAnswer, Answers } from "@/src/types";
-import {
-  createServerClient,
-  createBrowserClient,
-} from "@/src/lib/supabase-client";
+import { createBrowserClient } from "@/src/lib/supabase-client";
 import type { Question } from "@/src/types/db/questions";
 
 export type AnswerWithQuestion = Answers & { questions: Question | null };
@@ -149,7 +146,7 @@ export async function createOriginalAnswer({
     question_id: questionId,
     pre_ai_answer: originalAnswer,
     ai_answer: "",
-    final_answer: "//WHAT GOES HERE?",
+    final_answer: "",
   });
 }
 

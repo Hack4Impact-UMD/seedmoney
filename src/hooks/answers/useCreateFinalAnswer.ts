@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createFinalAnswer } from "@/src/actions/db/answers";
 import { Answers } from "@/src/types/db/answers";
 
-export default function useUpsertFinalAnswer() {
+export default function useCreateFinalAnswer() {
   const queryClient = useQueryClient();
 
   return useMutation<
