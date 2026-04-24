@@ -274,8 +274,8 @@ export default function CampaignReviewPage() {
   if (error) return <AppError error={error as Error} reset={() => refetch()} />;
   if (!campaignEditData) return <NotFound />;
   if (
-    campaignEditData.mappedData.status !== "submitted_under_review" &&
-    campaignEditData.mappedData.status !== "not_approved"
+    campaignEditData.mappedData.status !== "pending" &&
+    campaignEditData.mappedData.status !== "denied"
   ) {
     return <NotFound />;
   }
@@ -338,7 +338,7 @@ export default function CampaignReviewPage() {
             CANCEL
           </Button>
           <Button
-            onClick= {() => handleStatusUpdate("not_approved")}
+            onClick= {() => handleStatusUpdate("denied")}
             variant="contained"
             color="success"
           >
@@ -369,7 +369,7 @@ export default function CampaignReviewPage() {
             CANCEL
           </Button>
           <Button
-            onClick= {() => handleStatusUpdate("submitted_under_review")}
+            onClick= {() => handleStatusUpdate("pending")}
             variant="contained"
           >
             RESTORE
@@ -428,7 +428,7 @@ export default function CampaignReviewPage() {
           </div>
 
           <div className="flex flex-col gap-2 sticky top-10">
-            {status === "submitted_under_review" && (
+            {status === "pending" && (
               <>
                 <Button
                   variant="contained"
@@ -447,7 +447,7 @@ export default function CampaignReviewPage() {
               </>
             )}
 
-            {status === "not_approved" && (
+            {status === "denied" && (
               <>
                 <Button
                   variant="contained"

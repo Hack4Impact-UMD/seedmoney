@@ -102,7 +102,7 @@ export default function DashboardShell({
     );
   }
 
-  if (campaignData.status === "submitted_under_review") {
+  if (campaignData.status === "pending") {
     return (
       <div className="flex min-h-screen">
         <Navbar/>

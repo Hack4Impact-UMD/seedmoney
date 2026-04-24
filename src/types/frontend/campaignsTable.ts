@@ -11,6 +11,6 @@ export type ReviewApplicationRow = {
   raised: number;
   goal: number;
   goalProgress: number;
-  status: "submitted_under_review" | "not_approved";
+  status: "pending" | "denied";
   submissionDate: string;
 };

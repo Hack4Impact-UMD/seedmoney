@@ -153,9 +153,9 @@ export default function DashboardIndexPage() {
     const currentCompetitionId = currentCompetitionData?.competition_id;
     const statusPriority: Record<string, number> = {
       in_progress: 0,
-      submitted_under_review: 1,
+      pending: 1,
       approved: 2,
-      not_approved: 3,
+      denied: 3,
     };
 
     return [...campaigns].sort((a, b) => {

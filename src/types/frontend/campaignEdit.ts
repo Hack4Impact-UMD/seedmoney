@@ -63,7 +63,7 @@ export const DEFAULT_CAMPAIGN_DATA: EditCampaignFormData = {
   beneficiaryCount: "",
   gardenSize: "",
   gardenStatus: "existing",
-  status: "submitted_under_review",
+  status: "pending",
   fundraisingGoal: "",
   gardenCity: "",
   gardenState: "",

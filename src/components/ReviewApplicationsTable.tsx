@@ -56,13 +56,12 @@ export default function ReviewApplicationsTable({ applications }: Props) {
   }, [snackbarOpen]);
   const pendingCount = useMemo(
     () =>
-      applications.filter((a) => a.status === "submitted_under_review").length,
+      applications.filter((a) => a.status === "pending").length,
     [applications],
   );
 
   const filteredApplications = useMemo(() => {
-    const dbStatus =
-      tab === "PENDING" ? "submitted_under_review" : "not_approved";
+    const dbStatus = tab === "PENDING" ? "pending" : "denied";
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
     return applications.filter((application) => {
@@ -113,7 +112,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
       const action =
         status === "approved"
           ? "approved"
-          : status === "not_approved"
+          : status === "denied"
             ? "denied"
             : "reverted";
       setNotification({ action, campaignNames: names });
@@ -181,9 +180,9 @@ export default function ReviewApplicationsTable({ applications }: Props) {
     if (pendingAction === "APPROVE") {
       handleBulkUpdate(selectedIds, "approved");
     } else if (pendingAction === "DENY") {
-      handleBulkUpdate(selectedIds, "not_approved");
+      handleBulkUpdate(selectedIds, "denied");
     } else if (pendingAction === "REVERT") {
-      handleBulkUpdate(selectedIds, "submitted_under_review");
+      handleBulkUpdate(selectedIds, "pending");
     }
   };
 

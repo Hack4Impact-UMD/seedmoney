@@ -30,9 +30,9 @@ type AggregateStatus = Status | "mixed";
 
 const STATUS_LABELS: Record<AggregateStatus, string> = {
   in_progress: "In Progress",
-  submitted_under_review: "Submitted",
+  pending: "Pending",
   approved: "Approved",
-  not_approved: "Not Approved",
+  denied: "Denied",
   published: "Published",
   archived: "Archived",
   mixed: "Mixed",
@@ -47,9 +47,9 @@ function getAggregateStatus(campaigns: UserCampaign[]): AggregateStatus {
 const STATUS_PRIORITY: Status[] = [
   "approved",
   "published",
-  "submitted_under_review",
+  "pending",
   "in_progress",
-  "not_approved",
+  "denied",
   "archived",
 ];
 
@@ -60,18 +60,18 @@ function getBestStatus(campaigns: UserCampaign[]): Status {
 
 const APP_STATUS_CONFIG: Record<Status, { label: string; buttonLabel: string }> = {
   in_progress: { label: "in progress", buttonLabel: "REVIEW APPLICATION" },
-  submitted_under_review: { label: "submitted", buttonLabel: "REVIEW APPLICATION" },
+  pending: { label: "pending", buttonLabel: "REVIEW APPLICATION" },
   approved: { label: "approved", buttonLabel: "VIEW CAMPAIGN" },
-  not_approved: { label: "not approved", buttonLabel: "VIEW APPLICATION" },
+  denied: { label: "denied", buttonLabel: "VIEW APPLICATION" },
   published: { label: "published", buttonLabel: "VIEW CAMPAIGN" },
   archived: { label: "archived", buttonLabel: "VIEW CAMPAIGN" },
 };
 
 const APP_STATUS_ORDER: Status[] = [
-  "submitted_under_review",
+  "pending",
   "approved",
   "in_progress",
-  "not_approved",
+  "denied",
   "published",
   "archived",
 ];
@@ -89,8 +89,8 @@ function groupByStatus(campaigns: UserCampaign[]) {
 
 function getCampaignStatusPath(status: Status, campaignId: number) {
   switch (status) {
-    case "submitted_under_review":
-    case "not_approved":
+    case "pending":
+    case "denied":
       return `/dashboard/review-applications/${campaignId}`;
     case "approved":
     case "published":
@@ -131,7 +131,7 @@ function CampaignsSummaryBadge({
     );
   }
 
-  if (status === "submitted_under_review") {
+  if (status === "pending") {
     return (
       <span onClick={onClick} className="cursor-pointer">
         <Chip
@@ -150,7 +150,7 @@ function CampaignsSummaryBadge({
     );
   }
 
-  if (status === "not_approved") {
+  if (status === "denied") {
     return (
       <span onClick={onClick} className="cursor-pointer">
         <Chip
@@ -195,13 +195,13 @@ function CampaignsSummaryBadge({
     if (bestStatus === "approved" || bestStatus === "published") {
       avatarBg = "bg-[#1B5E20]!";
       chipColors = "border-[#2E7D32]! text-[#2E7D32]!";
-    } else if (bestStatus === "submitted_under_review") {
+    } else if (bestStatus === "pending") {
       avatarBg = "bg-[#F57F17]!";
       chipColors = "border-[#F9A825]! text-[#F57F17]!";
     } else if (bestStatus === "in_progress") {
       avatarBg = "bg-[#01579B]!";
       chipColors = "border-[#0288D1]! text-[#0288D1]!";
-    } else if (bestStatus === "not_approved") {
+    } else if (bestStatus === "denied") {
       avatarBg = "bg-[#C62828]!";
       chipColors = "border-[#E53935]! text-[#C62828]!";
     }
@@ -401,9 +401,9 @@ export default function UsersTable({
                   >
                     <option value="">No Filter</option>
                     <option value="in_progress">In Progress</option>
-                    <option value="submitted_under_review">Submitted</option>
+                    <option value="pending">Pending</option>
                     <option value="approved">Approved</option>
-                    <option value="not_approved">Not Approved</option>
+                    <option value="denied">Denied</option>
                     <option value="published">Published</option>
                     <option value="archived">Archived</option>
                   </select>
