@@ -8,6 +8,7 @@ import {
 } from "@/src/components/application/ApplicationFormProvider";
 import useCreateCampaign from "@/src/hooks/campaigns/useCreateCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
+import { useEffect, useRef } from "react";
 
 function getFormattedSaveTime() {
   return new Date().toLocaleTimeString([], {
@@ -22,6 +23,12 @@ export default function useSaveDraftCampaign() {
   const { setLastSaved } = useLastSaved();
   const createCampaign = useCreateCampaign();
   const updateCampaign = useUpdateCampaign();
+  const draftCampaignIdRef = useRef<number | null>(draftCampaignId);
+  const creatingDraftPromiseRef = useRef<Promise<number> | null>(null);
+
+  useEffect(() => {
+    draftCampaignIdRef.current = draftCampaignId;
+  }, [draftCampaignId]);
 
   const saveDraftCampaign = async (campaignData: Partial<Campaign>) => {
     const filteredCampaignData = Object.fromEntries(
@@ -32,24 +39,48 @@ export default function useSaveDraftCampaign() {
       opt_in_ai: form.state.values.aiOptIn,
     };
 
-    if (!draftCampaignId) {
-      const draftCampaign = await createCampaign.mutateAsync({
-        status: "in_progress",
-        date_created: new Date().toISOString(),
-        ...campaignPayload,
-      });
+    const currentDraftCampaignId = draftCampaignIdRef.current;
 
-      setDraftCampaignId(draftCampaign.campaign_id);
+    if (!currentDraftCampaignId) {
+      let createdInThisCall = false;
+
+      if (!creatingDraftPromiseRef.current) {
+        createdInThisCall = true;
+        creatingDraftPromiseRef.current = createCampaign
+          .mutateAsync({
+            status: "in_progress",
+            date_created: new Date().toISOString(),
+            ...campaignPayload,
+          })
+          .then((draftCampaign) => {
+            draftCampaignIdRef.current = draftCampaign.campaign_id;
+            setDraftCampaignId(draftCampaign.campaign_id);
+            return draftCampaign.campaign_id;
+          })
+          .finally(() => {
+            creatingDraftPromiseRef.current = null;
+          });
+      }
+
+      const nextDraftCampaignId = await creatingDraftPromiseRef.current;
+
+      if (!createdInThisCall) {
+        await updateCampaign.mutateAsync({
+          campaignId: nextDraftCampaignId,
+          campaignData: campaignPayload,
+        });
+      }
+
       setLastSaved(getFormattedSaveTime());
-      return draftCampaign.campaign_id;
+      return nextDraftCampaignId;
     }
 
     await updateCampaign.mutateAsync({
-      campaignId: draftCampaignId,
+      campaignId: currentDraftCampaignId,
       campaignData: campaignPayload,
     });
     setLastSaved(getFormattedSaveTime());
-    return draftCampaignId;
+    return currentDraftCampaignId;
   };
 
   return {
