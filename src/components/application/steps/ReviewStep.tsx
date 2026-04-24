@@ -90,7 +90,9 @@ function ValueRow({
         <div className="border-b border-[#D32F2F] mt-2" />
       ) : (
         <>
-          <p>{displayValue}</p>
+          <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
+            {displayValue}
+          </p>
           <div className="border-b border-gray-300" />
         </>
       )}
@@ -139,7 +141,6 @@ export default function ReviewSubmitPage() {
   } = getApplicationCompletionState(values, hasPassedAgreement);
   const goalValue = Number(values.fundraisingGoal);
   const canSubmit = reviewComplete && !!currentCompetitionData && goalValue > 1;
-  
 
   const handleSubmitApplication = async () => {
     if (!currentCompetitionData) {
@@ -268,7 +269,6 @@ export default function ReviewSubmitPage() {
         <ValueRow
           label="Fundraising Goal (USD)"
           value={values.fundraisingGoal}
-
           required
         />
       </div>
