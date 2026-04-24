@@ -45,7 +45,10 @@ export default function DashboardIndexPage() {
     useReadCampaignsFromMembers(user?.id || "");
   const { data: allCampaigns = [], isLoading: isLoadingAll } =
     useReadAllCampaigns();
-  const { data: currentCompetitionData } = useReadCurrentCompetition();
+  const {
+    data: currentCompetitionData,
+    isLoading: isLoadingCurrentCompetition,
+  } = useReadCurrentCompetition();
   const { data: allCompetitions = [] } = useReadAllCompetitions();
 
   const isAdmin = !!userData?.is_admin;
@@ -185,31 +188,29 @@ export default function DashboardIndexPage() {
     })[0];
   }, [campaigns, currentCompetitionData?.competition_id]);
 
+  const shouldRedirectToPreferredCampaign =
+    !isLoadingUser &&
+    !isLoadingCampaigns &&
+    !isLoadingCurrentCompetition &&
+    !!userData &&
+    !!preferredUserCampaign &&
+    !userData.is_admin;
+
   useEffect(() => {
-    if (
-      !isLoadingUser &&
-      !isLoadingCampaigns &&
-      userData &&
-      preferredUserCampaign &&
-      !userData.is_admin
-    ) {
+    if (shouldRedirectToPreferredCampaign) {
       router.replace(`/dashboard/${preferredUserCampaign.campaign_id}`);
     }
   }, [
-    isLoadingCampaigns,
-    isLoadingUser,
     preferredUserCampaign,
     router,
+    isLoadingUser,
+    isLoadingCampaigns,
+    isLoadingCurrentCompetition,
+    shouldRedirectToPreferredCampaign,
     userData,
   ]);
 
-  if (
-    !isLoadingUser &&
-    !isLoadingCampaigns &&
-    userData &&
-    preferredUserCampaign &&
-    !userData.is_admin
-  ) {
+  if (shouldRedirectToPreferredCampaign) {
     return null;
   }
 
