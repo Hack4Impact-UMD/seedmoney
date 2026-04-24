@@ -4,7 +4,7 @@
 import Image from "next/image";
 import { CheckCircle, Delete } from "@mui/icons-material";
 import { Button, IconButton } from "@mui/material";
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import useDeleteCampaignImage from "@/src/hooks/campaign-image-records/useDeleteCampaignImage";
 import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
@@ -199,8 +199,32 @@ export default function CampaignMediaSection({
   const [uploadError, setUploadError] = useState<UploadError | null>(null);
   const [supportingUploadError, setSupportingUploadError] =
     useState<UploadError | null>(null);
+  const previousImageRecordsRef = useRef(formData.imageRecords);
   const mainPhoto = formData.imageRecords.find((r) => r.is_main);
   const supportingPhotos = formData.imageRecords.filter((r) => !r.is_main);
+
+  useEffect(() => {
+    const previousImageRecords = previousImageRecordsRef.current;
+    const currentSignedUrls = new Set(
+      formData.imageRecords.map((record) => record.signedUrl),
+    );
+
+    previousImageRecords.forEach((record) => {
+      if (!currentSignedUrls.has(record.signedUrl)) {
+        revokePreviewUrl(record.signedUrl);
+      }
+    });
+
+    previousImageRecordsRef.current = formData.imageRecords;
+  }, [formData.imageRecords]);
+
+  useEffect(() => {
+    return () => {
+      previousImageRecordsRef.current.forEach((record) => {
+        revokePreviewUrl(record.signedUrl);
+      });
+    };
+  }, []);
 
   const { getRootProps, getInputProps } = useDropzone({
     accept: {

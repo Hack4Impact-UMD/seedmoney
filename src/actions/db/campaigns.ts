@@ -10,7 +10,7 @@ function normalizeCampaignCreateData(data: Partial<Campaign>): Partial<Campaign>
     donors: data.donors ?? 0,
     goal: data.goal ?? 0,
     impact: data.impact ?? 0,
-    size: data.size ?? 0,
+    size: data.size ?? "0",
     opt_in_ai: data.opt_in_ai ?? false,
     ...data,
   };
