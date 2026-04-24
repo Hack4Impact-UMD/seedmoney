@@ -1,5 +1,6 @@
 "use client";
 import React, { useCallback, useMemo, useState } from "react";
+import { useRouter } from "next/navigation";
 import {
   flexRender,
   useReactTable,
@@ -7,7 +8,6 @@ import {
   getCoreRowModel,
   getPaginationRowModel,
 } from "@tanstack/react-table";
-import Image from "next/image";
 import Button from "@mui/material/Button";
 import { Avatar, Chip } from "@mui/material";
 import BaseModal from "@/src/components/bases/BaseModal";
@@ -85,6 +85,20 @@ function groupByStatus(campaigns: UserCampaign[]) {
     groups[campaign.status]!.push(campaign);
   }
   return groups;
+}
+
+function getCampaignStatusPath(status: Status, campaignId: number) {
+  switch (status) {
+    case "submitted_under_review":
+    case "not_approved":
+      return `/dashboard/review-applications/${campaignId}`;
+    case "approved":
+    case "published":
+    case "archived":
+      return `/dashboard/ongoing-campaigns/${campaignId}`;
+    default:
+      return null;
+  }
 }
 
 function CampaignsSummaryBadge({
@@ -235,6 +249,7 @@ export default function UsersTable({
   competitionYearMap,
   selectedYear,
 }: Props) {
+  const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [deleteTarget, setDeleteTarget] = useState<UsersTableRow | null>(null);
@@ -560,9 +575,17 @@ export default function UsersTable({
                               variant="contained"
                               size="medium"
                               onClick={() => {
-                                console.log(
-                                  `${config.buttonLabel}: "${campaign.name}" (ID: ${campaign.campaign_id})`,
+                                const path = getCampaignStatusPath(
+                                  status,
+                                  campaign.campaign_id,
                                 );
+
+                                if (!path) {
+                                  return;
+                                }
+
+                                setStatusTarget(null);
+                                router.push(path);
                               }}
                             >
                               {config.buttonLabel}
@@ -587,4 +610,3 @@ export default function UsersTable({
     </div>
   );
 };
-
