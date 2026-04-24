@@ -10,7 +10,8 @@ import Loading from "@/src/app/loading";
 import AppError from "@/src/app/error";
 import NotFound from "@/src/app/not-found";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
-import { AnswerWithQuestion, updateAnswer } from "@/src/actions/db/answers";
+import useCreateFinalAnswer from "@/src/hooks/answers/useCreateFinalAnswer";
+import { type AnswerWithQuestion } from "@/src/actions/db/answers";
 import { Button } from "@mui/material";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
@@ -40,6 +41,7 @@ export default function CampaignReviewPage() {
   const parsedCampaignId = Number(campaignId);
 
   const updateCampaignMutation = useUpdateCampaign();
+  const createFinalAnswerMutation = useCreateFinalAnswer();
   const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
 
   const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
@@ -163,21 +165,48 @@ export default function CampaignReviewPage() {
         campaignData: campaignPayload,
       });
 
-      const answersData = campaignEditData?.answersData;
-      if (answersData) {
-        const buildAnswerUpdate = (qNum: number, finalValue: string) => {
-          const ans = answersData.find((a: AnswerWithQuestion) => a.questions?.question_number === qNum);
-          if (ans?.answer_id) return updateAnswer(ans.answer_id, { final_answer: finalValue });
-          return Promise.resolve(null);
-        };
+      const answersData = campaignEditData?.answersData ?? [];
+      const findQuestionId = (questionNumber: number) =>
+        answersData.find(
+          (answer: AnswerWithQuestion) =>
+            answer.questions?.question_number === questionNumber,
+        )?.question_id;
 
-        await Promise.all([
-          buildAnswerUpdate(1, formData.storyLocationAndAudienceFinal),
-          buildAnswerUpdate(2, formData.storyChallengeFinal),
-          buildAnswerUpdate(3, formData.storySeasonActivityFinal),
-          buildAnswerUpdate(4, formData.storyCampaignImpactFinal),
-        ]);
-      }
+      const finalAnswerUpdates = [
+        {
+          questionId: findQuestionId(1),
+          before: initialData.storyLocationAndAudienceFinal,
+          after: formData.storyLocationAndAudienceFinal,
+        },
+        {
+          questionId: findQuestionId(2),
+          before: initialData.storyChallengeFinal,
+          after: formData.storyChallengeFinal,
+        },
+        {
+          questionId: findQuestionId(3),
+          before: initialData.storySeasonActivityFinal,
+          after: formData.storySeasonActivityFinal,
+        },
+        {
+          questionId: findQuestionId(4),
+          before: initialData.storyCampaignImpactFinal,
+          after: formData.storyCampaignImpactFinal,
+        },
+      ].filter(
+        (update): update is { questionId: number; before: string; after: string } =>
+          update.questionId !== undefined && update.before !== update.after,
+      );
+
+      await Promise.all(
+        finalAnswerUpdates.map(({ questionId, after }) =>
+          createFinalAnswerMutation.mutateAsync({
+            campaignId: parsedCampaignId,
+            questionId,
+            finalAnswer: after,
+          }),
+        ),
+      );
 
       setInitialData(formData);
       setIsSaveModalOpen(false);
@@ -189,7 +218,14 @@ export default function CampaignReviewPage() {
       setIsSaveModalOpen(false);
       setShowErrorToast(true);
     }
-  }, [formData, parsedCampaignId, campaignEditData, updateCampaignMutation]);
+  }, [
+    createFinalAnswerMutation,
+    formData,
+    campaignEditData,
+    initialData,
+    parsedCampaignId,
+    updateCampaignMutation,
+  ]);
 
   const navigateToCampaignPage = useCallback(() => {
     if (!parsedCampaignId) {
