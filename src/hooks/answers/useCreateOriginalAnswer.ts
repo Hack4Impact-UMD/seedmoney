@@ -25,9 +25,15 @@ export default function useCreateOriginalAnswer() {
 
       return answer;
     },
-    onSuccess: (_data, { campaignId, questionId }) => {
+    onSuccess: (_data, { campaignId }) => {
       queryClient.invalidateQueries({
-        queryKey: ["answers", campaignId, questionId],
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
+          query.queryKey.some((part) => part === "answers") &&
+          query.queryKey.some((part) => part === campaignId),
+      });
+      queryClient.invalidateQueries({
+        queryKey: ["campaigns", "read", campaignId],
       });
     },
   });
