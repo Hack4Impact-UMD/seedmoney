@@ -23,7 +23,11 @@ export default function useCreateCampaign() {
       return campaign;
     },
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+      queryClient.invalidateQueries({
+        predicate: (query) =>
+          Array.isArray(query.queryKey) &&
+          query.queryKey.some((part) => part === "campaigns"),
+      });
     },
   });
 }
