@@ -60,16 +60,33 @@ export async function readOngoingCampaigns(competition_id?: number): Promise<Cam
 
 export async function readPreviousChallengeApplications(user_id?: string): Promise<CampaignWithLeader[]> {
   const supabase = await createServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
 
-  let query = supabase
+  if (userError || !user) {
+    console.error(
+      "Error reading authenticated user for view-all campaigns:",
+      userError?.message ?? "No authenticated user found",
+    );
+    return [];
+  }
+
+  if (user_id && user_id !== user.id) {
+    console.error(
+      "Mismatched user id passed to readPreviousChallengeApplications:",
+      user_id,
+    );
+    return [];
+  }
+
+  const query = supabase
     .from("campaigns")
     .select(BASE_SELECT)
     .eq("campaign_members.role", "campaign_leader")
+    .eq("campaign_members.user_id", user.id)
     .order("date_created", { ascending: false });
-
-  if (user_id) {
-    query = query.eq("campaign_members.user_id", user_id);
-  }
 
   const { data, error } = await query;
 
