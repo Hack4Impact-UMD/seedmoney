@@ -7,6 +7,7 @@ import Navbar from "@/src/components/Navbar";
 import DashboardTabs from "@/src/components/dashboard/DashboardTabs";
 import NotComplete from "@/src/components/dashboard/NotComplete";
 import Pending from "@/src/components/dashboard/Pending";
+import Denied from "@/src/components/dashboard/Denied";
 import { TotalRaisedCard } from "@/src/components/dashboard/TotalRaisedCard";
 import { TotalDonorsCard } from "@/src/components/dashboard/TotalDonorsCard";
 import { DaysRemainingCard } from "@/src/components/dashboard/DaysRemainingCard";
@@ -21,6 +22,7 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import OpenInNew from "@mui/icons-material/OpenInNew";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import DashboardFooter from "@/src/components/DashboardFooter";
+import FaqSection from "@/src/components/dashboard/FaqSection";
 
 type DashboardTab = "Overview" | "Donors" | "Analytics";
 
@@ -88,6 +90,10 @@ export default function DashboardShell({
     router.push("/apply/campaign");
   };
 
+  const handleNewCampaign = () => {
+    router.push("/apply");
+  };
+
   if (campaignData.status === "in_progress") {
     return (
       <div className="flex min-h-screen">
@@ -114,6 +120,24 @@ export default function DashboardShell({
 
         </div>
 
+      </div>
+    );
+  }
+
+  if (campaignData.status === "denied") {
+    return (
+      <div className="flex min-h-screen">
+        <Navbar />
+        <div className="flex-1 bg-gray-50 p-10">
+          <h3 className="text-4xl font-bold text-[#096B2E]">
+            {campaignData.name} (Not Approved)
+          </h3>
+          <div className="mt-10 flex flex-col gap-6">
+            <Denied onNewCampaign={handleNewCampaign} />
+            <FaqSection />
+          </div>
+          <DashboardFooter />
+        </div>
       </div>
     );
   }
