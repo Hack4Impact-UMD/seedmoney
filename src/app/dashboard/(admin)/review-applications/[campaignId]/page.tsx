@@ -11,7 +11,6 @@ import AppError from "@/src/app/error";
 import NotFound from "@/src/app/not-found";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useCreateFinalAnswer from "@/src/hooks/answers/useCreateFinalAnswer";
-import { type AnswerWithQuestion } from "@/src/actions/db/answers";
 import { Button } from "@mui/material";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
@@ -160,43 +159,59 @@ export default function CampaignReviewPage() {
         contact_role: formData.contactRole,
       };
 
-      await updateCampaignMutation.mutateAsync({
-        campaignId: parsedCampaignId,
-        campaignData: campaignPayload,
-      });
-
-      const answersData = campaignEditData?.answersData ?? [];
-      const findQuestionId = (questionNumber: number) =>
-        answersData.find(
-          (answer: AnswerWithQuestion) =>
-            answer.questions?.question_number === questionNumber,
-        )?.question_id;
-
-      const finalAnswerUpdates = [
+      const finalAnswerCandidates = [
         {
-          questionId: findQuestionId(1),
+          questionNumber: 1,
+          questionId: formData.storyLocationAndAudienceQuestionId,
           before: initialData.storyLocationAndAudienceFinal,
           after: formData.storyLocationAndAudienceFinal,
         },
         {
-          questionId: findQuestionId(2),
+          questionNumber: 2,
+          questionId: formData.storyChallengeQuestionId,
           before: initialData.storyChallengeFinal,
           after: formData.storyChallengeFinal,
         },
         {
-          questionId: findQuestionId(3),
+          questionNumber: 3,
+          questionId: formData.storySeasonActivityQuestionId,
           before: initialData.storySeasonActivityFinal,
           after: formData.storySeasonActivityFinal,
         },
         {
-          questionId: findQuestionId(4),
+          questionNumber: 4,
+          questionId: formData.storyCampaignImpactQuestionId,
           before: initialData.storyCampaignImpactFinal,
           after: formData.storyCampaignImpactFinal,
         },
-      ].filter(
-        (update): update is { questionId: number; before: string; after: string } =>
-          update.questionId !== undefined && update.before !== update.after,
+      ];
+
+      const changedFinalAnswerCandidates = finalAnswerCandidates.filter(
+        (update) => update.before !== update.after,
       );
+
+      const missingQuestionNumbers = changedFinalAnswerCandidates
+        .filter((update) => update.questionId === null)
+        .map((update) => update.questionNumber);
+
+      if (missingQuestionNumbers.length > 0) {
+        const message = `Missing final answer question IDs for campaign ${parsedCampaignId}: ${missingQuestionNumbers.join(", ")}`;
+        console.error(message);
+        setSaveErrorMessage(message);
+        setIsSaveModalOpen(false);
+        setShowErrorToast(true);
+        return;
+      }
+
+      const finalAnswerUpdates = changedFinalAnswerCandidates.filter(
+        (update): update is { questionNumber: number; questionId: number; before: string; after: string } =>
+          update.questionId !== null,
+      );
+
+      await updateCampaignMutation.mutateAsync({
+        campaignId: parsedCampaignId,
+        campaignData: campaignPayload,
+      });
 
       await Promise.all(
         finalAnswerUpdates.map(({ questionId, after }) =>
@@ -221,7 +236,6 @@ export default function CampaignReviewPage() {
   }, [
     createFinalAnswerMutation,
     formData,
-    campaignEditData,
     initialData,
     parsedCampaignId,
     updateCampaignMutation,

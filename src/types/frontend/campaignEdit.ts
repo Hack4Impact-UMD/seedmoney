@@ -3,7 +3,6 @@
 import React from "react";
 import { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords"
 import { Status } from "@/src/types/db/enums";
-import type { AnswerWithQuestion } from "@/src/actions/db/answers";
 
 
 export type CampaignEditInformation = {
@@ -14,7 +13,6 @@ export type CampaignEditInformation = {
     q3: string;
     q4: string;
   };
-  answersData: AnswerWithQuestion[];
 };
 
 export interface EditCampaignFormData {
@@ -44,15 +42,19 @@ export interface EditCampaignFormData {
   storyLocationAndAudience: string;
   storyLocationAndAudienceAI: string;
   storyLocationAndAudienceFinal: string;
+  storyLocationAndAudienceQuestionId: number | null;
   storyChallengeOriginal: string;
   storyChallengeAI: string;
   storyChallengeFinal: string;
+  storyChallengeQuestionId: number | null;
   storySeasonActivityOriginal: string;
   storySeasonActivityAI: string;
   storySeasonActivityFinal: string;
+  storySeasonActivityQuestionId: number | null;
   storyCampaignImpactOriginal: string;
   storyCampaignImpactAI: string;
   storyCampaignImpactFinal: string;
+  storyCampaignImpactQuestionId: number | null;
   imageRecords: HydratedCampaignImageRecord[];
 }
 
@@ -83,15 +85,19 @@ export const DEFAULT_CAMPAIGN_DATA: EditCampaignFormData = {
   storyLocationAndAudience: "",
   storyLocationAndAudienceAI: "",
   storyLocationAndAudienceFinal: "",
+  storyLocationAndAudienceQuestionId: null,
   storyChallengeOriginal: "",
   storyChallengeAI: "",
   storyChallengeFinal: "",
+  storyChallengeQuestionId: null,
   storySeasonActivityOriginal: "",
   storySeasonActivityAI: "",
   storySeasonActivityFinal: "",
+  storySeasonActivityQuestionId: null,
   storyCampaignImpactOriginal: "",
   storyCampaignImpactAI: "",
   storyCampaignImpactFinal: "",
+  storyCampaignImpactQuestionId: null,
   imageRecords: [],
 };
 
