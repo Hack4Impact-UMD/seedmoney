@@ -1,8 +1,6 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createAIAnswers } from "@/src/actions/db/ai-polish";
-import { Answers } from "@/src/types/db/answers";
 
 type CreateAIAnswersMutationInput = {
   campaignId: number;
@@ -17,13 +15,28 @@ type CreateAIAnswersMutationInput = {
 export default function useCreateAIAnswers() {
   const queryClient = useQueryClient();
 
-  return useMutation<Answers[], Error, CreateAIAnswersMutationInput>({
+  return useMutation<void, Error, CreateAIAnswersMutationInput>({
     mutationFn: async ({ campaignId, overwrite, questions }) => {
-      return createAIAnswers({
-        campaignId,
-        overwrite,
-        questions,
+      const response = await fetch("/api/ai-polish", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        credentials: "same-origin",
+        body: JSON.stringify({
+          campaignId,
+          overwrite,
+          questions,
+        }),
       });
+
+      if (!response.ok) {
+        const errorBody = (await response.json().catch(() => null)) as
+          | { error?: string }
+          | null;
+
+        throw new Error(errorBody?.error ?? "Failed to create AI answers");
+      }
     },
     onSuccess: (_data, { campaignId }) => {
       queryClient.invalidateQueries({
