@@ -13,6 +13,7 @@ import BaseModal from "@/src/components/bases/BaseModal";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import type { Status } from "@/src/types/db/enums";
 import { ReviewApplicationRow } from "@/src/types/frontend/campaignsTable";
+import { createGivebutterCampaigns } from "../actions/givebutter/campaignsGivebutter";
 
 
 const pageSizeOptions = [5, 10, 20];
@@ -128,10 +129,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
     selectedIds.includes(application.campaignId),
   );
 
-  const handleBulkUpdate = async (
-    ids: number[],
-    status: Status,
-  ) => {
+  const handleBulkUpdate = async (ids: number[], status: Status) => {
     try {
       const names = selectedApplications.map((a) => a.campaignTitle);
 
@@ -144,21 +142,34 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         ),
       );
 
-      const action =
-        status === "approved"
-          ? "approved"
-          : status === "denied"
-            ? "denied"
-            : "reverted";
+      if (status === "approved") {
+        const results = await createGivebutterCampaigns(ids);
+
+        await Promise.all(
+          results.map(async (result, index) => {
+            if (result.status === "rejected") {
+              console.error(`Failed to create Givebutter campaign for ID ${ids[index]}:`, result.reason);
+              return;
+            }
+            await updateCampaignMutation.mutateAsync({
+              campaignId: ids[index],
+              campaignData: {
+                givebutter_id: result.value.id,
+                givebutter_slug: result.value.slug,
+                givebutterlink: result.value.url,
+              },
+            });
+          }),
+        );
+      }
+
+      const action = status === "approved" ? "approved" : status === "denied" ? "denied" : "reverted";
       setNotification({ action, campaignNames: names });
       setSnackbarOpen(true);
       setSelectedIds([]);
       setPendingAction(null);
 
-      // Invalidate the query to refresh the data
-      await queryClient.invalidateQueries({
-        queryKey: ["campaigns"],
-      });
+      await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
     } catch (error) {
       console.error("Error updating campaigns:", error);
       setNotification({ action: "error", campaignNames: [] });
