@@ -139,49 +139,23 @@ export default function CampaignReviewPage() {
       campaignData: { status: newStatus },
     });
 
-
     if (newStatus === "approved") {
-      const getPublicUrl = (storagePath: string) => 
-      {
-        return`${process.env.NEXT_PUBLIC_SUPABASE_NGROK_URL}/storage/v1/object/public/campaign_images/${storagePath}`
-      }
-      const mainImage = formData.imageRecords.find((record) => record.is_main === true);
-      const supportingImages = formData.imageRecords
-        .filter((record) => record.is_main === false)
-        .map((record) => `<img src="${getPublicUrl(record.storage_path)}" alt="Campaign image" />`)
-        .join("\n");
       try {
-        const givebutterCampaign = await createGivebutterCampaign.mutateAsync({
-          title: formData.campaignTitle,
-          goal: formData.fundraisingGoal ? Number(formData.fundraisingGoal) : 1,
-          end_at: currentCompetition?.end_date ?? "",
-          cover: mainImage ? {
-            source: "upload",
-            type: "image",
-            url: getPublicUrl(mainImage.storage_path),
-          } : undefined,
-          description: `
-            <h3>Our Garden & Community</h3>
-            <p>${formData.storyLocationAndAudienceFinal}</p>
+        const results = await createGivebutterCampaign.mutateAsync([parsedCampaignId]);
+        const result = results[0];
 
-            <h3>Our Challenge</h3>
-            <p>${formData.storyChallengeFinal}</p>
-
-            <h3>Seasonal Activity</h3>
-            <p>${formData.storySeasonActivityFinal}</p>
-
-            <h3>Campaign Impact</h3>
-            <p>${formData.storyCampaignImpactFinal}</p>
-
-            ${supportingImages}
-          `.trim(),
-        });
+        if (result.status === "rejected") {
+          throw new Error(result.reason);
+        }
 
         await updateCampaignMutation.mutateAsync({
           campaignId: parsedCampaignId,
-          campaignData: { givebutter_id: givebutterCampaign.id, givebutter_slug: givebutterCampaign.slug, givebutterlink: givebutterCampaign.url },
+          campaignData: {
+            givebutter_id: result.value.id,
+            givebutter_slug: result.value.slug,
+            givebutterlink: result.value.url,
+          },
         });
-
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to create Givebutter campaign.";
         console.error(message);
