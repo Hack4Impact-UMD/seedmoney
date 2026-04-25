@@ -97,6 +97,7 @@ Return JSON only.
 
 type CreateAIAnswersInput = {
   campaignId: number;
+  overwrite?: boolean;
   questions: {
     questionId: number;
     questionText: string;
@@ -104,8 +105,33 @@ type CreateAIAnswersInput = {
   }[];
 };
 
+async function queryOpenAIWithRetry(
+  questions: PolishQuestionInput[],
+): Promise<PolishQuestionOutput[]> {
+  try {
+    return await queryOpenAI(questions);
+  } catch (error) {
+    console.error("Error querying OpenAI, retrying once:", error);
+  }
+
+  try {
+    return await queryOpenAI(questions);
+  } catch (retryError) {
+    console.error(
+      "Error querying OpenAI after retry, defaulting to original answers:",
+      retryError,
+    );
+
+    return questions.map((question) => ({
+      questionId: question.questionId,
+      polishedAnswer: question.answerText,
+    }));
+  }
+}
+
 export async function createAIAnswers({
   campaignId,
+  overwrite = false,
   questions,
 }: CreateAIAnswersInput): Promise<Answers[]> {
   const questionsToPolish = questions.filter(
@@ -116,8 +142,29 @@ export async function createAIAnswers({
     return [];
   }
 
-  const polishedAnswers = await queryOpenAI(
-    questionsToPolish.map((question) => ({
+  const questionsWithExistingAnswers = await Promise.all(
+    questionsToPolish.map(async (question) => ({
+      question,
+      existingAnswer: await readAnswerByCampaignAndQuestion(
+        campaignId,
+        question.questionId,
+      ),
+    })),
+  );
+
+  const questionsNeedingPolish = questionsWithExistingAnswers.filter(
+    ({ existingAnswer }) =>
+      overwrite || !existingAnswer?.ai_answer?.trim().length,
+  );
+
+  if (questionsNeedingPolish.length === 0) {
+    return questionsWithExistingAnswers.flatMap(({ existingAnswer }) =>
+      existingAnswer ? [existingAnswer] : [],
+    );
+  }
+
+  const polishedAnswers = await queryOpenAIWithRetry(
+    questionsNeedingPolish.map(({ question }) => ({
       questionId: String(question.questionId),
       questionText: question.questionText,
       answerText: question.originalText,
@@ -132,15 +179,14 @@ export async function createAIAnswers({
   );
 
   const savedAnswers = await Promise.all(
-    questionsToPolish.map(async (question) => {
+    questionsWithExistingAnswers.map(async ({ question, existingAnswer }) => {
+      if (!overwrite && existingAnswer?.ai_answer?.trim().length) {
+        return existingAnswer;
+      }
+
       const aiAnswer =
         polishedAnswerByQuestionId.get(question.questionId) ??
         question.originalText;
-
-      const existingAnswer = await readAnswerByCampaignAndQuestion(
-        campaignId,
-        question.questionId,
-      );
 
       if (existingAnswer) {
         const updatedAnswer = await updateAnswer(existingAnswer.answer_id, {

@@ -6,6 +6,7 @@ import { Answers } from "@/src/types/db/answers";
 
 type CreateAIAnswersMutationInput = {
   campaignId: number;
+  overwrite?: boolean;
   questions: {
     questionId: number;
     questionText: string;
@@ -17,9 +18,10 @@ export default function useCreateAIAnswers() {
   const queryClient = useQueryClient();
 
   return useMutation<Answers[], Error, CreateAIAnswersMutationInput>({
-    mutationFn: async ({ campaignId, questions }) => {
+    mutationFn: async ({ campaignId, overwrite, questions }) => {
       return createAIAnswers({
         campaignId,
+        overwrite,
         questions,
       });
     },

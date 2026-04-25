@@ -186,22 +186,22 @@ export default function ReviewSubmitPage() {
     if (values.aiOptIn) {
       const questions = [
         {
-          questionId: 1,
+          questionId: question1.question_id,
           questionText: question1.question,
           originalText: values.storyLocationAndAudience,
         },
         {
-          questionId: 2,
+          questionId: question2.question_id,
           questionText: question2.question,
           originalText: values.storyChallenge,
         },
         {
-          questionId: 3,
+          questionId: question3.question_id,
           questionText: question3.question,
           originalText: values.storySeasonActivity,
         },
         {
-          questionId: 4,
+          questionId: question4.question_id,
           questionText: question4.question,
           originalText: values.storyCampaignImpact,
         },
