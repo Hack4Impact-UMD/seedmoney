@@ -13,7 +13,6 @@ import { notFound, useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
-import useCreateAIAnswers from "@/src/hooks/answers/useCreateAIAnswers";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 const stateNames: Record<string, string> = {
   AL: "Alabama",
@@ -131,7 +130,6 @@ export default function ReviewSubmitPage() {
   const { draftCampaignId } = useDraftCampaignId();
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const updateCampaign = useUpdateCampaign();
-  const createAIAnswersMutation = useCreateAIAnswers();
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const { data: question1, isLoading: isLoadingQuestion1 } = useReadQuestion(1);
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
@@ -211,26 +209,37 @@ export default function ReviewSubmitPage() {
         }
       : null;
 
-    router.push(`/dashboard/${campaignId}?submitted=1`);
+    if (aiPayload && typeof window !== "undefined") {
+      try {
+        const requestBody = JSON.stringify(aiPayload);
+        const beaconPayload = new Blob([requestBody], {
+          type: "application/json",
+        });
 
-    if (values.aiOptIn) {
-      queueMicrotask(() => {
-        if (!aiPayload) {
-          return;
-        }
+        const beaconQueued =
+          typeof navigator !== "undefined" &&
+          typeof navigator.sendBeacon === "function" &&
+          navigator.sendBeacon("/api/ai-polish", beaconPayload);
 
-        try {
-          void createAIAnswersMutation.mutateAsync(aiPayload).catch((error) => {
-            console.error(
-              "Error creating AI-polished answers after submit:",
-              error,
-            );
+        if (!beaconQueued) {
+          void fetch("/api/ai-polish", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: requestBody,
+            keepalive: true,
+            credentials: "same-origin",
+          }).catch((error) => {
+            console.error("Error creating AI-polished answers after submit:", error);
           });
-        } catch (error) {
-          console.error("Error starting AI-polished answer creation:", error);
         }
-      });
+      } catch (error) {
+        console.error("Error starting AI-polished answer creation:", error);
+      }
     }
+
+    router.push(`/dashboard/${campaignId}?submitted=1`);
   };
 
   return (

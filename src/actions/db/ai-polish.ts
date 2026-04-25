@@ -151,6 +151,22 @@ type CreateAIAnswersInput = {
   }[];
 };
 
+function hasReusableAiAnswer(
+  existingAnswer: Answers | null,
+  originalText: string,
+) {
+  const aiAnswer = existingAnswer?.ai_answer?.trim();
+
+  if (!aiAnswer) {
+    return false;
+  }
+
+  const originalSource =
+    existingAnswer?.pre_ai_answer?.trim() || originalText.trim();
+
+  return aiAnswer !== originalSource;
+}
+
 async function queryOpenAIWithRetry(
   questions: PolishQuestionInput[],
 ): Promise<PolishQuestionOutput[]> {
@@ -211,8 +227,8 @@ export async function createAIAnswers({
   );
 
   const questionsNeedingPolish = questionsWithExistingAnswers.filter(
-    ({ existingAnswer }) =>
-      overwrite || !existingAnswer?.ai_answer?.trim().length,
+    ({ question, existingAnswer }) =>
+      overwrite || !hasReusableAiAnswer(existingAnswer, question.originalText),
   );
 
   if (questionsNeedingPolish.length === 0) {
@@ -238,7 +254,11 @@ export async function createAIAnswers({
 
   const savedAnswers = await Promise.all(
     questionsWithExistingAnswers.map(async ({ question, existingAnswer }) => {
-      if (!overwrite && existingAnswer?.ai_answer?.trim().length) {
+      if (
+        !overwrite &&
+        existingAnswer &&
+        hasReusableAiAnswer(existingAnswer, question.originalText)
+      ) {
         return existingAnswer;
       }
 
