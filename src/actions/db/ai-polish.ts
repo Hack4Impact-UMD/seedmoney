@@ -95,34 +95,85 @@ Return JSON only.
   return parsed.answers;
 }
 
-export async function createAIAnswer({
-  campaignId,
-  questionId,
-  originalText,
-}: {
+type CreateAIAnswersInput = {
   campaignId: number;
-  questionId: number;
-  originalText: string;
-}): Promise<Answers | null> {
-  const aiAnswer = await queryOpenAI(originalText);
+  questions: {
+    questionId: number;
+    questionText: string;
+    originalText: string;
+  }[];
+};
 
-  const existingAnswer = await readAnswerByCampaignAndQuestion(
-    campaignId,
-    questionId,
+export async function createAIAnswers({
+  campaignId,
+  questions,
+}: CreateAIAnswersInput): Promise<Answers[]> {
+  const questionsToPolish = questions.filter(
+    (question) => question.originalText.trim().length > 0,
   );
 
-  if (existingAnswer) {
-    return updateAnswer(existingAnswer.answer_id, {
-      pre_ai_answer: originalText,
-      ai_answer: aiAnswer,
-    });
+  if (questionsToPolish.length === 0) {
+    return [];
   }
 
-  return createAnswer({
-    campaign_id: campaignId,
-    question_id: questionId,
-    pre_ai_answer: originalText,
-    ai_answer: aiAnswer,
-    final_answer: "",
-  });
+  const polishedAnswers = await queryOpenAI(
+    questionsToPolish.map((question) => ({
+      questionId: String(question.questionId),
+      questionText: question.questionText,
+      answerText: question.originalText,
+    })),
+  );
+
+  const polishedAnswerByQuestionId = new Map(
+    polishedAnswers.map((answer) => [
+      Number(answer.questionId),
+      answer.polishedAnswer,
+    ]),
+  );
+
+  const savedAnswers = await Promise.all(
+    questionsToPolish.map(async (question) => {
+      const aiAnswer =
+        polishedAnswerByQuestionId.get(question.questionId) ??
+        question.originalText;
+
+      const existingAnswer = await readAnswerByCampaignAndQuestion(
+        campaignId,
+        question.questionId,
+      );
+
+      if (existingAnswer) {
+        const updatedAnswer = await updateAnswer(existingAnswer.answer_id, {
+          pre_ai_answer: question.originalText,
+          ai_answer: aiAnswer,
+        });
+
+        if (!updatedAnswer) {
+          throw new Error(
+            `Error updating answer for question ${question.questionId}`,
+          );
+        }
+
+        return updatedAnswer;
+      }
+
+      const createdAnswer = await createAnswer({
+        campaign_id: campaignId,
+        question_id: question.questionId,
+        pre_ai_answer: question.originalText,
+        ai_answer: aiAnswer,
+        final_answer: "",
+      });
+
+      if (!createdAnswer) {
+        throw new Error(
+          `Error creating answer for question ${question.questionId}`,
+        );
+      }
+
+      return createdAnswer;
+    }),
+  );
+
+  return savedAnswers;
 }

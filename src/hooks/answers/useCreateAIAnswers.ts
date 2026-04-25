@@ -1,29 +1,27 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createAIAnswer } from "@/src/actions/db/ai-polish";
+import { createAIAnswers } from "@/src/actions/db/ai-polish";
 import { Answers } from "@/src/types/db/answers";
 
-export default function useCreateAIAnswer() {
+type CreateAIAnswersMutationInput = {
+  campaignId: number;
+  questions: {
+    questionId: number;
+    questionText: string;
+    originalText: string;
+  }[];
+};
+
+export default function useCreateAIAnswers() {
   const queryClient = useQueryClient();
 
-  return useMutation<
-    Answers,
-    Error,
-    { campaignId: number; questionId: number; originalText: string }
-  >({
-    mutationFn: async ({ campaignId, questionId, originalText }) => {
-      const answer = await createAIAnswer({
+  return useMutation<Answers[], Error, CreateAIAnswersMutationInput>({
+    mutationFn: async ({ campaignId, questions }) => {
+      return createAIAnswers({
         campaignId,
-        questionId,
-        originalText,
+        questions,
       });
-
-      if (!answer) {
-        throw new Error("Error saving answer");
-      }
-
-      return answer;
     },
     onSuccess: (_data, { campaignId }) => {
       queryClient.invalidateQueries({
