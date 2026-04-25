@@ -443,9 +443,9 @@ export default function GardenStoryStep() {
     isStoryAnswerValid(values.storyCampaignImpact);
 
   return (
-    <div className="flex flex-col gap-6 w-[700px] m-15">
+    <div className="mx-auto my-10 flex w-full max-w-[640px] flex-col gap-5">
       {/* Garden Story */}
-      <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
+      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[20px] font-medium">
           Garden Story <span className="text-orange-500">*</span>
         </h2>
@@ -644,7 +644,7 @@ export default function GardenStoryStep() {
       </div>
 
       {/* Main Photo */}
-      <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
+      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[20px] font-medium">
           Main Photo <span className="text-orange-500">*</span>
         </h2>
@@ -766,7 +766,7 @@ export default function GardenStoryStep() {
       </div>
 
       {/* Supporting Photos */}
-      <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
+      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[20px] font-medium">Supporting Photos</h2>
 
         <p className="text-sm text-gray-600">

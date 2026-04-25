@@ -29,20 +29,22 @@ export default function StepsLayout({
   }
 
   return (
-    <div className="flex min-h-screen w-full gap-16">
+    <div className="flex min-h-screen w-full gap-10">
       <div className="relative z-10 shrink-0 self-stretch overflow-visible">
-        <Navbar />
+        <Navbar compact />
       </div>
       <div className="flex min-w-0 flex-1 flex-col">
-        <div className="flex min-w-0 flex-1 gap-6 pr-6 md:pr-8 lg:pr-10">
+        <div className="flex min-w-0 flex-1 gap-4 px-4 md:px-6 lg:px-8">
           <div className="shrink-0 overflow-visible">
             <ApplicationSidebar />
           </div>
-          <div className="min-w-0 flex-1">
-            {children}
+          <div className="flex min-w-0 flex-1 justify-start">
+            <div className="w-full max-w-[760px] min-w-0">
+              {children}
+            </div>
           </div>
         </div>
-        <div className="mt-auto shrink-0 px-6 pb-5 pt-4 md:px-8 lg:px-10">
+        <div className="mt-auto shrink-0 px-4 pb-4 pt-3 md:px-6 lg:px-8">
           <ApplicationFooter />
         </div>
       </div>

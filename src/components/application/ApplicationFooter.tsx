@@ -5,9 +5,9 @@ export default function ApplicationFooter() {
   return (
     <footer>
       <Divider />
-      <div className="flex items-center justify-between pt-6 text-[14px] text-[#666666]">
+      <div className="flex items-center justify-between pt-4 text-[13px] text-[#666666]">
         <p>© {new Date().getFullYear()} SeedMoney All Rights Reserved.</p>
-        <div className="flex items-center gap-6">
+        <div className="flex items-center gap-5">
           <Link href="/">SeedMoney</Link>
           <Link href="/contact">Contact</Link>
           <Link href="/faq">FAQ</Link>

@@ -98,11 +98,11 @@ export default function GrantAgreementStep() {
   };
 
   return (
-    <div className="flex flex-col items-center m-15">
+    <div className="mx-auto my-10 flex w-full max-w-[640px] flex-col items-center">
       {/* CARD */}
-      <div className="w-[700px] bg-white border border-gray-200 rounded-xl p-8 flex flex-col gap-4">
+      <div className="w-full bg-white border border-gray-200 rounded-xl p-6 flex flex-col gap-4">
         {/* TITLE */}
-        <h5 className="text-[20px] font-medium">
+        <h5 className="text-[18px] font-medium">
           Grantee Agreement <span className="text-red-500">*</span>
         </h5>
 
@@ -140,7 +140,7 @@ export default function GrantAgreementStep() {
       </div>
 
       {/* BUTTONS */}
-      <div className="w-[700px] flex justify-between mt-6">
+      <div className="mt-5 flex w-full justify-between">
         <Button component={Link} href="/apply" variant="outlined" size="medium">
           Previous Step
         </Button>

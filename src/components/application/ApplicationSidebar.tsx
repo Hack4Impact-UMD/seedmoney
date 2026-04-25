@@ -30,7 +30,7 @@ export default function ApplicationSidebar() {
   };
 
   return (
-    <div className="flex flex-col gap-4 w-[260px] mt-20">
+    <div className="mt-12 flex w-[220px] flex-col gap-3">
       <form.Subscribe
         selector={(state) => ({
           campaignTitle: state.values.campaignTitle,
@@ -88,8 +88,8 @@ export default function ApplicationSidebar() {
                       <StepDot status={step.status} />
 
                       {i !== steps.length - 1 && (
-                        <div className="flex flex-col items-center h-[35px]">
-                          <div className="h-[8px]" />
+                        <div className="flex h-[28px] flex-col items-center">
+                          <div className="h-[6px]" />
                           <div
                             className={`w-[2px] flex-1 ${
                               steps[i + 1].status === "unvisited"
@@ -102,7 +102,7 @@ export default function ApplicationSidebar() {
                     </div>
 
                     <p
-                      className={`text-md leading-[133%] font-normal -translate-y-1
+                      className={`-translate-y-0.5 text-sm leading-[1.3] font-normal
                     text-black
                     ${step.status === "review" ? "text-red-600" : ""}
                     ${canNavigate ? "hover:opacity-80" : "opacity-60"}`}
@@ -128,7 +128,7 @@ export default function ApplicationSidebar() {
       </form.Subscribe>
 
       {/* autosave indicator */}
-      <div className="flex items-center gap-2 text-[#666] text-[14px] mt-3">
+      <div className="mt-2 flex items-center gap-2 text-[13px] text-[#666]">
         <Image
           src="/icons/autosave.svg"
           alt="Autosave icon"
@@ -141,7 +141,7 @@ export default function ApplicationSidebar() {
       <button
         type="button"
         onClick={handleExit}
-        className="flex items-center gap-2 text-[#666] text-[14px] w-fit hover:opacity-80"
+        className="flex w-fit items-center gap-2 text-[13px] text-[#666] hover:opacity-80"
       >
         <ArrowBack sx={{ fontSize: 16 }} />
         Exit
@@ -153,22 +153,22 @@ export default function ApplicationSidebar() {
 
 function StepDot({ status }: { status: StepStatus }) {
   if (status === "completed") {
-    return <div className="w-[12px] h-[12px] rounded-full bg-[#56BD60]" />;
+    return <div className="h-[10px] w-[10px] rounded-full bg-[#56BD60]" />;
   }
 
   if (status === "current") {
     return (
-      <div className="w-[12px] h-[12px] rounded-full border-2 border-[#56BD60]" />
+      <div className="h-[10px] w-[10px] rounded-full border-2 border-[#56BD60]" />
     );
   }
 
   if (status === "review") {
     return (
-      <div className="w-[12px] h-[12px] rounded-full border-2 border-[#D32F2F]" />
+      <div className="h-[10px] w-[10px] rounded-full border-2 border-[#D32F2F]" />
     );
   }
 
   return (
-    <div className="w-[12px] h-[12px] rounded-full border-2 border-black/10" />
+    <div className="h-[10px] w-[10px] rounded-full border-2 border-black/10" />
   );
 }

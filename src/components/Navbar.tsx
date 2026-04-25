@@ -22,7 +22,7 @@ import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
 import useReadCurrentCompetition from "../hooks/competition-metadata/useReadCurrentCompetition";
 
-export default function Navbar() {
+export default function Navbar({ compact = false }: { compact?: boolean }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const { user } = useAuth();
   const { data: userData } = useUserByAuthId(user?.id || "");
@@ -80,12 +80,25 @@ export default function Navbar() {
 
   const getItemClasses = (isSelected: boolean) =>
     clsx(
-      "!p-0 !min-h-12",
+      "!p-0",
+      compact ? "!min-h-10" : "!min-h-12",
       isSelected
         ? "!bg-[#1A4A28] hover:!bg-black/30"
         : "!bg-transparent hover:!bg-[#43B45D]",
       isCollapsed ? "!justify-center !px-0" : "!justify-start",
     );
+
+  const navItemTextClass = compact
+    ? "!px-[36px] !py-[16px] !text-[15px] !font-[600] !leading-[22px] !text-white"
+    : "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white";
+
+  const sectionHeadingClass = compact
+    ? "mb-1 h-6 px-5 text-[12px] font-normal tracking-[0.08em] text-white"
+    : "mb-2 h-7 px-6 text-[13px] font-normal tracking-[1px] text-white";
+
+  const previousSectionHeadingClass = compact
+    ? "mb-1 mt-3 h-6 px-5 text-[12px] font-normal tracking-[0.08em] text-white/70"
+    : "mb-2 mt-4 h-7 px-6 text-[13px] font-normal tracking-[1px] text-white/70";
 
   const getCampaignDisplayName = (campaign: Campaign) => {
     const hasName = typeof campaign.name === "string" && campaign.name.trim() !== "";
@@ -130,8 +143,7 @@ export default function Navbar() {
             primary={getCampaignDisplayName(campaign)}
             slotProps={{
               primary: {
-                className:
-                  "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
+                className: navItemTextClass,
               },
             }}
           />
@@ -144,10 +156,15 @@ export default function Navbar() {
     <nav
       className={clsx(
         "!sticky !top-0 flex h-screen min-h-0 flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
-        isCollapsed ? "!w-[105px]" : "!w-[300px] xl:!w-[300px]",
+        isCollapsed ? "!w-[96px]" : compact ? "!w-[260px]" : "!w-[300px] xl:!w-[300px]",
       )}
     >
-      <div className="flex items-center px-5 pb-4 pt-6">
+      <div
+        className={clsx(
+          "flex items-center",
+          compact ? "px-4 pb-3 pt-5" : "px-5 pb-4 pt-6",
+        )}
+      >
         <div
           className={clsx(
             "flex min-w-0 flex-1 items-center gap-4",
@@ -157,22 +174,27 @@ export default function Navbar() {
           <div
             className={clsx(
               "flex shrink-0 items-center justify-center rounded-full bg-white",
-              isCollapsed ? "h-12 w-12" : "h-16 w-16",
+              isCollapsed ? "h-11 w-11" : compact ? "h-14 w-14" : "h-16 w-16",
             )}
           >
             <Image
               src="/seedMoneyLogo.png"
               alt="SeedMoney"
-              width={isCollapsed ? 32 : 44}
-              height={isCollapsed ? 32 : 44}
+              width={isCollapsed ? 28 : compact ? 38 : 44}
+              height={isCollapsed ? 28 : compact ? 38 : 44}
             />
           </div>
           {!isCollapsed && (
             <div className="min-w-0">
-              <h6 className="text-xl font-bold leading-[1.3] text-white">
+              <h6
+                className={clsx(
+                  "font-bold leading-[1.3] text-white",
+                  compact ? "text-lg" : "text-xl",
+                )}
+              >
                 {firstName ?? "SeedMoney"}
               </h6>
-              <p className="text-sm text-white/80">
+              <p className={clsx("text-white/80", compact ? "text-[13px]" : "text-sm")}>
                 {isLoading
                   ? "Loading..."
                   : userData
@@ -190,7 +212,10 @@ export default function Navbar() {
         onClick={() => setIsCollapsed((prev) => !prev)}
         size="small"
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className="!absolute !right-0 !top-[100px] !z-50 !h-9 !w-9 !translate-x-1/2 !border-2 !border-[#2D7A45] !bg-white !text-[#2D7A45] hover:!bg-gray-100"
+        className={clsx(
+          "!absolute !right-0 !z-50 !h-9 !w-9 !translate-x-1/2 !border-2 !border-[#2D7A45] !bg-white !text-[#2D7A45] hover:!bg-gray-100",
+          compact ? "!top-[84px]" : "!top-[100px]",
+        )}
       >
         {isCollapsed ? (
           <ChevronRightIcon fontSize="small" />
@@ -236,8 +261,7 @@ export default function Navbar() {
                       primary={label}
                       slotProps={{
                         primary: {
-                          className:
-                            "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
+                          className: navItemTextClass,
                         },
                       }}
                     />
@@ -246,14 +270,19 @@ export default function Navbar() {
               );
             })}
           </List>
-          <div className="mt-auto shrink-0 flex flex-col gap-3 px-4 pb-6">
+          <div
+            className={clsx(
+              "mt-auto shrink-0 flex flex-col",
+              compact ? "gap-2 px-3 pb-4" : "gap-3 px-4 pb-6",
+            )}
+          >
             <Button
               onClick={handleSettings}
               size="medium"
               variant="text"
               className="!flex !justify-start !text-white"
             >
-              <SettingsIcon className="!text-[28px]" />
+              <SettingsIcon className={compact ? "!text-[24px]" : "!text-[28px]"} />
               {!isCollapsed && <span className="ml-2">SETTINGS</span>}
             </Button>
             <Button
@@ -262,7 +291,7 @@ export default function Navbar() {
               variant="text"
               className="!flex !justify-start !text-white"
             >
-              <LogoutIcon className="!text-[28px]" />
+              <LogoutIcon className={compact ? "!text-[24px]" : "!text-[28px]"} />
               {!isCollapsed && <span className="ml-2">LOG OUT</span>}
             </Button>
           </div>
@@ -275,7 +304,7 @@ export default function Navbar() {
             {currentYearCampaigns.length > 0 && (
               <>
                 {!isCollapsed && (
-                  <div className="mb-2 h-7 px-6 text-[13px] font-normal tracking-[1px] text-white">
+                  <div className={sectionHeadingClass}>
                     {currentYear} Campaigns
                   </div>
                 )}
@@ -288,7 +317,7 @@ export default function Navbar() {
             {previousCampaigns.length > 0 && (
               <>
                 {!isCollapsed && (
-                  <div className="mb-2 mt-4 h-7 px-6 text-[13px] font-normal tracking-[1px] text-white/70">
+                  <div className={previousSectionHeadingClass}>
                     Previous Campaigns
                   </div>
                 )}
@@ -312,22 +341,26 @@ export default function Navbar() {
                   />
                 ) : (
                   <ListItemText
-                    primary="View all"
-                    slotProps={{
-                      primary: {
-                        className:
-                          "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white",
-                      },
-                    }}
-                  />
+                      primary="View all"
+                      slotProps={{
+                        primary: {
+                          className: navItemTextClass,
+                        },
+                      }}
+                    />
                 )}
               </ListItemButton>
             </List>
           </div>
 
-          <div className="shrink-0 flex flex-col gap-3 px-4 pb-6">
+          <div
+            className={clsx(
+              "shrink-0 flex flex-col",
+              compact ? "gap-2 px-3 pb-4" : "gap-3 px-4 pb-6",
+            )}
+          >
             <Button
-              size="large"
+              size={compact ? "medium" : "large"}
               variant="outlined"
               startIcon={!isCollapsed && <AddIcon />}
               onClick={() => router.push("/apply")}
@@ -342,7 +375,7 @@ export default function Navbar() {
               variant="text"
               className="!flex !justify-start !text-white"
             >
-              <SettingsIcon className="!text-[28px]" />
+              <SettingsIcon className={compact ? "!text-[24px]" : "!text-[28px]"} />
               {!isCollapsed && <span className="ml-2">SETTINGS</span>}
             </Button>
             <Button
@@ -351,7 +384,7 @@ export default function Navbar() {
               variant="text"
               className="!flex !justify-start !text-white"
             >
-              <LogoutIcon className="!text-[28px]" />
+              <LogoutIcon className={compact ? "!text-[24px]" : "!text-[28px]"} />
               {!isCollapsed && <span className="ml-2">LOG OUT</span>}
             </Button>
           </div>

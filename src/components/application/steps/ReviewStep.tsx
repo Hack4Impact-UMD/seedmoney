@@ -221,8 +221,8 @@ export default function ReviewSubmitPage() {
   };
 
   return (
-    <div className="w-[700px] flex flex-col gap-6 pb-20 m-15">
-      <h2 className="text-xl font-semibold">Campaign Information</h2>
+    <div className="mx-auto my-10 flex w-full max-w-[640px] flex-col gap-5 pb-12">
+      <h2 className="text-lg font-semibold">Campaign Information</h2>
 
       {!campaignComplete && (
         <ReviewBanner
@@ -237,9 +237,9 @@ export default function ReviewSubmitPage() {
         />
       )}
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
         <div>
-          <h3 className="text-lg font-medium">
+          <h3 className="text-[17px] font-medium">
             Campaign Title <span className="text-orange-500">*</span>
           </h3>
 
@@ -256,8 +256,8 @@ export default function ReviewSubmitPage() {
         />
       </div>
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
-        <h3 className="text-lg font-medium">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-5">
+        <h3 className="text-[17px] font-medium">
           Project Details & Impact <span className="text-orange-500">*</span>
         </h3>
 
@@ -311,8 +311,8 @@ export default function ReviewSubmitPage() {
         />
       </div>
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-        <h3 className="text-lg font-medium">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
+        <h3 className="text-[17px] font-medium">
           Fundraising Goal <span className="text-orange-500">*</span>
         </h3>
 
@@ -327,7 +327,7 @@ export default function ReviewSubmitPage() {
         />
       </div>
 
-      <h2 className="text-xl font-semibold">Garden Information</h2>
+      <h2 className="text-lg font-semibold">Garden Information</h2>
 
       {!gardenComplete && (
         <ReviewBanner
@@ -336,8 +336,8 @@ export default function ReviewSubmitPage() {
         />
       )}
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
-        <h3 className="text-lg font-medium">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-5">
+        <h3 className="text-[17px] font-medium">
           Garden Location <span className="text-orange-500">*</span>
         </h3>
 
@@ -354,16 +354,16 @@ export default function ReviewSubmitPage() {
         />
       </div>
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-2">
-        <h3 className="text-lg font-medium">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-2">
+        <h3 className="text-[17px] font-medium">
           Primary Project Category <span className="text-orange-500">*</span>
         </h3>
 
         <ValueRow label="Category" value={values.gardenCategory} required />
       </div>
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-2">
-        <h3 className="text-lg font-medium">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-2">
+        <h3 className="text-[17px] font-medium">
           Beneficiary Populations Served{" "}
           <span className="text-orange-500">*</span>
         </h3>
@@ -382,7 +382,7 @@ export default function ReviewSubmitPage() {
         />
       </div>
 
-      <h2 className="text-xl font-semibold">Garden Story</h2>
+      <h2 className="text-lg font-semibold">Garden Story</h2>
 
       {!storyComplete && (
         <ReviewBanner
@@ -391,8 +391,8 @@ export default function ReviewSubmitPage() {
         />
       )}
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
-        <h3 className="text-lg font-medium">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-5">
+        <h3 className="text-[17px] font-medium">
           Garden Story <span className="text-orange-500">*</span>
         </h3>
 
@@ -420,8 +420,8 @@ export default function ReviewSubmitPage() {
         />
       </div>
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-        <h3 className="text-lg font-medium">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
+        <h3 className="text-[17px] font-medium">
           Main Photo <span className="text-orange-500">*</span>
         </h3>
 
@@ -474,8 +474,8 @@ export default function ReviewSubmitPage() {
         )}
       </div>
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-6">
-        <h3 className="text-lg font-medium">Supporting Photos</h3>
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-5">
+        <h3 className="text-[17px] font-medium">Supporting Photos</h3>
 
         <p className="text-sm text-gray-600">
           You may upload up to five additional photos that help tell your
@@ -519,7 +519,7 @@ export default function ReviewSubmitPage() {
         )}
       </div>
 
-      <h2 className="text-xl font-semibold">Contact Information</h2>
+      <h2 className="text-lg font-semibold">Contact Information</h2>
 
       {!contactComplete && (
         <ReviewBanner
@@ -528,8 +528,8 @@ export default function ReviewSubmitPage() {
         />
       )}
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-        <h3 className="text-lg font-medium">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
+        <h3 className="text-[17px] font-medium">
           Organization Information <span className="text-orange-500">*</span>
         </h3>
 
@@ -545,8 +545,8 @@ export default function ReviewSubmitPage() {
         />
       </div>
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-        <h3 className="text-lg font-medium">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
+        <h3 className="text-[17px] font-medium">
           Beneficiary Organization Mailing Address{" "}
           <span className="text-orange-500">*</span>
         </h3>
@@ -571,8 +571,8 @@ export default function ReviewSubmitPage() {
         />
       </div>
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-6 flex flex-col gap-4">
-        <h3 className="text-lg font-medium">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
+        <h3 className="text-[17px] font-medium">
           Primary Contact Information <span className="text-orange-500">*</span>
         </h3>
 

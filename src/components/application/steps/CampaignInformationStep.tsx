@@ -93,10 +93,10 @@ export default function CampaignInformationStep() {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-[700px] m-15">
+    <div className="mx-auto my-10 flex w-full max-w-[640px] flex-col gap-5">
       {/* campaign title */}
-      <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
-        <h2 className="text-[20px] font-medium">
+      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
+        <h2 className="text-[18px] font-medium">
           Campaign Title <span className="text-orange-500">*</span>
         </h2>
 
@@ -132,8 +132,8 @@ export default function CampaignInformationStep() {
       </div>
 
       {/* project details & impact */}
-      <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
-        <h2 className="text-[20px] font-medium">
+      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
+        <h2 className="text-[18px] font-medium">
           Project Details & Impact <span className="text-orange-500">*</span>
         </h2>
 
@@ -223,8 +223,8 @@ export default function CampaignInformationStep() {
       </div>
 
       {/* fundraising goal */}
-      <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
-        <h2 className="text-[20px] font-medium">
+      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
+        <h2 className="text-[18px] font-medium">
           Fundraising Goal <span className="text-orange-500">*</span>
         </h2>
 

@@ -146,10 +146,10 @@ export default function ContactInformationStep() {
   };
 
   return (
-    <div className="flex flex-col gap-6 w-[700px] m-15">
+    <div className="mx-auto my-10 flex w-full max-w-[640px] flex-col gap-5">
       {/* Organization Information */}
-      <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
-        <h2 className="text-[20px] font-medium">
+      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
+        <h2 className="text-[18px] font-medium">
           Organization Information <span className="text-orange-500">*</span>
         </h2>
 
@@ -198,8 +198,8 @@ export default function ContactInformationStep() {
       </div>
 
       {/* Mailing Address */}
-      <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
-        <h2 className="text-[20px] font-medium">
+      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
+        <h2 className="text-[18px] font-medium">
           Beneficiary Organization Mailing Address{" "}
           <span className="text-orange-500">*</span>
         </h2>
@@ -408,8 +408,8 @@ export default function ContactInformationStep() {
       </div>
 
       {/* Primary Contact Information */}
-      <div className="bg-white rounded-2xl border border-black/10 p-6 flex flex-col gap-4">
-        <h2 className="text-[20px] font-medium">
+      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
+        <h2 className="text-[18px] font-medium">
           Primary Contact Information <span className="text-orange-500">*</span>
         </h2>
 
