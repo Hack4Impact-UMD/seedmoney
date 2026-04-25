@@ -17,6 +17,42 @@ type PolishQuestionOutput = {
   polishedAnswer: string;
 };
 
+function buildFallbackAnswers(
+  questions: PolishQuestionInput[],
+): PolishQuestionOutput[] {
+  return questions.map((question) => ({
+    questionId: question.questionId,
+    polishedAnswer: question.answerText,
+  }));
+}
+
+function getOpenAIErrorMessage(error: unknown) {
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return String(error);
+}
+
+function isRetryableOpenAIError(error: unknown) {
+  const message = getOpenAIErrorMessage(error).toLowerCase();
+
+  if (
+    message.includes("missing credentials") ||
+    message.includes("api key") ||
+    message.includes("insufficient_quota") ||
+    message.includes("billing")
+  ) {
+    return false;
+  }
+
+  return (
+    error instanceof OpenAI.APIConnectionError ||
+    error instanceof OpenAI.InternalServerError ||
+    error instanceof OpenAI.RateLimitError
+  );
+}
+
 export async function queryOpenAI(
   questions: PolishQuestionInput[],
 ): Promise<PolishQuestionOutput[]> {
@@ -111,24 +147,36 @@ type CreateAIAnswersInput = {
 async function queryOpenAIWithRetry(
   questions: PolishQuestionInput[],
 ): Promise<PolishQuestionOutput[]> {
+  if (!process.env.OPENAI_API_KEY?.trim()) {
+    console.warn(
+      "OPENAI_API_KEY is not configured. Skipping AI polishing and defaulting to original answers.",
+    );
+    return buildFallbackAnswers(questions);
+  }
+
   try {
     return await queryOpenAI(questions);
   } catch (error) {
+    if (!isRetryableOpenAIError(error)) {
+      console.warn(
+        "OpenAI polishing is unavailable, defaulting to original answers:",
+        getOpenAIErrorMessage(error),
+      );
+      return buildFallbackAnswers(questions);
+    }
+
     console.error("Error querying OpenAI, retrying once:", error);
   }
 
   try {
     return await queryOpenAI(questions);
   } catch (retryError) {
-    console.error(
-      "Error querying OpenAI after retry, defaulting to original answers:",
-      retryError,
+    console.warn(
+      "OpenAI polishing failed after retry, defaulting to original answers:",
+      getOpenAIErrorMessage(retryError),
     );
 
-    return questions.map((question) => ({
-      questionId: question.questionId,
-      polishedAnswer: question.answerText,
-    }));
+    return buildFallbackAnswers(questions);
   }
 }
 
