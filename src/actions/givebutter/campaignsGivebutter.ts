@@ -4,7 +4,7 @@ import { readAnswersByCampaignId } from "@/src/actions/db/answers";
 import { createServerClient } from "@/src/lib/supabase-client";
 import type { Campaign } from "@/src/types";
 
-const SUPABASE_URL = process.env.NEXT_PUBLIC_GIVEBUTTER_IMAGE_RETRIEVAL;
+const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const BUCKET_NAME = "campaign_images";
 
 const getPublicUrl = (storagePath: string) =>
