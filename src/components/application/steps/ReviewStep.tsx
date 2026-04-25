@@ -183,41 +183,54 @@ export default function ReviewSubmitPage() {
 
     await form.handleSubmit();
 
-    if (values.aiOptIn) {
-      const questions = [
-        {
-          questionId: question1.question_id,
-          questionText: question1.question,
-          originalText: values.storyLocationAndAudience,
-        },
-        {
-          questionId: question2.question_id,
-          questionText: question2.question,
-          originalText: values.storyChallenge,
-        },
-        {
-          questionId: question3.question_id,
-          questionText: question3.question,
-          originalText: values.storySeasonActivity,
-        },
-        {
-          questionId: question4.question_id,
-          questionText: question4.question,
-          originalText: values.storyCampaignImpact,
-        },
-      ];
-
-      void createAIAnswersMutation
-        .mutateAsync({
+    const aiPayload = values.aiOptIn
+      ? {
           campaignId,
-          questions,
-        })
-        .catch((error) => {
-          console.error("Error creating AI-polished answers after submit:", error);
-        });
-    }
+          questions: [
+            {
+              questionId: question1.question_id,
+              questionText: question1.question,
+              originalText: values.storyLocationAndAudience,
+            },
+            {
+              questionId: question2.question_id,
+              questionText: question2.question,
+              originalText: values.storyChallenge,
+            },
+            {
+              questionId: question3.question_id,
+              questionText: question3.question,
+              originalText: values.storySeasonActivity,
+            },
+            {
+              questionId: question4.question_id,
+              questionText: question4.question,
+              originalText: values.storyCampaignImpact,
+            },
+          ],
+        }
+      : null;
 
     router.push(`/dashboard/${campaignId}?submitted=1`);
+
+    if (values.aiOptIn) {
+      queueMicrotask(() => {
+        if (!aiPayload) {
+          return;
+        }
+
+        try {
+          void createAIAnswersMutation.mutateAsync(aiPayload).catch((error) => {
+            console.error(
+              "Error creating AI-polished answers after submit:",
+              error,
+            );
+          });
+        } catch (error) {
+          console.error("Error starting AI-polished answer creation:", error);
+        }
+      });
+    }
   };
 
   return (
