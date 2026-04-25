@@ -311,7 +311,7 @@ export default function GardenStoryStep() {
 
   const imagePreviews = files.map((file) => (
     <div key={file.name}>
-      <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+      <div className="w-full aspect-[650/358] overflow-hidden border border-gray-300">
         <img
           src={file.preview}
           alt={file.name}
@@ -847,7 +847,7 @@ export default function GardenStoryStep() {
             key={`${file.name}-${file.size}`}
             className="flex flex-col gap-2"
           >
-            <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+            <div className="w-full aspect-[650/358] overflow-hidden border border-gray-300">
               <img
                 src={file.preview}
                 alt={file.name}

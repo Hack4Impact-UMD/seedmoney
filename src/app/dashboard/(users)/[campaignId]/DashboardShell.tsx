@@ -1,6 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
+import { useEffect } from "react";
 import { useParams, useRouter, usePathname, notFound } from "next/navigation";
 import { useState } from "react";
 import Navbar from "@/src/components/Navbar";
@@ -23,6 +24,7 @@ import OpenInNew from "@mui/icons-material/OpenInNew";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import DashboardFooter from "@/src/components/DashboardFooter";
 import FaqSection from "@/src/components/dashboard/FaqSection";
+import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 
 type DashboardTab = "Overview" | "Donors" | "Analytics";
 
@@ -35,6 +37,11 @@ export default function DashboardShell({
   const pathname = usePathname();
   const { campaignId } = useParams<{ campaignId: string }>();
   const { user } = useAuth();
+  const {
+    data: userData,
+    isLoading: isLoadingUser,
+    error: userError,
+  } = useUserByAuthId(user?.id || "");
   const { data: campaignsData, isLoading, error} = useReadCampaign({ campaignId: Number(campaignId) });
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const {
@@ -54,7 +61,16 @@ export default function DashboardShell({
   const [toast, setToast] = useState(false);
   const [viewCampaignModal, setViewCampaignModal] = useState(false);
 
+  useEffect(() => {
+    if (userData?.is_admin) {
+      router.replace(`/dashboard/ongoing-campaigns/${campaignId}`);
+    }
+  }, [campaignId, router, userData?.is_admin]);
+
   if (!user) notFound();
+  if (userError) throw userError;
+  if (isLoadingUser) return <div>Loading...</div>;
+  if (userData?.is_admin) return null;
   if (isLoading ) return <div>Loading...</div>;
   if (error) throw error;
   if (!campaignsData) return <div className="flex min-h-screen" >Unable to load campaign.</div>;

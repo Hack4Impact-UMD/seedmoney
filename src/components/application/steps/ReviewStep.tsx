@@ -432,7 +432,7 @@ export default function ReviewSubmitPage() {
 
         {values.mainPhoto ? (
           <div className="flex flex-col gap-4">
-            <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+            <div className="w-full aspect-[650/358] overflow-hidden border border-gray-300">
               <img
                 src={values.mainPhoto}
                 alt={values.mainPhotoName || "Main photo"}
@@ -486,7 +486,7 @@ export default function ReviewSubmitPage() {
           <div className="flex flex-col gap-6">
             {values.supportingPhotos.map((photo, index) => (
               <div key={`${photo}-${index}`} className="flex flex-col gap-4">
-                <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+                <div className="w-full aspect-[650/358] overflow-hidden border border-gray-300">
                   <img
                     src={photo}
                     alt={
