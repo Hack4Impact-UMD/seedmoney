@@ -35,13 +35,18 @@ function getOpenAIErrorMessage(error: unknown) {
 }
 
 function isRetryableOpenAIError(error: unknown) {
-  const message = getOpenAIErrorMessage(error).toLowerCase();
-
+  // Auth/permission failures will never recover on retry.
   if (
-    message.includes("missing credentials") ||
-    message.includes("api key") ||
-    message.includes("insufficient_quota") ||
-    message.includes("billing")
+    error instanceof OpenAI.AuthenticationError ||
+    error instanceof OpenAI.PermissionDeniedError
+  ) {
+    return false;
+  }
+
+  // Quota exhaustion is surfaced as RateLimitError with code "insufficient_quota".
+  if (
+    error instanceof OpenAI.RateLimitError &&
+    (error as { code?: string }).code === "insufficient_quota"
   ) {
     return false;
   }
