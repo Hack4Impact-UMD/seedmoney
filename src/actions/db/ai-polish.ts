@@ -1,3 +1,5 @@
+"use server";
+
 import OpenAI from "openai";
 import {
   createAnswer,
@@ -58,7 +60,7 @@ function isRetryableOpenAIError(error: unknown) {
   );
 }
 
-export async function queryOpenAI(
+async function queryOpenAI(
   questions: PolishQuestionInput[],
 ): Promise<PolishQuestionOutput[]> {
   if (questions.length === 0) {
@@ -71,7 +73,7 @@ export async function queryOpenAI(
   });
 
   const response = await client.responses.create({
-    model: "gpt-5.4-mini",
+    model: "gpt-5-mini",
     input: [
       {
         role: "system",

@@ -15,8 +15,16 @@ async function createReadClient() {
   return createBrowserClient();
 }
 
+async function createWriteClient() {
+  if (typeof window === "undefined") {
+    return await createServerClient();
+  }
+
+  return createBrowserClient();
+}
+
 export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
-  const supabase = await createBrowserClient();
+  const supabase = await createWriteClient();
 
   const { data: insertedData, error } = await supabase
     .from("answers")
@@ -32,7 +40,7 @@ export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
 }
 
 export async function readAnswer(id: number): Promise<Answers | null> {
-  const supabase = await createBrowserClient();
+  const supabase = await createReadClient();
 
   const { data, error } = await supabase
     .from("answers")
@@ -52,7 +60,7 @@ export async function updateAnswer(
   id: number,
   data: Partial<NewAnswer>,
 ): Promise<Answers | null> {
-  const supabase = await createBrowserClient();
+  const supabase = await createWriteClient();
 
   const { data: updatedData, error } = await supabase
     .from("answers")
@@ -70,7 +78,7 @@ export async function updateAnswer(
 }
 
 export async function deleteAnswer(id: number): Promise<boolean> {
-  const supabase = await createBrowserClient();
+  const supabase = await createWriteClient();
 
   const { error } = await supabase.from("answers").delete().eq("answer_id", id);
 
@@ -86,7 +94,7 @@ export async function readAnswerByCampaignAndQuestion(
   campaignId: number,
   questionId: number,
 ): Promise<Answers | null> {
-  const supabase = await createBrowserClient();
+  const supabase = await createReadClient();
 
   const { data, error } = await supabase
     .from("answers")
