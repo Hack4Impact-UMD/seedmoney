@@ -19,15 +19,6 @@ type PolishQuestionOutput = {
   polishedAnswer: string;
 };
 
-function buildFallbackAnswers(
-  questions: PolishQuestionInput[],
-): PolishQuestionOutput[] {
-  return questions.map((question) => ({
-    questionId: question.questionId,
-    polishedAnswer: question.answerText,
-  }));
-}
-
 function getOpenAIErrorMessage(error: unknown) {
   if (error instanceof Error) {
     return error.message;
@@ -69,7 +60,7 @@ async function queryOpenAI(
 
   const client = new OpenAI({
     maxRetries: 0,
-    timeout: 15000,
+    timeout: 45000,
   });
 
   const response = await client.responses.create({
@@ -171,35 +162,23 @@ async function queryOpenAIWithRetry(
   questions: PolishQuestionInput[],
 ): Promise<PolishQuestionOutput[]> {
   if (!process.env.OPENAI_API_KEY?.trim()) {
-    console.warn(
-      "OPENAI_API_KEY is not configured. Skipping AI polishing and defaulting to original answers.",
+    throw new Error(
+      "OPENAI_API_KEY is not configured. AI polishing cannot run.",
     );
-    return buildFallbackAnswers(questions);
   }
 
   try {
     return await queryOpenAI(questions);
   } catch (error) {
     if (!isRetryableOpenAIError(error)) {
-      console.warn(
-        "OpenAI polishing is unavailable, defaulting to original answers:",
-        getOpenAIErrorMessage(error),
+      throw new Error(
+        `OpenAI polishing is unavailable: ${getOpenAIErrorMessage(error)}`,
       );
-      return buildFallbackAnswers(questions);
     }
 
-    console.error("Error querying OpenAI, retrying once:", error);
-  }
-
-  try {
-    return await queryOpenAI(questions);
-  } catch (retryError) {
-    console.warn(
-      "OpenAI polishing failed after retry, defaulting to original answers:",
-      getOpenAIErrorMessage(retryError),
+    throw new Error(
+      `OpenAI polishing timed out or failed: ${getOpenAIErrorMessage(error)}`,
     );
-
-    return buildFallbackAnswers(questions);
   }
 }
 
@@ -252,6 +231,16 @@ export async function createAIAnswers({
     ]),
   );
 
+  for (const { question } of questionsNeedingPolish) {
+    const polishedAnswer = polishedAnswerByQuestionId.get(question.questionId);
+
+    if (typeof polishedAnswer !== "string" || polishedAnswer.trim().length === 0) {
+      throw new Error(
+        `OpenAI response was missing a polished answer for question ${question.questionId}`,
+      );
+    }
+  }
+
   const savedAnswers = await Promise.all(
     questionsWithExistingAnswers.map(async ({ question, existingAnswer }) => {
       if (
@@ -262,9 +251,13 @@ export async function createAIAnswers({
         return existingAnswer;
       }
 
-      const aiAnswer =
-        polishedAnswerByQuestionId.get(question.questionId) ??
-        question.originalText;
+      const aiAnswer = polishedAnswerByQuestionId.get(question.questionId);
+
+      if (typeof aiAnswer !== "string") {
+        throw new Error(
+          `OpenAI response was missing a polished answer for question ${question.questionId}`,
+        );
+      }
 
       if (existingAnswer) {
         const updatedAnswer = await updateAnswer(existingAnswer.answer_id, {

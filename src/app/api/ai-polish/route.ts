@@ -40,22 +40,31 @@ export async function POST(request: Request) {
       return NextResponse.json({ error: "Forbidden" }, { status: 403 });
     }
 
+    const validQuestions = body.questions.filter(
+      (question) =>
+        typeof question.questionId === "number" &&
+        typeof question.questionText === "string" &&
+        typeof question.originalText === "string",
+    );
+
+    if (validQuestions.length === 0) {
+      return NextResponse.json({ error: "No valid questions provided" }, { status: 400 });
+    }
+
     await createAIAnswers({
       campaignId: body.campaignId,
       overwrite: body.overwrite,
-      questions: body.questions.filter(
-        (question) =>
-          typeof question.questionId === "number" &&
-          typeof question.questionText === "string" &&
-          typeof question.originalText === "string",
-      ),
+      questions: validQuestions,
     });
 
     return NextResponse.json({ ok: true });
   } catch (error) {
+    const errorMessage =
+      error instanceof Error ? error.message : "Failed to process AI polish request";
+
     console.error("Error handling AI polish request:", error);
     return NextResponse.json(
-      { error: "Failed to process AI polish request" },
+      { error: errorMessage },
       { status: 500 },
     );
   }
