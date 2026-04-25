@@ -52,7 +52,6 @@ export type GivebutterCampaignPayload = {
   raised: number;
   donors: number;
   currency: string;
-  cover: string;
   status: string;
   timezone: string;
   end_at: string;
@@ -80,6 +79,11 @@ export type GivebutterCampaignPayload = {
     created_at: string;
     updated_at: string;
   };
+  cover?: {
+    source: "upload";
+    type: "image";
+    url: string;
+  } 
 };
 
 export type GivebutterCampaignUpdatePayload = Partial<

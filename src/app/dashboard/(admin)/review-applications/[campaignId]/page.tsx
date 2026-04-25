@@ -32,6 +32,9 @@ import {
 import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
+import { useCreateGivebutterCampaign } from "@/src/hooks/givebutter/useCreateCampaign";
+import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
+import { get } from "http";
 
 export default function CampaignReviewPage() {
   const router = useRouter();
@@ -40,6 +43,10 @@ export default function CampaignReviewPage() {
   const parsedCampaignId = Number(campaignId);
 
   const updateCampaignMutation = useUpdateCampaign();
+  const createGivebutterCampaign = useCreateGivebutterCampaign();
+
+  const { data: currentCompetition } = useReadCurrentCompetition();
+
   const createFinalAnswerMutation = useCreateFinalAnswer();
   const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
 
@@ -131,6 +138,59 @@ export default function CampaignReviewPage() {
       campaignId: parsedCampaignId,
       campaignData: { status: newStatus },
     });
+
+
+    if (newStatus === "approved") {
+      const getPublicUrl = (storagePath: string) => 
+      {
+        return`${process.env.NEXT_PUBLIC_SUPABASE_NGROK_URL}/storage/v1/object/public/campaign_images/${storagePath}`
+      }
+      const mainImage = formData.imageRecords.find((record) => record.is_main === true);
+
+
+
+      const supportingImages = formData.imageRecords
+        .filter((record) => record.is_main === false)
+        .map((record) => `<img src="${getPublicUrl(record.storage_path)}" alt="Campaign image" />`)
+        .join("\n");
+
+      try {
+        await createGivebutterCampaign.mutateAsync({
+          title: formData.campaignTitle,
+          goal: formData.fundraisingGoal ? Number(formData.fundraisingGoal) : 1,
+          end_at: currentCompetition?.end_date ?? "",
+          cover: mainImage ? {
+            source: "upload",
+            type: "image",
+            url: getPublicUrl(mainImage.storage_path),
+          } : undefined,
+          description: `
+            <h3>Our Garden & Community</h3>
+            <p>${formData.storyLocationAndAudienceFinal}</p>
+
+            <h3>Our Challenge</h3>
+            <p>${formData.storyChallengeFinal}</p>
+
+            <h3>Seasonal Activity</h3>
+            <p>${formData.storySeasonActivityFinal}</p>
+
+            <h3>Campaign Impact</h3>
+            <p>${formData.storyCampaignImpactFinal}</p>
+
+            ${supportingImages}
+          `.trim(),
+        });
+      } catch (err) {
+        const message = err instanceof Error ? err.message : "Failed to create Givebutter campaign.";
+        console.error(message);
+        setSaveErrorMessage(message);
+        setShowErrorToast(true);
+        return;
+      }
+    }
+
+
+
     setFieldValue("status", newStatus);
     router.push("/dashboard/review-applications");
   }, [isFormDirty, parsedCampaignId, updateCampaignMutation, setFieldValue, router]);
