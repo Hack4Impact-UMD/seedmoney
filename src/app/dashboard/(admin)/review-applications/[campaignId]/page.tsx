@@ -33,8 +33,6 @@ import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import { useCreateGivebutterCampaign } from "@/src/hooks/givebutter/useCreateCampaign";
-import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
-import { get } from "http";
 
 export default function CampaignReviewPage() {
   const router = useRouter();
@@ -44,8 +42,6 @@ export default function CampaignReviewPage() {
 
   const updateCampaignMutation = useUpdateCampaign();
   const createGivebutterCampaign = useCreateGivebutterCampaign();
-
-  const { data: currentCompetition } = useReadCurrentCompetition();
 
   const createFinalAnswerMutation = useCreateFinalAnswer();
   const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
@@ -64,6 +60,7 @@ export default function CampaignReviewPage() {
   const [isRestoredModalOpen, setIsRestoredModalOpen] = useState(false);
 
   const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
+  const [isStatusTransitioning, setIsStatusTransitioning] = useState(false);
 
   const isFormDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
   const status = formData.status;
@@ -134,59 +131,73 @@ export default function CampaignReviewPage() {
       setIsSaveAlertOpen(true);
       return;
     }
-    await updateCampaignMutation.mutateAsync({
-      campaignId: parsedCampaignId,
-      campaignData: { status: newStatus },
-    });
 
-    if (newStatus === "approved") {
-      try {
-        const results = await createGivebutterCampaign.mutateAsync([parsedCampaignId]);
-        const result = results[0];
+    setIsStatusTransitioning(true);
 
-        if (result.status === "rejected") {
-          throw new Error(result.reason);
+    try {
+      await updateCampaignMutation.mutateAsync({
+        campaignId: parsedCampaignId,
+        campaignData: { status: newStatus },
+      });
+
+      if (newStatus === "approved") {
+        try {
+          const results = await createGivebutterCampaign.mutateAsync([parsedCampaignId]);
+          const result = results[0];
+
+          if (result.status === "rejected") {
+            throw new Error(result.reason);
+          }
+
+          await updateCampaignMutation.mutateAsync({
+            campaignId: parsedCampaignId,
+            campaignData: {
+              givebutter_id: result.value.id,
+              givebutter_slug: result.value.slug,
+              givebutterlink: result.value.url,
+            },
+          });
+        } catch (err) {
+          const message = err instanceof Error ? err.message : "Failed to create Givebutter campaign.";
+          console.error(message);
+          setSaveErrorMessage(message);
+          setShowErrorToast(true);
+          setIsStatusTransitioning(false);
+          return;
         }
-
-        await updateCampaignMutation.mutateAsync({
-          campaignId: parsedCampaignId,
-          campaignData: {
-            givebutter_id: result.value.id,
-            givebutter_slug: result.value.slug,
-            givebutterlink: result.value.url,
-          },
-        });
-      } catch (err) {
-        const message = err instanceof Error ? err.message : "Failed to create Givebutter campaign.";
-        console.error(message);
-        setSaveErrorMessage(message);
-        setShowErrorToast(true);
-        return;
       }
+
+
+
+      setFieldValue("status", newStatus);
+      const action =
+        newStatus === "approved"
+          ? "approved"
+          : newStatus === "denied"
+            ? "denied"
+            : newStatus === "pending"
+              ? "reverted"
+              : null;
+      const nextPath = action
+        ? `/dashboard/review-applications?action=${action}&campaign=${encodeURIComponent(formData.campaignTitle)}`
+        : "/dashboard/review-applications";
+      router.push(nextPath);
+    } catch (err) {
+      const message =
+        err instanceof Error ? err.message : "Failed to update campaign status.";
+      console.error(message);
+      setSaveErrorMessage(message);
+      setShowErrorToast(true);
+      setIsStatusTransitioning(false);
     }
-
-
-
-    setFieldValue("status", newStatus);
-    const action =
-      newStatus === "approved"
-        ? "approved"
-        : newStatus === "denied"
-          ? "denied"
-          : newStatus === "pending"
-            ? "reverted"
-            : null;
-    const nextPath = action
-      ? `/dashboard/review-applications?action=${action}&campaign=${encodeURIComponent(formData.campaignTitle)}`
-      : "/dashboard/review-applications";
-    router.push(nextPath);
   }, [
+    createGivebutterCampaign,
     formData.campaignTitle,
     isFormDirty,
     parsedCampaignId,
-    updateCampaignMutation,
-    setFieldValue,
     router,
+    setFieldValue,
+    updateCampaignMutation,
   ]);
 
   const handleConfirmSave = useCallback(async () => {
@@ -329,6 +340,7 @@ export default function CampaignReviewPage() {
   }, [initialData]);
 
   if (!parsedCampaignId) return null;
+  if (isStatusTransitioning) return <Loading />;
   if (isLoading) return <Loading />;
   if (error) return <AppError error={error as Error} reset={() => refetch()} />;
   if (!campaignEditData) return <NotFound />;
