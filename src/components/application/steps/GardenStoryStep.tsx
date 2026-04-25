@@ -16,6 +16,7 @@ import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import useCreateOriginalAnswer from "@/src/hooks/answers/useCreateOriginalAnswer";
 import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
 import useDeleteCampaignImage from "@/src/hooks/campaign-image-records/useDeleteCampaignImage";
+import BaseAlert from "@/src/components/bases/BaseAlert";
 
 type PreviewFile = {
   name: string;
@@ -135,6 +136,10 @@ export default function GardenStoryStep() {
   );
   const [supportingUploadError, setSupportingUploadError] =
     useState<UploadError | null>(null);
+  const [successToast, setSuccessToast] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
   const storyAnswersRef = useRef({
     1: values.storyLocationAndAudience,
     2: values.storyChallenge,
@@ -198,6 +203,10 @@ export default function GardenStoryStep() {
         form.setFieldValue("mainPhotoName", nextFiles[0]?.name ?? "");
         form.setFieldValue("mainPhotoSize", nextFiles[0]?.size ?? 0);
         setLastSaved(getFormattedSaveTime());
+        setSuccessToast({
+          title: "Image Uploaded!",
+          message: "Main photo has been uploaded successfully.",
+        });
       } catch (error) {
         console.error(error);
         setUploadError({
@@ -282,6 +291,13 @@ export default function GardenStoryStep() {
           updatedFiles.map((file) => file.size),
         );
         setLastSaved(getFormattedSaveTime());
+        setSuccessToast({
+          title: "Image Uploaded!",
+          message:
+            uploadedFiles.length === 1
+              ? "Supporting photo has been uploaded successfully."
+              : "Supporting photos have been uploaded successfully.",
+        });
       } catch (error) {
         console.error(error);
         setSupportingUploadError({
@@ -922,6 +938,14 @@ export default function GardenStoryStep() {
           Next Step
         </Button>
       </div>
+
+      <BaseAlert
+        open={successToast !== null}
+        onClose={() => setSuccessToast(null)}
+        title={successToast?.title}
+      >
+        {successToast?.message}
+      </BaseAlert>
     </div>
   );
 }

@@ -1,11 +1,11 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import clsx from "clsx";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button } from "@mui/material";
 import BaseAlert from "@/src/components/bases/BaseAlert";
@@ -43,17 +43,52 @@ export default function ReviewApplicationsTable({ applications }: Props) {
   } | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
   const router = useRouter();
+  const pathname = usePathname();
+  const searchParams = useSearchParams();
   const queryClient = useQueryClient();
   const updateCampaignMutation = useUpdateCampaign();
 
+  const clearActionSearchParams = useCallback(() => {
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.delete("action");
+    nextSearchParams.delete("campaign");
+    const nextQuery = nextSearchParams.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
+  }, [pathname, router, searchParams]);
+
+  const queryNotification = useMemo(() => {
+    const action = searchParams.get("action");
+    const campaignName = searchParams.get("campaign");
+
+    if (!action || !campaignName) {
+      return null;
+    }
+
+    if (action !== "approved" && action !== "denied" && action !== "reverted") {
+      return null;
+    }
+
+    return {
+      action,
+      campaignNames: [campaignName],
+    } satisfies {
+      action: "approved" | "denied" | "reverted";
+      campaignNames: string[];
+    };
+  }, [searchParams]);
+
+  const activeNotification = notification ?? queryNotification;
+  const isAlertOpen = snackbarOpen || queryNotification !== null;
+
   useEffect(() => {
-    if (!snackbarOpen) return;
+    if (!isAlertOpen) return;
     const timer = setTimeout(() => {
       setSnackbarOpen(false);
       setNotification(null);
+      clearActionSearchParams();
     }, 4000);
     return () => clearTimeout(timer);
-  }, [snackbarOpen]);
+  }, [isAlertOpen, clearActionSearchParams]);
   const pendingCount = useMemo(
     () =>
       applications.filter((a) => a.status === "pending").length,
@@ -206,37 +241,39 @@ export default function ReviewApplicationsTable({ applications }: Props) {
   return (
     <div className="relative w-full max-w-[1200px] pb-24 pt-2">
       <BaseAlert
-        open={snackbarOpen}
+        open={isAlertOpen}
         onClose={() => {
           setSnackbarOpen(false);
           setNotification(null);
+          clearActionSearchParams();
         }}
         title={
-          notification?.action === "approved"
+          activeNotification?.action === "approved"
             ? "Campaign Approved!"
-            : notification?.action === "denied"
+            : activeNotification?.action === "denied"
               ? "Campaign Denied!"
-              : notification?.action === "reverted"
+              : activeNotification?.action === "reverted"
                 ? "Campaign Restored!"
                 : "Something went wrong."
         }
       >
         <div>
-          {notification?.action !== "error" && notification?.campaignNames && (
+          {activeNotification?.action !== "error" &&
+            activeNotification?.campaignNames && (
             <>
               <p className="text-sm">
-                {notification.action === "approved"
+                {activeNotification.action === "approved"
                   ? "You have successfully approved:"
-                  : notification.action === "denied"
+                  : activeNotification.action === "denied"
                     ? "You have successfully denied:"
                     : "You have successfully restored:"}
               </p>
               <ul className="my-1 list-disc pl-5 text-sm">
-                {notification.campaignNames.map((name) => (
+                {activeNotification.campaignNames.map((name) => (
                   <li key={name}>{name}</li>
                 ))}
               </ul>
-              {notification.action === "approved" && (
+              {activeNotification.action === "approved" && (
                 <p className="text-sm">
                   You can view it on the &ldquo;Ongoing Campaigns&rdquo; page.
                 </p>
@@ -382,7 +419,6 @@ export default function ReviewApplicationsTable({ applications }: Props) {
                   const isSelected = selectedIds.includes(
                     application.campaignId,
                   );
-                  const progressCapped = Math.min(application.goalProgress, 100);
 
                   return (
                     <tr
