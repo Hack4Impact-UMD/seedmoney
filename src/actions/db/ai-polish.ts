@@ -27,7 +27,7 @@ export async function queryOpenAI(
   const client = new OpenAI();
 
   const response = await client.responses.create({
-    model: "gpt-5.4",
+    model: "gpt-5.4-mini",
     input: [
       {
         role: "system",
