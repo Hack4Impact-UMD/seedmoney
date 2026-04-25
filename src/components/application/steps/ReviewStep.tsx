@@ -9,11 +9,12 @@ import {
   useDraftCampaignId,
 } from "@/src/components/application/ApplicationFormProvider";
 import { getApplicationCompletionState } from "@/src/components/application/applicationStepState";
-import { useRouter } from "next/navigation";
+import { notFound, useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
-
+import useCreateAIAnswers from "@/src/hooks/answers/useCreateAIAnswers";
+import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 const stateNames: Record<string, string> = {
   AL: "Alabama",
   AK: "Alaska",
@@ -130,7 +131,12 @@ export default function ReviewSubmitPage() {
   const { draftCampaignId } = useDraftCampaignId();
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const updateCampaign = useUpdateCampaign();
+  const createAIAnswersMutation = useCreateAIAnswers();
   const { data: currentCompetitionData } = useReadCurrentCompetition();
+  const { data: question1, isLoading: isLoadingQuestion1 } = useReadQuestion(1);
+  const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
+  const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
+  const { data: question4, isLoading: isLoadingQuestion4 } = useReadQuestion(4);
   const values = form.state.values;
   const {
     campaignComplete,
@@ -141,6 +147,19 @@ export default function ReviewSubmitPage() {
   } = getApplicationCompletionState(values, hasPassedAgreement);
   const goalValue = Number(values.fundraisingGoal);
   const canSubmit = reviewComplete && !!currentCompetitionData && goalValue > 1;
+  const isLoadingQuestions =
+    isLoadingQuestion1 ||
+    isLoadingQuestion2 ||
+    isLoadingQuestion3 ||
+    isLoadingQuestion4;
+
+  if (isLoadingQuestions) {
+    return <div>Loading...</div>;
+  }
+
+  if (!question1 || !question2 || !question3 || !question4) {
+    notFound();
+  }
 
   const handleSubmitApplication = async () => {
     if (!currentCompetitionData) {
@@ -163,6 +182,41 @@ export default function ReviewSubmitPage() {
     });
 
     await form.handleSubmit();
+
+    if (values.aiOptIn) {
+      const questions = [
+        {
+          questionId: question1.question_id,
+          questionText: question1.question,
+          originalText: values.storyLocationAndAudience,
+        },
+        {
+          questionId: question2.question_id,
+          questionText: question2.question,
+          originalText: values.storyChallenge,
+        },
+        {
+          questionId: question3.question_id,
+          questionText: question3.question,
+          originalText: values.storySeasonActivity,
+        },
+        {
+          questionId: question4.question_id,
+          questionText: question4.question,
+          originalText: values.storyCampaignImpact,
+        },
+      ];
+
+      void createAIAnswersMutation
+        .mutateAsync({
+          campaignId,
+          questions,
+        })
+        .catch((error) => {
+          console.error("Error creating AI-polished answers after submit:", error);
+        });
+    }
+
     router.push(`/dashboard/${campaignId}`);
   };
 
@@ -345,22 +399,22 @@ export default function ReviewSubmitPage() {
         <p className="text-sm">2-3 sentences each</p>
 
         <ValueRow
-          label="Where is your garden, and who does it serve?"
+          label={question1.question}
           value={values.storyLocationAndAudience}
           required
         />
         <ValueRow
-          label="What challenge does your garden help address, and why does it matter locally?"
+          label={question2.question}
           value={values.storyChallenge}
           required
         />
         <ValueRow
-          label="What happens in the garden during the growing season?"
+          label={question3.question}
           value={values.storySeasonActivity}
           required
         />
         <ValueRow
-          label="What will this year's SeedMoney campaign make possible?"
+          label={question4.question}
           value={values.storyCampaignImpact}
           required
         />
