@@ -24,7 +24,10 @@ export async function queryOpenAI(
     return [];
   }
 
-  const client = new OpenAI();
+  const client = new OpenAI({
+    maxRetries: 0,
+    timeout: 15000,
+  });
 
   const response = await client.responses.create({
     model: "gpt-5.4-mini",
