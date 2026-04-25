@@ -13,7 +13,7 @@ import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
-
+import useCreateAIAnswer from "@/src/hooks/answers/useCreateAIAnswer";
 const stateNames: Record<string, string> = {
   AL: "Alabama",
   AK: "Alaska",
@@ -130,6 +130,7 @@ export default function ReviewSubmitPage() {
   const { draftCampaignId } = useDraftCampaignId();
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const updateCampaign = useUpdateCampaign();
+  const createAIAnswerMutation = useCreateAIAnswer();
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const values = form.state.values;
   const {
@@ -163,6 +164,44 @@ export default function ReviewSubmitPage() {
     });
 
     await form.handleSubmit();
+
+    if (values.aiOptIn) {
+      const aiAnswerPayloads = [
+        {
+          questionId: 1,
+          originalText: values.storyLocationAndAudience,
+        },
+        {
+          questionId: 2,
+          originalText: values.storyChallenge,
+        },
+        {
+          questionId: 3,
+          originalText: values.storySeasonActivity,
+        },
+        {
+          questionId: 4,
+          originalText: values.storyCampaignImpact,
+        },
+      ].filter(({ originalText }) => originalText.trim().length > 0);
+
+      void Promise.allSettled(
+        aiAnswerPayloads.map(({ questionId, originalText }) =>
+          createAIAnswerMutation.mutateAsync({
+            campaignId,
+            questionId,
+            originalText,
+          }),
+        ),
+      ).then((results) => {
+        const failures = results.filter((result) => result.status === "rejected");
+
+        if (failures.length > 0) {
+          console.error("Error creating AI-polished answers after submit:", failures);
+        }
+      });
+    }
+
     router.push(`/dashboard/${campaignId}`);
   };
 

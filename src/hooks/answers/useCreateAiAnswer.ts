@@ -4,7 +4,7 @@ import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createAIAnswer } from "@/src/actions/db/ai-polish";
 import { Answers } from "@/src/types/db/answers";
 
-export default function useCreateAiAnswer() {
+export default function useCreateAIAnswer() {
   const queryClient = useQueryClient();
 
   return useMutation<
