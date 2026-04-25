@@ -1,7 +1,7 @@
 "use client";
 
 import { useMutation, useQueryClient } from "@tanstack/react-query";
-import { createAiAnswer } from "@/src/actions/db/answers";
+import { createAIAnswer } from "@/src/actions/db/ai-polish";
 import { Answers } from "@/src/types/db/answers";
 
 export default function useCreateAiAnswer() {
@@ -10,13 +10,13 @@ export default function useCreateAiAnswer() {
   return useMutation<
     Answers,
     Error,
-    { campaignId: number; questionId: number; aiAnswer: string }
+    { campaignId: number; questionId: number; originalText: string }
   >({
-    mutationFn: async ({ campaignId, questionId, aiAnswer }) => {
-      const answer = await createAiAnswer({
+    mutationFn: async ({ campaignId, questionId, originalText }) => {
+      const answer = await createAIAnswer({
         campaignId,
         questionId,
-        aiAnswer,
+        originalText,
       });
 
       if (!answer) {
@@ -32,6 +32,7 @@ export default function useCreateAiAnswer() {
           query.queryKey.some((part) => part === "answers") &&
           query.queryKey.some((part) => part === campaignId),
       });
+
       queryClient.invalidateQueries({
         queryKey: ["campaigns", "read", campaignId],
       });
