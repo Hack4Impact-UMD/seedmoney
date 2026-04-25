@@ -34,6 +34,7 @@ const STATUS_LABELS: Record<AggregateStatus, string> = {
   approved: "Approved",
   denied: "Denied",
   published: "Published",
+  publish_failed: "Publish Failed",
   archived: "Archived",
   mixed: "Mixed",
 };
@@ -47,6 +48,7 @@ function getAggregateStatus(campaigns: UserCampaign[]): AggregateStatus {
 const STATUS_PRIORITY: Status[] = [
   "approved",
   "published",
+  "publish_failed",
   "pending",
   "in_progress",
   "denied",
@@ -64,6 +66,7 @@ const APP_STATUS_CONFIG: Record<Status, { label: string; buttonLabel: string }> 
   approved: { label: "approved", buttonLabel: "VIEW CAMPAIGN" },
   denied: { label: "denied", buttonLabel: "VIEW APPLICATION" },
   published: { label: "published", buttonLabel: "VIEW CAMPAIGN" },
+  publish_failed: { label: "publish failed", buttonLabel: "VIEW CAMPAIGN" },
   archived: { label: "archived", buttonLabel: "VIEW CAMPAIGN" },
 };
 
@@ -73,6 +76,7 @@ const APP_STATUS_ORDER: Status[] = [
   "in_progress",
   "denied",
   "published",
+  "publish_failed",
   "archived",
 ];
 
@@ -94,6 +98,7 @@ function getCampaignStatusPath(status: Status, campaignId: number) {
       return `/dashboard/review-applications/${campaignId}`;
     case "approved":
     case "published":
+    case "publish_failed":
     case "archived":
       return `/dashboard/ongoing-campaigns/${campaignId}`;
     default:
