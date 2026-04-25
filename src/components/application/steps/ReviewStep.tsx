@@ -217,7 +217,7 @@ export default function ReviewSubmitPage() {
         });
     }
 
-    router.push(`/dashboard/${campaignId}`);
+    router.push(`/dashboard/${campaignId}?submitted=1`);
   };
 
   return (

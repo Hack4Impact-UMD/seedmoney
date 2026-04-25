@@ -9,6 +9,7 @@ import { useDropzone } from "react-dropzone";
 import useDeleteCampaignImage from "@/src/hooks/campaign-image-records/useDeleteCampaignImage";
 import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
 import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
+import BaseAlert from "@/src/components/bases/BaseAlert";
 import type {
   CampaignImageRecord,
   HydratedCampaignImageRecord,
@@ -202,6 +203,10 @@ export default function CampaignMediaSection({
   const [uploadError, setUploadError] = useState<UploadError | null>(null);
   const [supportingUploadError, setSupportingUploadError] =
     useState<UploadError | null>(null);
+  const [successToast, setSuccessToast] = useState<{
+    title: string;
+    message: string;
+  } | null>(null);
   const previousImageRecordsRef = useRef(formData.imageRecords);
   const mainPhoto = formData.imageRecords.find((r) => r.is_main);
   const supportingPhotos = formData.imageRecords.filter((r) => !r.is_main);
@@ -267,6 +272,10 @@ export default function CampaignMediaSection({
             ...supportingPhotos,
           ]),
         );
+        setSuccessToast({
+          title: "Image Saved!",
+          message: "Main photo has been saved successfully.",
+        });
       } catch (error) {
         console.error(error);
         setUploadError({
@@ -344,6 +353,13 @@ export default function CampaignMediaSection({
         syncImageRecords(
           sortImageRecords([...formData.imageRecords, ...uploadedFiles]),
         );
+        setSuccessToast({
+          title: "Image Saved!",
+          message:
+            uploadedFiles.length === 1
+              ? "Supporting photo has been saved successfully."
+              : "Supporting photos have been saved successfully.",
+        });
       } catch (error) {
         console.error(error);
         setSupportingUploadError({
@@ -383,6 +399,10 @@ export default function CampaignMediaSection({
         ),
         { syncInitialData: false },
       );
+      setSuccessToast({
+        title: "Image Saved!",
+        message: "Main photo has been updated successfully.",
+      });
     } catch (error) {
       console.error(error);
     }
@@ -556,6 +576,14 @@ export default function CampaignMediaSection({
           </div>
         ))}
       </div>
+
+      <BaseAlert
+        open={successToast !== null}
+        onClose={() => setSuccessToast(null)}
+        title={successToast?.title}
+      >
+        {successToast?.message}
+      </BaseAlert>
     </>
   );
 }

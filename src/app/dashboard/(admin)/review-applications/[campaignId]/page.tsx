@@ -132,8 +132,26 @@ export default function CampaignReviewPage() {
       campaignData: { status: newStatus },
     });
     setFieldValue("status", newStatus);
-    router.push("/dashboard/review-applications");
-  }, [isFormDirty, parsedCampaignId, updateCampaignMutation, setFieldValue, router]);
+    const action =
+      newStatus === "approved"
+        ? "approved"
+        : newStatus === "denied"
+          ? "denied"
+          : newStatus === "pending"
+            ? "reverted"
+            : null;
+    const nextPath = action
+      ? `/dashboard/review-applications?action=${action}&campaign=${encodeURIComponent(formData.campaignTitle)}`
+      : "/dashboard/review-applications";
+    router.push(nextPath);
+  }, [
+    formData.campaignTitle,
+    isFormDirty,
+    parsedCampaignId,
+    updateCampaignMutation,
+    setFieldValue,
+    router,
+  ]);
 
   const handleConfirmSave = useCallback(async () => {
     if (!parsedCampaignId) return;

@@ -1,8 +1,14 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect } from "react";
-import { useParams, useRouter, usePathname, notFound } from "next/navigation";
+import { useCallback, useEffect } from "react";
+import {
+  useParams,
+  useRouter,
+  usePathname,
+  useSearchParams,
+  notFound,
+} from "next/navigation";
 import { useState } from "react";
 import Navbar from "@/src/components/Navbar";
 import DashboardTabs from "@/src/components/dashboard/DashboardTabs";
@@ -35,6 +41,7 @@ export default function DashboardShell({
 }) {
   const router = useRouter();
   const pathname = usePathname();
+  const searchParams = useSearchParams();
   const { campaignId } = useParams<{ campaignId: string }>();
   const { user } = useAuth();
   const {
@@ -60,12 +67,30 @@ export default function DashboardShell({
     donorsLoading || donorsError ? null : donorsPercent;
   const [toast, setToast] = useState(false);
   const [viewCampaignModal, setViewCampaignModal] = useState(false);
+  const submissionToastOpen = searchParams.get("submitted") === "1";
+
+  const handleCloseSubmissionToast = useCallback(() => {
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    nextSearchParams.delete("submitted");
+    const nextQuery = nextSearchParams.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
+  }, [pathname, router, searchParams]);
 
   useEffect(() => {
     if (userData?.is_admin) {
       router.replace(`/dashboard/ongoing-campaigns/${campaignId}`);
     }
   }, [campaignId, router, userData?.is_admin]);
+
+  useEffect(() => {
+    if (!submissionToastOpen || !campaignsData?.length) {
+      return;
+    }
+
+    if (campaignsData[0].status !== "pending") {
+      handleCloseSubmissionToast();
+    }
+  }, [campaignsData, handleCloseSubmissionToast, submissionToastOpen]);
 
   if (!user) notFound();
   if (userError) throw userError;
@@ -133,7 +158,13 @@ export default function DashboardShell({
           <div className="flex-1 bg-gray-50 mt-10">
             <Pending />
           </div>
-
+          <BaseAlert
+            open={submissionToastOpen}
+            onClose={handleCloseSubmissionToast}
+            title="Application Submitted!"
+          >
+            Your application has been submitted successfully.
+          </BaseAlert>
         </div>
 
       </div>
