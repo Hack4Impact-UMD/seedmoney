@@ -6,26 +6,93 @@ import {
 } from "@/src/actions/db/answers";
 import { Answers } from "@/src/types/db/answers";
 
-export async function queryOpenAI(text: string): Promise<string> {
+type PolishQuestionInput = {
+  questionId: string;
+  questionText: string;
+  answerText: string;
+};
+
+type PolishQuestionOutput = {
+  questionId: string;
+  polishedAnswer: string;
+};
+
+export async function queryOpenAI(
+  questions: PolishQuestionInput[],
+): Promise<PolishQuestionOutput[]> {
+  if (questions.length === 0) {
+    return [];
+  }
+
   const client = new OpenAI();
 
   const response = await client.responses.create({
     model: "gpt-5.4",
-    instructions: `You are a copyeditor for Seedmoney, 
-    a non-profit that fundraises for community gardens. 
-    Your job is to revise given campaign description 
-    entries proposed by prospective garden applicants 
-    in the grant-management portal. Correct objective 
-    errors (spelling, grammar, punctuation). 
-    Maintain the original voice and flow of the author. 
-    You may rephrase/reword some text to optimize for clarity. 
-    Double check your work once completed to ensure you did not 
-    misrepresent the original text and maintained the original 
-    style.`,
-    input: text,
+    input: [
+      {
+        role: "system",
+        content: `
+You are a copyeditor for SeedMoney, a non-profit that fundraises for community gardens.
+
+You will receive a list of applicant answers to form questions.
+
+For each answer:
+- correct objective issues like spelling, grammar, and punctuation
+- preserve the applicant's meaning
+- preserve the applicant's voice and overall flow
+- make only light clarity edits when helpful
+- do not add new facts
+- do not remove important details
+- do not rewrite into a different tone
+- return one polished answer for each input answer
+
+Return JSON only.
+        `.trim(),
+      },
+      {
+        role: "user",
+        content: JSON.stringify({
+          questions,
+        }),
+      },
+    ],
+    text: {
+      format: {
+        type: "json_schema",
+        name: "polished_campaign_answers",
+        strict: true,
+        schema: {
+          type: "object",
+          properties: {
+            answers: {
+              type: "array",
+              items: {
+                type: "object",
+                properties: {
+                  questionId: {
+                    type: "string",
+                  },
+                  polishedAnswer: {
+                    type: "string",
+                  },
+                },
+                required: ["questionId", "polishedAnswer"],
+                additionalProperties: false,
+              },
+            },
+          },
+          required: ["answers"],
+          additionalProperties: false,
+        },
+      },
+    },
   });
 
-  return response.output_text;
+  const parsed = JSON.parse(response.output_text) as {
+    answers: PolishQuestionOutput[];
+  };
+
+  return parsed.answers;
 }
 
 export async function createAIAnswer({
