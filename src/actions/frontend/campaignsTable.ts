@@ -86,6 +86,7 @@ export async function readPreviousChallengeApplications(user_id?: string): Promi
     .select(BASE_SELECT)
     .eq("campaign_members.role", "campaign_leader")
     .eq("campaign_members.user_id", user.id)
+    .neq("status", "in_progress")
     .order("date_created", { ascending: false });
 
   const { data, error } = await query;
