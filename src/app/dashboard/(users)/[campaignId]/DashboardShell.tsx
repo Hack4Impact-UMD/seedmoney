@@ -1,7 +1,7 @@
 "use client";
 
 import type { ReactNode } from "react";
-import { useEffect } from "react";
+import { useCallback, useEffect } from "react";
 import {
   useParams,
   useRouter,
@@ -69,18 +69,28 @@ export default function DashboardShell({
   const [viewCampaignModal, setViewCampaignModal] = useState(false);
   const submissionToastOpen = searchParams.get("submitted") === "1";
 
-  const handleCloseSubmissionToast = () => {
+  const handleCloseSubmissionToast = useCallback(() => {
     const nextSearchParams = new URLSearchParams(searchParams.toString());
     nextSearchParams.delete("submitted");
     const nextQuery = nextSearchParams.toString();
     router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname);
-  };
+  }, [pathname, router, searchParams]);
 
   useEffect(() => {
     if (userData?.is_admin) {
       router.replace(`/dashboard/ongoing-campaigns/${campaignId}`);
     }
   }, [campaignId, router, userData?.is_admin]);
+
+  useEffect(() => {
+    if (!submissionToastOpen || !campaignsData?.length) {
+      return;
+    }
+
+    if (campaignsData[0].status !== "pending") {
+      handleCloseSubmissionToast();
+    }
+  }, [campaignsData, handleCloseSubmissionToast, submissionToastOpen]);
 
   if (!user) notFound();
   if (userError) throw userError;
