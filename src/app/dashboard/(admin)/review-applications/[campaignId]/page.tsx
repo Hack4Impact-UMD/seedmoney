@@ -146,16 +146,12 @@ export default function CampaignReviewPage() {
         return`${process.env.NEXT_PUBLIC_SUPABASE_NGROK_URL}/storage/v1/object/public/campaign_images/${storagePath}`
       }
       const mainImage = formData.imageRecords.find((record) => record.is_main === true);
-
-
-
       const supportingImages = formData.imageRecords
         .filter((record) => record.is_main === false)
         .map((record) => `<img src="${getPublicUrl(record.storage_path)}" alt="Campaign image" />`)
         .join("\n");
-
       try {
-        await createGivebutterCampaign.mutateAsync({
+        const givebutterCampaign = await createGivebutterCampaign.mutateAsync({
           title: formData.campaignTitle,
           goal: formData.fundraisingGoal ? Number(formData.fundraisingGoal) : 1,
           end_at: currentCompetition?.end_date ?? "",
@@ -180,6 +176,12 @@ export default function CampaignReviewPage() {
             ${supportingImages}
           `.trim(),
         });
+
+        await updateCampaignMutation.mutateAsync({
+          campaignId: parsedCampaignId,
+          campaignData: { givebutter_id: givebutterCampaign.id, givebutter_slug: givebutterCampaign.slug, givebutterlink: givebutterCampaign.url },
+        });
+
       } catch (err) {
         const message = err instanceof Error ? err.message : "Failed to create Givebutter campaign.";
         console.error(message);

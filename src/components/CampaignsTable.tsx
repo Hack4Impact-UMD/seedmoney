@@ -158,7 +158,7 @@ export default function CampaignsTable({ initialData }: Props) {
   );
 
   const handleCampaignClick = (campaignId: number) => {
-    router.push(`/dashboard/${campaignId}`);
+    router.push(`/dashboard/ongoing-campaigns/${campaignId}`);
   };
 
   const handleResetFilters = () => {
