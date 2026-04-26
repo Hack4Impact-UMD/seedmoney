@@ -1,6 +1,6 @@
 "use client";
 
-import { Button } from "@mui/material";
+import {Button} from "@mui/material";
 
 interface EditCampaignActionsProps {
   isFormDirty: boolean;
@@ -14,7 +14,7 @@ export default function EditCampaignActions({
   onCancel,
 }: EditCampaignActionsProps) {
   return (
-    <div className="w-32 flex flex-col gap-3 pt-1">
+      <div className="w-full lg:w-32 flex flex-col gap-3 pt-1">
       <Button variant="contained" disabled={!isFormDirty} onClick={onSave}>
         Save
       </Button>
