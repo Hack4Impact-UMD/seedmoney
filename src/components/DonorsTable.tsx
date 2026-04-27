@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useMemo, useState } from "react";
+import Button from "@mui/material/Button";
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -51,6 +52,43 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
       );
     });
   }, [donors, searchQuery]);
+
+  const handleExportCsv = useCallback(() => {
+    if (filteredData.length === 0) {
+      return;
+    }
+
+    const rows = [
+      ["ID", "Amount", "Contributor", "Contributor Email", "Date", "Status"],
+      ...filteredData.map((donor) => [
+        donor.id,
+        donor.amount.toFixed(2),
+        donor.name,
+        donor.email,
+        donor.date.split("T")[0],
+        donor.status,
+      ]),
+    ];
+
+    const csvContent = rows
+      .map((row) =>
+        row
+          .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+          .join(","),
+      )
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.setAttribute("download", `campaign-${campaignId}-donors.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }, [campaignId, filteredData]);
 
   const columnHelper = createColumnHelper<Donor>();
 
@@ -215,25 +253,37 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
               </span>
 
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
-                  className="p-1 text-2xl font-bold text-black disabled:opacity-30"
+                  variant="text"
+                  size="small"
+                  className="!min-w-0 !p-1 !text-2xl !font-bold !text-black disabled:!opacity-30"
                 >
                   &lt;
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
-                  className="p-1 text-2xl font-bold text-black disabled:opacity-30"
+                  variant="text"
+                  size="small"
+                  className="!min-w-0 !p-1 !text-2xl !font-bold !text-black disabled:!opacity-30"
                 >
                   &gt;
-                </button>
+                </Button>
               </div>
             </div>
           </>
         )}
-        <button className="bg-[#2c7a45] text-white uppercase font-semibold px-4 py-2 rounded-md mb-7 ml-4 cursor-pointer outline-none">Export to CSV</button>
+        <Button
+          variant="contained"
+          size="small"
+          onClick={handleExportCsv}
+          disabled={filteredData.length === 0}
+          className="!mb-7 !ml-4"
+        >
+          Export to CSV
+        </Button>
       </div>
     </div>
   );
