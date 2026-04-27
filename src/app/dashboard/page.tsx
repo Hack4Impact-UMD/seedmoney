@@ -12,6 +12,7 @@ import NotStarted from "@/src/components/dashboard/NotStarted";
 import Navbar from "@/src/components/Navbar";
 import SummaryCard from "@/src/components/dashboard/SummaryCard";
 import CampaignCard from "@/src/components/dashboard/CampaignCard";
+import DashboardFooter from "@/src/components/DashboardFooter";
 
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
@@ -221,7 +222,7 @@ export default function DashboardIndexPage() {
   return (
     <div className="flex min-h-screen">
       <Navbar />
-      <div className="flex-1 bg-gray-50 p-10">
+      <div className="flex-1 bg-gray-50 p-4 pb-24 md:p-10 md:pb-10 flex flex-col min-h-screen">
         <div className="flex items-center gap-4 flex-wrap">
           <h3 className="text-4xl font-bold text-[#054A1F]">
             {isAdmin ? "Home" : "Dashboard"}
@@ -355,6 +356,9 @@ export default function DashboardIndexPage() {
             </div>
           </>
         )}
+        <div className="mt-auto">
+          <DashboardFooter />
+        </div>
       </div>
     </div>
   );

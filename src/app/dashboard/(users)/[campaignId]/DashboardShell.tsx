@@ -32,7 +32,7 @@ import DashboardFooter from "@/src/components/DashboardFooter";
 import FaqSection from "@/src/components/dashboard/FaqSection";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 
-type DashboardTab = "Overview" | "Donors" | "Analytics";
+type DashboardTab = "Overview" | "Donations" | "Analytics";
 
 export default function DashboardShell({
   children,
@@ -106,7 +106,7 @@ export default function DashboardShell({
   const selectedCampaignId = Number(campaignId);
 
   const selectedTab: DashboardTab = pathname.endsWith("/donors")
-    ? "Donors"
+    ? "Donations"
     : pathname.endsWith("/analytics")
       ? "Analytics"
       : "Overview";
@@ -114,7 +114,7 @@ export default function DashboardShell({
   const handleTabChange = (newValue: string) => {
     const basePath = `/dashboard/${selectedCampaignId}`;
 
-    if (newValue === "Donors") {
+    if (newValue === "Donations") {
       router.push(`${basePath}/donors`);
       return;
     }
@@ -139,9 +139,9 @@ export default function DashboardShell({
     return (
       <div className="flex min-h-screen">
         <Navbar/>
-        <div className="flex-1 bg-gray-50 p-10">
+        <div className="flex-1 bg-[#F6FAF9] p-10">
           <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
-          <div className="flex-1 bg-gray-50 mt-10">
+          <div className="flex-1 bg-[#F6FAF9] mt-10">
             <NotComplete onContinueApplication={handleContinueApplication} />
           </div>
         </div>
@@ -153,9 +153,9 @@ export default function DashboardShell({
     return (
       <div className="flex min-h-screen">
         <Navbar/>
-        <div className="flex-1 bg-gray-50 p-10">
+        <div className="flex-1 bg-[#F6FAF9] p-10">
           <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
-          <div className="flex-1 bg-gray-50 mt-10">
+          <div className="flex-1 bg-[#F6FAF9] mt-10">
             <Pending />
           </div>
           <BaseAlert
@@ -175,7 +175,7 @@ export default function DashboardShell({
     return (
       <div className="flex min-h-screen">
         <Navbar />
-        <div className="flex-1 bg-gray-50 p-10">
+        <div className="flex-1 bg-[#F6FAF9] p-10">
           <h3 className="text-4xl font-bold text-[#096B2E]">
             {campaignData.name} (Not Approved)
           </h3>
@@ -190,38 +190,48 @@ export default function DashboardShell({
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen overflow-x-hidden">
       <Navbar/>
 
-      <div className="flex-1 bg-gray-50 p-10">
-        <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
+      <div className="flex-1 min-w-0 overflow-x-hidden bg-[#F6FAF9] p-4 pb-24 md:p-10 md:pb-10">
+        <div className="flex items-center justify-between gap-2 mb-1">
+          <h3 className="text-2xl md:text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
+          {campaignData.competition_id === currentCompetitionData?.competition_id && (
+            <span className="shrink-0 rounded-full border border-[#2D7A45] px-3 py-1 text-xs font-medium text-[#2D7A45]">
+              Challenge Active
+            </span>
+          )}
+        </div>
 
         <DashboardTabs selectedTab={selectedTab} onChange={handleTabChange} />
 
-        <Button size="small" variant="contained" className = "!mr-2" onClick={() => setViewCampaignModal(true)}>View Campaign Site
-          <OpenInNew fontSize="small" className="text-[#FFFFFF] ml-[5px]" />
-        </Button>
-        <Button
-          size="small"
-          variant="outlined"
-          className="!mr-2"
-          onClick={() => {
-            navigator.clipboard.writeText(campaignData.givebutterlink);
-            setToast(true);
-          }}
-        >
-          Copy Campaign Site Link
-        </Button>        
-        <Button 
-          size="small" 
-          variant="outlined"
-          onClick={() => router.push("/leaderboard")}
-        >
-          View Leaderboard
-          <OpenInNew fontSize="small" className="text-[#123A1E] ml-[5px]" />
+        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
+          <Button size="small" variant="contained" className="!shrink-0" onClick={() => setViewCampaignModal(true)}>
+            View Campaign
+            <OpenInNew fontSize="small" className="text-[#FFFFFF] ml-[5px]" />
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            className="!shrink-0"
+            onClick={() => {
+              navigator.clipboard.writeText(campaignData.givebutterlink);
+              setToast(true);
+            }}
+          >
+            Share Campaign
+          </Button>
+          <Button
+            size="small"
+            variant="outlined"
+            className="!shrink-0"
+            onClick={() => router.push("/leaderboard")}
+          >
+            Leaderboard
+            <OpenInNew fontSize="small" className="text-[#123A1E] ml-[5px]" />
+          </Button>
+        </div>
 
-        </Button>
-            
         <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
           <TotalRaisedCard
             totalRaised={campaignData.raised}
@@ -229,7 +239,7 @@ export default function DashboardShell({
             raisedChangePercent={raisedChangePercent}
           />
 
-          <div className="flex flex-col gap-6">
+          <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-6">
             <TotalDonorsCard
               totalDonors={campaignData.donors}
               donorsChangePercent={donorsChangePercent}
@@ -273,7 +283,7 @@ export default function DashboardShell({
           <p>Link has been copied to clipboard</p>
       </BaseAlert>
 
-      {campaignData.competition_id !== currentCompetitionData?.competition_id &&
+      {currentCompetitionData != null && campaignData.competition_id !== currentCompetitionData.competition_id &&
         <BaseAlert
           open={true}
           onClose={() => {}}

@@ -119,25 +119,37 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
   return (
     <div className="w-full">
       <div className="overflow-x-auto rounded-xl bg-white md:mx-auto md:w-full border border-1 border-[#e5e5e5]">
-        <div className="px-5 pt-8">
-          <h2 className="text-center text-black sm:text-left">Donors List</h2>
-          <p className="text-center text-sm text-gray-500 sm:text-left">
-            {filteredData.length} donor{filteredData.length === 1 ? "" : "s"}
-          </p>
+        <div className="px-5 pt-6">
+          <div className="flex items-start justify-between gap-2 mb-1">
+            <div>
+              <h2 className="text-black">Donation List</h2>
+              <p className="text-sm text-gray-500">
+                {filteredData.length} Donation{filteredData.length === 1 ? "" : "s"}
+              </p>
+            </div>
+            <button className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold uppercase text-gray-700 hover:bg-gray-50 cursor-pointer">
+              Export to CSV
+            </button>
+          </div>
 
-          <div className="relative my-6">
-            <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs text-gray-400">
-              Search
-            </label>
-            <div className="flex items-center rounded-lg border border-gray-200 px-3 py-2.5 transition-colors focus-within:border-blue-500">
+          <div className="flex items-center gap-2 my-4">
+            <div className="flex flex-1 items-center gap-2 rounded-lg border border-gray-200 px-3 py-2.5 transition-colors focus-within:border-blue-500">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg" className="shrink-0 text-gray-400">
+                <path d="M17.5 17.5L13.875 13.875M15.8333 9.16667C15.8333 12.8486 12.8486 15.8333 9.16667 15.8333C5.48477 15.8333 2.5 12.8486 2.5 9.16667C2.5 5.48477 5.48477 2.5 9.16667 2.5C12.8486 2.5 15.8333 5.48477 15.8333 9.16667Z" stroke="#9CA3AF" strokeWidth="1.66667" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
               <input
                 type="text"
                 value={searchQuery}
                 onChange={(e) => setSearchQuery(e.target.value)}
-                placeholder="Search by donor, email, ID, reward, or amount"
-                className="w-full overflow-x-auto bg-transparent p-1 text-md outline-none"
+                placeholder="Search"
+                className="w-full bg-transparent text-sm outline-none"
               />
             </div>
+            <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500">
+              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
+                <path d="M5 10H15M2.5 5H17.5M7.5 15H12.5" stroke="#6B7280" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+            </button>
           </div>
         </div>
 
@@ -145,7 +157,39 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
           <div className="p-8 text-center text-gray-500">No donors available.</div>
         ) : (
           <>
-            <table className="w-full">
+            {/* Mobile card view */}
+            <div className="md:hidden px-4 pb-4 flex flex-col gap-3">
+              {table.getRowModel().rows.map((row, index) => {
+                const donor = row.original;
+                const isSuccess = donor.status.toLowerCase() === "succeeded" || donor.status.toLowerCase() === "paid";
+                return (
+                  <div key={row.id} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                    <div className="px-4 py-3 border-b border-gray-100">
+                      <span className="font-semibold text-gray-800">{String(index + 1).padStart(2, "0")}</span>
+                    </div>
+                    {[
+                      { label: "Contributor Name", value: donor.name },
+                      { label: "Amount", value: `$${donor.amount.toFixed(2)}` },
+                      { label: "Contributor Email", value: donor.email },
+                    ].map(({ label, value }) => (
+                      <div key={label} className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                        <span className="text-xs text-gray-400">{label}</span>
+                        <span className="text-sm text-gray-800 text-right max-w-[55%] truncate">{value}</span>
+                      </div>
+                    ))}
+                    <div className="flex items-center justify-between px-4 py-3">
+                      <span className="text-xs text-gray-400">Status</span>
+                      <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${isSuccess ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
+                        {isSuccess ? "Success" : donor.status}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop table view */}
+            <table className="hidden md:table w-full">
               <thead>
                 {table.getHeaderGroups().map((headerGroup) => (
                   <tr key={headerGroup.id}>
@@ -185,7 +229,7 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
               </tbody>
             </table>
 
-            <div className="flex items-center justify-end gap-6 border-t border-gray-100 px-6 py-4 text-sm text-gray-500">
+            <div className="hidden md:flex items-center justify-end gap-6 border-t border-gray-100 px-6 py-4 text-sm text-gray-500">
               <div className="flex items-center gap-2">
                 <span>Rows per page:</span>
                 <select
@@ -233,7 +277,6 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
             </div>
           </>
         )}
-        <button className="bg-[#2c7a45] text-white uppercase font-semibold px-4 py-2 rounded-md mb-7 ml-4 cursor-pointer outline-none">Export to CSV</button>
       </div>
     </div>
   );
