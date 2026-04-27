@@ -268,7 +268,7 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
                   disabled={!table.getCanPreviousPage()}
                   variant="text"
                   size="small"
-                  className="!min-w-0 !p-1 !text-2xl !font-bold !text-black disabled:!opacity-30"
+                  className="min-w-0! p-1! text-2xl! font-bold! text-black! disabled:opacity-30!"
                 >
                   &lt;
                 </Button>
@@ -277,7 +277,7 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
                   disabled={!table.getCanNextPage()}
                   variant="text"
                   size="small"
-                  className="!min-w-0 !p-1 !text-2xl !font-bold !text-black disabled:!opacity-30"
+                  className="min-w-0! p-1! text-2xl! font-bold! text-black! disabled:opacity-30!"
                 >
                   &gt;
                 </Button>
@@ -290,7 +290,7 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
           size="small"
           onClick={handleExportCsv}
           disabled={filteredData.length === 0}
-          className="!mb-7 !ml-4"
+          className="mb-7! ml-4!"
         >
           Export to CSV
         </Button>
