@@ -10,14 +10,22 @@ import {
 } from "@tanstack/table-core";
 import { flexRender, useReactTable } from "@tanstack/react-table";
 import useReadTransactionsByCampaign from "@/src/hooks/transactions/useReadTransactionsByCampaign";
+import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import { Donor } from "@/src/types/frontend/donorsTable";
 
 interface DonorsTableProps {
   campaignId: number;
+  campaignName?: string;
 }
 
-export default function DonorsTable({ campaignId }: DonorsTableProps) {
+export default function DonorsTable({
+  campaignId,
+  campaignName,
+}: DonorsTableProps) {
   const { data: transactions, isLoading } = useReadTransactionsByCampaign(campaignId);
+  const { data: campaignsData } = useReadCampaign(
+    campaignName ? undefined : { campaignId },
+  );
   const [searchQuery, setSearchQuery] = useState("");
 
   const donors: Donor[] = useMemo(() => {
@@ -63,6 +71,18 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
     return stringValue;
   }, []);
 
+  const exportFileName = useMemo(() => {
+    const resolvedCampaignName =
+      campaignName || campaignsData?.[0]?.name || `campaign-${campaignId}`;
+
+    const normalizedCampaignName = resolvedCampaignName
+      .trim()
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
+      .replace(/\s+/g, "-");
+
+    return `${normalizedCampaignName || `campaign-${campaignId}`}-donors.csv`;
+  }, [campaignId, campaignName, campaignsData]);
+
   const handleExportCsv = useCallback(() => {
     if (filteredData.length === 0) {
       return;
@@ -93,12 +113,12 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
     const link = document.createElement("a");
 
     link.href = url;
-    link.setAttribute("download", `campaign-${campaignId}-donors.csv`);
+    link.setAttribute("download", exportFileName);
     document.body.appendChild(link);
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  }, [campaignId, filteredData, sanitizeCsvValue]);
+  }, [exportFileName, filteredData, sanitizeCsvValue]);
 
   const columnHelper = createColumnHelper<Donor>();
 
