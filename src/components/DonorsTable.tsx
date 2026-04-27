@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useCallback, useMemo, useState } from "react";
+import Button from "@mui/material/Button";
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -9,14 +10,22 @@ import {
 } from "@tanstack/table-core";
 import { flexRender, useReactTable } from "@tanstack/react-table";
 import useReadTransactionsByCampaign from "@/src/hooks/transactions/useReadTransactionsByCampaign";
+import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import { Donor } from "@/src/types/frontend/donorsTable";
 
 interface DonorsTableProps {
   campaignId: number;
+  campaignName?: string;
 }
 
-export default function DonorsTable({ campaignId }: DonorsTableProps) {
+export default function DonorsTable({
+  campaignId,
+  campaignName,
+}: DonorsTableProps) {
   const { data: transactions, isLoading } = useReadTransactionsByCampaign(campaignId);
+  const { data: campaignsData } = useReadCampaign(
+    campaignName ? undefined : { campaignId },
+  );
   const [searchQuery, setSearchQuery] = useState("");
 
   const donors: Donor[] = useMemo(() => {
@@ -51,6 +60,65 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
       );
     });
   }, [donors, searchQuery]);
+
+  const sanitizeCsvValue = useCallback((value: unknown) => {
+    const stringValue = String(value);
+
+    if (/^[=+\-@]/.test(stringValue)) {
+      return `'${stringValue}`;
+    }
+
+    return stringValue;
+  }, []);
+
+  const exportFileName = useMemo(() => {
+    const resolvedCampaignName =
+      campaignName || campaignsData?.[0]?.name || `campaign-${campaignId}`;
+
+    const normalizedCampaignName = resolvedCampaignName
+      .trim()
+      .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
+      .replace(/\s+/g, "-");
+
+    return `${normalizedCampaignName || `campaign-${campaignId}`}-donors.csv`;
+  }, [campaignId, campaignName, campaignsData]);
+
+  const handleExportCsv = useCallback(() => {
+    if (filteredData.length === 0) {
+      return;
+    }
+
+    const rows = [
+      ["ID", "Amount", "Contributor", "Contributor Email", "Date", "Status"],
+      ...filteredData.map((donor) => [
+        sanitizeCsvValue(donor.id),
+        sanitizeCsvValue(donor.amount.toFixed(2)),
+        sanitizeCsvValue(donor.name),
+        sanitizeCsvValue(donor.email),
+        sanitizeCsvValue(donor.date.split("T")[0]),
+        sanitizeCsvValue(donor.status),
+      ]),
+    ];
+
+    const csvContent = rows
+      .map((row) =>
+        row
+          .map((value) => `"${sanitizeCsvValue(value).replaceAll('"', '""')}"`)
+          .join(","),
+      )
+      .join("\n");
+
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = window.URL.createObjectURL(blob);
+    const link = document.createElement("a");
+
+    link.href = url;
+    link.setAttribute("download", exportFileName);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+    window.URL.revokeObjectURL(url);
+  }, [exportFileName, filteredData, sanitizeCsvValue]);
 
   const columnHelper = createColumnHelper<Donor>();
 
@@ -127,7 +195,11 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
                 {filteredData.length} Donation{filteredData.length === 1 ? "" : "s"}
               </p>
             </div>
-            <button className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold uppercase text-gray-700 hover:bg-gray-50 cursor-pointer">
+            <button
+              onClick={handleExportCsv}
+              disabled={filteredData.length === 0}
+              className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold uppercase text-gray-700 hover:bg-gray-50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
+            >
               Export to CSV
             </button>
           </div>
@@ -259,20 +331,24 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
               </span>
 
               <div className="flex items-center gap-2">
-                <button
+                <Button
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
-                  className="p-1 text-2xl font-bold text-black disabled:opacity-30"
+                  variant="text"
+                  size="small"
+                  className="min-w-0! p-1! text-2xl! font-bold! text-black! disabled:opacity-30!"
                 >
                   &lt;
-                </button>
-                <button
+                </Button>
+                <Button
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
-                  className="p-1 text-2xl font-bold text-black disabled:opacity-30"
+                  variant="text"
+                  size="small"
+                  className="min-w-0! p-1! text-2xl! font-bold! text-black! disabled:opacity-30!"
                 >
                   &gt;
-                </button>
+                </Button>
               </div>
             </div>
           </>

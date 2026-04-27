@@ -228,7 +228,7 @@ export default function AdminCampaignPage() {
           />
         )}
 
-        <DonorsTable campaignId={campaignId} />
+        <DonorsTable campaignId={campaignId} campaignName={campaignData.name} />
       </div>
 
       <BaseModal
