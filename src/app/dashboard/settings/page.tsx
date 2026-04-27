@@ -55,7 +55,11 @@ export default function SettingsPage() {
     lastName: string;
   } | null>(null);
 
-  const isGoogleAuth = user?.app_metadata?.provider === "google";
+  const isGoogleAuth =
+    user?.app_metadata?.provider === "google" ||
+    user?.app_metadata?.providers?.includes("google") === true ||
+    user?.identities?.some((identity) => identity.provider === "google") ===
+      true;
   const firstName = savedName?.firstName || userData?.first_name || "SeedMoney";
   const lastName = savedName?.lastName || userData?.last_name || "User";
   const email = userData?.email || user?.email || "Could not fetch email.";
