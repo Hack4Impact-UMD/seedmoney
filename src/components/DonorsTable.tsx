@@ -53,6 +53,16 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
     });
   }, [donors, searchQuery]);
 
+  const sanitizeCsvValue = useCallback((value: unknown) => {
+    const stringValue = String(value);
+
+    if (/^[=+\-@]/.test(stringValue)) {
+      return `'${stringValue}`;
+    }
+
+    return stringValue;
+  }, []);
+
   const handleExportCsv = useCallback(() => {
     if (filteredData.length === 0) {
       return;
@@ -61,19 +71,19 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
     const rows = [
       ["ID", "Amount", "Contributor", "Contributor Email", "Date", "Status"],
       ...filteredData.map((donor) => [
-        donor.id,
-        donor.amount.toFixed(2),
-        donor.name,
-        donor.email,
-        donor.date.split("T")[0],
-        donor.status,
+        sanitizeCsvValue(donor.id),
+        sanitizeCsvValue(donor.amount.toFixed(2)),
+        sanitizeCsvValue(donor.name),
+        sanitizeCsvValue(donor.email),
+        sanitizeCsvValue(donor.date.split("T")[0]),
+        sanitizeCsvValue(donor.status),
       ]),
     ];
 
     const csvContent = rows
       .map((row) =>
         row
-          .map((value) => `"${String(value).replaceAll('"', '""')}"`)
+          .map((value) => `"${sanitizeCsvValue(value).replaceAll('"', '""')}"`)
           .join(","),
       )
       .join("\n");
@@ -88,7 +98,7 @@ export default function DonorsTable({ campaignId }: DonorsTableProps) {
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  }, [campaignId, filteredData]);
+  }, [campaignId, filteredData, sanitizeCsvValue]);
 
   const columnHelper = createColumnHelper<Donor>();
 
