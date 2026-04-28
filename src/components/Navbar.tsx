@@ -176,9 +176,10 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
         >
           <div
             className={clsx(
-              "flex shrink-0 items-center justify-center rounded-full bg-white",
+              "flex shrink-0 items-center justify-center rounded-full bg-white cursor-pointer",
               isCollapsed ? "h-11 w-11" : compact ? "h-14 w-14" : "h-16 w-16",
             )}
+            onClick={() => router.push("/dashboard")}
           >
             <Image
               src="/seedMoneyLogo.png"
