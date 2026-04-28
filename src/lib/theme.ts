@@ -1,5 +1,19 @@
 import { createTheme } from "@mui/material/styles";
 
+
+declare module "@mui/material/Chip" {
+  interface ChipPropsVariantOverrides {
+    approved: true;
+    denied: true;
+    pending: true;
+    published: true;
+    in_progress: true;
+    publish_failed: true;
+    archived: true;
+  }
+}
+
+
 const theme = createTheme({
   typography: {
     fontFamily: "var(--font-Lato), sans-serif",
@@ -138,6 +152,28 @@ const theme = createTheme({
             fontWeight: 400,
           },
         },
+      ],
+    },
+
+    MuiChip: {
+      styleOverrides: {
+        root: {
+          fontFamily: "var(--font-Lato), sans-serif",
+          fontWeight: 400,
+          borderRadius: "999px",
+          fontSize: "13px",
+          height: "32px",
+          paddingInline: "4px",
+        },
+      },
+      variants: [
+        { props: { variant: "approved" },       style: { border: "1px solid #1976D2", color: "#1976D2", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "archived" },       style: { border: "1px solid #A6A6A6", color: "#A6A6A6", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "denied" },         style: { border: "1px solid #FF8C29", color: "#FF8C29", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "in_progress" },    style: { border: "1px solid #6A7282", color: "#6A7282", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "pending" },        style: { border: "1px solid #883280", color: "#883280", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "publish_failed" }, style: { border: "1px solid #D32F2F", color: "#D32F2F", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "published" },      style: { border: "1px solid #2D7A45", color: "#2D7A45", backgroundColor: "#FFFFFF" } },
       ],
     },
   },
