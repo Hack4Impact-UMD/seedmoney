@@ -31,8 +31,13 @@ import BaseAlert from "@/src/components/bases/BaseAlert";
 import DashboardFooter from "@/src/components/DashboardFooter";
 import FaqSection from "@/src/components/dashboard/FaqSection";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
+import { Chip } from "@mui/material";
+import { getStatusLabel } from "@/src/lib/utils/statusConversions";
+import { Status } from "@src/types/db/enums";
+import moment from "moment";
 
 type DashboardTab = "Overview" | "Donors" | "Analytics";
+
 
 export default function DashboardShell({
   children,
@@ -189,12 +194,39 @@ export default function DashboardShell({
     );
   }
 
+  const isChallengeActive =
+  moment().isAfter(currentCompetitionData?.start_date) &&
+  moment().isBefore(currentCompetitionData?.end_date);
+
   return (
     <div className="flex min-h-screen">
       <Navbar/>
 
       <div className="flex-1 bg-gray-50 p-10">
-        <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
+        <div className = "flex flex-row justify-between items-center">
+          <div className = "flex flex-row items-center ">
+            <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
+            <p className = "mt-[5px] ml-[10px] text-[#A6A6A6]">Created in {moment(currentCompetitionData?.start_date).format("YYYY")}</p>
+
+          </div>
+
+          <div>
+            {isChallengeActive ? (
+              <>
+                <Chip
+                  variant={campaignData.status}
+                  label={getStatusLabel(campaignData.status)}
+                />
+                <Chip variant="published" label="SeedMoney Challenge Active" />
+              </>
+            ) : (
+              <Chip variant="archived" label="SeedMoney Challenge Inactive" />
+            )}
+          </div>
+
+
+        </div>
+
 
         <DashboardTabs selectedTab={selectedTab} onChange={handleTabChange} />
 
@@ -273,15 +305,7 @@ export default function DashboardShell({
           <p>Link has been copied to clipboard</p>
       </BaseAlert>
 
-      {campaignData.competition_id !== currentCompetitionData?.competition_id &&
-        <BaseAlert
-          open={true}
-          onClose={() => {}}
-          title="This campaign has ended!"
-        >
-          <p>This page now displays the final <br></br>statistics of your campaign</p>
-        </BaseAlert>
-      }
+
     </div>
   );
 }

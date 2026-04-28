@@ -100,6 +100,9 @@ export default function CampaignsTable({ initialData }: Props) {
 
   const lastRow = Math.min((currentPageIndex + 1) * pageSize, filteredData.length);
 
+  if (isLoadingUser) return null;
+  if (userError || !userData) throw new Error("Unauthorized");
+
   const handleCampaignClick = (campaignId: number) => {
     const path = userData.is_admin
       ? `/dashboard/ongoing-campaigns/${campaignId}`
@@ -112,9 +115,6 @@ export default function CampaignsTable({ initialData }: Props) {
     setYearFilter("all");
     setPageIndex(0);
   };
-
-  if (isLoadingUser) return null;
-  if (userError || !userData) throw new Error("Unauthorized");
 
   return (
     <div className="w-full">
