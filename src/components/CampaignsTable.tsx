@@ -51,7 +51,7 @@ function getGoalProgress(
 function StatusChip({ status }: { status: string }) {
   return (
     <Chip
-      variant={status as any}
+      variant={status as Status}
       label={getStatusLabel(status)}
     />
   );

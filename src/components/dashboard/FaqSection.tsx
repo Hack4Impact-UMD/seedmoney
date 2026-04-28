@@ -10,10 +10,9 @@ import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import OpenInNew from "@mui/icons-material/OpenInNew";
 import Link from "next/link";
 
-
 export default function FaqSection() {
   return (
-    <div className="bg-white p-8 rounded-xl border border-[#e5e5e5] border-[2px]">
+    <div className="bg-white p-8 rounded-xl border-2 border-[#e5e5e5] rounded-xl">
       <h2 className="text-xl font-bold text-[#212121] mb-6">
         <span className="flex flex-row items-center">
           Frequently Asked Questions
@@ -28,6 +27,7 @@ export default function FaqSection() {
           <OpenInNew fontSize="small" className="text-[#0288D1] ml-[5px]" />
         </span>
       </h2>
+
       <div className="space-y-4">
         <Accordion elevation={0} className="border border-[#e5e5e5] rounded-lg before:hidden" sx={{ "&:not(:last-child)": { marginBottom: "1rem" }, borderRadius: "8px !important" }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
@@ -61,7 +61,7 @@ export default function FaqSection() {
           </AccordionSummary>
           <AccordionDetails>
             <Typography className="text-slate-500 text-sm leading-relaxed">
-              Funds are disbursed in January following the close of the Challenge on December 15. In late December, we'll email you a short form to confirm or update your payment details. Once confirmed, we'll send your campaign's raised funds along with any grant award.
+              Funds are disbursed in January following the close of the Challenge on December 15. In late December, we&apos;ll email you a short form to confirm or update your payment details. Once confirmed, we&apos;ll send your campaign&apos;s raised funds along with any grant award.
             </Typography>
           </AccordionDetails>
         </Accordion>
@@ -72,7 +72,7 @@ export default function FaqSection() {
           </AccordionSummary>
           <AccordionDetails>
             <Typography className="text-slate-500 text-sm leading-relaxed">
-              You don't need to do anything right now. After the Challenge ends, we'll send you a secure link to review and confirm the payment information you provided in your application. If anything has changed, you can update it then. If urgent, use the support form below.
+              You don&apos;t need to do anything right now. After the Challenge ends, we&apos;ll send you a secure link to review and confirm the payment information you provided in your application. If anything has changed, you can update it then. If urgent, use the support form below.
             </Typography>
           </AccordionDetails>
         </Accordion>
