@@ -1,5 +1,6 @@
 import { Button, MenuItem, Select } from "@mui/material";
 import SendIcon from "@mui/icons-material/Send";
+import { Logout } from "@mui/icons-material";
 
 export default function HelpForm() {
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
@@ -54,7 +55,7 @@ export default function HelpForm() {
           />
         </div>
 
-        <Button type="submit" variant="contained" size="small" startIcon={<SendIcon />}>
+        <Button type="submit" variant="contained" size="small" startIcon={<Logout />}>
           Submit Request
         </Button>
       </form>

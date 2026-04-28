@@ -22,6 +22,7 @@ import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
 import useReadCurrentCompetition from "../hooks/competition-metadata/useReadCurrentCompetition";
 import BaseModal from "@/src/components/bases/BaseModal";
+import Logout from "@mui/icons-material/Logout";
 
 export default function Navbar({ compact = false }: { compact?: boolean }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -417,18 +418,22 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
           Most applicants complete this application in 20–30 minutes.
         </p>
 
+
         <div className="flex justify-end">
-          <button
+          <Button
+            variant="contained"
+            size="medium"
             onClick={() => {
               setOpenApplyModal(false);
               router.push("/apply");
             }}
-            className="bg-[#2D5C3A] hover:bg-[#254d30] text-white font-bold uppercase tracking-wide px-6 py-3 rounded flex items-center gap-2"
+            endIcon={<Logout />}
           >
             Start Application
-            <span>↪</span>
-          </button>
+          </Button>
+          
         </div>
+
       </BaseModal>
     </nav>
   );
