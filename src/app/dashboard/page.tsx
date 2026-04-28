@@ -7,12 +7,10 @@ import moment from "moment";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import OutlinedFlagIcon from "@mui/icons-material/OutlinedFlag";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-
 import NotStarted from "@/src/components/dashboard/NotStarted";
 import Navbar from "@/src/components/Navbar";
 import SummaryCard from "@/src/components/dashboard/SummaryCard";
 import CampaignCard from "@/src/components/dashboard/CampaignCard";
-
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
@@ -20,6 +18,10 @@ import useReadAllCampaigns from "@/src/hooks/campaigns/useReadAllCampaigns";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadAllCompetitions from "@/src/hooks/competition-metadata/useReadAllCompetitions";
 import useReadCampaignImageUrlsByCampaignIds from "@/src/hooks/campaign-image-records/useReadCampaignImageUrlsByCampaignIds";
+import InformationSection from "@/src/components/dashboard/InformationSection";
+import BaseModal from "@/src/components/bases/BaseModal";
+import { Button } from "@mui/material";
+import { Logout } from "@mui/icons-material";
 
 type SortKey = "most_raised" | "least_raised" | "most_donors";
 
@@ -34,6 +36,7 @@ export default function DashboardIndexPage() {
   const router = useRouter();
 
   const [sortKey, setSortKey] = useState<SortKey>("most_raised");
+  const [openApplyModal, setOpenApplyModal] = useState(false);
   const [selectedCompetitionId, setSelectedCompetitionId] = useState<
     number | null
   >(null);
@@ -214,8 +217,9 @@ export default function DashboardIndexPage() {
     return null;
   }
 
+
   const handleNewCampaign = () => {
-    router.push("/apply");
+    setOpenApplyModal(true);
   };
 
   return (
@@ -268,8 +272,10 @@ export default function DashboardIndexPage() {
         {isLoading && <div className="mt-10 text-gray-500">Loading...</div>}
 
         {userData && !isAdmin && (
-          <div className="mt-10 flex items-center justify-center">
+          <div className="mt-10 flex flex-col gap-6">
             <NotStarted onNewCampaign={handleNewCampaign} />
+            <InformationSection />
+
           </div>
         )}
 
@@ -356,6 +362,43 @@ export default function DashboardIndexPage() {
           </>
         )}
       </div>
+      <BaseModal
+        open={openApplyModal}
+        onClose={() => setOpenApplyModal(false)}
+        title="SeedMoney Challenge Application"
+      >
+        <p className="text-gray-500 text-base mb-4">
+          SeedMoney supports nonprofit and community-based food garden projects
+          through a combination of online fundraising tools and grant funding.
+        </p>
+
+        <ul className="list-disc pl-5 mb-4">
+          <li className="text-black text-base">
+            By completing this application, you are applying to participate in the
+            SeedMoney Challenge and to run a 30-day online fundraising campaign
+            supported by SeedMoney running from{" "}
+            {moment(currentCompetitionData?.start_date).format("MM/DD/YYYY")}-
+            {moment(currentCompetitionData?.end_date).format("MM/DD/YYYY")}
+          </li>
+        </ul>
+
+        <p className="text-gray-500 text-base mb-6">
+          Most applicants complete this application in 20–30 minutes.
+        </p>
+
+        <div className="flex justify-end">
+          <Button
+            variant="contained"
+            size="medium"
+            onClick={handleNewCampaign}
+            endIcon={<Logout />}
+          >
+            Start Application
+          </Button>
+          
+        </div>
+        
+      </BaseModal>
     </div>
   );
 }

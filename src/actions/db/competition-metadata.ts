@@ -27,3 +27,22 @@ export async function readCurrentCompetition(): Promise<CompetitionMetadata> {
 
   return data as CompetitionMetadata;
 }
+
+export async function readCompetitionById(
+  competitionId: number,
+): Promise<CompetitionMetadata | null> {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("competition_metadata")
+    .select("*")
+    .eq("competition_id", competitionId)
+    .single();
+
+  if (error) {
+    console.error("Error reading competition by id:", error.message);
+    return null;
+  }
+
+  return data as CompetitionMetadata;
+}
