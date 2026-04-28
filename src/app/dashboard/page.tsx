@@ -12,7 +12,8 @@ import NotStarted from "@/src/components/dashboard/NotStarted";
 import Navbar from "@/src/components/Navbar";
 import SummaryCard from "@/src/components/dashboard/SummaryCard";
 import CampaignCard from "@/src/components/dashboard/CampaignCard";
-
+import FaqSection from "@/src/components/dashboard/FaqSection";
+import HelpForm from "@/src/components/dashboard/HelpForm";
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
@@ -20,6 +21,7 @@ import useReadAllCampaigns from "@/src/hooks/campaigns/useReadAllCampaigns";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadAllCompetitions from "@/src/hooks/competition-metadata/useReadAllCompetitions";
 import useReadCampaignImageUrlsByCampaignIds from "@/src/hooks/campaign-image-records/useReadCampaignImageUrlsByCampaignIds";
+import InformationSection from "@/src/components/dashboard/InformationSection";
 
 type SortKey = "most_raised" | "least_raised" | "most_donors";
 
@@ -270,6 +272,8 @@ export default function DashboardIndexPage() {
         {userData && !isAdmin && (
           <div className="mt-10 flex items-center justify-center">
             <NotStarted onNewCampaign={handleNewCampaign} />
+            <InformationSection />
+
           </div>
         )}
 

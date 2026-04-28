@@ -33,8 +33,9 @@ import FaqSection from "@/src/components/dashboard/FaqSection";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import { Chip } from "@mui/material";
 import { getStatusLabel } from "@/src/lib/utils/statusConversions";
-import { Status } from "@src/types/db/enums";
 import moment from "moment";
+import HelpForm from "@/src/components/dashboard/HelpForm";
+import InformationSection from "@/src/components/dashboard/InformationSection";
 
 type DashboardTab = "Overview" | "Donors" | "Analytics";
 
@@ -148,6 +149,8 @@ export default function DashboardShell({
           <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
           <div className="flex-1 bg-gray-50 mt-10">
             <NotComplete onContinueApplication={handleContinueApplication} />
+            <InformationSection />
+
           </div>
         </div>
       </div>
@@ -162,6 +165,8 @@ export default function DashboardShell({
           <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
           <div className="flex-1 bg-gray-50 mt-10">
             <Pending />
+      
+            <InformationSection />
           </div>
           <BaseAlert
             open={submissionToastOpen}
@@ -186,7 +191,7 @@ export default function DashboardShell({
           </h3>
           <div className="mt-10 flex flex-col gap-6">
             <Denied onNewCampaign={handleNewCampaign} />
-            <FaqSection />
+            <InformationSection />
           </div>
           <DashboardFooter />
         </div>
@@ -277,7 +282,7 @@ export default function DashboardShell({
         </div>
 
         <div className="mt-8">{children}</div>
-        <DashboardFooter />
+
       </div>
 
 
