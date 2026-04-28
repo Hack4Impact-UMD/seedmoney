@@ -7,13 +7,10 @@ import moment from "moment";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import OutlinedFlagIcon from "@mui/icons-material/OutlinedFlag";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-
 import NotStarted from "@/src/components/dashboard/NotStarted";
 import Navbar from "@/src/components/Navbar";
 import SummaryCard from "@/src/components/dashboard/SummaryCard";
 import CampaignCard from "@/src/components/dashboard/CampaignCard";
-import FaqSection from "@/src/components/dashboard/FaqSection";
-import HelpForm from "@/src/components/dashboard/HelpForm";
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
@@ -270,7 +267,7 @@ export default function DashboardIndexPage() {
         {isLoading && <div className="mt-10 text-gray-500">Loading...</div>}
 
         {userData && !isAdmin && (
-          <div className="mt-10 flex items-center justify-center">
+          <div className="mt-10 flex flex-col gap-6">
             <NotStarted onNewCampaign={handleNewCampaign} />
             <InformationSection />
 
