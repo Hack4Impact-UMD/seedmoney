@@ -8,9 +8,12 @@ import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import { useRouter } from "next/navigation";
 import type { Status } from "@/src/types/db/enums";
 import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
+import { useAuth } from "@/src/context/AuthProvider";
+import useUserByAuthId from "../hooks/users/useUserByAuthId";
 
 interface Props {
   initialData: CampaignWithLeader[];
+  isAdmin: boolean
 }
 
 const pageSizeOptions = [5, 10, 20];
@@ -105,6 +108,18 @@ export default function CampaignsTable({ initialData }: Props) {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
 
+  const { user } = useAuth();
+  
+  const {
+    data: userData,
+    isLoading: isLoadingUser,
+    error: userError,
+  } = useUserByAuthId(user?.id || "");
+
+  if (isLoadingUser) return null;
+
+  if (userError || !userData) throw new Error("Unauthorized");
+
   const years = useMemo(
     () =>
       [
@@ -158,7 +173,14 @@ export default function CampaignsTable({ initialData }: Props) {
   );
 
   const handleCampaignClick = (campaignId: number) => {
-    router.push(`/dashboard/ongoing-campaigns/${campaignId}`);
+
+    if (userData.is_admin == true) {
+      router.push(`/dashboard/ongoing-campaigns/${campaignId}`);
+    }
+    else {
+      router.push(`/dashboard/${campaignId}`);
+    }
+
   };
 
   const handleResetFilters = () => {

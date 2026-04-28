@@ -31,7 +31,7 @@ export default function ViewAllCampaignsPage() {
             <h1 className="text-4xl font-bold text-[#096B2E]">All Campaigns</h1>
           </div>
 
-          <CampaignsTable initialData={campaigns} />
+          <CampaignsTable initialData={campaigns} isAdmin/>
         </div>
       </div>
     </div>

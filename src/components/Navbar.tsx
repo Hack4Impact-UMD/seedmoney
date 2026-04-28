@@ -341,7 +341,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
                   />
                 ) : (
                   <ListItemText
-                      primary="View all"
+                      primary="All Campaigns"
                       slotProps={{
                         primary: {
                           className: navItemTextClass,

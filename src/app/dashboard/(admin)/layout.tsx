@@ -14,14 +14,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
   if (isLoadingUser) return null;
 
-  if (userError || !userData) {
-    throw new Error("Unauthorized");
-  }
-
-  if (userData.is_admin === false) {
-    notFound();
-    
-  }
+  if (userError || !userData) throw new Error("Unauthorized");
+  
+  if (userData.is_admin === false) notFound();
 
   return <>{children}</>
 }
