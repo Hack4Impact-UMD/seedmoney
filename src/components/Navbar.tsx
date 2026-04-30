@@ -21,8 +21,7 @@ import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
 import useReadCurrentCompetition from "../hooks/competition-metadata/useReadCurrentCompetition";
-import BaseModal from "@/src/components/bases/BaseModal";
-import Logout from "@mui/icons-material/Logout";
+import StartApplicationModal from "@/src/components/StartApplicationModal";
 
 export default function Navbar({ compact = false }: { compact?: boolean }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -394,48 +393,16 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
           </div>
         </>
       )}
-
-      <BaseModal
+      <StartApplicationModal
         open={openApplyModal}
         onClose={() => setOpenApplyModal(false)}
-        title="SeedMoney Challenge Application"
-      >
-        <p className="text-gray-500 text-base mb-4">
-          SeedMoney supports nonprofit and community-based food garden projects
-          through a combination of online fundraising tools and grant funding.
-        </p>
-
-        <ul className="list-disc pl-5 mb-4">
-          <li className="text-black text-base">
-            By completing this application, you are applying to participate in
-            the SeedMoney Challenge and to run a 30-day online fundraising
-            campaign supported by SeedMoney running from{" "}
-            {moment(currentCompetitionData?.start_date).format("MM/DD/YYYY")}–
-            {moment(currentCompetitionData?.end_date).format("MM/DD/YYYY")}
-          </li>
-        </ul>
-
-        <p className="text-gray-500 text-base mb-6">
-          Most applicants complete this application in 20–30 minutes.
-        </p>
-
-
-        <div className="flex justify-end">
-          <Button
-            variant="contained"
-            size="medium"
-            onClick={() => {
-              setOpenApplyModal(false);
-              router.push("/apply");
-            }}
-            endIcon={<Logout />}
-          >
-            Start Application
-          </Button>
-          
-        </div>
-
-      </BaseModal>
+        onStart={() => {
+          setOpenApplyModal(false);
+          router.push("/apply");
+        }}
+        startDate={currentCompetitionData?.start_date}
+        endDate={currentCompetitionData?.end_date}
+      />
     </nav>
   );
 }
