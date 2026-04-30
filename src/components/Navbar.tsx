@@ -28,10 +28,12 @@ import ChangeNameModal from "@/src/components/settings-modals/ChangeNameModal";
 import ChangeEmailModal from "@/src/components/settings-modals/ChangeEmailModal";
 import ChangePasswordModal from "@/src/components/settings-modals/ChangePasswordModal";
 import useUpdateUser from "@/src/hooks/users/useUpdateUser";
+import StartApplicationModal from "@/src/components/StartApplicationModal";
 
 export default function Navbar({ compact = false }: { compact?: boolean }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
   const [isCampaignSheetOpen, setIsCampaignSheetOpen] = useState(false);
+  const [openApplyModal, setOpenApplyModal] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
   const [activeSettingsModal, setActiveSettingsModal] = useState<"name" | "email" | "password" | null>(null);
   const [savedName, setSavedName] = useState<{ firstName: string; lastName: string } | null>(null);
@@ -96,8 +98,6 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
   const currentCompetitionId = currentCompetitionData?.competition_id;
 
   const { currentYearCampaigns, previousCampaigns } = useMemo(() => {
-    console.log("[Navbar] currentCompetitionId:", currentCompetitionId, typeof currentCompetitionId);
-    campaigns.forEach(c => console.log("[Navbar] campaign:", c.name, "competition_id:", c.competition_id, typeof c.competition_id));
     const currentYearCampaigns = campaigns
       .filter((campaign) => campaign.competition_id === currentCompetitionId)
       .sort(
@@ -213,9 +213,10 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
         >
           <div
             className={clsx(
-              "flex shrink-0 items-center justify-center rounded-full bg-white",
+              "flex shrink-0 items-center justify-center rounded-full bg-white cursor-pointer",
               isCollapsed ? "h-11 w-11" : compact ? "h-14 w-14" : "h-16 w-16",
             )}
+            onClick={() => router.push("/dashboard")}
           >
             <Image
               src="/seedMoneyLogo.png"
@@ -381,13 +382,13 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
                   />
                 ) : (
                   <ListItemText
-                      primary="View all"
-                      slotProps={{
-                        primary: {
-                          className: navItemTextClass,
-                        },
-                      }}
-                    />
+                    primary="All Campaigns"
+                    slotProps={{
+                      primary: {
+                        className: navItemTextClass,
+                      },
+                    }}
+                  />
                 )}
               </ListItemButton>
             </List>
@@ -403,7 +404,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
               size={compact ? "medium" : "large"}
               variant="outlined"
               startIcon={!isCollapsed && <AddIcon />}
-              onClick={() => router.push("/apply")}
+              onClick={() => setOpenApplyModal(true)}
               fullWidth
               className="hover:!bg-gray-100"
             >
@@ -430,6 +431,16 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
           </div>
         </>
       )}
+      <StartApplicationModal
+        open={openApplyModal}
+        onClose={() => setOpenApplyModal(false)}
+        onStart={() => {
+          setOpenApplyModal(false);
+          router.push("/apply");
+        }}
+        startDate={currentCompetitionData?.start_date}
+        endDate={currentCompetitionData?.end_date}
+      />
     </nav>
 
       {/* Mobile FAB — floating hamburger button */}
@@ -492,7 +503,10 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
           {!isAdmin && (
             <button
               type="button"
-              onClick={() => { setIsCampaignSheetOpen(false); router.push("/apply"); }}
+              onClick={() => {
+                setIsCampaignSheetOpen(false);
+                setOpenApplyModal(true);
+              }}
               className="mt-3 mx-4 flex w-[calc(100%-2rem)] items-center justify-center gap-2 rounded-md bg-white py-3 text-sm font-semibold text-[#2D7A45] hover:bg-gray-50"
             >
               <AddIcon className="!text-[18px]" />

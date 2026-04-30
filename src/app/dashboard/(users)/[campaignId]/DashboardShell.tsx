@@ -29,10 +29,14 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import OpenInNew from "@mui/icons-material/OpenInNew";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import DashboardFooter from "@/src/components/DashboardFooter";
-import FaqSection from "@/src/components/dashboard/FaqSection";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
+import { Chip } from "@mui/material";
+import { getStatusLabel } from "@/src/lib/utils/statusConversions";
+import moment from "moment";
+import InformationSection from "@/src/components/dashboard/InformationSection";
 
 type DashboardTab = "Overview" | "Donations" | "Analytics";
+
 
 export default function DashboardShell({
   children,
@@ -143,6 +147,8 @@ export default function DashboardShell({
           <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
           <div className="flex-1 bg-[#F6FAF9] mt-10">
             <NotComplete onContinueApplication={handleContinueApplication} />
+            <InformationSection />
+
           </div>
         </div>
       </div>
@@ -157,6 +163,8 @@ export default function DashboardShell({
           <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
           <div className="flex-1 bg-[#F6FAF9] mt-10">
             <Pending />
+
+            <InformationSection />
           </div>
           <BaseAlert
             open={submissionToastOpen}
@@ -181,7 +189,7 @@ export default function DashboardShell({
           </h3>
           <div className="mt-10 flex flex-col gap-6">
             <Denied onNewCampaign={handleNewCampaign} />
-            <FaqSection />
+            <InformationSection />
           </div>
           <DashboardFooter />
         </div>
@@ -189,18 +197,37 @@ export default function DashboardShell({
     );
   }
 
+  const isChallengeActive =
+  moment().isAfter(currentCompetitionData?.start_date) &&
+  moment().isBefore(currentCompetitionData?.end_date);
+
   return (
     <div className="flex min-h-screen overflow-x-hidden">
       <Navbar/>
-
       <div className="flex-1 min-w-0 overflow-x-hidden bg-[#F6FAF9] p-4 pb-24 md:p-10 md:pb-10">
-        <div className="flex items-center justify-between gap-2 mb-1">
-          <h3 className="text-2xl md:text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
-          {campaignData.competition_id === currentCompetitionData?.competition_id && (
-            <span className="shrink-0 rounded-full border border-[#2D7A45] px-3 py-1 text-xs font-medium text-[#2D7A45]">
-              Challenge Active
-            </span>
-          )}
+        <div className="mb-1 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
+          <div className="flex flex-col md:flex-row md:items-center">
+            <h3 className="text-2xl md:text-4xl font-bold text-[#096B2E]">
+              {campaignData.name}
+            </h3>
+            <p className="text-sm text-[#A6A6A6] md:ml-[10px] md:mt-[5px]">
+              Created in {moment(currentCompetitionData?.start_date).format("YYYY")}
+            </p>
+          </div>
+
+          <div className="flex flex-wrap gap-2">
+            {isChallengeActive ? (
+              <>
+                <Chip
+                  variant={campaignData.status}
+                  label={getStatusLabel(campaignData.status)}
+                />
+                <Chip variant="published" label="SeedMoney Challenge Active" />
+              </>
+            ) : (
+              <Chip variant="archived" label="SeedMoney Challenge Inactive" />
+            )}
+          </div>
         </div>
 
         <DashboardTabs selectedTab={selectedTab} onChange={handleTabChange} />
@@ -282,7 +309,6 @@ export default function DashboardShell({
       <BaseAlert open={toast} onClose={() => setToast(false)} title="Successfully Copied!">
           <p>Link has been copied to clipboard</p>
       </BaseAlert>
-
       {currentCompetitionData != null && campaignData.competition_id !== currentCompetitionData.competition_id &&
         <BaseAlert
           open={true}
