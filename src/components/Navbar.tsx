@@ -531,6 +531,21 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
           <div className="min-h-0 flex-1 overflow-y-auto">
             {!isAdmin && (
               <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCampaignSheetOpen(false);
+                    router.push("/dashboard/view-all");
+                  }}
+                  className={clsx(
+                    "flex w-full items-center px-8 py-6 text-left",
+                    isViewAllSelected ? "bg-[#123A1E]" : "bg-transparent",
+                  )}
+                >
+                  <span className="text-[20px] font-bold leading-[1.334] text-white">
+                    All Campaigns
+                  </span>
+                </button>
                 {currentYearCampaigns.length > 0 && (
                   <>
                     <p className="px-6 pb-1 text-base leading-6 text-white/90">
