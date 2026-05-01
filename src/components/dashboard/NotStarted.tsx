@@ -17,7 +17,7 @@ export default function NotStarted() {
 
   return (
     <>
-      <Box className="flex flex-col items-center justify-center py-20 px-16 bg-white rounded-2xl shadow-sm w-full">
+      <Box className="flex w-full flex-col items-center justify-center rounded-2xl bg-white px-6 py-20 text-center shadow-sm md:px-16">
         <Box className="flex items-center justify-center w-20 h-20 rounded-full border-2 border-[#2e7d32] mb-6">
           <Image
             src="/seedMoneyLogo.png"

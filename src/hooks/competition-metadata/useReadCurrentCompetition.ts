@@ -8,8 +8,7 @@ export default function useReadCurrentCompetition() {
         queryKey: ['current-competition'],
         queryFn: async () => {
           const competition = await readCurrentCompetition();
-          if (!competition) throw new Error("Error reading campaign");
-          return competition as CompetitionMetadata
+          return competition ?? null;
         },
         staleTime: 1000 * 60 * 5,
         retry: 2,

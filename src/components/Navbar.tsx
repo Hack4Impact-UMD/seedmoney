@@ -7,11 +7,13 @@ import ListItemButton from "@mui/material/ListItemButton";
 import ListItemText from "@mui/material/ListItemText";
 import IconButton from "@mui/material/IconButton";
 import Button from "@mui/material/Button";
+import Drawer from "@mui/material/Drawer";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import AddIcon from "@mui/icons-material/Add";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SettingsIcon from "@mui/icons-material/Settings";
+import MenuIcon from "@mui/icons-material/Menu";
 import Image from "next/image";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { usePathname, useRouter, useParams } from "next/navigation";
@@ -21,11 +23,21 @@ import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
 import useReadCurrentCompetition from "../hooks/competition-metadata/useReadCurrentCompetition";
+import BaseModal from "@/src/components/bases/BaseModal";
+import ChangeNameModal from "@/src/components/settings-modals/ChangeNameModal";
+import ChangeEmailModal from "@/src/components/settings-modals/ChangeEmailModal";
+import ChangePasswordModal from "@/src/components/settings-modals/ChangePasswordModal";
+import useUpdateUser from "@/src/hooks/users/useUpdateUser";
 import StartApplicationModal from "@/src/components/StartApplicationModal";
 
 export default function Navbar({ compact = false }: { compact?: boolean }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
+  const [isCampaignSheetOpen, setIsCampaignSheetOpen] = useState(false);
   const [openApplyModal, setOpenApplyModal] = useState(false);
+  const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [activeSettingsModal, setActiveSettingsModal] = useState<"name" | "email" | "password" | null>(null);
+  const [savedName, setSavedName] = useState<{ firstName: string; lastName: string } | null>(null);
+  const [nameSaveError, setNameSaveError] = useState<string | null>(null);
   const { user } = useAuth();
   const { data: userData } = useUserByAuthId(user?.id || "");
   const { data: campaigns = [], isLoading } = useReadCampaignsFromMembers(
@@ -40,7 +52,32 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
   const selectedCampaignId = Number(campaignId);
   const isAdmin = userData?.is_admin ?? false;
 
-  const firstName = userData?.first_name ?? user?.user_metadata.full_name;
+  const firstName = savedName?.firstName ?? userData?.first_name ?? user?.user_metadata.full_name;
+  const lastName = savedName?.lastName ?? userData?.last_name ?? "";
+  const email = userData?.email ?? user?.email ?? "";
+  const displayName = [firstName, lastName].filter(Boolean).join(" ");
+  const isGoogleAuth = user?.app_metadata?.provider === "google";
+  const updateUser = useUpdateUser();
+
+  const handleReauthenticate = async () => {
+    const supabase = createBrowserClient();
+    await supabase.auth.signOut();
+    router.push("/");
+  };
+
+  const handleSettingsSave = async (nextFirstName: string, nextLastName: string) => {
+    if (!userData?.id) { setNameSaveError("Unable to update name right now."); return false; }
+    try {
+      setNameSaveError(null);
+      await updateUser.mutateAsync({ userId: userData.id, userUpdateData: { first_name: nextFirstName, last_name: nextLastName } });
+      setSavedName({ firstName: nextFirstName, lastName: nextLastName });
+      setActiveSettingsModal(null);
+      return true;
+    } catch {
+      setNameSaveError("Unable to update name. Try again.");
+      return false;
+    }
+  };
 
   const handleCampaignClick = (id: number) => {
     router.push(`/dashboard/${id}`);
@@ -154,10 +191,35 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
     );
   };
 
+  const renderMobileCampaignItem = (campaign: Campaign) => {
+    const isSelected =
+      !isViewAllSelected && campaign.campaign_id === selectedCampaignId;
+
+    return (
+      <button
+        key={campaign.campaign_id}
+        type="button"
+        onClick={() => {
+          setIsCampaignSheetOpen(false);
+          handleCampaignClick(campaign.campaign_id);
+        }}
+        className={clsx(
+          "flex w-full items-center px-8 py-6 text-left",
+          isSelected ? "bg-[#123A1E]" : "bg-transparent",
+        )}
+      >
+        <span className="text-[20px] font-bold leading-[1.334] text-white">
+          {getCampaignDisplayName(campaign)}
+        </span>
+      </button>
+    );
+  };
+
   return (
+    <>
     <nav
       className={clsx(
-        "!sticky !top-0 flex h-screen min-h-0 flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
+        "!sticky !top-0 hidden md:flex h-screen min-h-0 flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
         isCollapsed ? "!w-[96px]" : compact ? "!w-[260px]" : "!w-[300px] xl:!w-[300px]",
       )}
     >
@@ -404,5 +466,257 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
         endDate={currentCompetitionData?.end_date}
       />
     </nav>
+
+      {/* Mobile FAB — floating hamburger button */}
+      {userData && (
+        <IconButton
+          onClick={() => setIsCampaignSheetOpen(true)}
+          className="!fixed !bottom-4 !right-4 !z-50 !bg-white !shadow-lg !border !border-[#2D7A45] md:!hidden"
+          size="large"
+          aria-label="Open navigation"
+        >
+          <MenuIcon className="!text-[#2D7A45]" />
+        </IconButton>
+      )}
+
+      {/* Mobile bottom drawer */}
+      <Drawer
+        anchor="bottom"
+        open={isCampaignSheetOpen}
+        onClose={() => setIsCampaignSheetOpen(false)}
+        className="md:hidden"
+        slotProps={{
+          paper: {
+            className:
+              "!overflow-hidden !rounded-t-[24px] !bg-[#2D7A45]",
+          },
+        }}
+      >
+        <div className="flex min-h-[65dvh] max-h-[calc(100dvh-12px)] flex-col">
+          <div className="flex items-start gap-4 p-6">
+            <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white">
+              <Image src="/seedMoneyLogo.png" alt="SeedMoney" width={30} height={30} />
+            </div>
+            <div className="min-w-0 flex-1">
+              <p className="text-[20px] font-bold leading-[1.334] text-white">
+                {firstName ?? "SeedMoney"}
+              </p>
+              <p className="text-sm leading-6 text-white/70">
+                {isAdmin ? "Admin" : "Campaign Leader"}
+              </p>
+            </div>
+            <IconButton
+              onClick={() => setIsCampaignSheetOpen(false)}
+              className="!p-0 !text-white"
+              aria-label="Close navigation"
+            >
+              <svg
+                width="24"
+                height="24"
+                viewBox="0 0 24 24"
+                fill="none"
+                xmlns="http://www.w3.org/2000/svg"
+              >
+                <path
+                  d="M18 6L6 18M6 6L18 18"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+              </svg>
+            </IconButton>
+          </div>
+
+          <div className="min-h-0 flex-1 overflow-y-auto">
+            {!isAdmin && (
+              <>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setIsCampaignSheetOpen(false);
+                    router.push("/dashboard/view-all");
+                  }}
+                  className={clsx(
+                    "flex w-full items-center px-8 py-6 text-left",
+                    isViewAllSelected ? "bg-[#123A1E]" : "bg-transparent",
+                  )}
+                >
+                  <span className="text-[20px] font-bold leading-[1.334] text-white">
+                    All Campaigns
+                  </span>
+                </button>
+                {currentYearCampaigns.length > 0 && (
+                  <>
+                    <p className="px-6 pb-1 text-base leading-6 text-white/90">
+                      {currentYear} Campaign
+                    </p>
+                    <div className="flex flex-col">
+                      {currentYearCampaigns.map(renderMobileCampaignItem)}
+                    </div>
+                  </>
+                )}
+                {previousCampaigns.length > 0 && (
+                  <>
+                    <p className="px-6 pb-1 pt-3 text-base leading-6 text-white/70">
+                      Previous Campaigns
+                    </p>
+                    <div className="flex flex-col">
+                      {previousCampaigns.map(renderMobileCampaignItem)}
+                    </div>
+                  </>
+                )}
+              </>
+            )}
+
+            {isAdmin && (
+              <List disablePadding>
+                {[
+                  { label: "Home", path: "/dashboard" },
+                  {
+                    label: "Ongoing Campaigns",
+                    path: "/dashboard/ongoing-campaigns",
+                  },
+                  {
+                    label: "Review Applications",
+                    path: "/dashboard/review-applications",
+                  },
+                  { label: "List of Users", path: "/dashboard/users" },
+                ].map(({ label, path }) => {
+                  const isSelected =
+                    path === "/dashboard"
+                      ? pathname === path
+                      : pathname.startsWith(path);
+
+                  return (
+                    <button
+                      key={path}
+                      type="button"
+                      onClick={() => {
+                        setIsCampaignSheetOpen(false);
+                        router.push(path);
+                      }}
+                      className={clsx(
+                        "flex w-full items-center px-8 py-6 text-left",
+                        isSelected ? "bg-[#123A1E]" : "bg-transparent",
+                      )}
+                    >
+                      <span className="text-[20px] font-bold leading-[1.334] text-white">
+                        {label}
+                      </span>
+                    </button>
+                  );
+                })}
+              </List>
+            )}
+          </div>
+
+          <div className="shrink-0 px-6 pb-4 pt-4">
+            {!isAdmin && (
+              <Button
+                type="button"
+                fullWidth
+                variant="contained"
+                startIcon={<AddIcon className="!text-[24px]" />}
+                onClick={() => {
+                  setIsCampaignSheetOpen(false);
+                  setOpenApplyModal(true);
+                }}
+                className="!mb-2 !justify-center !rounded-[8px] !bg-white !px-[26px] !py-3 !text-[20px] !font-bold !leading-[1.5] !text-[#123A1E] hover:!bg-[#f5f5f5]"
+              >
+                New Campaign
+              </Button>
+            )}
+
+            <div className="flex items-start gap-2">
+              <Button
+                type="button"
+                fullWidth
+                variant="text"
+                onClick={() => {
+                  setIsCampaignSheetOpen(false);
+                  setIsSettingsModalOpen(true);
+                }}
+                startIcon={<SettingsIcon className="!text-[20px]" />}
+                className="!justify-start !rounded-[8px] !px-2 !py-[10px] !text-[16px] !font-bold !leading-[26px] !text-white"
+              >
+                Settings
+              </Button>
+              <Button
+                type="button"
+                fullWidth
+                variant="text"
+                onClick={handleLogout}
+                startIcon={<LogoutIcon className="!text-[20px]" />}
+                className="!justify-start !rounded-[8px] !px-2 !py-[10px] !text-[16px] !font-bold !leading-[26px] !text-white"
+              >
+                Log Out
+              </Button>
+            </div>
+          </div>
+        </div>
+      </Drawer>
+
+      {/* Settings modal */}
+      <BaseModal
+        open={isSettingsModalOpen}
+        onClose={() => setIsSettingsModalOpen(false)}
+        title="Settings"
+        containerClassName="!w-[90vw] !max-w-sm"
+      >
+        <div className="divide-y divide-gray-100">
+          {[
+            { label: "Name", value: displayName || "—", key: "name" as const },
+            { label: "Email", value: email || "—", key: "email" as const, hideForGoogle: true },
+            { label: "Password", value: "••••••••••••••••••", key: "password" as const, hideForGoogle: true },
+          ].map(({ label, value, key, hideForGoogle }) => (
+            <div key={key} className="flex items-center justify-between py-3">
+              <div>
+                <p className="text-sm font-semibold text-[#1f2320]">{label}</p>
+                <p className="text-sm text-[#7b827d]">{value}</p>
+              </div>
+              {(!hideForGoogle || !isGoogleAuth) && (
+                <button
+                  type="button"
+                  onClick={() => setActiveSettingsModal(key)}
+                  className="rounded-lg border border-[#2D7A45] px-3 py-1 text-xs font-semibold text-[#2D7A45] hover:bg-[#f3faf4]"
+                >
+                  EDIT
+                </button>
+              )}
+            </div>
+          ))}
+        </div>
+      </BaseModal>
+
+      {activeSettingsModal === "name" && (
+        <ChangeNameModal
+          open
+          onClose={() => { setNameSaveError(null); setActiveSettingsModal(null); }}
+          firstName={firstName ?? ""}
+          lastName={lastName}
+          title={isGoogleAuth ? "Confirm Edit" : "Change Name"}
+          onSave={handleSettingsSave}
+          saveError={nameSaveError}
+          isSaving={updateUser.isPending}
+        />
+      )}
+      {activeSettingsModal === "email" && (
+        <ChangeEmailModal
+          open
+          onClose={() => setActiveSettingsModal(null)}
+          userEmail={email}
+          onLogin={handleReauthenticate}
+        />
+      )}
+      {activeSettingsModal === "password" && (
+        <ChangePasswordModal
+          open
+          onClose={() => setActiveSettingsModal(null)}
+          userEmail={email}
+          onLogin={handleReauthenticate}
+        />
+      )}
+    </>
   );
 }
