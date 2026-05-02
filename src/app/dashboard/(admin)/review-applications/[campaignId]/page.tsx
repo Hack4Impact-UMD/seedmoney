@@ -1,17 +1,17 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import {useCallback, useEffect, useState} from "react";
+import {useParams, useRouter} from "next/navigation";
 import Navbar from "@/src/components/Navbar";
-import type { Campaign } from "@/src/types/db/campaigns";
-import type { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords";
-import type { Existence, Status } from "@/src/types/db/enums";
+import type {Campaign} from "@/src/types/db/campaigns";
+import type {HydratedCampaignImageRecord} from "@/src/types/db/campaignImageRecords";
+import type {Existence, Status} from "@/src/types/db/enums";
 import Loading from "@/src/app/loading";
 import AppError from "@/src/app/error";
 import NotFound from "@/src/app/not-found";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useCreateFinalAnswer from "@/src/hooks/answers/useCreateFinalAnswer";
-import { Button } from "@mui/material";
+import {Button} from "@mui/material";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
 import ContactInformationSection from "@/src/components/ongoing-campaigns/edit/ContactInformationSection";
@@ -20,19 +20,12 @@ import EditCampaignDialogs from "@/src/components/ongoing-campaigns/edit/EditCam
 import EditCampaignHeader from "@/src/components/ongoing-campaigns/edit/EditCampaignHeader";
 import GardenInformationSection from "@/src/components/ongoing-campaigns/edit/GardenInformationSection";
 import GardenStorySection from "@/src/components/ongoing-campaigns/edit/GardenStorySection";
-import {
-  DEFAULT_CAMPAIGN_DATA,
-  EditCampaignFormData,
-  TextFieldKey,
-} from "@/src/types/frontend/campaignEdit";
-import {
-  beneficiaryOptions,
-  categoryOptions,
-} from "@/src/components/ongoing-campaigns/options";
-import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
+import {DEFAULT_CAMPAIGN_DATA, EditCampaignFormData, TextFieldKey,} from "@/src/types/frontend/campaignEdit";
+import {beneficiaryOptions, categoryOptions,} from "@/src/components/ongoing-campaigns/options";
+import {useCampaignEditData} from "@/src/hooks/campaigns/useCampaignEditData";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
-import { useCreateGivebutterCampaign } from "@/src/hooks/givebutter/useCreateCampaign";
+import {useCreateGivebutterCampaign} from "@/src/hooks/givebutter/useCreateCampaign";
 
 export default function CampaignReviewPage() {
   const router = useRouter();
@@ -456,14 +449,14 @@ export default function CampaignReviewPage() {
         Make sure to save your changes before making status changes!
       </BaseAlert>
 
-      <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
+        <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-10 lg:pr-32 space-y-3">
         <EditCampaignHeader
           text={`Review Application - ${formData.campaignTitle}`}
           onBack={handleAttemptLeave}
         />
 
-        <div className="flex items-start gap-24">
-          <div className="flex-1 flex flex-col gap-6">
+            <div className="flex flex-col lg:flex-row lg:items-start gap-8 pt-2">
+                <div className="lg:flex-1 flex flex-col gap-6 order-2 lg:order-1">
             <CampaignInformationSection
               formData={formData}
               onTextChange={handleTextChange}
@@ -498,7 +491,8 @@ export default function CampaignReviewPage() {
             />
           </div>
 
-          <div className="flex flex-col gap-2 sticky top-10">
+                <div
+                    className="flex flex-col gap-2 order-1 lg:order-2 lg:sticky lg:top-10 w-full lg:w-auto">
             {status === "pending" && (
               <>
                 <Button
