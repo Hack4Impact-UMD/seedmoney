@@ -492,7 +492,7 @@ export default function CampaignReviewPage() {
           </div>
 
                 <div
-                    className="flex flex-col gap-2 order-1 lg:order-2 lg:sticky lg:top-10 w-full lg:w-auto px-10 lg:px-0">
+                    className="flex flex-col gap-2 order-1 lg:order-2 lg:sticky lg:top-10 w-full lg:w-auto">
             {status === "pending" && (
               <>
                 <Button
