@@ -263,6 +263,7 @@ export async function createAIAnswers({
         const updatedAnswer = await updateAnswer(existingAnswer.answer_id, {
           pre_ai_answer: question.originalText,
           ai_answer: aiAnswer,
+          final_answer: aiAnswer,
         });
 
         if (!updatedAnswer) {
@@ -279,7 +280,7 @@ export async function createAIAnswers({
         question_id: question.questionId,
         pre_ai_answer: question.originalText,
         ai_answer: aiAnswer,
-        final_answer: "",
+        final_answer: aiAnswer,
       });
 
       if (!createdAnswer) {
