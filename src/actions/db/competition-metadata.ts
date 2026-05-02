@@ -17,13 +17,38 @@ export async function readAllCompetitions(): Promise<CompetitionMetadata[]> {
   return (data ?? []) as CompetitionMetadata[];
 }
 
-export async function readCurrentCompetition(): Promise<CompetitionMetadata> {
-  const supabase = await createBrowserClient();
+export async function readCurrentCompetition(): Promise<CompetitionMetadata | null> {
+  const supabase = createBrowserClient();
   const { data, error } = await supabase
     .from("competition_metadata")
-    .select()
-    .eq("is_current", true)
+    .select("*")
+    .order("start_date", { ascending: false })
+    .limit(1);
+
+  if (error) {
+    console.error("readCurrentCompetition error:", error.code, error.message);
+    return null;
+  }
+
+  if (!data || data.length === 0) return null;
+  return data[0] as CompetitionMetadata;
+}
+
+export async function readCompetitionById(
+  competitionId: number,
+): Promise<CompetitionMetadata | null> {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("competition_metadata")
+    .select("*")
+    .eq("competition_id", competitionId)
     .single();
+
+  if (error) {
+    console.error("Error reading competition by id:", error.message);
+    return null;
+  }
 
   return data as CompetitionMetadata;
 }

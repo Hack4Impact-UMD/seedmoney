@@ -7,12 +7,11 @@ import moment from "moment";
 import VolunteerActivismIcon from "@mui/icons-material/VolunteerActivism";
 import OutlinedFlagIcon from "@mui/icons-material/OutlinedFlag";
 import AttachMoneyIcon from "@mui/icons-material/AttachMoney";
-
 import NotStarted from "@/src/components/dashboard/NotStarted";
 import Navbar from "@/src/components/Navbar";
 import SummaryCard from "@/src/components/dashboard/SummaryCard";
 import CampaignCard from "@/src/components/dashboard/CampaignCard";
-
+import DashboardFooter from "@/src/components/DashboardFooter";
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import useReadCampaignsFromMembers from "@/src/hooks/campaign-members/useReadCampaignsFromMembers";
@@ -20,6 +19,7 @@ import useReadAllCampaigns from "@/src/hooks/campaigns/useReadAllCampaigns";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadAllCompetitions from "@/src/hooks/competition-metadata/useReadAllCompetitions";
 import useReadCampaignImageUrlsByCampaignIds from "@/src/hooks/campaign-image-records/useReadCampaignImageUrlsByCampaignIds";
+import InformationSection from "@/src/components/dashboard/InformationSection";
 
 type SortKey = "most_raised" | "least_raised" | "most_donors";
 
@@ -214,14 +214,10 @@ export default function DashboardIndexPage() {
     return null;
   }
 
-  const handleNewCampaign = () => {
-    router.push("/apply");
-  };
-
   return (
     <div className="flex min-h-screen">
       <Navbar />
-      <div className="flex-1 bg-gray-50 p-10">
+      <div className="flex-1 bg-gray-50 p-4 pb-24 md:p-10 md:pb-10 flex flex-col min-h-screen">
         <div className="flex items-center gap-4 flex-wrap">
           <h3 className="text-4xl font-bold text-[#054A1F]">
             {isAdmin ? "Home" : "Dashboard"}
@@ -268,8 +264,10 @@ export default function DashboardIndexPage() {
         {isLoading && <div className="mt-10 text-gray-500">Loading...</div>}
 
         {userData && !isAdmin && (
-          <div className="mt-10 flex items-center justify-center">
-            <NotStarted onNewCampaign={handleNewCampaign} />
+          <div className="mt-10 flex flex-col gap-6">
+            <NotStarted />
+            <InformationSection />
+
           </div>
         )}
 
@@ -355,6 +353,9 @@ export default function DashboardIndexPage() {
             </div>
           </>
         )}
+        <div className="mt-auto">
+          <DashboardFooter />
+        </div>
       </div>
     </div>
   );

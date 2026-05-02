@@ -1,7 +1,8 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
+import moment from "moment";
 
 import Navbar from "@/src/components/Navbar";
 import DonorsTable from "@/src/components/DonorsTable";
@@ -9,14 +10,13 @@ import { TotalRaisedCard } from "@/src/components/dashboard/TotalRaisedCard";
 import { TotalDonorsCard } from "@/src/components/dashboard/TotalDonorsCard";
 import { DaysRemainingCard } from "@/src/components/dashboard/DaysRemainingCard";
 import { EarningsTrendCard } from "@/src/components/dashboard/EarningsTrendCard";
-
 import {
   buildEarningsTrendData,
   transactionsToDailyEarnings,
 } from "@/src/lib/utils/buildEarningsTrend";
 
 import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
-import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
+import useReadCompetitionById from "@/src/hooks/competition-metadata/useReadCompetitionById";
 import useReadCampaignTransactions from "@/src/hooks/transactions/useReadCampaignTransactions";
 import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
 import useDonorsChangePercent from "@/src/hooks/transactions/useDonorsChangePercent";
@@ -26,9 +26,6 @@ import Button from "@mui/material/Button";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import LogoutIcon from "@mui/icons-material/Logout";
-
-import { useMemo } from "react";
-import moment from "moment";
 
 export default function AdminCampaignPage() {
   const params = useParams();
@@ -47,8 +44,12 @@ export default function AdminCampaignPage() {
     error: campaignError,
   } = useReadCampaign({ campaignId });
 
-  const { data: currentCompetitionData, isLoading: competitionLoading } =
-    useReadCurrentCompetition();
+  const campaignData = campaignsData?.[0] ?? null;
+
+  const {
+    data: competitionData,
+    isLoading: competitionLoading,
+  } = useReadCompetitionById(campaignData?.competition_id);
 
   const {
     data: transactions,
@@ -60,20 +61,24 @@ export default function AdminCampaignPage() {
     percent: raisedPercent,
     isLoading: raisedLoading,
     isError: raisedError,
-  } = useRaisedChangePercent(campaignId, currentCompetitionData?.start_date);
+  } = useRaisedChangePercent(campaignId, competitionData?.start_date);
 
   const {
     percent: donorsPercent,
     isLoading: donorsLoading,
     isError: donorsError,
-  } = useDonorsChangePercent(campaignId, currentCompetitionData?.start_date);
+  } = useDonorsChangePercent(campaignId, competitionData?.start_date);
 
   const raisedChangePercent =
     raisedLoading || raisedError ? null : raisedPercent;
   const donorsChangePercent =
     donorsLoading || donorsError ? null : donorsPercent;
 
-  const campaignData = campaignsData?.[0] ?? null;
+  const isPastCampaign = competitionData?.is_current === false;
+
+  const todayIso = isPastCampaign
+    ? moment(competitionData?.end_date).format("YYYY-MM-DD")
+    : moment().startOf("day").format("YYYY-MM-DD");
 
   const earnings = useMemo(
     () => transactionsToDailyEarnings(transactions ?? []),
@@ -81,21 +86,15 @@ export default function AdminCampaignPage() {
   );
 
   const { dates, dailyValues, totalValues } = useMemo(() => {
-    const startDate = currentCompetitionData?.start_date;
-    const endDate = currentCompetitionData?.end_date;
+    const startDate = competitionData?.start_date;
+    const endDate = competitionData?.end_date;
 
     if (earnings.length === 0 || !startDate || !endDate) {
       return { dates: [], dailyValues: [], totalValues: [] };
     }
 
     return buildEarningsTrendData(earnings, endDate, startDate);
-  }, [
-    earnings,
-    currentCompetitionData?.start_date,
-    currentCompetitionData?.end_date,
-  ]);
-
-  const todayIso = moment().startOf("day").format("YYYY-MM-DD");
+  }, [earnings, competitionData?.start_date, competitionData?.end_date]);
 
   const handleBack = () => {
     router.push("/dashboard/ongoing-campaigns");
@@ -183,7 +182,6 @@ export default function AdminCampaignPage() {
           >
             Edit
           </Button>
-
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -200,12 +198,9 @@ export default function AdminCampaignPage() {
             />
 
             <DaysRemainingCard
-              startDate={currentCompetitionData?.start_date ?? null}
-              endDate={currentCompetitionData?.end_date ?? null}
-              is_current={
-                campaignData.competition_id ===
-                currentCompetitionData?.competition_id
-              }
+              startDate={competitionData?.start_date ?? null}
+              endDate={competitionData?.end_date ?? null}
+              is_current={!isPastCampaign}
             />
           </div>
         </div>
@@ -228,7 +223,7 @@ export default function AdminCampaignPage() {
           />
         )}
 
-        <DonorsTable campaignId={campaignId} />
+        <DonorsTable campaignId={campaignId} campaignName={campaignData.name} />
       </div>
 
       <BaseModal

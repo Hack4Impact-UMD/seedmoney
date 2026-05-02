@@ -230,7 +230,7 @@ export default function GardenStoryStep() {
         message: isFileTooLarge ? "File too large" : "Upload failed",
       });
     },
-    maxSize: 3000000,
+    maxSize: 10485760,
   });
 
   const {
@@ -321,7 +321,7 @@ export default function GardenStoryStep() {
         message: isFileTooLarge ? "File too large" : "Upload failed",
       });
     },
-    maxSize: 3000000,
+    maxSize: 10485760,
     disabled: supportingFiles.length >= 5,
   });
 

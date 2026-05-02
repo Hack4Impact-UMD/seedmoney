@@ -12,6 +12,7 @@ import {
 import useReadCampaignTransactions from "@/src/hooks/transactions/useReadCampaignTransactions";
 import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
+import useReadCompetitionById from "@/src/hooks/competition-metadata/useReadCompetitionById";
 import type { Campaign } from "@/src/types/db/campaigns";
 
 export default function CampaignAnalyticsPage() {
@@ -23,23 +24,38 @@ export default function CampaignAnalyticsPage() {
     isLoading: txnsLoading,
     isError: txnsError,
   } = useReadCampaignTransactions(campaignIdNum);
+
   const {
     data: campaignData,
     isLoading: campaignLoading,
     isError: campaignError,
   } = useReadCampaign({ campaignId: campaignIdNum });
+
+  // Narrow to single campaign
+  const campaign: Campaign | null = Array.isArray(campaignData)
+    ? (campaignData[0] ?? null)
+    : (campaignData ?? null);
+
+  // Fetch current competition only to detect if this is a past campaign
+  const { data: currentCompetitionData } = useReadCurrentCompetition();
+
+  const isPastCampaign =
+    campaign?.competition_id !== currentCompetitionData?.competition_id;
+
+  // Fetch the campaign's own competition for correct dates
   const {
     data: competitionData,
     isLoading: competitionLoading,
     isError: competitionError,
-  } = useReadCurrentCompetition();
+  } = useReadCompetitionById(campaign?.competition_id);
 
-  // useReadCampaign is typed as Campaign | Campaign[] — narrow to single.
-  const campaign: Campaign | null = Array.isArray(campaignData)
-    ? (campaignData[0] ?? null)
-    : (campaignData ?? null);
-  const campaignEndDate = competitionData?.end_date;
   const campaignStartDate = competitionData?.start_date;
+  const campaignEndDate = competitionData?.end_date;
+
+  const todayIso = isPastCampaign
+    ? moment(campaignEndDate).format("YYYY-MM-DD")
+    : moment().startOf("day").format("YYYY-MM-DD");
+
   const earnings = useMemo(
     () => transactionsToDailyEarnings(transactions ?? []),
     [transactions],
@@ -52,11 +68,8 @@ export default function CampaignAnalyticsPage() {
     return buildEarningsTrendData(earnings, campaignEndDate, campaignStartDate);
   }, [earnings, campaignEndDate, campaignStartDate]);
 
-  const todayIso = moment().startOf("day").format("YYYY-MM-DD");
-
   const isLoading = txnsLoading || campaignLoading || competitionLoading;
-  const hasError =
-    txnsError || campaignError || competitionError || !campaign;
+  const hasError = txnsError || campaignError || competitionError || !campaign;
 
   if (isLoading) {
     return (
@@ -73,7 +86,6 @@ export default function CampaignAnalyticsPage() {
       <div className="flex flex-col gap-6 mt-6">
         <div className="bg-white rounded-lg border border-[#e5e5e5] p-6 h-[360px] flex items-center justify-center text-gray-500">
           Could not load earnings trend.
-
         </div>
       </div>
     );
