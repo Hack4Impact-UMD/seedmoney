@@ -1,4 +1,4 @@
-import type { EditableUser, NewUser, NewUserInternal, Users } from "@/src/types";
+import type { EditableUser, NewUser, Users } from "@/src/types";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import type { UsersTableRow } from "@/src/types/frontend/usersTable";
 import type { Campaign } from "@/src/types/db/campaigns";
@@ -12,7 +12,7 @@ type JoinedCampaign = {
 
 type UserWithCampaigns = Pick<
   Users,
-  "id" | "first_name" | "last_name" | "email"
+  "id" | "first_name" | "last_name" | "email" | "created_at"
 > & {
   campaign_members: {
     campaigns: JoinedCampaign;
@@ -23,7 +23,7 @@ export async function readAllUsersWithCampaigns(): Promise<UsersTableRow[]> {
   const supabase = createBrowserClient();
 
   const { data, error } = await supabase.from("users").select(`
-      id, first_name, last_name, email,
+      id, first_name, last_name, email, created_at,
       campaign_members(
         campaigns(campaign_id, name, status, competition_id)
       )
@@ -41,6 +41,7 @@ export async function readAllUsersWithCampaigns(): Promise<UsersTableRow[]> {
     first_name: user.first_name,
     last_name: user.last_name,
     email: user.email,
+    created_at: user.created_at,
     campaigns: user.campaign_members.map((m) => ({
       campaign_id: m.campaigns.campaign_id,
       name: m.campaigns.name,

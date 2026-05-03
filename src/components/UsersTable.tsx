@@ -1,6 +1,8 @@
 "use client";
-import React, { useCallback, useMemo, useState } from "react";
+
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import clsx from "clsx";
 import {
   flexRender,
   useReactTable,
@@ -9,7 +11,13 @@ import {
   getPaginationRowModel,
 } from "@tanstack/react-table";
 import Button from "@mui/material/Button";
-import { Avatar, Chip } from "@mui/material";
+import { Avatar, Chip, Menu, MenuItem } from "@mui/material";
+import CheckIcon from "@mui/icons-material/Check";
+import CloseIcon from "@mui/icons-material/Close";
+import DeleteIcon from "@mui/icons-material/Delete";
+import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
+import ImportExportIcon from "@mui/icons-material/ImportExport";
+import SearchIcon from "@mui/icons-material/Search";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import type {
@@ -18,7 +26,6 @@ import type {
 } from "@/src/types/frontend/usersTable";
 import useDeleteUser from "@/src/hooks/users/useDeleteUser";
 import type { Status } from "@/src/types/db/enums";
-import DeleteIcon from '@mui/icons-material/Delete';
 
 interface Props {
   initialData: UsersTableRow[];
@@ -27,6 +34,9 @@ interface Props {
 }
 
 type AggregateStatus = Status | "mixed";
+type FilterStatus = Status | "not_started";
+type SortField = "first_name" | "last_name" | "email" | "created_at";
+type SortDirection = "asc" | "desc";
 
 const STATUS_LABELS: Record<AggregateStatus, string> = {
   in_progress: "In Progress",
@@ -38,6 +48,24 @@ const STATUS_LABELS: Record<AggregateStatus, string> = {
   archived: "Archived",
   mixed: "Mixed",
 };
+
+const FILTER_OPTIONS: { value: FilterStatus; label: string }[] = [
+  { value: "approved", label: "Approved" },
+  { value: "pending", label: "Pending" },
+  { value: "denied", label: "Denied" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "not_started", label: "Not Started" },
+  { value: "published", label: "Published" },
+  { value: "publish_failed", label: "Publish Failed" },
+  { value: "archived", label: "Archived" },
+];
+
+const SORT_OPTIONS: { value: SortField; label: string }[] = [
+  { value: "first_name", label: "First Name" },
+  { value: "last_name", label: "Last Name" },
+  { value: "email", label: "Email" },
+  { value: "created_at", label: "Date Joined" },
+];
 
 function getAggregateStatus(campaigns: UserCampaign[]): AggregateStatus {
   const statuses = new Set(campaigns.map((c) => c.status));
@@ -60,9 +88,12 @@ function getBestStatus(campaigns: UserCampaign[]): Status {
   return STATUS_PRIORITY.find((s) => statuses.has(s)) ?? "archived";
 }
 
-const APP_STATUS_CONFIG: Record<Status, { label: string; buttonLabel: string }> = {
-  in_progress: { label: "in progress", buttonLabel: "REVIEW APPLICATION" },
-  pending: { label: "pending", buttonLabel: "REVIEW APPLICATION" },
+const APP_STATUS_CONFIG: Record<
+  Status,
+  { label: string; buttonLabel: string }
+> = {
+  in_progress: { label: "in-progress", buttonLabel: "VIEW APPLICATION" },
+  pending: { label: "pending", buttonLabel: "VIEW APPLICATION" },
   approved: { label: "approved", buttonLabel: "VIEW CAMPAIGN" },
   denied: { label: "denied", buttonLabel: "VIEW APPLICATION" },
   published: { label: "published", buttonLabel: "VIEW CAMPAIGN" },
@@ -82,12 +113,14 @@ const APP_STATUS_ORDER: Status[] = [
 
 function groupByStatus(campaigns: UserCampaign[]) {
   const groups: Partial<Record<Status, UserCampaign[]>> = {};
+
   for (const campaign of campaigns) {
     if (!groups[campaign.status]) {
       groups[campaign.status] = [];
     }
     groups[campaign.status]!.push(campaign);
   }
+
   return groups;
 }
 
@@ -106,6 +139,39 @@ function getCampaignStatusPath(status: Status, campaignId: number) {
   }
 }
 
+function formatDateJoined(dateStr?: string) {
+  if (!dateStr) return "N/A";
+  return dateStr.split("T")[0];
+}
+
+function compareValues(
+  a: string | undefined,
+  b: string | undefined,
+  direction: SortDirection,
+) {
+  const multiplier = direction === "asc" ? 1 : -1;
+  return (a ?? "").localeCompare(b ?? "") * multiplier;
+}
+
+function getStatusSummaryText(status: Status, count: number, fullName: string) {
+  switch (status) {
+    case "pending":
+      return `${fullName} has ${count} pending application${count === 1 ? "" : "s"}:`;
+    case "approved":
+      return `${fullName} has ${count} approved campaign${count === 1 ? "" : "s"}:`;
+    case "denied":
+      return `${fullName} has ${count} denied application${count === 1 ? "" : "s"}:`;
+    case "published":
+      return `${fullName} has ${count} published campaign${count === 1 ? "" : "s"}:`;
+    case "publish_failed":
+      return `${fullName} has ${count} publish failed campaign${count === 1 ? "" : "s"}:`;
+    case "archived":
+      return `${fullName} has ${count} archived campaign${count === 1 ? "" : "s"}:`;
+    case "in_progress":
+      return `${fullName} has ${count} in-progress application${count === 1 ? "" : "s"}.`;
+  }
+}
+
 function CampaignsSummaryBadge({
   status,
   count,
@@ -117,7 +183,7 @@ function CampaignsSummaryBadge({
   onClick?: () => void;
   bestStatus?: Status;
 }) {
-  if (status === "approved" || status === "published") {
+  if (status === "approved" || status === "published" || status === "pending") {
     return (
       <span onClick={onClick} className="cursor-pointer">
         <Chip
@@ -131,25 +197,6 @@ function CampaignsSummaryBadge({
             ),
           })}
           className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm! cursor-pointer!"
-        />
-      </span>
-    );
-  }
-
-  if (status === "pending") {
-    return (
-      <span onClick={onClick} className="cursor-pointer">
-        <Chip
-          variant="outlined"
-          label={STATUS_LABELS[status]}
-          {...(count > 1 && {
-            avatar: (
-              <Avatar className="bg-[#F57F17]! text-white! font-bold! text-xs!">
-                {count}
-              </Avatar>
-            ),
-          })}
-          className="border-[#F9A825]! text-[#F57F17]! font-medium! text-sm! cursor-pointer!"
         />
       </span>
     );
@@ -197,12 +244,13 @@ function CampaignsSummaryBadge({
     let avatarBg = "bg-[#757575]!";
     let chipColors = "border-[#BDBDBD]! text-[#9E9E9E]!";
 
-    if (bestStatus === "approved" || bestStatus === "published") {
+    if (
+      bestStatus === "approved" ||
+      bestStatus === "published" ||
+      bestStatus === "pending"
+    ) {
       avatarBg = "bg-[#1B5E20]!";
       chipColors = "border-[#2E7D32]! text-[#2E7D32]!";
-    } else if (bestStatus === "pending") {
-      avatarBg = "bg-[#F57F17]!";
-      chipColors = "border-[#F9A825]! text-[#F57F17]!";
     } else if (bestStatus === "in_progress") {
       avatarBg = "bg-[#01579B]!";
       chipColors = "border-[#0288D1]! text-[#0288D1]!";
@@ -257,21 +305,52 @@ export default function UsersTable({
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
+  const [mobileStatusFilters, setMobileStatusFilters] = useState<FilterStatus[]>(
+    [],
+  );
+  const [sortField, setSortField] = useState<SortField>("created_at");
+  const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
+  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
+  const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteTarget, setDeleteTarget] = useState<UsersTableRow | null>(null);
+  const [deleteUnlockIn, setDeleteUnlockIn] = useState(0);
   const [statusTarget, setStatusTarget] = useState<UsersTableRow | null>(null);
   const [toast, setToast] = useState(false);
   const { mutate: deleteUserMutate } = useDeleteUser();
   const [hoveredRowId, setHoveredRowId] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (!deleteTarget) {
+      setDeleteUnlockIn(0);
+      return;
+    }
+
+    setDeleteUnlockIn(5);
+
+    const timer = window.setInterval(() => {
+      setDeleteUnlockIn((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [deleteTarget]);
+
   const handleConfirmDelete = useCallback(() => {
-    if (!deleteTarget) return;
+    if (!deleteTarget || deleteUnlockIn > 0) return;
+
     deleteUserMutate(deleteTarget.id, {
       onSuccess: () => {
         setDeleteTarget(null);
         setToast(true);
       },
     });
-  }, [deleteTarget, deleteUserMutate]);
+  }, [deleteTarget, deleteUnlockIn, deleteUserMutate]);
 
   const columns = useMemo(
     () => [
@@ -323,7 +402,7 @@ export default function UsersTable({
             onClick={() => setDeleteTarget(row.original)}
           >
             <DeleteIcon
-              className="transition-opacity text-[#9E9E9E]"
+              className="transition-opacity text-[#D32F2F]"
               style={{ opacity: hoveredRowId === row.id ? 1 : 0 }}
             />
           </span>
@@ -336,59 +415,263 @@ export default function UsersTable({
   const yearFilteredData = useMemo(() => {
     return initialData.map((user) => ({
       ...user,
-      campaigns: user.campaigns.filter((c) => {
-        if (!c || !c.competition_id) return false;
-        return competitionYearMap.get(c.competition_id) === selectedYear;
+      campaigns: user.campaigns.filter((campaign) => {
+        if (!campaign || !campaign.competition_id) return false;
+        return competitionYearMap.get(campaign.competition_id) === selectedYear;
       }),
     }));
   }, [initialData, competitionYearMap, selectedYear]);
 
+  const activeStatusFilters = useMemo<FilterStatus[]>(() => {
+    if (mobileStatusFilters.length) {
+      return mobileStatusFilters;
+    }
+
+    return statusFilter ? [statusFilter as FilterStatus] : [];
+  }, [mobileStatusFilters, statusFilter]);
+
   const filteredData = useMemo(() => {
-    const q = search.toLowerCase();
+    const q = search.trim().toLowerCase();
+
     return yearFilteredData.filter((user) => {
       const matchesSearch =
+        q.length === 0 ||
         user.first_name.toLowerCase().includes(q) ||
         user.last_name.toLowerCase().includes(q) ||
         user.email.toLowerCase().includes(q);
+
       const matchesStatus =
-        !statusFilter || user.campaigns.some((c) => c.status === statusFilter);
+        activeStatusFilters.length === 0 ||
+        activeStatusFilters.some((filter) => {
+          if (filter === "not_started") {
+            return user.campaigns.length === 0;
+          }
+
+          return user.campaigns.some((campaign) => campaign.status === filter);
+        });
+
       return matchesSearch && matchesStatus;
     });
-  }, [search, statusFilter, yearFilteredData]);
+  }, [activeStatusFilters, search, yearFilteredData]);
+
+  const sortedData = useMemo(() => {
+    const nextData = [...filteredData];
+
+    nextData.sort((a, b) => {
+      switch (sortField) {
+        case "first_name":
+          return compareValues(a.first_name, b.first_name, sortDirection);
+        case "last_name":
+          return compareValues(a.last_name, b.last_name, sortDirection);
+        case "email":
+          return compareValues(a.email, b.email, sortDirection);
+        case "created_at":
+        default:
+          return compareValues(a.created_at, b.created_at, sortDirection);
+      }
+    });
+
+    return nextData;
+  }, [filteredData, sortDirection, sortField]);
 
   const table = useReactTable({
-    data: filteredData,
+    data: sortedData,
     columns,
     getCoreRowModel: getCoreRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
     initialState: { pagination: { pageSize: 10 } },
   });
 
+  const paginatedUsers = table.getRowModel().rows.map((row) => row.original);
+  const pageIndex = table.getState().pagination.pageIndex;
+  const pageSize = table.getState().pagination.pageSize;
+  const firstRow = sortedData.length === 0 ? 0 : pageIndex * pageSize + 1;
+  const lastRow = Math.min((pageIndex + 1) * pageSize, sortedData.length);
+
+  const handleSearchChange = useCallback((value: string) => {
+    setSearch(value);
+    table.setPageIndex(0);
+  }, [table]);
+
+  const handleDesktopStatusChange = useCallback((value: string) => {
+    setStatusFilter(value);
+    setMobileStatusFilters([]);
+    table.setPageIndex(0);
+  }, [table]);
+
+  const handleToggleMobileStatusFilter = useCallback((value: FilterStatus) => {
+    setStatusFilter("");
+    setMobileStatusFilters((current) => {
+      const next = current.includes(value)
+        ? current.filter((item) => item !== value)
+        : [...current, value];
+
+      return next;
+    });
+    table.setPageIndex(0);
+  }, [table]);
+
+  const handleSortFieldChange = useCallback((value: SortField) => {
+    setSortField(value);
+    table.setPageIndex(0);
+  }, [table]);
+
+  const handleSortDirectionChange = useCallback((value: SortDirection) => {
+    setSortDirection(value);
+    table.setPageIndex(0);
+  }, [table]);
+
+  const isFilterMenuOpen = Boolean(filterAnchorEl);
+  const isSortMenuOpen = Boolean(sortAnchorEl);
+
   return (
     <div className="w-full">
-      <div className="md:w-full md:mx-auto bg-white rounded-xl overflow-x-auto">
-        {/* Header */}
-        <div className="pt-8 px-5">
+      <Menu
+        anchorEl={filterAnchorEl}
+        open={isFilterMenuOpen}
+        onClose={() => setFilterAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{
+          paper: {
+            className:
+              "mt-2 min-w-[240px] overflow-hidden rounded-[14px] border border-[#eef2ee] shadow-[0_12px_26px_rgba(31,60,44,0.12)]",
+          },
+        }}
+      >
+        <div className="border-b border-[#eef2ee] px-5 py-4 text-[16px] font-semibold text-[#1f2320]">
+          Submission Status
+        </div>
+        {FILTER_OPTIONS.map((option) => {
+          const isSelected = activeStatusFilters.includes(option.value);
+
+          return (
+            <MenuItem
+              key={option.value}
+              onClick={() => handleToggleMobileStatusFilter(option.value)}
+              className="!px-5 !py-3"
+            >
+              <div className="flex min-w-[200px] items-center justify-between gap-4">
+                <span>{option.label}</span>
+                {isSelected && <CheckIcon className="!text-[#2D7A45]" />}
+              </div>
+            </MenuItem>
+          );
+        })}
+      </Menu>
+
+      <Menu
+        anchorEl={sortAnchorEl}
+        open={isSortMenuOpen}
+        onClose={() => setSortAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{
+          paper: {
+            className:
+              "mt-2 min-w-[240px] overflow-hidden rounded-[14px] border border-[#eef2ee] shadow-[0_12px_26px_rgba(31,60,44,0.12)]",
+          },
+        }}
+      >
+        <div className="border-b border-[#eef2ee] px-5 py-4 text-[16px] font-semibold text-[#1f2320]">
+          Sort By
+        </div>
+        {SORT_OPTIONS.map((option) => (
+          <MenuItem
+            key={option.value}
+            onClick={() => handleSortFieldChange(option.value)}
+            className="!px-5 !py-3"
+          >
+            <div className="flex min-w-[200px] items-center justify-between gap-4">
+              <span>{option.label}</span>
+              {sortField === option.value && <CheckIcon className="!text-[#2D7A45]" />}
+            </div>
+          </MenuItem>
+        ))}
+        <div className="border-t border-[#eef2ee] px-5 py-4 text-[16px] font-semibold text-[#1f2320]">
+          Sort Direction
+        </div>
+        <MenuItem
+          onClick={() => handleSortDirectionChange("asc")}
+          className="!px-5 !py-3"
+        >
+          <div className="flex min-w-[200px] items-center justify-between gap-4">
+            <span>Ascending</span>
+            {sortDirection === "asc" && <CheckIcon className="!text-[#2D7A45]" />}
+          </div>
+        </MenuItem>
+        <MenuItem
+          onClick={() => handleSortDirectionChange("desc")}
+          className="!px-5 !py-3"
+        >
+          <div className="flex min-w-[200px] items-center justify-between gap-4">
+            <span>Descending</span>
+            {sortDirection === "desc" && <CheckIcon className="!text-[#2D7A45]" />}
+          </div>
+        </MenuItem>
+      </Menu>
+
+      <div className="overflow-hidden rounded-xl bg-white md:mx-auto md:w-full md:overflow-x-auto">
+        <div className="px-4 pt-5 md:hidden">
+          <div className="text-sm text-[#1f2320]">
+            <span className="font-semibold">User List</span> - {sortedData.length} User
+            {sortedData.length === 1 ? "" : "s"}
+          </div>
+
+          <div className="mt-4 flex items-center gap-3">
+            <label className="relative block flex-1">
+              <SearchIcon className="pointer-events-none absolute left-3 top-1/2 !h-7 !w-7 -translate-y-1/2 text-[#666666]" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => handleSearchChange(e.target.value)}
+                placeholder="Search"
+                className="h-12 w-full rounded-[10px] border border-[#C8D0C8] bg-white pl-14 pr-4 text-[16px] text-[#1f2320] outline-none placeholder:text-[#818881]"
+              />
+            </label>
+
+            <button
+              type="button"
+              onClick={(event) => setFilterAnchorEl(event.currentTarget)}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] border border-[#C8D0C8] bg-white text-[#666666] shadow-[0_4px_10px_rgba(31,60,44,0.08)]"
+              aria-label="Filter users"
+            >
+              <FilterAltOutlinedIcon className="!h-7 !w-7" />
+            </button>
+
+            <button
+              type="button"
+              onClick={(event) => setSortAnchorEl(event.currentTarget)}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] border border-[#C8D0C8] bg-white text-[#666666] shadow-[0_4px_10px_rgba(31,60,44,0.08)]"
+              aria-label="Sort users"
+            >
+              <ImportExportIcon className="!h-7 !w-7" />
+            </button>
+          </div>
+
+          <div className="mt-6 border-b border-[#CFD8CF]" />
+        </div>
+
+        <div className="hidden px-5 pt-8 md:block">
           <h2 className="text-black sm:text-left text-center">
             {selectedYear} User List
           </h2>
           <p className="text-sm text-gray-500 sm:text-left text-center">
-            {initialData.length} Users
+            {sortedData.length} Users
           </p>
 
-          {/* Search + Filter row */}
-          <div className="flex gap-4 my-6">
+          <div className="my-6 flex gap-4">
             <div className="relative flex-1">
-              <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs text-gray-00">
+              <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs text-gray-400">
                 Search
               </label>
-              <div className="flex items-center border border-gray-400 rounded-lg px-3 py-2.5 focus-within:border-blue-500 transition-colors">
+              <div className="flex items-center rounded-lg border border-gray-400 px-3 py-2.5 transition-colors focus-within:border-blue-500">
                 <input
                   type="text"
                   value={search}
-                  onChange={(e) => setSearch(e.target.value)}
+                  onChange={(e) => handleSearchChange(e.target.value)}
                   placeholder="Name, email, etc..."
-                  className="w-full bg-transparent outline-none text-md"
+                  className="w-full bg-transparent text-md outline-none"
                 />
               </div>
             </div>
@@ -398,11 +681,11 @@ export default function UsersTable({
                 <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs text-gray-400">
                   Filter By Application Status
                 </label>
-                <div className="flex items-center border border-gray-400 rounded-lg px-3 py-2.5">
+                <div className="flex items-center rounded-lg border border-gray-400 px-3 py-2.5">
                   <select
                     value={statusFilter}
-                    onChange={(e) => setStatusFilter(e.target.value)}
-                    className="w-full bg-transparent outline-none text-md text-gray-500 cursor-pointer appearance-none"
+                    onChange={(e) => handleDesktopStatusChange(e.target.value)}
+                    className="w-full cursor-pointer appearance-none bg-transparent text-md text-gray-500 outline-none"
                   >
                     <option value="">No Filter</option>
                     <option value="in_progress">In Progress</option>
@@ -410,7 +693,9 @@ export default function UsersTable({
                     <option value="approved">Approved</option>
                     <option value="denied">Denied</option>
                     <option value="published">Published</option>
+                    <option value="publish_failed">Publish Failed</option>
                     <option value="archived">Archived</option>
+                    <option value="not_started">Not Started</option>
                   </select>
                 </div>
               </div>
@@ -418,110 +703,221 @@ export default function UsersTable({
           </div>
         </div>
 
-        {filteredData.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No users found.</div>
-        ) : (
-          <>
-            <table className="w-full">
-              <thead>
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <tr key={headerGroup.id}>
-                    {headerGroup.headers.map((header) => (
-                      <th
-                        key={header.id}
-                        className="text-left px-5 py-4 border-b border-gray-300 font-semibold text-gray-800"
-                      >
-                        {header.isPlaceholder
-                          ? null
-                          : flexRender(
-                              header.column.columnDef.header,
-                              header.getContext(),
-                            )}
-                      </th>
-                    ))}
-                  </tr>
-                ))}
-              </thead>
-              <tbody>
-                {table.getRowModel().rows.map((row) => (
-                  <tr
-                    key={row.id}
-                    onMouseEnter={() => setHoveredRowId(row.id)}
-                    onMouseLeave={() => setHoveredRowId(null)}
-                  >
-                    {row.getVisibleCells().map((cell) => (
-                      <td
-                        key={cell.id}
-                        className="text-left px-5 py-4 border-b border-gray-300"
-                      >
-                        {flexRender(
-                          cell.column.columnDef.cell,
-                          cell.getContext(),
-                        )}
-                      </td>
-                    ))}
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-
-            {/* Pagination */}
-            <div className="px-6 py-4 flex items-center justify-end gap-6 text-sm text-gray-500 border-t border-gray-100">
-              <div className="flex items-center gap-2">
-                <span>Rows per page:</span>
-                <select
-                  value={table.getState().pagination.pageSize}
-                  onChange={(e) => table.setPageSize(Number(e.target.value))}
-                  className="outline-none cursor-pointer font-medium text-gray-700"
-                >
-                  {[5, 10, 20].map((size) => (
-                    <option key={size} value={size}>
-                      {size}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              <span>
-                {table.getState().pagination.pageIndex *
-                  table.getState().pagination.pageSize +
-                  1}
-                -
-                {Math.min(
-                  (table.getState().pagination.pageIndex + 1) *
-                    table.getState().pagination.pageSize,
-                  filteredData.length,
-                )}{" "}
-                of {filteredData.length}
-              </span>
-
-              <div className="flex items-center gap-2">
-                <button
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                  className="p-1 disabled:opacity-30 text-2xl text-black font-bold"
-                >
-                  &lt;
-                </button>
-                <button
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                  className="p-1 disabled:opacity-30 text-2xl text-black font-bold"
-                >
-                  &gt;
-                </button>
-              </div>
+        <div className="block px-4 py-5 md:hidden">
+          {paginatedUsers.length === 0 ? (
+            <div className="rounded-[18px] border border-[#DFE8DF] bg-white px-5 py-8 text-center text-sm text-[#8a918b] shadow-[0_8px_20px_rgba(31,60,44,0.05)]">
+              No users found.
             </div>
-          </>
-        )}
+          ) : (
+            <div className="space-y-4">
+              {paginatedUsers.map((user) => {
+                const aggregateStatus =
+                  user.campaigns.length === 0
+                    ? null
+                    : getAggregateStatus(user.campaigns);
+
+                return (
+                  <div
+                    key={user.id}
+                    className="overflow-hidden rounded-[18px] border border-[#DFE8DF] bg-white shadow-[0_8px_20px_rgba(31,60,44,0.05)]"
+                  >
+                    <div className="flex items-start justify-between gap-4 px-5 py-4">
+                      <div>
+                        <p className="text-[13px] text-[#7B827D]">First Name:</p>
+                        <p className="mt-1 text-[18px] font-semibold text-[#1f2320]">
+                          {user.first_name}
+                        </p>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setDeleteTarget(user)}
+                        className="text-[#E53935]"
+                        aria-label={`Delete ${user.first_name} ${user.last_name}`}
+                      >
+                        <DeleteIcon />
+                      </button>
+                    </div>
+
+                    <div className="border-t border-[#CFD8CF] px-5 py-4">
+                      <div className="flex items-center justify-between gap-4 border-b border-[#E3E8E3] py-3 text-[14px]">
+                        <span className="text-[#6A706B]">Last Name</span>
+                        <span className="font-medium text-[#1f2320]">{user.last_name}</span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4 border-b border-[#E3E8E3] py-3 text-[14px]">
+                        <span className="text-[#6A706B]">Email</span>
+                        <span className="truncate pl-3 font-medium text-[#1f2320]">
+                          {user.email}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4 border-b border-[#E3E8E3] py-3 text-[14px]">
+                        <span className="text-[#6A706B]">Date Joined</span>
+                        <span className="font-medium text-[#1f2320]">
+                          {formatDateJoined(user.created_at)}
+                        </span>
+                      </div>
+                      <div className="flex items-center justify-between gap-4 pt-3 text-[14px]">
+                        <span className="text-[#6A706B]">Submission Status</span>
+                        {aggregateStatus ? (
+                          <CampaignsSummaryBadge
+                            status={aggregateStatus}
+                            count={user.campaigns.length}
+                            onClick={() => setStatusTarget(user)}
+                            {...(aggregateStatus === "mixed" && {
+                              bestStatus: getBestStatus(user.campaigns),
+                            })}
+                          />
+                        ) : (
+                          <Chip
+                            variant="outlined"
+                            label="Not Started"
+                            className="border-[#BDBDBD]! text-[#9E9E9E]! font-medium! text-sm!"
+                          />
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          )}
+        </div>
+
+        <div className="hidden md:block">
+          {sortedData.length === 0 ? (
+            <div className="p-8 text-center text-gray-500">No users found.</div>
+          ) : (
+            <>
+              <table className="w-full">
+                <thead>
+                  {table.getHeaderGroups().map((headerGroup) => (
+                    <tr key={headerGroup.id}>
+                      {headerGroup.headers.map((header) => (
+                        <th
+                          key={header.id}
+                          className="border-b border-gray-300 px-5 py-4 text-left font-semibold text-gray-800"
+                        >
+                          {header.isPlaceholder
+                            ? null
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext(),
+                              )}
+                        </th>
+                      ))}
+                    </tr>
+                  ))}
+                </thead>
+                <tbody>
+                  {table.getRowModel().rows.map((row) => (
+                    <tr
+                      key={row.id}
+                      onMouseEnter={() => setHoveredRowId(row.id)}
+                      onMouseLeave={() => setHoveredRowId(null)}
+                    >
+                      {row.getVisibleCells().map((cell) => (
+                        <td
+                          key={cell.id}
+                          className="border-b border-gray-300 px-5 py-4 text-left"
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext(),
+                          )}
+                        </td>
+                      ))}
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+
+              <div className="flex items-center justify-end gap-6 border-t border-gray-100 px-6 py-4 text-sm text-gray-500">
+                <div className="flex items-center gap-2">
+                  <span>Rows per page:</span>
+                  <select
+                    value={pageSize}
+                    onChange={(e) => table.setPageSize(Number(e.target.value))}
+                    className="cursor-pointer font-medium text-gray-700 outline-none"
+                  >
+                    {[5, 10, 20].map((size) => (
+                      <option key={size} value={size}>
+                        {size}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
+                <span>
+                  {firstRow}-{lastRow} of {sortedData.length}
+                </span>
+
+                <div className="flex items-center gap-2">
+                  <button
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                    className="p-1 text-2xl font-bold text-black disabled:opacity-30"
+                  >
+                    &lt;
+                  </button>
+                  <button
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                    className="p-1 text-2xl font-bold text-black disabled:opacity-30"
+                  >
+                    &gt;
+                  </button>
+                </div>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+
+      <div className="px-4 pb-20 text-[12px] text-[#7B827D] md:hidden">
+        <div className="flex items-center justify-between">
+          <span>
+            {firstRow}-{lastRow} of {sortedData.length}
+          </span>
+          <div className="flex items-center gap-1">
+            <button
+              type="button"
+              onClick={() => table.previousPage()}
+              disabled={!table.getCanPreviousPage()}
+              className="rounded-full p-1 text-[#8d948e] transition-colors hover:bg-[#f0f4f0] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              &lt;
+            </button>
+            <button
+              type="button"
+              onClick={() => table.nextPage()}
+              disabled={!table.getCanNextPage()}
+              className="rounded-full p-1 text-[#8d948e] transition-colors hover:bg-[#f0f4f0] disabled:cursor-not-allowed disabled:opacity-40"
+            >
+              &gt;
+            </button>
+          </div>
+        </div>
       </div>
 
       <BaseModal
         open={!!deleteTarget}
         onClose={() => setDeleteTarget(null)}
-        title="Confirm Deletion"
+        title={undefined}
       >
-        <p className="text-gray-700 mb-8">
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <h2 className="text-[20px] font-semibold text-[#123A1E]">
+            Confirm Deletion
+          </h2>
+          <button
+            type="button"
+            onClick={() => setDeleteTarget(null)}
+            className="text-[#666666] transition-colors hover:text-[#1f2320]"
+            aria-label="Close delete dialog"
+          >
+            <CloseIcon />
+          </button>
+        </div>
+        <p className="mb-8 text-gray-700">
           You are about to delete {deleteTarget?.first_name}{" "}
           {deleteTarget?.last_name}&apos;s account. This action is irreversible.
           Are you sure you would like to delete their account?
@@ -529,18 +925,22 @@ export default function UsersTable({
         <div className="flex justify-end gap-4">
           <button
             onClick={() => setDeleteTarget(null)}
-            className="px-4 py-2 text-gray-600 font-medium cursor-pointer hover:text-gray-800 transition-colors"
+            className="cursor-pointer px-4 py-2 font-medium text-gray-600 transition-colors hover:text-gray-800"
           >
             CANCEL
           </button>
-          <div className="group/del">
-            <button
-              onClick={handleConfirmDelete}
-              className="px-5 py-2 bg-gray-300 text-gray-500 font-medium rounded pointer-events-none group-hover/del:pointer-events-auto group-hover/del:bg-red-500 group-hover/del:text-white transition-colors cursor-pointer"
-            >
-              DELETE
-            </button>
-          </div>
+          <button
+            onClick={handleConfirmDelete}
+            disabled={deleteUnlockIn > 0}
+            className={clsx(
+              "rounded px-5 py-2 font-medium transition-colors",
+              deleteUnlockIn > 0
+                ? "cursor-not-allowed bg-gray-200 text-gray-400"
+                : "cursor-pointer bg-red-600 text-white hover:bg-red-700",
+            )}
+          >
+            DELETE
+          </button>
         </div>
       </BaseModal>
 
@@ -552,28 +952,37 @@ export default function UsersTable({
           <BaseModal
             open={true}
             onClose={() => setStatusTarget(null)}
-            title="Application Status"
+            title={undefined}
           >
-            <hr className="border-gray-300" />
-            <div className="overflow-y-auto flex-1 max-h-[50vh]">
+            <div className="mb-6 flex items-start justify-between gap-4">
+              <h2 className="text-[20px] font-semibold text-[#123A1E]">
+                Application Status
+              </h2>
+              <button
+                type="button"
+                onClick={() => setStatusTarget(null)}
+                className="text-[#666666] transition-colors hover:text-[#1f2320]"
+                aria-label="Close application status dialog"
+              >
+                <CloseIcon />
+              </button>
+            </div>
+            <div className="max-h-[50vh] flex-1 overflow-y-auto">
               {APP_STATUS_ORDER.filter((status) => groups[status]).map((status) => {
                 const campaigns = groups[status]!;
                 const config = APP_STATUS_CONFIG[status];
 
                 return (
-                  <div key={status}>
-                    <p className="text-gray-800 mb-3 mt-4">
-                      {fullName} has{" "}
-                      <span className="font-bold">&lt;{campaigns.length}&gt;</span>{" "}
-                      {config.label} application{campaigns.length !== 1 ? "s" : ""}
-                      {status === "in_progress" ? "." : ":"}
+                  <div key={status} className="mb-5 last:mb-0">
+                    <p className="mb-3 text-gray-800">
+                      {getStatusSummaryText(status, campaigns.length, fullName)}
                     </p>
                     {status !== "in_progress" && (
-                      <div className="flex flex-col gap-3 pl-6">
+                      <div className="flex flex-col gap-3 pl-4">
                         {campaigns.map((campaign) => (
                           <div
                             key={campaign.campaign_id}
-                            className="flex items-center justify-between"
+                            className="flex items-center justify-between gap-4"
                           >
                             <span className="text-gray-700">{campaign.name}</span>
                             <Button
@@ -614,4 +1023,4 @@ export default function UsersTable({
       />
     </div>
   );
-};
+}

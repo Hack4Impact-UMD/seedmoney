@@ -7,7 +7,9 @@ export default function useDeleteUser() {
   return useMutation({
     mutationFn: (userId: string) => deleteUser(userId),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ["all-users-with-campaigns"] });
+      queryClient.invalidateQueries({
+        queryKey: ["campaigns", "all-users-with-campaigns"],
+      });
     },
   });
 }

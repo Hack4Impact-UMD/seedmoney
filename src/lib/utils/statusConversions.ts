@@ -1,4 +1,4 @@
-import { Status } from "@src/types/db/enums";
+import type { Status } from "@/src/types/db/enums";
 
 
 
@@ -15,4 +15,3 @@ const statusLabels: Partial<Record<Status, string>> = {
 export function getStatusLabel(status: string) {
   return statusLabels[status as Status] ?? status;
 }
-
