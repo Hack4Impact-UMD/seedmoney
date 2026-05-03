@@ -22,9 +22,15 @@ export default function OngoingApplicationsPage() {
   return (
     <div className="flex min-h-screen">
       <Navbar/>
-      <div className="flex-1 bg-gray-50 p-10">
-        <h3 className="text-4xl font-bold text-[#096B2E] mb-5">Ongoing Campaigns</h3>
-        <CampaignsTable initialData={campaigns || []}/>
+      <div className="flex-1 bg-gray-50 p-4 pb-24 md:p-10 md:pb-10">
+        <h3 className="mb-5 hidden text-4xl font-bold text-[#096B2E] md:block">
+          Ongoing Campaigns
+        </h3>
+        <CampaignsTable
+          initialData={campaigns || []}
+          pageTitle="Ongoing Campaigns"
+          pageListLabel="Ongoing Campaigns List"
+        />
 
       </div>
     </div>

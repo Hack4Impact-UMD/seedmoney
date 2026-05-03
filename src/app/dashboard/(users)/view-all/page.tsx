@@ -25,13 +25,17 @@ export default function ViewAllCampaignsPage() {
     <div className="flex min-h-screen">
       <Navbar />
 
-      <div className="flex-1 bg-[#F6FAF9] px-10 py-[60px]">
+      <div className="flex-1 bg-[#F6FAF9] px-4 py-8 pb-24 md:px-10 md:py-[60px] md:pb-[60px]">
         <div className="flex w-full flex-col gap-6">
-          <div className="w-full">
+          <div className="hidden w-full md:block">
             <h1 className="text-4xl font-bold text-[#096B2E]">All Campaigns</h1>
           </div>
 
-          <CampaignsTable initialData={campaigns} isAdmin/>
+          <CampaignsTable
+            initialData={campaigns}
+            pageTitle="All Campaigns"
+            pageListLabel="All Campaigns List"
+          />
         </div>
       </div>
     </div>
