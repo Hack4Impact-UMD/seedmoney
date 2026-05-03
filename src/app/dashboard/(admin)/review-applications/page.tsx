@@ -21,12 +21,13 @@ export default function ReviewApplicationsPage() {
 
   return (
     <div className="flex min-h-screen bg-[#fbfcfb]">
-      <Navbar/>
-      <div className="flex-1 bg-gray-50 p-10">
-        <h3 className="text-4xl font-bold text-[#096B2E]">Review Campaigns</h3>
+      <Navbar />
+      <div className="flex-1 bg-gray-50 px-4 py-6 md:p-10">
+        <h3 className="hidden text-4xl font-bold text-[#096B2E] md:block">
+          Review Campaigns
+        </h3>
         <ReviewApplicationsTable applications={campaigns || []} />
       </div>
-
     </div>
   );
 }
