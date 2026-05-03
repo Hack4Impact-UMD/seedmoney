@@ -17,6 +17,7 @@ import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import type { Status } from "@/src/types/db/enums";
 import { ReviewApplicationRow } from "@/src/types/frontend/campaignsTable";
 import { createGivebutterCampaigns } from "../actions/givebutter/campaignsGivebutter";
+import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
 
 const pageSizeOptions = [5, 10, 20];
 
@@ -136,6 +137,25 @@ export default function ReviewApplicationsTable({ applications }: Props) {
 
     return nextApplications;
   }, [filteredApplications, sortBy]);
+
+  const mobileResetKey = [
+    tab,
+    searchQuery,
+    sortBy,
+    sortedApplications.length,
+  ].join("|");
+
+  const {
+    visibleItems: visibleMobileApplications,
+    visibleCount: visibleMobileApplicationCount,
+    hasMore: hasMoreMobileApplications,
+    loadMore: loadMoreMobileApplications,
+    sentinelRef: mobileApplicationsSentinelRef,
+  } = useIncrementalMobileList(sortedApplications, {
+    initialCount: 12,
+    increment: 12,
+    resetKey: mobileResetKey,
+  });
 
   const totalPages = Math.max(1, Math.ceil(sortedApplications.length / pageSize));
   const currentPageIndex = Math.min(pageIndex, totalPages - 1);
@@ -485,12 +505,12 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
-          {paginatedApplications.length === 0 ? (
+          {sortedApplications.length === 0 ? (
             <div className="rounded-[18px] border border-[#dfe8df] bg-white px-5 py-8 text-center text-sm text-[#8a918b] shadow-[0_8px_20px_rgba(31,60,44,0.05)]">
               No applications found for this view.
             </div>
           ) : (
-            paginatedApplications.map((application) => {
+            visibleMobileApplications.map((application) => {
               const isSelected = selectedIds.includes(application.campaignId);
 
               return (
@@ -552,32 +572,25 @@ export default function ReviewApplicationsTable({ applications }: Props) {
           )}
         </div>
 
-        <div className="mt-4 flex items-center justify-between text-[12px] text-[#7b827d]">
-          <span>
-            {firstRow}-{lastRow} of {sortedApplications.length}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={handlePreviousPage}
-              disabled={currentPageIndex === 0}
-              className="rounded-full p-1 text-[#8d948e] transition-colors hover:bg-[#f0f4f0] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ChevronLeftIcon />
-            </button>
-            <button
-              type="button"
-              onClick={handleNextPage}
-              disabled={
-                currentPageIndex >= totalPages - 1 ||
-                sortedApplications.length === 0
-              }
-              className="rounded-full p-1 text-[#8d948e] transition-colors hover:bg-[#f0f4f0] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              <ChevronRightIcon />
-            </button>
+        {sortedApplications.length > 0 && (
+          <div className="mt-4 flex flex-col items-center gap-3 text-[12px] text-[#7b827d]">
+            <span>
+              Showing {visibleMobileApplicationCount} of {sortedApplications.length}
+            </span>
+            {hasMoreMobileApplications && (
+              <>
+                <div ref={mobileApplicationsSentinelRef} className="h-1 w-full" />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={loadMoreMobileApplications}
+                >
+                  Load More
+                </Button>
+              </>
+            )}
           </div>
-        </div>
+        )}
       </div>
 
       <div className="hidden md:block">

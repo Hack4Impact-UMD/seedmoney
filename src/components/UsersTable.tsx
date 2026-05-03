@@ -26,6 +26,7 @@ import type {
 } from "@/src/types/frontend/usersTable";
 import useDeleteUser from "@/src/hooks/users/useDeleteUser";
 import type { Status } from "@/src/types/db/enums";
+import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
 
 interface Props {
   initialData: UsersTableRow[];
@@ -474,6 +475,28 @@ export default function UsersTable({
     return nextData;
   }, [filteredData, sortDirection, sortField]);
 
+  const mobileResetKey = [
+    selectedYear,
+    search,
+    statusFilter,
+    mobileStatusFilters.join(","),
+    sortField,
+    sortDirection,
+    sortedData.length,
+  ].join("|");
+
+  const {
+    visibleItems: visibleMobileUsers,
+    visibleCount: visibleMobileUserCount,
+    hasMore: hasMoreMobileUsers,
+    loadMore: loadMoreMobileUsers,
+    sentinelRef: mobileUsersSentinelRef,
+  } = useIncrementalMobileList(sortedData, {
+    initialCount: 12,
+    increment: 12,
+    resetKey: mobileResetKey,
+  });
+
   const table = useReactTable({
     data: sortedData,
     columns,
@@ -482,7 +505,6 @@ export default function UsersTable({
     initialState: { pagination: { pageSize: 10 } },
   });
 
-  const paginatedUsers = table.getRowModel().rows.map((row) => row.original);
   const pageIndex = table.getState().pagination.pageIndex;
   const pageSize = table.getState().pagination.pageSize;
   const firstRow = sortedData.length === 0 ? 0 : pageIndex * pageSize + 1;
@@ -704,13 +726,13 @@ export default function UsersTable({
         </div>
 
         <div className="block px-4 py-5 md:hidden">
-          {paginatedUsers.length === 0 ? (
+          {sortedData.length === 0 ? (
             <div className="rounded-[18px] border border-[#DFE8DF] bg-white px-5 py-8 text-center text-sm text-[#8a918b] shadow-[0_8px_20px_rgba(31,60,44,0.05)]">
               No users found.
             </div>
           ) : (
             <div className="space-y-4">
-              {paginatedUsers.map((user) => {
+              {visibleMobileUsers.map((user) => {
                 const aggregateStatus =
                   user.campaigns.length === 0
                     ? null
@@ -873,31 +895,27 @@ export default function UsersTable({
         </div>
       </div>
 
-      <div className="px-4 pb-20 text-[12px] text-[#7B827D] md:hidden">
-        <div className="flex items-center justify-between">
-          <span>
-            {firstRow}-{lastRow} of {sortedData.length}
-          </span>
-          <div className="flex items-center gap-1">
-            <button
-              type="button"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-              className="rounded-full p-1 text-[#8d948e] transition-colors hover:bg-[#f0f4f0] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              &lt;
-            </button>
-            <button
-              type="button"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-              className="rounded-full p-1 text-[#8d948e] transition-colors hover:bg-[#f0f4f0] disabled:cursor-not-allowed disabled:opacity-40"
-            >
-              &gt;
-            </button>
+      {sortedData.length > 0 && (
+        <div className="px-4 pb-20 text-[12px] text-[#7B827D] md:hidden">
+          <div className="flex flex-col items-center gap-3">
+            <span>
+              Showing {visibleMobileUserCount} of {sortedData.length}
+            </span>
+            {hasMoreMobileUsers && (
+              <>
+                <div ref={mobileUsersSentinelRef} className="h-1 w-full" />
+                <Button
+                  variant="outlined"
+                  size="small"
+                  onClick={loadMoreMobileUsers}
+                >
+                  Load More
+                </Button>
+              </>
+            )}
           </div>
         </div>
-      </div>
+      )}
 
       <BaseModal
         open={!!deleteTarget}
