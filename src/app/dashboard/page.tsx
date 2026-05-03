@@ -244,8 +244,8 @@ export default function DashboardIndexPage() {
               </select>
 
               {daysLeft !== null && (
-                <div className="flex items-center gap-3 min-w-[420px]">
-                  <span className="text-sm text-gray-500 whitespace-nowrap">
+                <div className="flex w-full min-w-0 flex-col items-start gap-2 sm:w-auto sm:min-w-[420px] sm:flex-row sm:items-center sm:gap-3">
+                  <span className="text-sm text-gray-500 sm:whitespace-nowrap">
                     {daysLeft} days left in this year&apos;s campaign
                   </span>
 
