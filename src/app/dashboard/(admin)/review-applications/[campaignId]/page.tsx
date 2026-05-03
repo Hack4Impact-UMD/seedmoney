@@ -1,11 +1,11 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
-import { useParams, useRouter } from "next/navigation";
+import {useCallback, useEffect, useState} from "react";
+import {useParams, useRouter} from "next/navigation";
 import Navbar from "@/src/components/Navbar";
-import type { Campaign } from "@/src/types/db/campaigns";
-import type { HydratedCampaignImageRecord } from "@/src/types/db/campaignImageRecords";
-import type { Existence, Status } from "@/src/types/db/enums";
+import type {Campaign} from "@/src/types/db/campaigns";
+import type {HydratedCampaignImageRecord} from "@/src/types/db/campaignImageRecords";
+import type {Existence, Status} from "@/src/types/db/enums";
 import Loading from "@/src/app/loading";
 import AppError from "@/src/app/error";
 import NotFound from "@/src/app/not-found";
@@ -21,16 +21,9 @@ import EditCampaignDialogs from "@/src/components/ongoing-campaigns/edit/EditCam
 import EditCampaignHeader from "@/src/components/ongoing-campaigns/edit/EditCampaignHeader";
 import GardenInformationSection from "@/src/components/ongoing-campaigns/edit/GardenInformationSection";
 import GardenStorySection from "@/src/components/ongoing-campaigns/edit/GardenStorySection";
-import {
-  DEFAULT_CAMPAIGN_DATA,
-  EditCampaignFormData,
-  TextFieldKey,
-} from "@/src/types/frontend/campaignEdit";
-import {
-  beneficiaryOptions,
-  categoryOptions,
-} from "@/src/components/ongoing-campaigns/options";
-import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
+import {DEFAULT_CAMPAIGN_DATA, EditCampaignFormData, TextFieldKey,} from "@/src/types/frontend/campaignEdit";
+import {beneficiaryOptions, categoryOptions,} from "@/src/components/ongoing-campaigns/options";
+import {useCampaignEditData} from "@/src/hooks/campaigns/useCampaignEditData";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import { useCreateGivebutterCampaign } from "@/src/hooks/givebutter/useCreateCampaign";

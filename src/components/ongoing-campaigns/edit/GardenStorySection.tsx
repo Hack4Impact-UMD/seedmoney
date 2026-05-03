@@ -1,10 +1,7 @@
 "use client";
 
-import { TextField } from "@mui/material";
-import {
-  EditCampaignFormData,
-  TextChangeHandler,
-} from "@/src/types/frontend/campaignEdit";
+import {TextField} from "@mui/material";
+import {EditCampaignFormData, TextChangeHandler,} from "@/src/types/frontend/campaignEdit";
 
 interface StoryComparisonBlockProps {
   question: string;
@@ -25,7 +22,7 @@ function StoryComparisonBlock({
 }: StoryComparisonBlockProps) {
   return (
     <>
-      <div className="mt-8 col-span-2">
+        <div className="mt-8 col-span-1 lg:col-span-2">
         <h2 className="font-bold">{question}</h2>
       </div>
 
@@ -107,7 +104,7 @@ export default function GardenStorySection({
         </h2>
         <p className="text-sm">2-3 sentences each</p>
 
-        <div className="mt-4 grid grid-cols-[max-content_1fr] items-start gap-x-8 gap-y-4">
+          <div className="mt-4 grid grid-cols-1 lg:grid-cols-[max-content_1fr] items-start gap-x-8 gap-y-4">
           {questions?.q1 && (
             <StoryComparisonBlock
               question={questions.q1}
