@@ -11,7 +11,8 @@ import AppError from "@/src/app/error";
 import NotFound from "@/src/app/not-found";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useCreateFinalAnswer from "@/src/hooks/answers/useCreateFinalAnswer";
-import { Button } from "@mui/material";
+import { Button, Fab } from "@mui/material";
+import { Check, Close, Replay } from "@mui/icons-material";
 import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
 import ContactInformationSection from "@/src/components/ongoing-campaigns/edit/ContactInformationSection";
@@ -33,6 +34,7 @@ import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import { useCreateGivebutterCampaign } from "@/src/hooks/givebutter/useCreateCampaign";
+import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 
 export default function CampaignReviewPage() {
   const router = useRouter();
@@ -44,10 +46,19 @@ export default function CampaignReviewPage() {
   const createGivebutterCampaign = useCreateGivebutterCampaign();
 
   const createFinalAnswerMutation = useCreateFinalAnswer();
-  const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
+  const {
+    data: campaignEditData,
+    isLoading,
+    error,
+    refetch,
+  } = useCampaignEditData(parsedCampaignId);
 
-  const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
-  const [formData, setFormData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
+  const [initialData, setInitialData] = useState<EditCampaignFormData>(
+    DEFAULT_CAMPAIGN_DATA,
+  );
+  const [formData, setFormData] = useState<EditCampaignFormData>(
+    DEFAULT_CAMPAIGN_DATA,
+  );
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
@@ -64,6 +75,25 @@ export default function CampaignReviewPage() {
 
   const isFormDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
   const status = formData.status;
+
+  const { data: currentCompetitionData } = useReadCurrentCompetition();
+  const currentCompetitionId = currentCompetitionData?.competition_id;
+
+  const isPreviousCampaign =
+    campaignEditData?.mappedData.competitionId != null &&
+    currentCompetitionId != null &&
+    campaignEditData.mappedData.competitionId !== currentCompetitionId;
+
+  let tag;
+  if (isPreviousCampaign) {
+    if (status === "pending") {
+      tag = { label: "Pending", color: "#6B21A8", borderColor: "#6B21A8" };
+    } else if (status === "denied") {
+      tag = { label: "Denied", color: "#DC2626", borderColor: "#DC2626" };
+    } else if (status === "approved" || status === "published") {
+      tag = { label: "Approved", color: "#16A34A", borderColor: "#16A34A" };
+    }
+  }
 
   useEffect(() => {
     if (!campaignEditData) return;
@@ -90,9 +120,13 @@ export default function CampaignReviewPage() {
   }, [campaignEditData]);
 
   const setFieldValue = useCallback(
-    <K extends keyof EditCampaignFormData,>(field: K, value: EditCampaignFormData[K]) => {
+    <K extends keyof EditCampaignFormData>(
+      field: K,
+      value: EditCampaignFormData[K],
+    ) => {
       setFormData((prev) => ({ ...prev, [field]: value }));
-    }, [],
+    },
+    [],
   );
 
   const handleTextChange = useCallback(
@@ -126,79 +160,87 @@ export default function CampaignReviewPage() {
     });
   }, []);
 
-  const handleStatusUpdate = useCallback(async (newStatus: Status) => {
-    if (isFormDirty) {
-      setIsSaveAlertOpen(true);
-      return;
-    }
-
-    setIsStatusTransitioning(true);
-
-    try {
-      await updateCampaignMutation.mutateAsync({
-        campaignId: parsedCampaignId,
-        campaignData: { status: newStatus },
-      });
-
-      if (newStatus === "approved") {
-        try {
-          const results = await createGivebutterCampaign.mutateAsync([parsedCampaignId]);
-          const result = results[0];
-
-          if (result.status === "rejected") {
-            throw new Error(result.reason);
-          }
-
-          await updateCampaignMutation.mutateAsync({
-            campaignId: parsedCampaignId,
-            campaignData: {
-              givebutter_id: result.value.id,
-              givebutter_slug: result.value.slug,
-              givebutterlink: result.value.url,
-            },
-          });
-        } catch (err) {
-          const message = err instanceof Error ? err.message : "Failed to create Givebutter campaign.";
-          console.error(message);
-          setSaveErrorMessage(message);
-          setShowErrorToast(true);
-          setIsStatusTransitioning(false);
-          return;
-        }
+  const handleStatusUpdate = useCallback(
+    async (newStatus: Status) => {
+      if (isFormDirty) {
+        setIsSaveAlertOpen(true);
+        return;
       }
 
+      setIsStatusTransitioning(true);
 
+      try {
+        await updateCampaignMutation.mutateAsync({
+          campaignId: parsedCampaignId,
+          campaignData: { status: newStatus },
+        });
 
-      setFieldValue("status", newStatus);
-      const action =
-        newStatus === "approved"
-          ? "approved"
-          : newStatus === "denied"
-            ? "denied"
-            : newStatus === "pending"
-              ? "reverted"
-              : null;
-      const nextPath = action
-        ? `/dashboard/review-applications?action=${action}&campaign=${encodeURIComponent(formData.campaignTitle)}`
-        : "/dashboard/review-applications";
-      router.push(nextPath);
-    } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "Failed to update campaign status.";
-      console.error(message);
-      setSaveErrorMessage(message);
-      setShowErrorToast(true);
-      setIsStatusTransitioning(false);
-    }
-  }, [
-    createGivebutterCampaign,
-    formData.campaignTitle,
-    isFormDirty,
-    parsedCampaignId,
-    router,
-    setFieldValue,
-    updateCampaignMutation,
-  ]);
+        if (newStatus === "approved") {
+          try {
+            const results = await createGivebutterCampaign.mutateAsync([
+              parsedCampaignId,
+            ]);
+            const result = results[0];
+
+            if (result.status === "rejected") {
+              throw new Error(result.reason);
+            }
+
+            await updateCampaignMutation.mutateAsync({
+              campaignId: parsedCampaignId,
+              campaignData: {
+                givebutter_id: result.value.id,
+                givebutter_slug: result.value.slug,
+                givebutterlink: result.value.url,
+              },
+            });
+          } catch (err) {
+            const message =
+              err instanceof Error
+                ? err.message
+                : "Failed to create Givebutter campaign.";
+            console.error(message);
+            setSaveErrorMessage(message);
+            setShowErrorToast(true);
+            setIsStatusTransitioning(false);
+            return;
+          }
+        }
+
+        setFieldValue("status", newStatus);
+        const action =
+          newStatus === "approved"
+            ? "approved"
+            : newStatus === "denied"
+              ? "denied"
+              : newStatus === "pending"
+                ? "reverted"
+                : null;
+        const nextPath = action
+          ? `/dashboard/review-applications?action=${action}&campaign=${encodeURIComponent(formData.campaignTitle)}`
+          : "/dashboard/review-applications";
+        router.push(nextPath);
+      } catch (err) {
+        const message =
+          err instanceof Error
+            ? err.message
+            : "Failed to update campaign status.";
+        console.error(message);
+        setSaveErrorMessage(message);
+        setShowErrorToast(true);
+        setIsStatusTransitioning(false);
+      }
+    },
+    [
+      createGivebutterCampaign,
+      formData.campaignTitle,
+      isFormDirty,
+      parsedCampaignId,
+      router,
+      setFieldValue,
+      updateCampaignMutation,
+    ],
+  );
 
   const handleConfirmSave = useCallback(async () => {
     if (!parsedCampaignId) return;
@@ -274,8 +316,14 @@ export default function CampaignReviewPage() {
       }
 
       const finalAnswerUpdates = changedFinalAnswerCandidates.filter(
-        (update): update is { questionNumber: number; questionId: number; before: string; after: string } =>
-          update.questionId !== null,
+        (
+          update,
+        ): update is {
+          questionNumber: number;
+          questionId: number;
+          before: string;
+          after: string;
+        } => update.questionId !== null,
       );
 
       await updateCampaignMutation.mutateAsync({
@@ -297,7 +345,8 @@ export default function CampaignReviewPage() {
       setIsSaveModalOpen(false);
       setShowSuccessToast(true);
     } catch (err) {
-      const message = err instanceof Error ? err.message : "An unknown error occurred.";
+      const message =
+        err instanceof Error ? err.message : "An unknown error occurred.";
       console.error("Save error:", message);
       setSaveErrorMessage(message);
       setIsSaveModalOpen(false);
@@ -320,7 +369,10 @@ export default function CampaignReviewPage() {
   }, [parsedCampaignId, router]);
 
   const handleAttemptLeave = useCallback(() => {
-    if (isFormDirty) { setIsCancelModalOpen(true); return; }
+    if (isFormDirty) {
+      setIsCancelModalOpen(true);
+      return;
+    }
     navigateToCampaignPage();
   }, [isFormDirty, navigateToCampaignPage]);
 
@@ -363,28 +415,22 @@ export default function CampaignReviewPage() {
         <div className="px-4 pb-4 text-[16px] text-[#727873]">
           <p>You are about to approve:</p>
           <ul className="mt-2 mb-2 list-disc pl-6 text-[#222622]">
-            <li>
-              {campaignEditData.mappedData.campaignTitle}
-            </li>
+            <li>{campaignEditData.mappedData.campaignTitle}</li>
           </ul>
           <p>Are you sure you would like to approve?</p>
         </div>
         <div className="flex items-center justify-end gap-3 px-4 pb-4">
-          <Button
-            onClick={() => setIsApprovedModalOpen(false)}
-            variant="text"
-          >
+          <Button onClick={() => setIsApprovedModalOpen(false)} variant="text">
             CANCEL
           </Button>
           <Button
-            onClick= {() => handleStatusUpdate("approved")}
+            onClick={() => handleStatusUpdate("approved")}
             variant="contained"
             color="success"
           >
             APPROVE
           </Button>
         </div>
-
       </BaseModal>
 
       <BaseModal
@@ -395,21 +441,19 @@ export default function CampaignReviewPage() {
         <div className="px-4 pb-4 text-[16px] text-[#727873]">
           <p>You are about to deny:</p>
           <ul className="mt-2 mb-2 list-disc pl-6 text-[#222622]">
-            <li>
-              {campaignEditData.mappedData.campaignTitle}
-            </li>
+            <li>{campaignEditData.mappedData.campaignTitle}</li>
           </ul>
-          <p>Are you sure you would like to deny? You can view denied campaigns using the “DENIED” tab. </p>
+          <p>
+            Are you sure you would like to deny? You can view denied campaigns
+            using the “DENIED” tab.{" "}
+          </p>
         </div>
         <div className="flex items-center justify-end gap-3 px-4 pb-4">
-          <Button
-            onClick={() => setIsDeniedModalOpen(false)}
-            variant="text"
-          >
+          <Button onClick={() => setIsDeniedModalOpen(false)} variant="text">
             CANCEL
           </Button>
           <Button
-            onClick= {() => handleStatusUpdate("denied")}
+            onClick={() => handleStatusUpdate("denied")}
             variant="contained"
             color="success"
           >
@@ -426,21 +470,19 @@ export default function CampaignReviewPage() {
         <div className="px-4 pb-4 text-[16px] text-[#727873]">
           <p>You are about to restore:</p>
           <ul className="mt-2 mb-2 list-disc pl-6 text-[#222622]">
-            <li>
-              {campaignEditData.mappedData.campaignTitle}
-            </li>
+            <li>{campaignEditData.mappedData.campaignTitle}</li>
           </ul>
-          <p>Are you sure you would like to restore? You can view restored campaigns using the “PENDING” tab.</p>
+          <p>
+            Are you sure you would like to restore? You can view restored
+            campaigns using the “PENDING” tab.
+          </p>
         </div>
         <div className="flex items-center justify-end gap-3 px-4 pb-4">
-          <Button
-            onClick={() => setIsRestoredModalOpen(false)}
-            variant="text"
-          >
+          <Button onClick={() => setIsRestoredModalOpen(false)} variant="text">
             CANCEL
           </Button>
           <Button
-            onClick= {() => handleStatusUpdate("pending")}
+            onClick={() => handleStatusUpdate("pending")}
             variant="contained"
           >
             RESTORE
@@ -456,49 +498,77 @@ export default function CampaignReviewPage() {
         Make sure to save your changes before making status changes!
       </BaseAlert>
 
-      <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
+      <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-4 px-4 md:py-10 md:pl-10 md:pr-32 space-y-3 relative">
         <EditCampaignHeader
-          text={`Review Application - ${formData.campaignTitle}`}
+          text={
+            isPreviousCampaign
+              ? formData.campaignTitle
+              : `Review Application - ${formData.campaignTitle}`
+          }
           onBack={handleAttemptLeave}
+          tag={tag}
         />
 
-        <div className="flex items-start gap-24">
-          <div className="flex-1 flex flex-col gap-6">
-            <CampaignInformationSection
-              formData={formData}
-              onTextChange={handleTextChange}
-              setFieldValue={setFieldValue}
-            />
+        <div className="flex flex-col md:flex-row items-start gap-6 md:gap-24">
+          <div className="flex-1 flex flex-col gap-6 w-full max-w-full">
+            {!isPreviousCampaign && (
+              <div className="md:hidden mt-2">
+                <EditCampaignActions
+                  isFormDirty={isFormDirty}
+                  onSave={() => setIsSaveModalOpen(true)}
+                  onCancel={handleAttemptDiscard}
+                />
+                <div className="text-sm text-gray-500 mt-4 flex items-center">
+                  <span className="text-orange-500 text-lg mr-1">*</span> =
+                  required field
+                </div>
+              </div>
+            )}
 
-            <GardenInformationSection
-              formData={formData}
-              categoryOptions={categoryOptions}
-              beneficiaryOptions={beneficiaryOptions}
-              onTextChange={handleTextChange}
-              setFieldValue={setFieldValue}
-              onToggleBeneficiary={handleToggleBeneficiary}
-            />
+            <div
+              className={
+                isPreviousCampaign
+                  ? "pointer-events-none flex flex-col gap-6 w-full max-w-full"
+                  : "flex flex-col gap-6 w-full max-w-full"
+              }
+            >
+              <CampaignInformationSection
+                formData={formData}
+                onTextChange={handleTextChange}
+                setFieldValue={setFieldValue}
+              />
 
-            <GardenStorySection
-              formData={formData}
-              onTextChange={handleTextChange}
-              questions={campaignEditData.storyQuestions}
-            />
+              <GardenInformationSection
+                formData={formData}
+                categoryOptions={categoryOptions}
+                beneficiaryOptions={beneficiaryOptions}
+                onTextChange={handleTextChange}
+                setFieldValue={setFieldValue}
+                onToggleBeneficiary={handleToggleBeneficiary}
+              />
 
-            <CampaignMediaSection
-              formData={formData}
-              campaignId={parsedCampaignId}
-              syncImageRecords={syncImageRecords}
-            />
+              <GardenStorySection
+                formData={formData}
+                onTextChange={handleTextChange}
+                questions={campaignEditData.storyQuestions}
+              />
 
-            <ContactInformationSection
-              formData={formData}
-              onTextChange={handleTextChange}
-              setFieldValue={setFieldValue}
-            />
+              <CampaignMediaSection
+                formData={formData}
+                campaignId={parsedCampaignId}
+                syncImageRecords={syncImageRecords}
+              />
+
+              <ContactInformationSection
+                formData={formData}
+                onTextChange={handleTextChange}
+                setFieldValue={setFieldValue}
+              />
+            </div>
           </div>
 
-          <div className="flex flex-col gap-2 sticky top-10">
+          {/* Desktop Sidebar */}
+          <div className="hidden md:flex flex-col gap-2 sticky top-10">
             {status === "pending" && (
               <>
                 <Button
@@ -545,6 +615,63 @@ export default function CampaignReviewPage() {
             />
           </div>
         </div>
+
+        {/* Mobile Floating Action Buttons */}
+        {!isPreviousCampaign && (
+          <div className="md:hidden fixed bottom-40 right-4 flex flex-col gap-4 z-50">
+            {status === "pending" && (
+              <>
+                <Fab
+                  size="medium"
+                  color="success"
+                  onClick={() => setIsApprovedModalOpen(true)}
+                  disabled={updateCampaignMutation.isPending}
+                >
+                  <Check />
+                </Fab>
+                <Fab
+                  size="medium"
+                  onClick={() => setIsDeniedModalOpen(true)}
+                  disabled={updateCampaignMutation.isPending}
+                  sx={{
+                    bgcolor: "white",
+                    border: "1px solid #123A1E",
+                    color: "#123A1E",
+                    "&:hover": { bgcolor: "#f5f5f5" },
+                  }}
+                >
+                  <Close sx={{ color: "#123A1E" }} />
+                </Fab>
+              </>
+            )}
+
+            {status === "denied" && (
+              <>
+                <Fab
+                  size="medium"
+                  color="success"
+                  onClick={() => setIsApprovedModalOpen(true)}
+                  disabled={updateCampaignMutation.isPending}
+                >
+                  <Check />
+                </Fab>
+                <Fab
+                  size="medium"
+                  onClick={() => setIsRestoredModalOpen(true)}
+                  disabled={updateCampaignMutation.isPending}
+                  sx={{
+                    bgcolor: "white",
+                    border: "1px solid #123A1E",
+                    color: "#123A1E",
+                    "&:hover": { bgcolor: "#f5f5f5" },
+                  }}
+                >
+                  <Replay sx={{ color: "#123A1E" }} />
+                </Fab>
+              </>
+            )}
+          </div>
+        )}
 
         <div className="h-20" />
       </div>

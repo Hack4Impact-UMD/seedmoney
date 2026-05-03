@@ -1,7 +1,5 @@
-
 import { Box } from "@mui/material";
 import Modal from "@mui/material/Modal";
-
 
 type BaseModalProps = {
   open: boolean;
@@ -23,10 +21,12 @@ export default function BaseModal({
   return (
     <Modal open={open} onClose={onClose}>
       <Box
-        className={`absolute top-1/2 left-1/2 flex min-h-[191px] w-[600px] -translate-x-1/2 -translate-y-1/2 flex-col justify-between rounded-sm bg-white p-6 ${containerClassName}`}
+        className={`absolute top-1/2 left-1/2 flex min-h-[191px] w-[90%] md:w-[600px] -translate-x-1/2 -translate-y-1/2 flex-col justify-between rounded-sm bg-white p-6 max-h-[90vh] overflow-y-auto ${containerClassName}`}
       >
         {title && (
-          <h2 className={`mb-4 text-xl font-semibold text-[#123A1E] ${titleClassName}`}>
+          <h2
+            className={`mb-4 text-xl font-semibold text-[#123A1E] ${titleClassName}`}
+          >
             {title}
           </h2>
         )}

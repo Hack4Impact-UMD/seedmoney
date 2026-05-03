@@ -140,15 +140,15 @@ export default function GrantAgreementStep() {
       </div>
 
       {/* BUTTONS */}
-      <div className="mt-5 flex w-full justify-between">
-        <Button component={Link} href="/apply" variant="outlined" size="medium">
+      <div className="mt-5 flex w-full flex-col-reverse gap-3 md:flex-row md:justify-between md:gap-0">
+        <Button component={Link} href="/apply" variant="outlined" size="medium" className="w-full md:w-auto">
           Previous Step
         </Button>
 
         <Button
           onClick={handleNext}
           variant={allChecked ? "contained" : "text"}
-          className={allChecked ? "!px-4" : "!bg-[#E0E0E0] !px-4"}
+          className={`w-full md:w-auto ${allChecked ? "!px-4" : "!bg-[#E0E0E0] !px-4"}`}
           size="medium"
           disabled={!allChecked}
         >

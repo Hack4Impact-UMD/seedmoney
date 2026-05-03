@@ -57,9 +57,7 @@ export default function CampaignInformationStep() {
         : undefined,
       size: values.gardenSize.trim() || undefined,
       existence: values.gardenStatus || undefined,
-      goal: values.fundraisingGoal
-        ? Number(values.fundraisingGoal)
-        : undefined,
+      goal: values.fundraisingGoal ? Number(values.fundraisingGoal) : undefined,
     };
 
     const changedValues: Partial<typeof currentPayload> = {};
@@ -144,6 +142,18 @@ export default function CampaignInformationStep() {
               variant="standard"
               fullWidth
               value={field.state.value}
+              InputLabelProps={{
+                sx: {
+                  whiteSpace: { xs: "normal", md: "nowrap" },
+                  pr: 2,
+                  lineHeight: 1.2,
+                },
+              }}
+              sx={{
+                "& .MuiInputBase-root": {
+                  mt: { xs: 4, md: 0 },
+                },
+              }}
               onBlur={async (e) => {
                 field.handleBlur();
                 await saveCampaignInformationDraft({
@@ -235,7 +245,7 @@ export default function CampaignInformationStep() {
         <form.Field name="fundraisingGoal">
           {(field) => {
             const goalNum = Number(field.state.value);
-            const isInvalid = field.state.value !== '' && goalNum < 1;
+            const isInvalid = field.state.value !== "" && goalNum < 1;
 
             return (
               <TextField
@@ -254,7 +264,9 @@ export default function CampaignInformationStep() {
                   field.handleChange(normalizeNumericInput(e.target.value))
                 }
                 error={isInvalid}
-                helperText={isInvalid ? "Fundraising goal must be greater than $0" : ""}
+                helperText={
+                  isInvalid ? "Fundraising goal must be greater than $0" : ""
+                }
                 inputProps={{ min: 2 }}
               />
             );
@@ -263,12 +275,13 @@ export default function CampaignInformationStep() {
       </div>
 
       {/* buttons */}
-      <div className="flex justify-between">
+      <div className="flex w-full flex-col-reverse gap-3 md:flex-row md:justify-between md:gap-0">
         <Button
           component={Link}
           href="/apply/terms"
           variant="outlined"
           size="medium"
+          className="w-full md:w-auto"
         >
           Previous Step
         </Button>
@@ -277,6 +290,7 @@ export default function CampaignInformationStep() {
           component="button"
           variant="contained"
           size="medium"
+          className="w-full md:w-auto"
           onClick={async () => {
             await saveCampaignInformationDraft();
             router.push("/apply/garden");

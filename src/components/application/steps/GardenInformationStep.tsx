@@ -459,12 +459,13 @@ export default function GardenInformationStep() {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between pt-2">
+      <div className="flex w-full flex-col-reverse gap-3 md:flex-row md:justify-between md:gap-0 pt-2">
         <Button
           component={Link}
           href="/apply/campaign"
           variant="outlined"
           size="medium"
+          className="w-full md:w-auto"
         >
           Previous Step
         </Button>
@@ -472,6 +473,7 @@ export default function GardenInformationStep() {
           component="button"
           variant="contained"
           size="medium"
+          className="w-full md:w-auto"
           onClick={async () => {
             await saveGardenInformationDraft();
             router.push("/apply/story");
