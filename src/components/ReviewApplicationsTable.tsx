@@ -15,14 +15,13 @@ import type { Status } from "@/src/types/db/enums";
 import { ReviewApplicationRow } from "@/src/types/frontend/campaignsTable";
 import { createGivebutterCampaigns } from "../actions/givebutter/campaignsGivebutter";
 
-
 const pageSizeOptions = [5, 10, 20];
 
 type TabStatus = "PENDING" | "DENIED";
 type ReviewAction = "APPROVE" | "DENY" | "REVERT";
 
 const formatDate = (dateStr: string) => {
-    if (!dateStr) return "N/A";
+  if (!dateStr) return "N/A";
   const [year, month, day] = dateStr.split("T")[0].split("-");
   return `${month}/${day}/${year}`;
 };
@@ -91,8 +90,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
     return () => clearTimeout(timer);
   }, [isAlertOpen, clearActionSearchParams]);
   const pendingCount = useMemo(
-    () =>
-      applications.filter((a) => a.status === "pending").length,
+    () => applications.filter((a) => a.status === "pending").length,
     [applications],
   );
 
@@ -148,7 +146,10 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         await Promise.all(
           results.map(async (result, index) => {
             if (result.status === "rejected") {
-              console.error(`Failed to create Givebutter campaign for ID ${ids[index]}:`, result.reason);
+              console.error(
+                `Failed to create Givebutter campaign for ID ${ids[index]}:`,
+                result.reason,
+              );
               return;
             }
             await updateCampaignMutation.mutateAsync({
@@ -163,7 +164,12 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         );
       }
 
-      const action = status === "approved" ? "approved" : status === "denied" ? "denied" : "reverted";
+      const action =
+        status === "approved"
+          ? "approved"
+          : status === "denied"
+            ? "denied"
+            : "reverted";
       setNotification({ action, campaignNames: names });
       setSnackbarOpen(true);
       setSelectedIds([]);
@@ -271,26 +277,26 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         <div>
           {activeNotification?.action !== "error" &&
             activeNotification?.campaignNames && (
-            <>
-              <p className="text-sm">
-                {activeNotification.action === "approved"
-                  ? "You have successfully approved:"
-                  : activeNotification.action === "denied"
-                    ? "You have successfully denied:"
-                    : "You have successfully restored:"}
-              </p>
-              <ul className="my-1 list-disc pl-5 text-sm">
-                {activeNotification.campaignNames.map((name) => (
-                  <li key={name}>{name}</li>
-                ))}
-              </ul>
-              {activeNotification.action === "approved" && (
+              <>
                 <p className="text-sm">
-                  You can view it on the &ldquo;Ongoing Campaigns&rdquo; page.
+                  {activeNotification.action === "approved"
+                    ? "You have successfully approved:"
+                    : activeNotification.action === "denied"
+                      ? "You have successfully denied:"
+                      : "You have successfully restored:"}
                 </p>
-              )}
-            </>
-          )}
+                <ul className="my-1 list-disc pl-5 text-sm">
+                  {activeNotification.campaignNames.map((name) => (
+                    <li key={name}>{name}</li>
+                  ))}
+                </ul>
+                {activeNotification.action === "approved" && (
+                  <p className="text-sm">
+                    You can view it on the &ldquo;Ongoing Campaigns&rdquo; page.
+                  </p>
+                )}
+              </>
+            )}
           {notification?.action === "error" && (
             <p className="text-sm">An error occurred. Please try again.</p>
           )}
@@ -298,8 +304,6 @@ export default function ReviewApplicationsTable({ applications }: Props) {
       </BaseAlert>
 
       <div className="mb-5">
-
-
         <div className="mt-4 flex items-end gap-7 border-b border-[#d6e0d7]">
           {(["PENDING", "DENIED"] as TabStatus[]).map((status) => {
             const isActive = status === tab;
@@ -405,8 +409,8 @@ export default function ReviewApplicationsTable({ applications }: Props) {
             <thead>
               <tr className="border-b border-[#eef2ee] text-left text-[14px] font-semibold text-[#414644]">
                 <th className="w-8 px-3 py-3 sm:px-4" />
-                  <th className="w-[190px] pl-0 pr-2 py-3">Submission Date</th>
-                  <th className="w-[240px] pl-0 pr-2 py-3">Campaign Title</th>
+                <th className="w-[190px] pl-0 pr-2 py-3">Submission Date</th>
+                <th className="w-[240px] pl-0 pr-2 py-3">Campaign Title</th>
                 <th className="w-[180px] px-2 py-3">Campaign Leader</th>
                 {/*<th className="w-[100px] px-2 py-3">Raised</th>*/}
                 {/*<th className="w-[100px] px-2 py-3">Goal</th>*/}
@@ -451,9 +455,9 @@ export default function ReviewApplicationsTable({ applications }: Props) {
                           />
                         </div>
                       </td>
-                        <td className="px-2 py-3 text-[#49514c]">
-                          {formatDate(application.submissionDate)}
-                        </td>
+                      <td className="px-2 py-3 text-[#49514c]">
+                        {formatDate(application.submissionDate)}
+                      </td>
                       <td className="px-2 py-3 text-[#49514c]">
                         {application.campaignTitle}
                       </td>

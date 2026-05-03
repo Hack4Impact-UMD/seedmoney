@@ -491,6 +491,14 @@ export default function GardenStoryStep() {
                   maxRows={10}
                   name="storyLocationAndAudience"
                   value={field.state.value}
+                  InputLabelProps={{
+                    sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
+                  }}
+                  sx={{
+                    "& .MuiFilledInput-root": {
+                      pt: "40px",
+                    },
+                  }}
                   error={showError}
                   helperText={
                     <span className="flex items-center justify-between gap-4">
@@ -538,6 +546,14 @@ export default function GardenStoryStep() {
                   maxRows={10}
                   name="storyChallenge"
                   value={field.state.value}
+                  InputLabelProps={{
+                    sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
+                  }}
+                  sx={{
+                    "& .MuiFilledInput-root": {
+                      pt: "40px",
+                    },
+                  }}
                   error={showError}
                   helperText={
                     <span className="flex items-center justify-between gap-4">
@@ -585,6 +601,14 @@ export default function GardenStoryStep() {
                   maxRows={10}
                   name="storySeasonActivity"
                   value={field.state.value}
+                  InputLabelProps={{
+                    sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
+                  }}
+                  sx={{
+                    "& .MuiFilledInput-root": {
+                      pt: "40px",
+                    },
+                  }}
                   error={showError}
                   helperText={
                     <span className="flex items-center justify-between gap-4">
@@ -632,6 +656,14 @@ export default function GardenStoryStep() {
                   maxRows={10}
                   name="storyCampaignImpact"
                   value={field.state.value}
+                  InputLabelProps={{
+                    sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
+                  }}
+                  sx={{
+                    "& .MuiFilledInput-root": {
+                      pt: "40px",
+                    },
+                  }}
                   error={showError}
                   helperText={
                     <span className="flex items-center justify-between gap-4">
@@ -915,12 +947,13 @@ export default function GardenStoryStep() {
       </div>
 
       {/* Navigation Buttons */}
-      <div className="flex justify-between pt-2">
+      <div className="flex w-full flex-col-reverse gap-3 md:flex-row md:justify-between md:gap-0 pt-2">
         <Button
           component={Link}
           href="/apply/garden"
           variant="outlined"
           size="medium"
+          className="w-full md:w-auto"
         >
           Previous Step
         </Button>
@@ -929,6 +962,7 @@ export default function GardenStoryStep() {
           component="button"
           variant="contained"
           size="medium"
+          className="w-full md:w-auto"
           disabled={!areStoryAnswersValid}
           onClick={async () => {
             await saveGardenStoryDraft();

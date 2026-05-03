@@ -42,6 +42,7 @@ export async function readCampaignEditInformation(campaignId: number): Promise<C
   const mappedData: EditCampaignFormData = {
     ...DEFAULT_CAMPAIGN_DATA,
     campaignTitle:          dbCampaign?.name                    ?? "",
+    competitionId:          dbCampaign?.competition_id          ?? null,
     status:                 dbCampaign?.status                  ?? "pending",
     beneficiaryCount:       dbCampaign?.impact?.toString()      ?? "",
     gardenSize:             dbCampaign?.size?.toString()        ?? "",

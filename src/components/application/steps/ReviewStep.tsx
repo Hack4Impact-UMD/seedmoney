@@ -231,7 +231,10 @@ export default function ReviewSubmitPage() {
             keepalive: true,
             credentials: "same-origin",
           }).catch((error) => {
-            console.error("Error creating AI-polished answers after submit:", error);
+            console.error(
+              "Error creating AI-polished answers after submit:",
+              error,
+            );
           });
         }
       } catch (error) {
@@ -604,12 +607,13 @@ export default function ReviewSubmitPage() {
         <ValueRow label="Role or Title" value={values.contactRole} />
       </div>
 
-      <div className="flex justify-between pt-4">
+      <div className="flex w-full flex-col-reverse gap-3 md:flex-row md:justify-between md:gap-0">
         <Button
           component={Link}
           href="/apply/contact"
           variant="outlined"
           size="medium"
+          className="w-full md:w-auto"
         >
           Previous Step
         </Button>
@@ -617,7 +621,11 @@ export default function ReviewSubmitPage() {
         <Button
           component="button"
           variant={canSubmit ? "contained" : "text"}
-          className={canSubmit ? "!px-4" : "!bg-[#E0E0E0] !px-4"}
+          className={
+            canSubmit
+              ? "w-full md:w-auto !px-4"
+              : "w-full md:w-auto !bg-[#E0E0E0] !px-4"
+          }
           size="medium"
           disabled={!canSubmit}
           onClick={async () => {

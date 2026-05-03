@@ -17,6 +17,7 @@ export type CampaignEditInformation = {
 
 export interface EditCampaignFormData {
   campaignTitle: string;
+  competitionId: number | null;
   beneficiaryCount: string;
   gardenSize: string;
   gardenStatus: "new" | "existing";
@@ -60,6 +61,7 @@ export interface EditCampaignFormData {
 
 export const DEFAULT_CAMPAIGN_DATA: EditCampaignFormData = {
   campaignTitle: "",
+  competitionId: null,
   beneficiaryCount: "",
   gardenSize: "",
   gardenStatus: "existing",

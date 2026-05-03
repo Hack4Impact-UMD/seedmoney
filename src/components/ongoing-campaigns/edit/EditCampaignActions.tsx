@@ -14,12 +14,21 @@ export default function EditCampaignActions({
   onCancel,
 }: EditCampaignActionsProps) {
   return (
-      <div className="w-full lg:w-32 flex flex-col gap-3 pt-1">
-      <Button variant="contained" disabled={!isFormDirty} onClick={onSave}>
-        Save
+    <div className="w-full md:w-32 flex flex-row md:flex-col gap-3 pt-1">
+      <Button
+        variant="contained"
+        disabled={!isFormDirty}
+        onClick={onSave}
+        className="flex-1 md:flex-none"
+      >
+        SAVE
       </Button>
-      <Button variant="outlined" onClick={onCancel}>
-        Cancel
+      <Button
+        variant="outlined"
+        onClick={onCancel}
+        className="flex-1 md:flex-none"
+      >
+        CANCEL
       </Button>
     </div>
   );

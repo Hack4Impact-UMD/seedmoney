@@ -463,7 +463,7 @@ export default function CampaignMediaSection({
         </p>
         {mainPhoto ? (
           <>
-            <div className="w-[650px] h-[358px] overflow-hidden border border-gray-300">
+            <div className="w-full max-w-[650px] aspect-[650/358] overflow-hidden border border-gray-300">
               <img
                 src={mainPhoto.signedUrl}
                 alt={mainPhoto.fileName || "Main campaign photo"}
@@ -553,7 +553,7 @@ export default function CampaignMediaSection({
 
         {supportingPhotos.map((record) => (
           <div key={record.id} className="flex flex-col gap-2">
-            <div className="relative w-[650px] h-[358px] overflow-hidden border border-gray-300">
+            <div className="relative w-full max-w-[650px] aspect-[650/358] overflow-hidden border border-gray-300">
               <Button
                 variant="outlined"
                 onClick={() => handleSetAsMain(record)}

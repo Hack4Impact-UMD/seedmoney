@@ -29,6 +29,7 @@ import {
   categoryOptions,
 } from "@/src/components/ongoing-campaigns/options";
 import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
+import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 
 export default function EditCampaignPage() {
   const router = useRouter();
@@ -53,6 +54,26 @@ export default function EditCampaignPage() {
   const [saveErrorMessage, setSaveErrorMessage] = useState("");
 
   const isFormDirty = JSON.stringify(formData) !== JSON.stringify(initialData);
+  const status = formData.status;
+
+  const { data: currentCompetitionData } = useReadCurrentCompetition();
+  const currentCompetitionId = currentCompetitionData?.competition_id;
+  
+  const isPreviousCampaign = 
+    campaignEditData?.mappedData.competitionId != null &&
+    currentCompetitionId != null &&
+    campaignEditData.mappedData.competitionId !== currentCompetitionId;
+
+  let tag;
+  if (isPreviousCampaign) {
+    if (status === "pending") {
+      tag = { label: "Pending", color: "#6B21A8", borderColor: "#6B21A8" };
+    } else if (status === "denied") {
+      tag = { label: "Denied", color: "#DC2626", borderColor: "#DC2626" };
+    } else if (status === "approved" || status === "published") {
+      tag = { label: "Approved", color: "#16A34A", borderColor: "#16A34A" };
+    }
+  }
 
   useEffect(() => {
     if (!campaignEditData) return;
@@ -273,15 +294,30 @@ export default function EditCampaignPage() {
     <div className="flex min-h-screen">
       <Navbar />
 
-      <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-10 pl-10 pr-32 space-y-3">
+      <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-4 px-4 md:py-10 md:pl-10 md:pr-16 space-y-3">
         <EditCampaignHeader
-          text = {`Edit Campaign -${formData.campaignTitle}`}
+          text={isPreviousCampaign ? formData.campaignTitle : `Edit Campaign - ${formData.campaignTitle}`}
           onBack={handleAttemptLeave}
+          tag={tag}
         />
 
-        <div className="flex items-start gap-24">
-          <div className="flex-1 flex flex-col gap-6">
-            <CampaignInformationSection
+        <div className="flex flex-col md:flex-row items-start gap-6 md:gap-24">
+          <div className="flex-1 flex flex-col gap-6 w-full max-w-full">
+            {!isPreviousCampaign && (
+              <div className="md:hidden mt-2">
+                <EditCampaignActions
+                  isFormDirty={isFormDirty}
+                  onSave={() => setIsSaveModalOpen(true)}
+                  onCancel={handleAttemptDiscard}
+                />
+                <div className="text-sm text-gray-500 mt-4 flex items-center">
+                  <span className="text-orange-500 text-lg mr-1">*</span> = required field
+                </div>
+              </div>
+            )}
+
+            <div className={isPreviousCampaign ? "pointer-events-none flex flex-col gap-6 w-full max-w-full" : "flex flex-col gap-6 w-full max-w-full"}>
+              <CampaignInformationSection
               formData={formData}
               onTextChange={handleTextChange}
               setFieldValue={setFieldValue}
@@ -313,13 +349,18 @@ export default function EditCampaignPage() {
               onTextChange={handleTextChange}
               setFieldValue={setFieldValue}
             />
+            </div>
           </div>
 
-          <EditCampaignActions
-            isFormDirty={isFormDirty}
-            onSave={() => setIsSaveModalOpen(true)}
-            onCancel={handleAttemptDiscard}
-          />
+          {!isPreviousCampaign && (
+            <div className="hidden md:block sticky top-10">
+              <EditCampaignActions
+                isFormDirty={isFormDirty}
+                onSave={() => setIsSaveModalOpen(true)}
+                onCancel={handleAttemptDiscard}
+              />
+            </div>
+          )}
         </div>
 
         <div className="h-20" />
