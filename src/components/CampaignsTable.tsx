@@ -23,6 +23,7 @@ import type { Status } from "@/src/types/db/enums";
 import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "../hooks/users/useUserByAuthId";
+import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
 
 interface Props {
   initialData: CampaignWithLeader[];
@@ -163,6 +164,27 @@ export default function CampaignsTable({
       return isAscending ? aValue - bValue : bValue - aValue;
     });
   }, [filteredData, isAscending, selectedStatuses, selectedYears]);
+
+  const mobileResetKey = [
+    campaignSearch,
+    yearFilter,
+    selectedYears.join(","),
+    selectedStatuses.join(","),
+    isAscending ? "asc" : "desc",
+    mobileFilteredData.length,
+  ].join("|");
+
+  const {
+    visibleItems: visibleMobileCampaigns,
+    visibleCount: visibleMobileCampaignCount,
+    hasMore: hasMoreMobileCampaigns,
+    loadMore: loadMoreMobileCampaigns,
+    sentinelRef: mobileCampaignsSentinelRef,
+  } = useIncrementalMobileList(mobileFilteredData, {
+    initialCount: 12,
+    increment: 12,
+    resetKey: mobileResetKey,
+  });
 
   const totalPages = Math.max(1, Math.ceil(filteredData.length / pageSize));
   const currentPageIndex = Math.min(pageIndex, totalPages - 1);
@@ -342,7 +364,7 @@ export default function CampaignsTable({
               No campaigns found.
             </div>
           ) : (
-            mobileFilteredData.map((campaign) => {
+            visibleMobileCampaigns.map((campaign) => {
               const displayedProgress = Math.min(
                 getGoalProgress(campaign.raised, campaign.goal),
                 100,
@@ -430,6 +452,25 @@ export default function CampaignsTable({
                 </div>
               );
             })
+          )}
+
+          {mobileFilteredData.length > 0 && (
+            <div className="pt-2 text-center text-[12px] text-[#667085]">
+              Showing {visibleMobileCampaignCount} of {mobileFilteredData.length}
+            </div>
+          )}
+
+          {hasMoreMobileCampaigns && (
+            <div className="flex flex-col items-center gap-3 pt-1">
+              <div ref={mobileCampaignsSentinelRef} className="h-1 w-full" />
+              <Button
+                variant="outlined"
+                size="small"
+                onClick={loadMoreMobileCampaigns}
+              >
+                Load More
+              </Button>
+            </div>
           )}
         </div>
       </div>
