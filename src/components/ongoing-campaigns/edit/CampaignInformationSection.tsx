@@ -66,20 +66,28 @@ export default function CampaignInformationSection({
           Project Details & Impact <span className="text-orange-500">*</span>
         </h2>
 
-        <TextField
-          label="About how many people will benefit from this garden this year?"
-          variant="standard"
-          fullWidth
-          value={formData.beneficiaryCount}
-          onChange={(event) =>
-            setFieldValue(
-              "beneficiaryCount",
-              normalizeNumericInput(event.target.value),
-            )
-          }
-          type="number"
-          inputProps={{ min: 0 }}
-        />
+        <div className="flex flex-col gap-2">
+          <p className="text-sm text-gray-600">
+            About how many people will benefit from this garden this year?
+          </p>
+          <TextField
+            variant="standard"
+            fullWidth
+            value={formData.beneficiaryCount}
+            onChange={(event) =>
+              setFieldValue(
+                "beneficiaryCount",
+                normalizeNumericInput(event.target.value),
+              )
+            }
+            type="number"
+            inputProps={{
+              min: 0,
+              "aria-label":
+                "About how many people will benefit from this garden this year?",
+            }}
+          />
+        </div>
 
         <p className="pt-2 text-sm">Is this a new or existing garden?</p>
 

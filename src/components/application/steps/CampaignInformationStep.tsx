@@ -137,34 +137,27 @@ export default function CampaignInformationStep() {
 
         <form.Field name="beneficiaryCount">
           {(field) => (
-            <TextField
-              label="About how many people will benefit from this garden this year?"
-              variant="standard"
-              fullWidth
-              value={field.state.value}
-              InputLabelProps={{
-                sx: {
-                  whiteSpace: { xs: "normal", md: "nowrap" },
-                  pr: 2,
-                  lineHeight: 1.2,
-                },
-              }}
-              sx={{
-                "& .MuiInputBase-root": {
-                  mt: { xs: 4, md: 0 },
-                },
-              }}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveCampaignInformationDraft({
-                  beneficiaryCount: normalizeNumericInput(e.target.value),
-                });
-              }}
-              onChange={(e) =>
-                field.handleChange(normalizeNumericInput(e.target.value))
-              }
-              type="number"
-            />
+            <div className="flex flex-col gap-2">
+              <p className="text-sm text-gray-600">
+                About how many people will benefit from this garden this year?
+              </p>
+              <TextField
+                variant="standard"
+                fullWidth
+                value={field.state.value}
+                onBlur={async (e) => {
+                  field.handleBlur();
+                  await saveCampaignInformationDraft({
+                    beneficiaryCount: normalizeNumericInput(e.target.value),
+                  });
+                }}
+                onChange={(e) =>
+                  field.handleChange(normalizeNumericInput(e.target.value))
+                }
+                type="number"
+                inputProps={{ "aria-label": "About how many people will benefit from this garden this year?" }}
+              />
+            </div>
           )}
         </form.Field>
 
