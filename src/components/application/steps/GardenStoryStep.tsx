@@ -17,6 +17,7 @@ import useCreateOriginalAnswer from "@/src/hooks/answers/useCreateOriginalAnswer
 import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
 import useDeleteCampaignImage from "@/src/hooks/campaign-image-records/useDeleteCampaignImage";
 import BaseAlert from "@/src/components/bases/BaseAlert";
+import CropImageDialogue from "@/src/components/CropImageDialogue";
 
 type PreviewFile = {
   name: string;
@@ -140,6 +141,7 @@ export default function GardenStoryStep() {
     title: string;
     message: string;
   } | null>(null);
+  const [isCropDialogOpen, setIsCropDialogOpen] = useState(false);
   const storyAnswersRef = useRef({
     1: values.storyLocationAndAudience,
     2: values.storyChallenge,
@@ -327,7 +329,14 @@ export default function GardenStoryStep() {
 
   const imagePreviews = files.map((file) => (
     <div key={file.name}>
-      <div className="w-full aspect-[650/358] overflow-hidden border border-gray-300">
+      <div className="relative w-full aspect-[650/358] overflow-hidden border border-gray-300">
+        <Button
+          variant="outlined"
+          onClick={() => setIsCropDialogOpen(true)}
+          className="!absolute !left-3 !top-3 !z-[1] !min-w-0 !px-3 !py-1.5"
+        >
+          Crop
+        </Button>
         <img
           src={file.preview}
           alt={file.name}
@@ -766,7 +775,6 @@ export default function GardenStoryStep() {
             </div>
           </div>
         )}
-
         {files.map((file) => (
           <div
             key={`${file.name}-${file.size}`}
@@ -812,6 +820,14 @@ export default function GardenStoryStep() {
           </div>
         ))}
       </div>
+
+      {files[0] && (
+        <CropImageDialogue
+          open={isCropDialogOpen}
+          onClose={() => setIsCropDialogOpen(false)}
+          imageSrc={files[0].preview}
+        />
+      )}
 
       {/* Supporting Photos */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
