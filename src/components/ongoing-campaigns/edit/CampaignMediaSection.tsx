@@ -7,9 +7,11 @@ import { Button, IconButton } from "@mui/material";
 import { useEffect, useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import useDeleteCampaignImage from "@/src/hooks/campaign-image-records/useDeleteCampaignImage";
+import useReplaceCampaignImage from "@/src/hooks/campaign-image-records/useReplaceCampaignImage";
 import { useSetMainCampaignImage } from "@/src/hooks/campaign-image-records/useSetMainPhoto";
 import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
 import BaseAlert from "@/src/components/bases/BaseAlert";
+import CropImageDialogue from "@/src/components/CropImageDialogue";
 import type {
   CampaignImageRecord,
   HydratedCampaignImageRecord,
@@ -199,6 +201,7 @@ export default function CampaignMediaSection({
     "brightness(0) saturate(100%) invert(24%) sepia(95%) saturate(2815%) hue-rotate(347deg) brightness(93%) contrast(100%)";
   const uploadCampaignImage = useUploadCampaignImage();
   const deleteCampaignImage = useDeleteCampaignImage();
+  const replaceCampaignImage = useReplaceCampaignImage();
   const setMainCampaignImage = useSetMainCampaignImage(campaignId);
   const [uploadError, setUploadError] = useState<UploadError | null>(null);
   const [supportingUploadError, setSupportingUploadError] =
@@ -207,9 +210,18 @@ export default function CampaignMediaSection({
     title: string;
     message: string;
   } | null>(null);
+  const [cropTarget, setCropTarget] = useState<
+    { type: "main" } | { type: "supporting"; recordId: number } | null
+  >(null);
   const previousImageRecordsRef = useRef(formData.imageRecords);
   const mainPhoto = formData.imageRecords.find((r) => r.is_main);
   const supportingPhotos = formData.imageRecords.filter((r) => !r.is_main);
+  const cropTargetRecord =
+    cropTarget?.type === "main"
+      ? mainPhoto
+      : formData.imageRecords.find(
+          (record) => record.id === cropTarget?.recordId,
+        );
 
   useEffect(() => {
     const previousImageRecords = previousImageRecordsRef.current;
@@ -299,7 +311,7 @@ export default function CampaignMediaSection({
         message: isFileTooLarge ? "File too large" : "Upload failed",
       });
     },
-    maxSize: 3000000,
+    maxSize: 10485760,
   });
 
   const {
@@ -383,7 +395,7 @@ export default function CampaignMediaSection({
         message: isFileTooLarge ? "File too large" : "Upload failed",
       });
     },
-    maxSize: 3000000,
+    maxSize: 10485760,
     disabled: supportingPhotos.length >= 5,
   });
 
@@ -452,6 +464,61 @@ export default function CampaignMediaSection({
     }
   };
 
+  const handleCropImage = async (croppedFile: File) => {
+    const targetRecord = cropTargetRecord;
+    if (!targetRecord) {
+      setCropTarget(null);
+      return;
+    }
+
+    try {
+      const replacedRecord = await replaceCampaignImage.mutateAsync({
+        file: croppedFile,
+        campaignId,
+        oldStoragePath: targetRecord.storage_path,
+      });
+
+      const nextSignedUrl = URL.createObjectURL(croppedFile);
+      revokePreviewUrl(targetRecord.signedUrl);
+
+      syncImageRecords(
+        sortImageRecords(
+          formData.imageRecords.map((record) =>
+            record.id === targetRecord.id
+              ? {
+                  ...record,
+                  ...replacedRecord,
+                  signedUrl: nextSignedUrl,
+                  fileName: croppedFile.name,
+                  fileSize: croppedFile.size,
+                }
+              : record,
+          ),
+        ),
+      );
+
+      setSuccessToast({
+        title: "Image Saved!",
+        message: targetRecord.is_main
+          ? "Main photo has been cropped successfully."
+          : "Supporting photo has been cropped successfully.",
+      });
+    } catch (error) {
+      console.error(error);
+
+      const nextError = {
+        fileName: targetRecord.fileName || "Uploaded image",
+        message: "Crop failed",
+      };
+
+      if (targetRecord.is_main) {
+        setUploadError(nextError);
+      } else {
+        setSupportingUploadError(nextError);
+      }
+    }
+  };
+
   return (
     <>
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
@@ -459,11 +526,27 @@ export default function CampaignMediaSection({
           Main Photo <span className="text-orange-500">*</span>
         </h2>
         <p className="text-sm">
-          Upload one clear, high-quality photo that best represents your project. This photo will appear at the top of your campaign page.
+          Upload one clear, high-quality photo that best represents your
+          project. This photo will appear at the top of your campaign page.
         </p>
         {mainPhoto ? (
           <>
-            <div className="w-full max-w-[650px] aspect-[650/358] overflow-hidden border border-gray-300">
+            <div className="relative w-full max-w-[650px] aspect-[650/358] overflow-hidden border border-gray-300">
+              <Button
+                variant="outlined"
+                onClick={() => setCropTarget({ type: "main" })}
+                sx={{
+                  position: "absolute",
+                  top: 12,
+                  left: 12,
+                  px: 1,
+                  py: 0.5,
+                  minWidth: 0,
+                  zIndex: 1,
+                }}
+              >
+                Crop
+              </Button>
               <img
                 src={mainPhoto.signedUrl}
                 alt={mainPhoto.fileName || "Main campaign photo"}
@@ -502,7 +585,7 @@ export default function CampaignMediaSection({
               </p>
 
               <p className="text-xs text-gray-500">
-                SVG, PNG, JPG or GIF (max. 3MB)
+                SVG, PNG, JPG or GIF (max. 10MB)
               </p>
             </div>
           </div>
@@ -514,9 +597,14 @@ export default function CampaignMediaSection({
           Supporting Photos <span className="text-orange-500">*</span>
         </h2>
         <p className="text-sm">
-          You may upload up to five additional photos that help tell your garden&apos;s story. <br />
-          *Please choose real, authentic photos of your project — for example, people working in the garden, harvesting food, learning together, or the garden space itself.
-          <br /> *Do not upload logos, flyers, graphics, or AI-generated images. These photos should reflect real people and real places connected to your project.
+          You may upload up to five additional photos that help tell your
+          garden&apos;s story. <br />
+          *Please choose real, authentic photos of your project — for example,
+          people working in the garden, harvesting food, learning together, or
+          the garden space itself.
+          <br /> *Do not upload logos, flyers, graphics, or AI-generated images.
+          These photos should reflect real people and real places connected to
+          your project.
         </p>
         {supportingUploadError && (
           <UploadErrorCard
@@ -545,7 +633,7 @@ export default function CampaignMediaSection({
               </p>
 
               <p className="text-xs text-gray-500">
-                SVG, PNG, JPG or GIF (max. 3MB)
+                SVG, PNG, JPG or GIF (max. 10MB)
               </p>
             </div>
           </div>
@@ -554,13 +642,24 @@ export default function CampaignMediaSection({
         {supportingPhotos.map((record) => (
           <div key={record.id} className="flex flex-col gap-2">
             <div className="relative w-full max-w-[650px] aspect-[650/358] overflow-hidden border border-gray-300">
-              <Button
-                variant="outlined"
-                onClick={() => handleSetAsMain(record)}
-                sx={{ position: "absolute", top: 12, left: 12, px: 1, py: 0.5, minWidth: 0, zIndex: 1 }}
-              >
-                Set as Main Photo
-              </Button>
+              <div className="absolute left-3 top-3 z-[1] flex items-center gap-2">
+                <Button
+                  variant="outlined"
+                  onClick={() => handleSetAsMain(record)}
+                  sx={{ px: 1, py: 0.5, minWidth: 0 }}
+                >
+                  Set as Main Photo
+                </Button>
+                <Button
+                  variant="outlined"
+                  onClick={() =>
+                    setCropTarget({ type: "supporting", recordId: record.id })
+                  }
+                  sx={{ px: 1, py: 0.5, minWidth: 0 }}
+                >
+                  Crop
+                </Button>
+              </div>
               <img
                 src={record.signedUrl}
                 alt={record.fileName || "Supporting campaign photo"}
@@ -584,6 +683,16 @@ export default function CampaignMediaSection({
       >
         {successToast?.message}
       </BaseAlert>
+
+      {cropTargetRecord && (
+        <CropImageDialogue
+          open={cropTarget !== null}
+          onClose={() => setCropTarget(null)}
+          imageSrc={cropTargetRecord.signedUrl}
+          imageName={cropTargetRecord.fileName || "campaign-image.png"}
+          onDone={handleCropImage}
+        />
+      )}
     </>
   );
 }

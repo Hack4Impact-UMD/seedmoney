@@ -7,6 +7,7 @@ import Link from "next/link";
 import {
   useApplicationForm,
   useLastSaved,
+  usePendingImageCrops,
 } from "@/src/components/application/ApplicationFormProvider";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 import { notFound, useRouter } from "next/navigation";
@@ -17,12 +18,21 @@ import useCreateOriginalAnswer from "@/src/hooks/answers/useCreateOriginalAnswer
 import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUploadCampaignImage";
 import useDeleteCampaignImage from "@/src/hooks/campaign-image-records/useDeleteCampaignImage";
 import BaseAlert from "@/src/components/bases/BaseAlert";
+import CropImageDialogue from "@/src/components/CropImageDialogue";
 
 type PreviewFile = {
   name: string;
   size: number;
   preview: string;
+  cropSource?: string;
+  cropPosition?: {
+    crop: { x: number; y: number };
+    zoom: number;
+    rotation: number;
+    flipX: boolean;
+  };
   storagePath?: string;
+  displayOrder?: number;
 };
 type UploadError = {
   fileName: string;
@@ -44,12 +54,27 @@ function buildPreviewFiles(files: File[]): PreviewFile[] {
     name: file.name,
     size: file.size,
     preview: URL.createObjectURL(file),
+    cropSource: "",
+    cropPosition: {
+      crop: { x: 0, y: 0 },
+      zoom: 1,
+      rotation: 0,
+      flipX: false,
+    },
   }));
 }
 
 function revokePreviewUrl(preview: string) {
   if (preview.startsWith("blob:")) {
     URL.revokeObjectURL(preview);
+  }
+}
+
+function revokePreviewFile(file: PreviewFile) {
+  revokePreviewUrl(file.preview);
+
+  if (file.cropSource && file.cropSource !== file.preview) {
+    revokePreviewUrl(file.cropSource);
   }
 }
 
@@ -101,6 +126,8 @@ export default function GardenStoryStep() {
   const form = useApplicationForm();
   const router = useRouter();
   const { setLastSaved } = useLastSaved();
+  const { setPendingMainPhotoCrop, setPendingSupportingPhotoCrops } =
+    usePendingImageCrops();
   const { draftCampaignId, saveDraftCampaign } = useSaveDraftCampaign();
   const createOriginalAnswerMutation = useCreateOriginalAnswer();
   const uploadCampaignImage = useUploadCampaignImage();
@@ -120,7 +147,15 @@ export default function GardenStoryStep() {
             name: values.mainPhotoName || "Uploaded image",
             size: values.mainPhotoSize,
             preview: values.mainPhoto,
+            cropSource: values.mainPhoto,
+            cropPosition: {
+              crop: { x: 0, y: 0 },
+              zoom: 1,
+              rotation: 0,
+              flipX: false,
+            },
             storagePath: values.mainPhotoStoragePath,
+            displayOrder: 0,
           },
         ]
       : [],
@@ -131,7 +166,15 @@ export default function GardenStoryStep() {
       name: values.supportingPhotoNames[index] || "Uploaded image",
       size: values.supportingPhotoSizes[index] ?? 0,
       preview,
+      cropSource: preview,
+      cropPosition: {
+        crop: { x: 0, y: 0 },
+        zoom: 1,
+        rotation: 0,
+        flipX: false,
+      },
       storagePath: values.supportingPhotoStoragePaths[index],
+      displayOrder: index + 1,
     })),
   );
   const [supportingUploadError, setSupportingUploadError] =
@@ -140,6 +183,9 @@ export default function GardenStoryStep() {
     title: string;
     message: string;
   } | null>(null);
+  const [cropTarget, setCropTarget] = useState<
+    { type: "main" } | { type: "supporting"; preview: string } | null
+  >(null);
   const storyAnswersRef = useRef({
     1: values.storyLocationAndAudience,
     2: values.storyChallenge,
@@ -190,11 +236,14 @@ export default function GardenStoryStep() {
           isMain: true,
         });
 
-        files.forEach((file) => revokePreviewUrl(file.preview));
+        files.forEach((file) => revokePreviewFile(file));
         nextFiles[0].storagePath = uploadedImage.storage_path;
+        nextFiles[0].displayOrder = 0;
+        nextFiles[0].cropSource = nextFiles[0].preview;
         setUploadError(null);
         setUploaded(true);
         setFiles(nextFiles);
+        setPendingMainPhotoCrop(null);
         form.setFieldValue("mainPhoto", nextFiles[0]?.preview ?? "");
         form.setFieldValue(
           "mainPhotoStoragePath",
@@ -268,6 +317,8 @@ export default function GardenStoryStep() {
           uploadedFiles.push({
             ...nextFiles[index],
             storagePath: uploadedImage.storage_path,
+            displayOrder: nextDisplayOrderBase + index,
+            cropSource: nextFiles[index].preview,
           });
         }
 
@@ -327,7 +378,14 @@ export default function GardenStoryStep() {
 
   const imagePreviews = files.map((file) => (
     <div key={file.name}>
-      <div className="w-full aspect-[650/358] overflow-hidden border border-gray-300">
+      <div className="relative w-full aspect-[650/358] overflow-hidden border border-gray-300">
+        <Button
+          variant="outlined"
+          onClick={() => setCropTarget({ type: "main" })}
+          className="!absolute !left-3 !top-3 !z-[1] !min-w-0 !px-3 !py-1.5"
+        >
+          Crop
+        </Button>
         <img
           src={file.preview}
           alt={file.name}
@@ -342,6 +400,12 @@ export default function GardenStoryStep() {
     isLoadingQuestion2 ||
     isLoadingQuestion3 ||
     isLoadingQuestion4;
+  const cropTargetFile =
+    cropTarget?.type === "main"
+      ? files[0]
+      : cropTarget
+        ? supportingFiles.find((file) => file.preview === cropTarget.preview)
+        : null;
 
   if (isLoading) {
     return <div>Loading...</div>;
@@ -362,7 +426,7 @@ export default function GardenStoryStep() {
     setFiles((prevFiles) => {
       const remainingFiles = prevFiles.filter((file) => {
         if (file.preview === fileToDelete.preview) {
-          revokePreviewUrl(file.preview);
+          revokePreviewFile(file);
           return false;
         }
 
@@ -372,6 +436,7 @@ export default function GardenStoryStep() {
       setUploaded(remainingFiles.length > 0);
       return remainingFiles;
     });
+    setPendingMainPhotoCrop(null);
     form.setFieldValue("mainPhoto", "");
     form.setFieldValue("mainPhotoStoragePath", "");
     form.setFieldValue("mainPhotoName", "");
@@ -381,6 +446,111 @@ export default function GardenStoryStep() {
 
   const handleClearUploadError = () => {
     setUploadError(null);
+  };
+
+  const handleCropImage = async (
+    croppedFile: File,
+    cropState: {
+      crop: { x: number; y: number };
+      zoom: number;
+      rotation: number;
+      flipX: boolean;
+    },
+  ) => {
+    if (cropTarget?.type === "main") {
+      const currentMain = files[0];
+      if (!currentMain) {
+        return;
+      }
+
+      const nextPreview = URL.createObjectURL(croppedFile);
+      const currentCropSource = currentMain.cropSource || currentMain.preview;
+      if (currentMain.preview !== currentCropSource) {
+        revokePreviewUrl(currentMain.preview);
+      }
+
+      const nextMain: PreviewFile = {
+        ...currentMain,
+        name: croppedFile.name,
+        size: croppedFile.size,
+        preview: nextPreview,
+        cropSource: currentCropSource,
+        cropPosition: cropState,
+        displayOrder: currentMain.displayOrder ?? 0,
+      };
+
+      setFiles([nextMain]);
+      setPendingMainPhotoCrop(croppedFile);
+      form.setFieldValue("mainPhoto", nextPreview);
+      form.setFieldValue("mainPhotoName", croppedFile.name);
+      form.setFieldValue("mainPhotoSize", croppedFile.size);
+      setLastSaved(getFormattedSaveTime());
+      setSuccessToast({
+        title: "Image Cropped!",
+        message: "Main photo preview has been updated successfully.",
+      });
+      return;
+    }
+
+    if (cropTarget?.type !== "supporting") {
+      return;
+    }
+
+    const supportingIndex = supportingFiles.findIndex(
+      (file) => file.preview === cropTarget.preview,
+    );
+
+    if (supportingIndex < 0) {
+      return;
+    }
+
+    const currentSupporting = supportingFiles[supportingIndex];
+    const nextPreview = URL.createObjectURL(croppedFile);
+    const currentCropSource =
+      currentSupporting.cropSource || currentSupporting.preview;
+    if (currentSupporting.preview !== currentCropSource) {
+      revokePreviewUrl(currentSupporting.preview);
+    }
+
+    const nextSupportingFiles = supportingFiles.map((file, index) =>
+      index === supportingIndex
+        ? {
+            ...file,
+            name: croppedFile.name,
+            size: croppedFile.size,
+            preview: nextPreview,
+            cropSource: currentCropSource,
+            cropPosition: cropState,
+            displayOrder: file.displayOrder ?? index + 1,
+          }
+        : file,
+    );
+
+    setSupportingFiles(nextSupportingFiles);
+    const currentSupportingStoragePath = currentSupporting.storagePath;
+    if (currentSupportingStoragePath) {
+      setPendingSupportingPhotoCrops((previous) => ({
+        ...previous,
+        [currentSupportingStoragePath]: croppedFile,
+      }));
+    }
+    form.setFieldValue(
+      "supportingPhotos",
+      nextSupportingFiles.map((file) => file.preview),
+    );
+    form.setFieldValue(
+      "supportingPhotoNames",
+      nextSupportingFiles.map((file) => file.name),
+    );
+    form.setFieldValue(
+      "supportingPhotoSizes",
+      nextSupportingFiles.map((file) => file.size),
+    );
+    setLastSaved(getFormattedSaveTime());
+    setSuccessToast({
+      title: "Image Cropped!",
+      message: "Supporting photo preview has been updated successfully.",
+    });
   };
 
   const handleDeleteSupportingImage = async (fileToDelete: PreviewFile) => {
@@ -393,7 +563,7 @@ export default function GardenStoryStep() {
 
     const remainingFiles = supportingFiles.filter((file) => {
       if (file.preview === fileToDelete.preview) {
-        revokePreviewUrl(file.preview);
+        revokePreviewFile(file);
         return false;
       }
 
@@ -401,6 +571,14 @@ export default function GardenStoryStep() {
     });
 
     setSupportingFiles(remainingFiles);
+    const fileToDeleteStoragePath = fileToDelete.storagePath;
+    if (fileToDeleteStoragePath) {
+      setPendingSupportingPhotoCrops((previous) => {
+        const next = { ...previous };
+        delete next[fileToDeleteStoragePath];
+        return next;
+      });
+    }
     form.setFieldValue(
       "supportingPhotos",
       remainingFiles.map((file) => file.preview),
@@ -761,12 +939,11 @@ export default function GardenStoryStep() {
               </p>
 
               <p className="text-xs text-gray-500">
-                SVG, PNG, JPG or GIF (max. 3MB)
+                SVG, PNG, JPG or GIF (max. 10MB)
               </p>
             </div>
           </div>
         )}
-
         {files.map((file) => (
           <div
             key={`${file.name}-${file.size}`}
@@ -812,6 +989,20 @@ export default function GardenStoryStep() {
           </div>
         ))}
       </div>
+
+      {cropTarget && cropTargetFile && (
+        <CropImageDialogue
+          open={cropTarget !== null}
+          onClose={() => setCropTarget(null)}
+          imageSrc={cropTargetFile.cropSource || cropTargetFile.preview}
+          imageName={cropTargetFile.name}
+          initialCrop={cropTargetFile.cropPosition?.crop}
+          initialZoom={cropTargetFile.cropPosition?.zoom}
+          initialRotation={cropTargetFile.cropPosition?.rotation}
+          initialFlipX={cropTargetFile.cropPosition?.flipX}
+          onDone={handleCropImage}
+        />
+      )}
 
       {/* Supporting Photos */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
@@ -884,7 +1075,7 @@ export default function GardenStoryStep() {
               </p>
 
               <p className="text-xs text-gray-500">
-                SVG, PNG, JPG or GIF (max. 3MB)
+                SVG, PNG, JPG or GIF (max. 10MB)
               </p>
             </div>
           </div>
@@ -895,7 +1086,16 @@ export default function GardenStoryStep() {
             key={`${file.name}-${file.size}`}
             className="flex flex-col gap-2"
           >
-            <div className="w-full aspect-[650/358] overflow-hidden border border-gray-300">
+            <div className="relative w-full aspect-[650/358] overflow-hidden border border-gray-300">
+              <Button
+                variant="outlined"
+                onClick={() =>
+                  setCropTarget({ type: "supporting", preview: file.preview })
+                }
+                className="!absolute !left-3 !top-3 !z-[1] !min-w-0 !px-3 !py-1.5"
+              >
+                Crop
+              </Button>
               <img
                 src={file.preview}
                 alt={file.name}

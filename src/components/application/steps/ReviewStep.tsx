@@ -7,11 +7,13 @@ import {
   useAgreementGate,
   useApplicationForm,
   useDraftCampaignId,
+  usePendingImageCrops,
 } from "@/src/components/application/ApplicationFormProvider";
 import { getApplicationCompletionState } from "@/src/components/application/applicationStepState";
 import { notFound, useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
+import useReplaceCampaignImage from "@/src/hooks/campaign-image-records/useReplaceCampaignImage";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 const stateNames: Record<string, string> = {
@@ -128,8 +130,15 @@ export default function ReviewSubmitPage() {
   const router = useRouter();
   const { hasPassedAgreement } = useAgreementGate();
   const { draftCampaignId } = useDraftCampaignId();
+  const {
+    pendingMainPhotoCrop,
+    setPendingMainPhotoCrop,
+    pendingSupportingPhotoCrops,
+    setPendingSupportingPhotoCrops,
+  } = usePendingImageCrops();
   const { saveDraftCampaign } = useSaveDraftCampaign();
   const updateCampaign = useUpdateCampaign();
+  const replaceCampaignImage = useReplaceCampaignImage();
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const { data: question1, isLoading: isLoadingQuestion1 } = useReadQuestion(1);
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
@@ -165,6 +174,46 @@ export default function ReviewSubmitPage() {
     }
 
     const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+
+    if (pendingMainPhotoCrop && values.mainPhotoStoragePath) {
+      const replacedMainPhoto = await replaceCampaignImage.mutateAsync({
+        file: pendingMainPhotoCrop,
+        campaignId,
+        oldStoragePath: values.mainPhotoStoragePath,
+      });
+      form.setFieldValue("mainPhotoStoragePath", replacedMainPhoto.storage_path);
+      setPendingMainPhotoCrop(null);
+    }
+
+    let nextSupportingPhotoStoragePaths = [
+      ...values.supportingPhotoStoragePaths,
+    ];
+
+    for (const storagePath of values.supportingPhotoStoragePaths) {
+      const croppedFile = pendingSupportingPhotoCrops[storagePath];
+      if (!croppedFile) {
+        continue;
+      }
+
+      const replacedSupportingPhoto = await replaceCampaignImage.mutateAsync({
+        file: croppedFile,
+        campaignId,
+        oldStoragePath: storagePath,
+      });
+
+      nextSupportingPhotoStoragePaths = nextSupportingPhotoStoragePaths.map(
+        (currentStoragePath) =>
+          currentStoragePath === storagePath
+            ? replacedSupportingPhoto.storage_path
+            : currentStoragePath,
+      );
+    }
+
+    form.setFieldValue(
+      "supportingPhotoStoragePaths",
+      nextSupportingPhotoStoragePaths,
+    );
+    setPendingSupportingPhotoCrops({});
 
     await updateCampaign.mutateAsync({
       campaignId,
