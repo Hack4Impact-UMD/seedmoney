@@ -219,7 +219,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
     <>
     <nav
       className={clsx(
-        "!sticky !top-0 hidden md:flex h-screen min-h-0 flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
+        "!sticky !top-0 !z-20 hidden md:flex h-screen min-h-0 flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
         isCollapsed ? "!w-[96px]" : compact ? "!w-[260px]" : "!w-[300px] xl:!w-[300px]",
       )}
     >
@@ -278,7 +278,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
         size="small"
         aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
         className={clsx(
-          "!absolute !right-0 !z-50 !h-9 !w-9 !translate-x-1/2 !border-2 !border-[#2D7A45] !bg-white !text-[#2D7A45] hover:!bg-gray-100",
+          "!absolute !right-0 !z-[60] !h-9 !w-9 !translate-x-1/2 !border-2 !border-[#2D7A45] !bg-white !text-[#2D7A45] !shadow-sm hover:!bg-gray-100",
           compact ? "!top-[84px]" : "!top-[100px]",
         )}
       >

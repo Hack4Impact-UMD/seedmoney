@@ -491,7 +491,7 @@ export default function CampaignReviewPage() {
         Make sure to save your changes before making status changes!
       </BaseAlert>
 
-      <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-4 px-4 md:py-10 md:pl-10 md:pr-32 space-y-3 relative">
+      <div className="min-w-0 flex-1 flex flex-col overflow-y-auto bg-gray-50 py-4 px-4 md:py-10 md:pl-10 md:pr-32 space-y-3 relative">
         <EditCampaignHeader
           text={
             isPreviousCampaign
