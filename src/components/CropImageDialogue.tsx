@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Button from "@mui/material/Button";
 import Dialog from "@mui/material/Dialog";
 import DialogActions from "@mui/material/DialogActions";
@@ -14,21 +14,115 @@ type CropImageDialogueProps = {
   open: boolean;
   onClose: () => void;
   imageSrc: string;
+  imageName: string;
+  initialCrop?: Point;
+  initialZoom?: number;
+  onDone: (
+    croppedFile: File,
+    cropState: { crop: Point; zoom: number },
+  ) => Promise<void> | void;
 };
+
+async function loadImage(src: string) {
+  const sourceBlob = await fetch(src).then(async (response) => {
+    if (!response.ok) {
+      throw new Error("Failed to load image for cropping.");
+    }
+
+    return response.blob();
+  });
+  const sourceUrl = URL.createObjectURL(sourceBlob);
+
+  try {
+    const image = await new Promise<HTMLImageElement>((resolve, reject) => {
+      const nextImage = new window.Image();
+
+      nextImage.onload = () => resolve(nextImage);
+      nextImage.onerror = () => reject(new Error("Failed to decode image."));
+      nextImage.src = sourceUrl;
+    });
+
+    return image;
+  } finally {
+    URL.revokeObjectURL(sourceUrl);
+  }
+}
+
+async function getCroppedFile({
+  imageSrc,
+  imageName,
+  cropAreaPixels,
+}: {
+  imageSrc: string;
+  imageName: string;
+  cropAreaPixels: Area;
+}) {
+  const image = await loadImage(imageSrc);
+  const canvas = document.createElement("canvas");
+  canvas.width = cropAreaPixels.width;
+  canvas.height = cropAreaPixels.height;
+
+  const context = canvas.getContext("2d");
+  if (!context) {
+    throw new Error("Failed to create crop canvas.");
+  }
+
+  context.drawImage(
+    image,
+    cropAreaPixels.x,
+    cropAreaPixels.y,
+    cropAreaPixels.width,
+    cropAreaPixels.height,
+    0,
+    0,
+    cropAreaPixels.width,
+    cropAreaPixels.height,
+  );
+
+  const croppedBlob = await new Promise<Blob>((resolve, reject) => {
+    canvas.toBlob((blob) => {
+      if (!blob) {
+        reject(new Error("Failed to generate cropped image."));
+        return;
+      }
+
+      resolve(blob);
+    }, "image/png");
+  });
+
+  return new File([croppedBlob], imageName, {
+    type: croppedBlob.type || "image/png",
+  });
+}
 
 export default function CropImageDialogue({
   open,
   onClose,
   imageSrc,
+  imageName,
+  initialCrop,
+  initialZoom,
+  onDone,
 }: CropImageDialogueProps) {
   const [crop, setCrop] = useState<Point>({ x: 0, y: 0 });
   const [zoom, setZoom] = useState(1);
-  const [, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+
+  useEffect(() => {
+    if (!open) {
+      return;
+    }
+
+    setCrop(initialCrop ?? { x: 0, y: 0 });
+    setZoom(initialZoom ?? 1);
+    setCroppedAreaPixels(null);
+    setIsSubmitting(false);
+  }, [imageSrc, initialCrop, initialZoom, open]);
 
   const handleClose = () => {
-    setCrop({ x: 0, y: 0 });
-    setZoom(1);
     setCroppedAreaPixels(null);
+    setIsSubmitting(false);
     onClose();
   };
 
@@ -36,10 +130,30 @@ export default function CropImageDialogue({
     setCroppedAreaPixels(croppedAreaPixels);
   };
 
+  const handleDone = async () => {
+    if (!croppedAreaPixels) {
+      handleClose();
+      return;
+    }
+
+    try {
+      setIsSubmitting(true);
+      const croppedFile = await getCroppedFile({
+        imageSrc,
+        imageName,
+        cropAreaPixels: croppedAreaPixels,
+      });
+      await onDone(croppedFile, { crop, zoom });
+      handleClose();
+    } finally {
+      setIsSubmitting(false);
+    }
+  };
+
   return (
     <Dialog
       open={open}
-      onClose={handleClose}
+      onClose={isSubmitting ? undefined : handleClose}
       fullWidth
       maxWidth="md"
       PaperProps={{
@@ -80,9 +194,7 @@ export default function CropImageDialogue({
           <div className="mt-6">
             <div className="mb-3 flex items-center justify-between">
               <span className="text-sm font-medium text-[#344054]">Zoom</span>
-              <span className="text-sm text-[#667085]">
-                {zoom.toFixed(1)}x
-              </span>
+              <span className="text-sm text-[#667085]">{zoom.toFixed(1)}x</span>
             </div>
             <Slider
               value={zoom}
@@ -98,10 +210,18 @@ export default function CropImageDialogue({
       </DialogContent>
 
       <DialogActions className="!border-t !border-[#E5E7EB] !px-6 !py-4">
-        <Button variant="outlined" onClick={handleClose}>
+        <Button
+          variant="outlined"
+          onClick={handleClose}
+          disabled={isSubmitting}
+        >
           Cancel
         </Button>
-        <Button variant="contained" onClick={handleClose}>
+        <Button
+          variant="contained"
+          onClick={handleDone}
+          disabled={isSubmitting}
+        >
           Done
         </Button>
       </DialogActions>

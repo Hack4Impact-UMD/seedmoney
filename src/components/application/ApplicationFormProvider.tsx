@@ -79,6 +79,15 @@ interface LastSavedContextValue {
   setLastSaved: (value: SetStateAction<string | null>) => void;
 }
 
+interface PendingImageCropContextValue {
+  pendingMainPhotoCrop: File | null;
+  setPendingMainPhotoCrop: (value: SetStateAction<File | null>) => void;
+  pendingSupportingPhotoCrops: Record<string, File>;
+  setPendingSupportingPhotoCrops: (
+    value: SetStateAction<Record<string, File>>,
+  ) => void;
+}
+
 const ApplicationFormContext = createContext<ApplicationFormApi | null>(null);
 const AgreementGateContext = createContext<AgreementGateContextValue | null>(
   null,
@@ -87,6 +96,8 @@ const DraftCampaignIdContext =
   createContext<DraftCampaignIdContextValue | null>(null);
 
 const LastSavedContext = createContext<LastSavedContextValue | null>(null);
+const PendingImageCropContext =
+  createContext<PendingImageCropContextValue | null>(null);
 
 export const ApplicationFormProvider = ({
   children,
@@ -107,6 +118,11 @@ export const ApplicationFormProvider = ({
     initialDraftCampaignId,
   );
   const [lastSaved, setLastSaved] = useState<string | null>(null);
+  const [pendingMainPhotoCrop, setPendingMainPhotoCrop] = useState<File | null>(
+    null,
+  );
+  const [pendingSupportingPhotoCrops, setPendingSupportingPhotoCrops] =
+    useState<Record<string, File>>({});
 
   const agreementGateValue = useMemo(
     () => ({
@@ -132,12 +148,24 @@ export const ApplicationFormProvider = ({
     [lastSaved],
   );
 
+  const pendingImageCropValue = useMemo(
+    () => ({
+      pendingMainPhotoCrop,
+      setPendingMainPhotoCrop,
+      pendingSupportingPhotoCrops,
+      setPendingSupportingPhotoCrops,
+    }),
+    [pendingMainPhotoCrop, pendingSupportingPhotoCrops],
+  );
+
   return (
     <ApplicationFormContext.Provider value={form}>
       <AgreementGateContext.Provider value={agreementGateValue}>
         <DraftCampaignIdContext.Provider value={draftCampaignIdValue}>
           <LastSavedContext.Provider value={lastSavedValue}>
-            {children}
+            <PendingImageCropContext.Provider value={pendingImageCropValue}>
+              {children}
+            </PendingImageCropContext.Provider>
           </LastSavedContext.Provider>
         </DraftCampaignIdContext.Provider>
       </AgreementGateContext.Provider>
@@ -182,5 +210,16 @@ export const useLastSaved = () => {
       "useLastSaved must be used within an ApplicationFormProvider",
     );
   }
+  return context;
+};
+
+export const usePendingImageCrops = () => {
+  const context = useContext(PendingImageCropContext);
+  if (!context) {
+    throw new Error(
+      "usePendingImageCrops must be used within an ApplicationFormProvider",
+    );
+  }
+
   return context;
 };

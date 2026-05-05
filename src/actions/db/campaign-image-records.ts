@@ -1,4 +1,4 @@
-import { createBrowserClient, createServerClient } from "@/src/lib/supabase-client";
+import { createBrowserClient } from "@/src/lib/supabase-client";
 import {
   CampaignImageRecord,
   CampaignFile,
@@ -217,6 +217,58 @@ export async function updateCampaignImageRecord(
   }
 
   return updatedData as CampaignImageRecord;
+}
+
+export async function replaceCampaignImage({
+  file,
+  campaignId,
+  oldStoragePath,
+}: {
+  file: File;
+  campaignId: number;
+  oldStoragePath: string;
+}): Promise<CampaignImageRecord> {
+  const supabase = createBrowserClient();
+
+  const fileName = file.name.replace(/\s+/g, "-");
+  const newFilePath = `campaigns/${campaignId}/${crypto.randomUUID()}-${fileName}`;
+
+  const { error: uploadError } = await supabase.storage
+    .from("campaign_images")
+    .upload(newFilePath, file, {
+      cacheControl: "3600",
+      upsert: false,
+    });
+
+  if (uploadError) {
+    throw new Error(`Storage upload failed: ${uploadError.message}`);
+  }
+
+  const { data, error: updateError } = await supabase
+    .from("campaign_image_records")
+    .update({ storage_path: newFilePath })
+    .eq("campaign_id", campaignId)
+    .eq("storage_path", oldStoragePath)
+    .select("id, campaign_id, storage_path, display_order, is_main")
+    .single();
+
+  if (updateError) {
+    await supabase.storage.from("campaign_images").remove([newFilePath]);
+    throw new Error(`DB update failed: ${updateError.message}`);
+  }
+
+  const { error: removeError } = await supabase.storage
+    .from("campaign_images")
+    .remove([oldStoragePath]);
+
+  if (removeError) {
+    console.error(
+      `Storage cleanup failed for ${oldStoragePath}:`,
+      removeError.message,
+    );
+  }
+
+  return data;
 }
 
 export async function setMainCampaignImage(
