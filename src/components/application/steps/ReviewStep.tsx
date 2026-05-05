@@ -176,13 +176,18 @@ export default function ReviewSubmitPage() {
     const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
 
     if (pendingMainPhotoCrop && values.mainPhotoStoragePath) {
-      await replaceCampaignImage.mutateAsync({
+      const replacedMainPhoto = await replaceCampaignImage.mutateAsync({
         file: pendingMainPhotoCrop,
         campaignId,
         oldStoragePath: values.mainPhotoStoragePath,
       });
+      form.setFieldValue("mainPhotoStoragePath", replacedMainPhoto.storage_path);
       setPendingMainPhotoCrop(null);
     }
+
+    let nextSupportingPhotoStoragePaths = [
+      ...values.supportingPhotoStoragePaths,
+    ];
 
     for (const storagePath of values.supportingPhotoStoragePaths) {
       const croppedFile = pendingSupportingPhotoCrops[storagePath];
@@ -190,13 +195,24 @@ export default function ReviewSubmitPage() {
         continue;
       }
 
-      await replaceCampaignImage.mutateAsync({
+      const replacedSupportingPhoto = await replaceCampaignImage.mutateAsync({
         file: croppedFile,
         campaignId,
         oldStoragePath: storagePath,
       });
+
+      nextSupportingPhotoStoragePaths = nextSupportingPhotoStoragePaths.map(
+        (currentStoragePath) =>
+          currentStoragePath === storagePath
+            ? replacedSupportingPhoto.storage_path
+            : currentStoragePath,
+      );
     }
 
+    form.setFieldValue(
+      "supportingPhotoStoragePaths",
+      nextSupportingPhotoStoragePaths,
+    );
     setPendingSupportingPhotoCrops({});
 
     await updateCampaign.mutateAsync({
