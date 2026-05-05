@@ -10,6 +10,8 @@ import Slider from "@mui/material/Slider";
 import CloseIcon from "@mui/icons-material/Close";
 import Cropper, { Area, Point } from "react-easy-crop";
 
+const PREVIEW_ASPECT_RATIO = 650 / 358;
+
 type CropImageDialogueProps = {
   open: boolean;
   onClose: () => void;
@@ -184,7 +186,7 @@ export default function CropImageDialogue({
               image={imageSrc}
               crop={crop}
               zoom={zoom}
-              aspect={4 / 3}
+              aspect={PREVIEW_ASPECT_RATIO}
               onCropChange={setCrop}
               onCropComplete={handleCropComplete}
               onZoomChange={(value) => setZoom(Number(value))}
