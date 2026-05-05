@@ -28,6 +28,8 @@ type PreviewFile = {
   cropPosition?: {
     crop: { x: number; y: number };
     zoom: number;
+    rotation: number;
+    flipX: boolean;
   };
   storagePath?: string;
   displayOrder?: number;
@@ -56,6 +58,8 @@ function buildPreviewFiles(files: File[]): PreviewFile[] {
     cropPosition: {
       crop: { x: 0, y: 0 },
       zoom: 1,
+      rotation: 0,
+      flipX: false,
     },
   }));
 }
@@ -149,6 +153,8 @@ export default function GardenStoryStep() {
             cropPosition: {
               crop: { x: 0, y: 0 },
               zoom: 1,
+              rotation: 0,
+              flipX: false,
             },
             storagePath: values.mainPhotoStoragePath,
             displayOrder: 0,
@@ -166,6 +172,8 @@ export default function GardenStoryStep() {
       cropPosition: {
         crop: { x: 0, y: 0 },
         zoom: 1,
+        rotation: 0,
+        flipX: false,
       },
       storagePath: values.supportingPhotoStoragePaths[index],
       displayOrder: index + 1,
@@ -446,7 +454,12 @@ export default function GardenStoryStep() {
 
   const handleCropImage = async (
     croppedFile: File,
-    cropState: { crop: { x: number; y: number }; zoom: number },
+    cropState: {
+      crop: { x: number; y: number };
+      zoom: number;
+      rotation: number;
+      flipX: boolean;
+    },
   ) => {
     if (cropTarget?.type === "main") {
       const currentMain = files[0];
@@ -989,6 +1002,8 @@ export default function GardenStoryStep() {
           imageName={cropTargetFile.name}
           initialCrop={cropTargetFile.cropPosition?.crop}
           initialZoom={cropTargetFile.cropPosition?.zoom}
+          initialRotation={cropTargetFile.cropPosition?.rotation}
+          initialFlipX={cropTargetFile.cropPosition?.flipX}
           onDone={handleCropImage}
         />
       )}
