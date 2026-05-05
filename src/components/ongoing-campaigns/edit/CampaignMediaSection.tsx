@@ -585,7 +585,7 @@ export default function CampaignMediaSection({
               </p>
 
               <p className="text-xs text-gray-500">
-                SVG, PNG, JPG or GIF (max. 3MB)
+                SVG, PNG, JPG or GIF (max. 10MB)
               </p>
             </div>
           </div>
@@ -633,7 +633,7 @@ export default function CampaignMediaSection({
               </p>
 
               <p className="text-xs text-gray-500">
-                SVG, PNG, JPG or GIF (max. 3MB)
+                SVG, PNG, JPG or GIF (max. 10MB)
               </p>
             </div>
           </div>

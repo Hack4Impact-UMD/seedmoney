@@ -20,6 +20,18 @@ export default function useReplaceCampaignImage() {
       queryClient.invalidateQueries({
         queryKey: ["campaign-images", campaignId],
       });
+      queryClient.invalidateQueries({
+        predicate: (query) => {
+          const [namespace, operation, campaignIds] = query.queryKey;
+
+          return (
+            namespace === "campaign-images" &&
+            operation === "read-urls-by-campaign-ids" &&
+            Array.isArray(campaignIds) &&
+            campaignIds.includes(campaignId)
+          );
+        },
+      });
     },
   });
 }

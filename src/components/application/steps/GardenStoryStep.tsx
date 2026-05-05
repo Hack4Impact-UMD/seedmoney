@@ -126,10 +126,8 @@ export default function GardenStoryStep() {
   const form = useApplicationForm();
   const router = useRouter();
   const { setLastSaved } = useLastSaved();
-  const {
-    setPendingMainPhotoCrop,
-    setPendingSupportingPhotoCrops,
-  } = usePendingImageCrops();
+  const { setPendingMainPhotoCrop, setPendingSupportingPhotoCrops } =
+    usePendingImageCrops();
   const { draftCampaignId, saveDraftCampaign } = useSaveDraftCampaign();
   const createOriginalAnswerMutation = useCreateOriginalAnswer();
   const uploadCampaignImage = useUploadCampaignImage();
@@ -186,9 +184,7 @@ export default function GardenStoryStep() {
     message: string;
   } | null>(null);
   const [cropTarget, setCropTarget] = useState<
-    | { type: "main" }
-    | { type: "supporting"; preview: string }
-    | null
+    { type: "main" } | { type: "supporting"; preview: string } | null
   >(null);
   const storyAnswersRef = useRef({
     1: values.storyLocationAndAudience,
@@ -943,7 +939,7 @@ export default function GardenStoryStep() {
               </p>
 
               <p className="text-xs text-gray-500">
-                SVG, PNG, JPG or GIF (max. 3MB)
+                SVG, PNG, JPG or GIF (max. 10MB)
               </p>
             </div>
           </div>
@@ -1079,7 +1075,7 @@ export default function GardenStoryStep() {
               </p>
 
               <p className="text-xs text-gray-500">
-                SVG, PNG, JPG or GIF (max. 3MB)
+                SVG, PNG, JPG or GIF (max. 10MB)
               </p>
             </div>
           </div>

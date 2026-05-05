@@ -159,6 +159,7 @@ export default function CropImageDialogue({
   const [flipX, setFlipX] = useState(false);
   const [croppedAreaPixels, setCroppedAreaPixels] = useState<Area | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitError, setSubmitError] = useState<string | null>(null);
 
   useEffect(() => {
     if (!open) {
@@ -171,11 +172,13 @@ export default function CropImageDialogue({
     setFlipX(initialFlipX ?? false);
     setCroppedAreaPixels(null);
     setIsSubmitting(false);
+    setSubmitError(null);
   }, [imageSrc, initialCrop, initialFlipX, initialRotation, initialZoom, open]);
 
   const handleClose = () => {
     setCroppedAreaPixels(null);
     setIsSubmitting(false);
+    setSubmitError(null);
     onClose();
   };
 
@@ -189,6 +192,8 @@ export default function CropImageDialogue({
       return;
     }
 
+    setSubmitError(null);
+
     try {
       setIsSubmitting(true);
       const croppedFile = await getCroppedFile({
@@ -200,6 +205,9 @@ export default function CropImageDialogue({
       });
       await onDone(croppedFile, { crop, zoom, rotation, flipX });
       handleClose();
+    } catch (error) {
+      console.error("Failed to crop image:", error);
+      setSubmitError("Unable to apply crop. Try again.");
     } finally {
       setIsSubmitting(false);
     }
@@ -213,7 +221,7 @@ export default function CropImageDialogue({
       maxWidth="md"
       PaperProps={{
         className:
-          "!m-4 !w-[calc(100%-2rem)] !max-w-[800px] !overflow-hidden !rounded-[4px] !bg-white !shadow-[0px_9px_46px_8px_rgba(0,0,0,0.12),0px_24px_38px_3px_rgba(0,0,0,0.14),0px_11px_15px_-7px_rgba(0,0,0,0.2)]",
+          "m-4! w-[calc(100%-2rem)]! max-w-[800px]! overflow-hidden! rounded-[4px]! bg-white! shadow-[0px_9px_46px_8px_rgba(0,0,0,0.12),0px_24px_38px_3px_rgba(0,0,0,0.14),0px_11px_15px_-7px_rgba(0,0,0,0.2)]!",
       }}
     >
       <div className="flex items-center justify-between px-6 py-4">
@@ -223,11 +231,15 @@ export default function CropImageDialogue({
           </h2>
         </div>
         <IconButton
-          onClick={handleClose}
-          aria-label="Close crop dialog"
-          className="!rounded-none !p-0 !text-[#6B6B6B] hover:!bg-transparent"
+          onClick={isSubmitting ? undefined : handleClose}
+          disabled={isSubmitting}
+          aria-label={
+            isSubmitting ? "Crop dialog is saving" : "Close crop dialog"
+          }
+          aria-disabled={isSubmitting}
+          className="rounded-none! p-0! text-[#6B6B6B]! hover:bg-transparent!"
         >
-          <CloseIcon className="!text-[24px]" />
+          <CloseIcon className="text-[24px]!" />
         </IconButton>
       </div>
 
@@ -236,6 +248,12 @@ export default function CropImageDialogue({
           Drag and resize your image by dragging the image or using the slider.
         </p>
       </div>
+
+      {submitError && (
+        <div className="px-6 pb-4">
+          <p className="text-sm font-medium text-[#D32F2F]">{submitError}</p>
+        </div>
+      )}
 
       <div className="w-full bg-[#8a8a8a]">
         <div className="mx-auto flex h-[398px] w-full max-w-[800px] items-center justify-center overflow-hidden">
@@ -267,17 +285,17 @@ export default function CropImageDialogue({
             step={0.1}
             aria-label="Zoom"
             onChange={(_event, value) => setZoom(Number(value))}
-            className="!mx-0 flex-1 text-[#2D7A45]"
+            className="mx-0! flex-1 text-[#2D7A45]"
             slotProps={{
               rail: {
-                className: "!h-1 !rounded-[10px] !bg-[#E0E0E0] !opacity-100",
+                className: "h-1! rounded-[10px]! bg-[#E0E0E0]! opacity-100!",
               },
               track: {
-                className: "!h-1 !rounded-[10px] !border-none !bg-[#D5DDE5]",
+                className: "h-1! rounded-[10px]! border-none! bg-[#D5DDE5]!",
               },
               thumb: {
                 className:
-                  "!h-5 !w-5 !bg-[#2D7A45] !shadow-none before:!shadow-none after:!shadow-none",
+                  "h-5! w-5! bg-[#2D7A45]! shadow-none! before:shadow-none! after:shadow-none!",
               },
             }}
           />
@@ -290,16 +308,16 @@ export default function CropImageDialogue({
           <IconButton
             onClick={() => setRotation((previous) => previous + 90)}
             aria-label="Rotate image clockwise"
-            className="!rounded-none !p-0 !text-[#123A1E] hover:!bg-transparent"
+            className="rounded-none! p-0! text-[#123A1E]! hover:bg-transparent!"
           >
-            <RotateRightIcon className="!text-[28px]" />
+            <RotateRightIcon className="text-[28px]!" />
           </IconButton>
           <IconButton
             onClick={() => setFlipX((previous) => !previous)}
             aria-label="Flip image on vertical axis"
-            className="!rounded-none !p-0 !text-[#123A1E] hover:!bg-transparent"
+            className="rounded-none! p-0! text-[#123A1E]! hover:bg-transparent!"
           >
-            <FlipIcon className="!text-[28px]" />
+            <FlipIcon className="text-[28px]!" />
           </IconButton>
         </div>
       </div>
@@ -310,7 +328,7 @@ export default function CropImageDialogue({
             variant="text"
             onClick={handleClose}
             disabled={isSubmitting}
-            className="!min-w-0 !rounded-[8px] !px-2 !py-2.5 !text-[14px] !font-bold !uppercase !leading-4 !text-[#666666] hover:!bg-transparent"
+            className="min-w-0! rounded-[8px]! px-2! py-2.5! text-[14px]! font-bold! uppercase! leading-4! text-[#666666]! hover:bg-transparent!"
           >
             Cancel
           </Button>
@@ -318,7 +336,7 @@ export default function CropImageDialogue({
             variant="contained"
             onClick={handleDone}
             disabled={isSubmitting}
-            className="!min-w-0 !rounded-[8px] !bg-[#2D7A45] !px-[14px] !py-2.5 !text-[14px] !font-bold !uppercase !leading-4 !text-white hover:!bg-[#246239]"
+            className="min-w-0! rounded-[8px]! bg-[#2D7A45]! px-[14px]! py-2.5! text-[14px]! font-bold! uppercase! leading-4! text-white! hover:bg-[#246239]!"
           >
             Apply Crop
           </Button>
