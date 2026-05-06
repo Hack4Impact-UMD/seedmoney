@@ -41,19 +41,11 @@ export default function EditCampaignPage() {
   const updateCampaignMutation = useUpdateCampaign();
   const createFinalAnswerMutation = useCreateFinalAnswer();
 
-  const {
-    data: campaignEditData,
-    isLoading,
-    error,
-    refetch,
-  } = useCampaignEditData(parsedCampaignId);
+  const { data: campaignEditData, isLoading, error, refetch } = useCampaignEditData(parsedCampaignId);
 
-  const [initialData, setInitialData] = useState<EditCampaignFormData>(
-    DEFAULT_CAMPAIGN_DATA,
-  );
-  const [formData, setFormData] = useState<EditCampaignFormData>(
-    DEFAULT_CAMPAIGN_DATA,
-  );
+
+  const [initialData, setInitialData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
+  const [formData, setFormData] = useState<EditCampaignFormData>(DEFAULT_CAMPAIGN_DATA);
   const [isSaveModalOpen, setIsSaveModalOpen] = useState(false);
   const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
   const [isDiscardModalOpen, setIsDiscardModalOpen] = useState(false);
@@ -66,8 +58,8 @@ export default function EditCampaignPage() {
 
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const currentCompetitionId = currentCompetitionData?.competition_id;
-
-  const isPreviousCampaign =
+  
+  const isPreviousCampaign = 
     campaignEditData?.mappedData.competitionId != null &&
     currentCompetitionId != null &&
     campaignEditData.mappedData.competitionId !== currentCompetitionId;
@@ -109,10 +101,7 @@ export default function EditCampaignPage() {
   }, [campaignEditData]);
 
   const setFieldValue = useCallback(
-    <K extends keyof EditCampaignFormData>(
-      field: K,
-      value: EditCampaignFormData[K],
-    ) => {
+    <K extends keyof EditCampaignFormData,>(field: K, value: EditCampaignFormData[K]) => {
       setFormData((prev) => ({ ...prev, [field]: value }));
     },
     [],
@@ -223,14 +212,8 @@ export default function EditCampaignPage() {
       }
 
       const finalAnswerUpdates = changedFinalAnswerCandidates.filter(
-        (
-          update,
-        ): update is {
-          questionNumber: number;
-          questionId: number;
-          before: string;
-          after: string;
-        } => update.questionId !== null,
+        (update): update is { questionNumber: number; questionId: number; before: string; after: string } =>
+          update.questionId !== null,
       );
 
       await updateCampaignMutation.mutateAsync({
@@ -256,8 +239,7 @@ export default function EditCampaignPage() {
       setIsSaveModalOpen(false);
       setShowSuccessToast(true);
     } catch (err) {
-      const message =
-        err instanceof Error ? err.message : "An unknown error occurred.";
+      const message = err instanceof Error ? err.message : "An unknown error occurred.";
       console.error("Save error:", message);
       setSaveErrorMessage(message);
       setIsSaveModalOpen(false);
@@ -314,11 +296,7 @@ export default function EditCampaignPage() {
 
       <div className="flex-1 flex flex-col overflow-y-auto bg-gray-50 py-4 px-4 md:py-10 md:pl-10 md:pr-16 space-y-3">
         <EditCampaignHeader
-          text={
-            isPreviousCampaign
-              ? formData.campaignTitle
-              : `Edit Campaign - ${formData.campaignTitle}`
-          }
+          text={isPreviousCampaign ? formData.campaignTitle : `Edit Campaign - ${formData.campaignTitle}`}
           onBack={handleAttemptLeave}
           tag={tag}
         />
@@ -333,51 +311,44 @@ export default function EditCampaignPage() {
                   onCancel={handleAttemptDiscard}
                 />
                 <div className="text-sm text-gray-500 mt-4 flex items-center">
-                  <span className="text-orange-500 text-lg mr-1">*</span> =
-                  required field
+                  <span className="text-orange-500 text-lg mr-1">*</span> = required field
                 </div>
               </div>
             )}
 
-            <div
-              className={
-                isPreviousCampaign
-                  ? "pointer-events-none flex flex-col gap-6 w-full max-w-full"
-                  : "flex flex-col gap-6 w-full max-w-full"
-              }
-            >
+            <div className={isPreviousCampaign ? "pointer-events-none flex flex-col gap-6 w-full max-w-full" : "flex flex-col gap-6 w-full max-w-full"}>
               <CampaignInformationSection
-                formData={formData}
-                onTextChange={handleTextChange}
-                setFieldValue={setFieldValue}
-              />
+              formData={formData}
+              onTextChange={handleTextChange}
+              setFieldValue={setFieldValue}
+            />
 
-              <GardenInformationSection
-                formData={formData}
-                categoryOptions={categoryOptions}
-                beneficiaryOptions={beneficiaryOptions}
-                onTextChange={handleTextChange}
-                setFieldValue={setFieldValue}
-                onToggleBeneficiary={handleToggleBeneficiary}
-              />
+            <GardenInformationSection
+              formData={formData}
+              categoryOptions={categoryOptions}
+              beneficiaryOptions={beneficiaryOptions}
+              onTextChange={handleTextChange}
+              setFieldValue={setFieldValue}
+              onToggleBeneficiary={handleToggleBeneficiary}
+            />
 
-              <GardenStorySection
-                formData={formData}
-                onTextChange={handleTextChange}
-                questions={campaignEditData.storyQuestions}
-              />
+            <GardenStorySection
+              formData={formData}
+              onTextChange={handleTextChange}
+              questions={campaignEditData.storyQuestions}
+            />
 
-              <CampaignMediaSection
-                formData={formData}
-                campaignId={parsedCampaignId}
-                syncImageRecords={syncImageRecords}
-              />
+            <CampaignMediaSection
+              formData={formData}
+              campaignId={parsedCampaignId}
+              syncImageRecords={syncImageRecords}
+            />
 
-              <ContactInformationSection
-                formData={formData}
-                onTextChange={handleTextChange}
-                setFieldValue={setFieldValue}
-              />
+            <ContactInformationSection
+              formData={formData}
+              onTextChange={handleTextChange}
+              setFieldValue={setFieldValue}
+            />
             </div>
           </div>
 

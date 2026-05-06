@@ -355,7 +355,7 @@ export default function CampaignReviewPage() {
 
   const navigateToCampaignPage = useCallback(() => {
     if (!parsedCampaignId) {
-      router.push("/dashboard/ongoing-campaigns");
+      router.push("/dashboard/review-applications");
       return;
     }
     router.push(`/dashboard/review-applications`);

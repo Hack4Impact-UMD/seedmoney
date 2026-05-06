@@ -35,8 +35,13 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
   const [isCampaignSheetOpen, setIsCampaignSheetOpen] = useState(false);
   const [openApplyModal, setOpenApplyModal] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
-  const [activeSettingsModal, setActiveSettingsModal] = useState<"name" | "email" | "password" | null>(null);
-  const [savedName, setSavedName] = useState<{ firstName: string; lastName: string } | null>(null);
+  const [activeSettingsModal, setActiveSettingsModal] = useState<
+    "name" | "email" | "password" | null
+  >(null);
+  const [savedName, setSavedName] = useState<{
+    firstName: string;
+    lastName: string;
+  } | null>(null);
   const [nameSaveError, setNameSaveError] = useState<string | null>(null);
   const { user } = useAuth();
   const { data: userData } = useUserByAuthId(user?.id || "");
@@ -52,7 +57,10 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
   const selectedCampaignId = Number(campaignId);
   const isAdmin = userData?.is_admin ?? false;
 
-  const firstName = savedName?.firstName ?? userData?.first_name ?? user?.user_metadata.full_name;
+  const firstName =
+    savedName?.firstName ??
+    userData?.first_name ??
+    user?.user_metadata.full_name;
   const lastName = savedName?.lastName ?? userData?.last_name ?? "";
   const email = userData?.email ?? user?.email ?? "";
   const displayName = [firstName, lastName].filter(Boolean).join(" ");
@@ -65,11 +73,20 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
     router.push("/");
   };
 
-  const handleSettingsSave = async (nextFirstName: string, nextLastName: string) => {
-    if (!userData?.id) { setNameSaveError("Unable to update name right now."); return false; }
+  const handleSettingsSave = async (
+    nextFirstName: string,
+    nextLastName: string,
+  ) => {
+    if (!userData?.id) {
+      setNameSaveError("Unable to update name right now.");
+      return false;
+    }
     try {
       setNameSaveError(null);
-      await updateUser.mutateAsync({ userId: userData.id, userUpdateData: { first_name: nextFirstName, last_name: nextLastName } });
+      await updateUser.mutateAsync({
+        userId: userData.id,
+        userUpdateData: { first_name: nextFirstName, last_name: nextLastName },
+      });
       setSavedName({ firstName: nextFirstName, lastName: nextLastName });
       setActiveSettingsModal(null);
       return true;
@@ -140,7 +157,8 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
     : "mb-2 mt-4 h-7 px-6 text-[13px] font-normal tracking-[1px] text-white/70";
 
   const getCampaignDisplayName = (campaign: Campaign) => {
-    const hasName = typeof campaign.name === "string" && campaign.name.trim() !== "";
+    const hasName =
+      typeof campaign.name === "string" && campaign.name.trim() !== "";
 
     if (campaign.status === "in_progress") {
       return hasName ? `${campaign.name} (Draft)` : "Untitled Draft";
@@ -217,113 +235,209 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
 
   return (
     <>
-    <nav
-      className={clsx(
-        "!sticky !top-0 !z-20 hidden md:flex h-screen min-h-0 flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
-        isCollapsed ? "!w-[96px]" : compact ? "!w-[260px]" : "!w-[300px] xl:!w-[300px]",
-      )}
-    >
-      <div
+      <nav
         className={clsx(
-          "flex items-center",
-          compact ? "px-4 pb-3 pt-5" : "px-5 pb-4 pt-6",
+          "!sticky !top-0 !z-20 hidden md:flex h-screen min-h-0 flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
+          isCollapsed
+            ? "!w-[96px]"
+            : compact
+              ? "!w-[260px]"
+              : "!w-[300px] xl:!w-[300px]",
         )}
       >
         <div
           className={clsx(
-            "flex min-w-0 flex-1 items-center gap-4",
-            isCollapsed && "justify-center",
+            "flex items-center",
+            compact ? "px-4 pb-3 pt-5" : "px-5 pb-4 pt-6",
           )}
         >
           <div
             className={clsx(
-              "flex shrink-0 items-center justify-center rounded-full bg-white cursor-pointer",
-              isCollapsed ? "h-11 w-11" : compact ? "h-14 w-14" : "h-16 w-16",
+              "flex min-w-0 flex-1 items-center gap-4",
+              isCollapsed && "justify-center",
             )}
-            onClick={() => router.push("/dashboard")}
           >
-            <Image
-              src="/seedMoneyLogo.png"
-              alt="SeedMoney"
-              width={isCollapsed ? 28 : compact ? 38 : 44}
-              height={isCollapsed ? 28 : compact ? 38 : 44}
-            />
-          </div>
-          {!isCollapsed && (
-            <div className="min-w-0">
-              <h6
-                className={clsx(
-                  "font-bold leading-[1.3] text-white",
-                  compact ? "text-lg" : "text-xl",
-                )}
-              >
-                {firstName ?? "SeedMoney"}
-              </h6>
-              <p className={clsx("text-white/80", compact ? "text-[13px]" : "text-sm")}>
-                {isLoading
-                  ? "Loading..."
-                  : userData
-                    ? isAdmin
-                      ? "Admin"
-                      : "Campaign Leader"
-                    : ""}
-              </p>
+            <div
+              className={clsx(
+                "flex shrink-0 items-center justify-center rounded-full bg-white cursor-pointer",
+                isCollapsed ? "h-11 w-11" : compact ? "h-14 w-14" : "h-16 w-16",
+              )}
+              onClick={() => router.push("/dashboard")}
+            >
+              <Image
+                src="/seedMoneyLogo.png"
+                alt="SeedMoney"
+                width={isCollapsed ? 28 : compact ? 38 : 44}
+                height={isCollapsed ? 28 : compact ? 38 : 44}
+              />
             </div>
-          )}
+            {!isCollapsed && (
+              <div className="min-w-0">
+                <h6
+                  className={clsx(
+                    "font-bold leading-[1.3] text-white",
+                    compact ? "text-lg" : "text-xl",
+                  )}
+                >
+                  {firstName ?? "SeedMoney"}
+                </h6>
+                <p
+                  className={clsx(
+                    "text-white/80",
+                    compact ? "text-[13px]" : "text-sm",
+                  )}
+                >
+                  {isLoading
+                    ? "Loading..."
+                    : userData
+                      ? isAdmin
+                        ? "Admin"
+                        : "Campaign Leader"
+                      : ""}
+                </p>
+              </div>
+            )}
+          </div>
         </div>
-      </div>
 
-      <IconButton
-        onClick={() => setIsCollapsed((prev) => !prev)}
-        size="small"
-        aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
-        className={clsx(
-          "!absolute !right-0 !z-[60] !h-9 !w-9 !translate-x-1/2 !border-2 !border-[#2D7A45] !bg-white !text-[#2D7A45] !shadow-sm hover:!bg-gray-100",
-          compact ? "!top-[84px]" : "!top-[100px]",
-        )}
-      >
-        {isCollapsed ? (
-          <ChevronRightIcon fontSize="small" />
-        ) : (
-          <ChevronLeftIcon fontSize="small" />
-        )}
-      </IconButton>
+        <IconButton
+          onClick={() => setIsCollapsed((prev) => !prev)}
+          size="small"
+          aria-label={isCollapsed ? "Expand sidebar" : "Collapse sidebar"}
+          className={clsx(
+            "!absolute !right-0 !z-[60] !h-9 !w-9 !translate-x-1/2 !border-2 !border-[#2D7A45] !bg-white !text-[#2D7A45] !shadow-sm hover:!bg-gray-100",
+            compact ? "!top-[84px]" : "!top-[100px]",
+          )}
+        >
+          {isCollapsed ? (
+            <ChevronRightIcon fontSize="small" />
+          ) : (
+            <ChevronLeftIcon fontSize="small" />
+          )}
+        </IconButton>
 
-      {userData && isAdmin && (
-        <div className="scrollbar-hide mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
-          <List disablePadding>
-            {[
-              { label: "Home", path: "/dashboard" },
-              {
-                label: "Ongoing Campaigns",
-                path: "/dashboard/ongoing-campaigns",
-              },
-              {
-                label: "Review Applications",
-                path: "/dashboard/review-applications",
-              },
-              { label: "List of Users", path: "/dashboard/users" },
-            ].map(({ label, path }) => {
-              const isSelected =
-                path === "/dashboard"
-                  ? pathname === path
-                  : pathname.startsWith(path);
-              return (
+        {userData && isAdmin && (
+          <div className="scrollbar-hide mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+            <List disablePadding>
+              {[
+                { label: "Home", path: "/dashboard" },
+                {
+                  label: "Approved Campaigns",
+                  path: "/dashboard/approved-campaigns",
+                },
+                {
+                  label: "Review Applications",
+                  path: "/dashboard/review-applications",
+                },
+                { label: "List of Users", path: "/dashboard/users" },
+              ].map(({ label, path }) => {
+                const isSelected =
+                  path === "/dashboard"
+                    ? pathname === path
+                    : pathname.startsWith(path);
+                return (
+                  <ListItemButton
+                    key={path}
+                    onClick={() => router.push(path)}
+                    className={getItemClasses(isSelected)}
+                  >
+                    {isCollapsed ? (
+                      <div
+                        className={clsx(
+                          "h-3 w-3 rounded-full",
+                          isSelected ? "bg-white" : "bg-gray-200/50",
+                        )}
+                      />
+                    ) : (
+                      <ListItemText
+                        primary={label}
+                        slotProps={{
+                          primary: {
+                            className: navItemTextClass,
+                          },
+                        }}
+                      />
+                    )}
+                  </ListItemButton>
+                );
+              })}
+            </List>
+            <div
+              className={clsx(
+                "mt-auto shrink-0 flex flex-col",
+                compact ? "gap-2 px-3 pb-4" : "gap-3 px-4 pb-6",
+              )}
+            >
+              <Button
+                onClick={handleSettings}
+                size="medium"
+                variant="text"
+                className="!flex !justify-start !text-white"
+              >
+                <SettingsIcon
+                  className={compact ? "!text-[24px]" : "!text-[28px]"}
+                />
+                {!isCollapsed && <span className="ml-2">SETTINGS</span>}
+              </Button>
+              <Button
+                onClick={handleLogout}
+                size="medium"
+                variant="text"
+                className="!flex !justify-start !text-white"
+              >
+                <LogoutIcon
+                  className={compact ? "!text-[24px]" : "!text-[28px]"}
+                />
+                {!isCollapsed && <span className="ml-2">LOG OUT</span>}
+              </Button>
+            </div>
+          </div>
+        )}
+
+        {userData && !isAdmin && (
+          <>
+            <div className="scrollbar-hide mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
+              {currentYearCampaigns.length > 0 && (
+                <>
+                  {!isCollapsed && (
+                    <div className={sectionHeadingClass}>
+                      {currentYear} Campaigns
+                    </div>
+                  )}
+                  <List disablePadding>
+                    {currentYearCampaigns.map(renderCampaignItem)}
+                  </List>
+                </>
+              )}
+
+              {previousCampaigns.length > 0 && (
+                <>
+                  {!isCollapsed && (
+                    <div className={previousSectionHeadingClass}>
+                      Previous Campaigns
+                    </div>
+                  )}
+                  <List disablePadding>
+                    {previousCampaigns.map(renderCampaignItem)}
+                  </List>
+                </>
+              )}
+
+              <List disablePadding>
                 <ListItemButton
-                  key={path}
-                  onClick={() => router.push(path)}
-                  className={getItemClasses(isSelected)}
+                  onClick={() => router.push("/dashboard/view-all")}
+                  className={clsx(getItemClasses(isViewAllSelected), "mt-2")}
                 >
                   {isCollapsed ? (
                     <div
                       className={clsx(
                         "h-3 w-3 rounded-full",
-                        isSelected ? "bg-white" : "bg-gray-200/50",
+                        isViewAllSelected ? "bg-white" : "bg-gray-200/50",
                       )}
                     />
                   ) : (
                     <ListItemText
-                      primary={label}
+                      primary="All Campaigns"
                       slotProps={{
                         primary: {
                           className: navItemTextClass,
@@ -332,140 +446,61 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
                     />
                   )}
                 </ListItemButton>
-              );
-            })}
-          </List>
-          <div
-            className={clsx(
-              "mt-auto shrink-0 flex flex-col",
-              compact ? "gap-2 px-3 pb-4" : "gap-3 px-4 pb-6",
-            )}
-          >
-            <Button
-              onClick={handleSettings}
-              size="medium"
-              variant="text"
-              className="!flex !justify-start !text-white"
+              </List>
+            </div>
+
+            <div
+              className={clsx(
+                "shrink-0 flex flex-col",
+                compact ? "gap-2 px-3 pb-4" : "gap-3 px-4 pb-6",
+              )}
             >
-              <SettingsIcon className={compact ? "!text-[24px]" : "!text-[28px]"} />
-              {!isCollapsed && <span className="ml-2">SETTINGS</span>}
-            </Button>
-            <Button
-              onClick={handleLogout}
-              size="medium"
-              variant="text"
-              className="!flex !justify-start !text-white"
-            >
-              <LogoutIcon className={compact ? "!text-[24px]" : "!text-[28px]"} />
-              {!isCollapsed && <span className="ml-2">LOG OUT</span>}
-            </Button>
-          </div>
-        </div>
-      )}
-
-      {userData && !isAdmin && (
-        <>
-          <div className="scrollbar-hide mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
-            {currentYearCampaigns.length > 0 && (
-              <>
-                {!isCollapsed && (
-                  <div className={sectionHeadingClass}>
-                    {currentYear} Campaigns
-                  </div>
-                )}
-                <List disablePadding>
-                  {currentYearCampaigns.map(renderCampaignItem)}
-                </List>
-              </>
-            )}
-
-            {previousCampaigns.length > 0 && (
-              <>
-                {!isCollapsed && (
-                  <div className={previousSectionHeadingClass}>
-                    Previous Campaigns
-                  </div>
-                )}
-                <List disablePadding>
-                  {previousCampaigns.map(renderCampaignItem)}
-                </List>
-              </>
-            )}
-
-            <List disablePadding>
-              <ListItemButton
-                onClick={() => router.push("/dashboard/view-all")}
-                className={clsx(getItemClasses(isViewAllSelected), "mt-2")}
+              <Button
+                size={compact ? "medium" : "large"}
+                variant="outlined"
+                startIcon={!isCollapsed && <AddIcon />}
+                onClick={() => setOpenApplyModal(true)}
+                fullWidth
+                className="hover:!bg-gray-100"
               >
-                {isCollapsed ? (
-                  <div
-                    className={clsx(
-                      "h-3 w-3 rounded-full",
-                      isViewAllSelected ? "bg-white" : "bg-gray-200/50",
-                    )}
-                  />
-                ) : (
-                  <ListItemText
-                    primary="All Campaigns"
-                    slotProps={{
-                      primary: {
-                        className: navItemTextClass,
-                      },
-                    }}
-                  />
-                )}
-              </ListItemButton>
-            </List>
-          </div>
-
-          <div
-            className={clsx(
-              "shrink-0 flex flex-col",
-              compact ? "gap-2 px-3 pb-4" : "gap-3 px-4 pb-6",
-            )}
-          >
-            <Button
-              size={compact ? "medium" : "large"}
-              variant="outlined"
-              startIcon={!isCollapsed && <AddIcon />}
-              onClick={() => setOpenApplyModal(true)}
-              fullWidth
-              className="hover:!bg-gray-100"
-            >
-              {isCollapsed ? <AddIcon /> : "New Campaign"}
-            </Button>
-            <Button
-              onClick={handleSettings}
-              size="medium"
-              variant="text"
-              className="!flex !justify-start !text-white"
-            >
-              <SettingsIcon className={compact ? "!text-[24px]" : "!text-[28px]"} />
-              {!isCollapsed && <span className="ml-2">SETTINGS</span>}
-            </Button>
-            <Button
-              onClick={handleLogout}
-              size="medium"
-              variant="text"
-              className="!flex !justify-start !text-white"
-            >
-              <LogoutIcon className={compact ? "!text-[24px]" : "!text-[28px]"} />
-              {!isCollapsed && <span className="ml-2">LOG OUT</span>}
-            </Button>
-          </div>
-        </>
-      )}
-      <StartApplicationModal
-        open={openApplyModal}
-        onClose={() => setOpenApplyModal(false)}
-        onStart={() => {
-          setOpenApplyModal(false);
-          router.push("/apply");
-        }}
-        startDate={currentCompetitionData?.start_date}
-        endDate={currentCompetitionData?.end_date}
-      />
-    </nav>
+                {isCollapsed ? <AddIcon /> : "New Campaign"}
+              </Button>
+              <Button
+                onClick={handleSettings}
+                size="medium"
+                variant="text"
+                className="!flex !justify-start !text-white"
+              >
+                <SettingsIcon
+                  className={compact ? "!text-[24px]" : "!text-[28px]"}
+                />
+                {!isCollapsed && <span className="ml-2">SETTINGS</span>}
+              </Button>
+              <Button
+                onClick={handleLogout}
+                size="medium"
+                variant="text"
+                className="!flex !justify-start !text-white"
+              >
+                <LogoutIcon
+                  className={compact ? "!text-[24px]" : "!text-[28px]"}
+                />
+                {!isCollapsed && <span className="ml-2">LOG OUT</span>}
+              </Button>
+            </div>
+          </>
+        )}
+        <StartApplicationModal
+          open={openApplyModal}
+          onClose={() => setOpenApplyModal(false)}
+          onStart={() => {
+            setOpenApplyModal(false);
+            router.push("/apply");
+          }}
+          startDate={currentCompetitionData?.start_date}
+          endDate={currentCompetitionData?.end_date}
+        />
+      </nav>
 
       {/* Mobile FAB — floating hamburger button */}
       {userData && (
@@ -487,15 +522,19 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
         className="md:hidden"
         slotProps={{
           paper: {
-            className:
-              "!overflow-hidden !rounded-t-[24px] !bg-[#2D7A45]",
+            className: "!overflow-hidden !rounded-t-[24px] !bg-[#2D7A45]",
           },
         }}
       >
         <div className="flex min-h-[65dvh] max-h-[calc(100dvh-12px)] flex-col">
           <div className="flex items-start gap-4 p-6">
             <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-full bg-white">
-              <Image src="/seedMoneyLogo.png" alt="SeedMoney" width={30} height={30} />
+              <Image
+                src="/seedMoneyLogo.png"
+                alt="SeedMoney"
+                width={30}
+                height={30}
+              />
             </div>
             <div className="min-w-0 flex-1">
               <p className="text-[20px] font-bold leading-[1.334] text-white">
@@ -574,8 +613,8 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
                 {[
                   { label: "Home", path: "/dashboard" },
                   {
-                    label: "Ongoing Campaigns",
-                    path: "/dashboard/ongoing-campaigns",
+                    label: "Approved Campaigns",
+                    path: "/dashboard/approved-campaigns",
                   },
                   {
                     label: "Review Applications",
@@ -667,8 +706,18 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
         <div className="divide-y divide-gray-100">
           {[
             { label: "Name", value: displayName || "—", key: "name" as const },
-            { label: "Email", value: email || "—", key: "email" as const, hideForGoogle: true },
-            { label: "Password", value: "••••••••••••••••••", key: "password" as const, hideForGoogle: true },
+            {
+              label: "Email",
+              value: email || "—",
+              key: "email" as const,
+              hideForGoogle: true,
+            },
+            {
+              label: "Password",
+              value: "••••••••••••••••••",
+              key: "password" as const,
+              hideForGoogle: true,
+            },
           ].map(({ label, value, key, hideForGoogle }) => (
             <div key={key} className="flex items-center justify-between py-3">
               <div>
@@ -692,7 +741,10 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
       {activeSettingsModal === "name" && (
         <ChangeNameModal
           open
-          onClose={() => { setNameSaveError(null); setActiveSettingsModal(null); }}
+          onClose={() => {
+            setNameSaveError(null);
+            setActiveSettingsModal(null);
+          }}
           firstName={firstName ?? ""}
           lastName={lastName}
           title={isGoogleAuth ? "Confirm Edit" : "Change Name"}

@@ -35,10 +35,22 @@ function rankStyle(rank: number) {
   }
 }
 
-export default function CampaignCard({ campaign, rank, imageUrl }: CampaignCardProps) {
-  const { campaign_id, name, raised = 0, goal = 0, donors = 0, project_category } = campaign;
+export default function CampaignCard({
+  campaign,
+  rank,
+  imageUrl,
+}: CampaignCardProps) {
+  const {
+    campaign_id,
+    name,
+    raised = 0,
+    goal = 0,
+    donors = 0,
+    project_category,
+  } = campaign;
 
-  const percent = (goal ?? 0) > 0 ? Math.round(((raised ?? 0) / (goal ?? 0)) * 100) : 0;
+  const percent =
+    (goal ?? 0) > 0 ? Math.round(((raised ?? 0) / (goal ?? 0)) * 100) : 0;
 
   const barWidth = Math.min(100, percent);
 
@@ -51,11 +63,7 @@ export default function CampaignCard({ campaign, rank, imageUrl }: CampaignCardP
     <div className="bg-white rounded-lg border border-[#e5e5e5] overflow-hidden flex flex-col">
       <div
         className="relative h-36 bg-[#2D7A45] bg-cover bg-center flex items-center justify-center"
-        style={
-          imageUrl
-            ? { backgroundImage: `url(${imageUrl})` }
-            : undefined
-        }
+        style={imageUrl ? { backgroundImage: `url(${imageUrl})` } : undefined}
       >
         {imageUrl && <div className="absolute inset-0 bg-black/50" />}
         {rank !== undefined && (
@@ -71,7 +79,9 @@ export default function CampaignCard({ campaign, rank, imageUrl }: CampaignCardP
       </div>
 
       <div className="p-5 flex flex-col flex-1">
-        <h4 className="text-lg font-bold text-gray-900 mb-1 truncate">{name}</h4>
+        <h4 className="text-lg font-bold text-gray-900 mb-1 truncate">
+          {name}
+        </h4>
         <p className="text-sm text-gray-500 mb-4 line-clamp-2">{description}</p>
 
         <div className="mt-auto">
@@ -90,11 +100,12 @@ export default function CampaignCard({ campaign, rank, imageUrl }: CampaignCardP
           </div>
 
           <p className="text-xs text-gray-500 mb-4">
-            {(donors ?? 0).toLocaleString()} {(donors ?? 0) === 1 ? "donor" : "donors"}
+            {(donors ?? 0).toLocaleString()}{" "}
+            {(donors ?? 0) === 1 ? "donor" : "donors"}
           </p>
 
           <Link
-            href={`/dashboard/ongoing-campaigns/${campaign_id}`}
+            href={`/dashboard/approved-campaigns/${campaign_id}`}
             className="block w-full text-center border border-[#2D7A45] text-[#2D7A45] font-semibold py-2 rounded-md hover:bg-[#2D7A45] hover:text-white transition-colors"
           >
             VIEW CAMPAIGN →

@@ -267,7 +267,6 @@ export default function DashboardIndexPage() {
           <div className="mt-10 flex flex-col gap-6">
             <NotStarted />
             <InformationSection />
-
           </div>
         )}
 
@@ -324,7 +323,7 @@ export default function DashboardIndexPage() {
               </div>
 
               <Link
-                href="/dashboard/ongoing-campaigns"
+                href="/dashboard/approved-campaigns"
                 className="text-sm font-semibold text-[#2D7A45] hover:underline"
               >
                 VIEW ALL CAMPAIGNS →

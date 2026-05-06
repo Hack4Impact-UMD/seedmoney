@@ -46,8 +46,10 @@ export default function AdminCampaignPage() {
 
   const campaignData = campaignsData?.[0] ?? null;
 
-  const { data: competitionData, isLoading: competitionLoading } =
-    useReadCompetitionById(campaignData?.competition_id);
+  const {
+    data: competitionData,
+    isLoading: competitionLoading,
+  } = useReadCompetitionById(campaignData?.competition_id);
 
   const {
     data: transactions,

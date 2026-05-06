@@ -157,7 +157,10 @@ export default function ReviewApplicationsTable({ applications }: Props) {
     resetKey: mobileResetKey,
   });
 
-  const totalPages = Math.max(1, Math.ceil(sortedApplications.length / pageSize));
+  const totalPages = Math.max(
+    1,
+    Math.ceil(sortedApplications.length / pageSize),
+  );
   const currentPageIndex = Math.min(pageIndex, totalPages - 1);
   const paginatedApplications = useMemo(() => {
     const start = currentPageIndex * pageSize;
@@ -354,7 +357,8 @@ export default function ReviewApplicationsTable({ applications }: Props) {
                 </ul>
                 {activeNotification.action === "approved" && (
                   <p className="text-sm">
-                    You can view it on the &ldquo;Ongoing Campaigns&rdquo; page.
+                    You can view it on the &ldquo;Approved Campaigns&rdquo;
+                    page.
                   </p>
                 )}
               </>
@@ -378,7 +382,9 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         >
           <div className="flex min-w-[180px] items-center justify-between gap-4">
             <span>Submission Date</span>
-            {sortBy === "submissionDate" && <CheckIcon className="!text-[#2D7A45]" />}
+            {sortBy === "submissionDate" && (
+              <CheckIcon className="!text-[#2D7A45]" />
+            )}
           </div>
         </MenuItem>
         <MenuItem
@@ -387,7 +393,9 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         >
           <div className="flex min-w-[180px] items-center justify-between gap-4">
             <span>Campaign Title</span>
-            {sortBy === "campaignTitle" && <CheckIcon className="!text-[#2D7A45]" />}
+            {sortBy === "campaignTitle" && (
+              <CheckIcon className="!text-[#2D7A45]" />
+            )}
           </div>
         </MenuItem>
         <MenuItem
@@ -396,14 +404,18 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         >
           <div className="flex min-w-[180px] items-center justify-between gap-4">
             <span>Campaign Leader</span>
-            {sortBy === "campaignLeader" && <CheckIcon className="!text-[#2D7A45]" />}
+            {sortBy === "campaignLeader" && (
+              <CheckIcon className="!text-[#2D7A45]" />
+            )}
           </div>
         </MenuItem>
       </Menu>
 
       <div className="md:hidden">
         <div className="mb-3">
-          <h2 className="text-[22px] font-bold text-[#214E34]">Review Applications</h2>
+          <h2 className="text-[22px] font-bold text-[#214E34]">
+            Review Applications
+          </h2>
           <p className="mt-2 text-[14px] text-[#49514c]">
             <span className="font-semibold text-[#1f2320]">
               Campaign Application List
@@ -532,7 +544,9 @@ export default function ReviewApplicationsTable({ applications }: Props) {
                     />
 
                     <div className="min-w-0 flex-1">
-                      <p className="text-[12px] text-[#7b827d]">Campaign Title:</p>
+                      <p className="text-[12px] text-[#7b827d]">
+                        Campaign Title:
+                      </p>
                       <p className="mt-0.5 text-[16px] font-semibold leading-6 text-[#1f2320]">
                         {application.campaignTitle}
                       </p>
@@ -575,11 +589,15 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         {sortedApplications.length > 0 && (
           <div className="mt-4 flex flex-col items-center gap-3 text-[12px] text-[#7b827d]">
             <span>
-              Showing {visibleMobileApplicationCount} of {sortedApplications.length}
+              Showing {visibleMobileApplicationCount} of{" "}
+              {sortedApplications.length}
             </span>
             {hasMoreMobileApplications && (
               <>
-                <div ref={mobileApplicationsSentinelRef} className="h-1 w-full" />
+                <div
+                  ref={mobileApplicationsSentinelRef}
+                  className="h-1 w-full"
+                />
                 <Button
                   variant="outlined"
                   size="small"
