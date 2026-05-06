@@ -11,14 +11,14 @@ import Loading from "@/src/app/loading";
 import AppError from "@/src/app/error";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useCreateFinalAnswer from "@/src/hooks/answers/useCreateFinalAnswer";
-import CampaignInformationSection from "@/src/components/ongoing-campaigns/edit/CampaignInformationSection";
-import CampaignMediaSection from "@/src/components/ongoing-campaigns/edit/CampaignMediaSection";
-import ContactInformationSection from "@/src/components/ongoing-campaigns/edit/ContactInformationSection";
-import EditCampaignActions from "@/src/components/ongoing-campaigns/edit/EditCampaignActions";
-import EditCampaignDialogs from "@/src/components/ongoing-campaigns/edit/EditCampaignDialogs";
-import EditCampaignHeader from "@/src/components/ongoing-campaigns/edit/EditCampaignHeader";
-import GardenInformationSection from "@/src/components/ongoing-campaigns/edit/GardenInformationSection";
-import GardenStorySection from "@/src/components/ongoing-campaigns/edit/GardenStorySection";
+import CampaignInformationSection from "@/src/components/approved-campaigns/edit/CampaignInformationSection";
+import CampaignMediaSection from "@/src/components/approved-campaigns/edit/CampaignMediaSection";
+import ContactInformationSection from "@/src/components/approved-campaigns/edit/ContactInformationSection";
+import EditCampaignActions from "@/src/components/approved-campaigns/edit/EditCampaignActions";
+import EditCampaignDialogs from "@/src/components/approved-campaigns/edit/EditCampaignDialogs";
+import EditCampaignHeader from "@/src/components/approved-campaigns/edit/EditCampaignHeader";
+import GardenInformationSection from "@/src/components/approved-campaigns/edit/GardenInformationSection";
+import GardenStorySection from "@/src/components/approved-campaigns/edit/GardenStorySection";
 import {
   type EditCampaignFormData,
   type TextFieldKey,
@@ -27,7 +27,7 @@ import {
 import {
   beneficiaryOptions,
   categoryOptions,
-} from "@/src/components/ongoing-campaigns/options";
+} from "@/src/components/approved-campaigns/options";
 import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 

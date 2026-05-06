@@ -4,10 +4,10 @@ import CampaignsTable from "@/src/components/CampaignsTable";
 import Loading from "@/src/app/loading";
 import Error from "@/src/app/error";
 
-import useReadOngoingCampaigns from "@/src/hooks/campaigns/table/useReadOngoingCampaigns";
+import useReadApprovedCampaigns from "@/src/hooks/campaigns/table/useReadApprovedCampaigns";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 
-export default function OngoingApplicationsPage() {
+export default function ApprovedCampaignsPage() {
   const {
     data: currentCompetition,
     isLoading: isLoadingCompetition,
@@ -18,7 +18,7 @@ export default function OngoingApplicationsPage() {
     isLoading,
     error,
     refetch,
-  } = useReadOngoingCampaigns(currentCompetition?.competition_id);
+  } = useReadApprovedCampaigns(currentCompetition?.competition_id);
 
   if (isLoadingCompetition || isLoading) return <Loading />;
 

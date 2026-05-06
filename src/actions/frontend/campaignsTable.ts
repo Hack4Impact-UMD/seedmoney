@@ -44,7 +44,7 @@ const BASE_SELECT = `
     )
   )`;
 
-export async function readOngoingCampaigns(competition_id?: number): Promise<CampaignWithLeader[]> {
+export async function readApprovedCampaigns(competition_id?: number): Promise<CampaignWithLeader[]> {
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
