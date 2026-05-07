@@ -29,6 +29,8 @@ interface Props {
   initialData: CampaignWithLeader[];
   pageTitle?: string;
   pageListLabel?: string;
+  useFilterMenu?: boolean;
+  adminRouteResolver?: (campaign: CampaignWithLeader) => string;
 }
 
 const pageSizeOptions = [5, 10, 20];
@@ -91,6 +93,8 @@ export default function CampaignsTable({
   initialData,
   pageTitle = "Campaigns",
   pageListLabel = `${pageTitle} List`,
+  useFilterMenu = false,
+  adminRouteResolver,
 }: Props) {
   const router = useRouter();
   const [campaignSearch, setCampaignSearch] = useState("");
@@ -129,10 +133,19 @@ export default function CampaignsTable({
   const filteredData = useMemo(() => {
     const normalizedSearch = campaignSearch.trim().toLowerCase();
     return (initialData ?? []).filter((campaign) => {
-      const matchesYear =
-        yearFilter === "all" ||
-        getCampaignYear(campaign.date_created) === yearFilter;
-      if (!matchesYear) return false;
+      const campaignYear = getCampaignYear(campaign.date_created);
+      const matchesDesktopYear =
+        yearFilter === "all" || campaignYear === yearFilter;
+      if (!matchesDesktopYear) return false;
+
+      const matchesSelectedYears =
+        selectedYears.length === 0 || selectedYears.includes(campaignYear);
+      if (!matchesSelectedYears) return false;
+
+      const matchesSelectedStatuses =
+        selectedStatuses.length === 0 || selectedStatuses.includes(campaign.status);
+      if (!matchesSelectedStatuses) return false;
+
       if (!normalizedSearch) return true;
       return (
         campaign.name.toLowerCase().includes(normalizedSearch) ||
@@ -140,7 +153,7 @@ export default function CampaignsTable({
         getStatusLabel(campaign.status).toLowerCase().includes(normalizedSearch)
       );
     });
-  }, [campaignSearch, initialData, yearFilter]);
+  }, [campaignSearch, initialData, selectedStatuses, selectedYears, yearFilter]);
 
   const statusOptions = useMemo(
     () =>
@@ -210,9 +223,13 @@ export default function CampaignsTable({
   if (userError || !userData) throw new Error("Unauthorized");
 
   const handleCampaignClick = (campaignId: number) => {
-    const path = userData.is_admin
-      ? `/dashboard/approved-campaigns/${campaignId}`
-      : `/dashboard/${campaignId}`;
+    const campaign = initialData.find((item) => item.campaign_id === campaignId);
+    const path =
+      userData.is_admin && campaign && adminRouteResolver
+        ? adminRouteResolver(campaign)
+        : userData.is_admin
+          ? `/dashboard/approved-campaigns/${campaignId}`
+          : `/dashboard/${campaignId}`;
     router.push(path);
   };
 
@@ -593,7 +610,7 @@ export default function CampaignsTable({
       <div className="hidden overflow-hidden rounded-2xl border border-[#EAECF0] bg-white shadow-[0px_1px_2px_rgba(16,24,40,0.05)] md:block">
         <div className="px-4 pt-6">
           <h2 className="text-[16px] font-bold leading-6 text-[rgba(0,0,0,0.87)]">
-            Campaign List
+            {pageListLabel}
           </h2>
           <p className="mt-1 text-sm text-[#6A7282]">
             {initialData.length} Campaign{initialData.length === 1 ? "" : "s"}
@@ -603,7 +620,7 @@ export default function CampaignsTable({
         <div className="flex flex-wrap items-center gap-4 px-4 pb-4 pt-6">
           <TextField
             label="Search"
-            placeholder="Search by title or name"
+            placeholder={useFilterMenu ? "Name, email, etc..." : "Search by title or name"}
             variant="outlined"
             fullWidth
             value={campaignSearch}
@@ -613,32 +630,44 @@ export default function CampaignsTable({
             }}
             sx={{ flex: "1 1 320px", minWidth: 220 }}
           />
-          <TextField
-            select
-            label="Filter By Year"
-            variant="outlined"
-            fullWidth
-            value={yearFilter}
-            onChange={(e) => {
-              setYearFilter(e.target.value);
-              setPageIndex(0);
-            }}
-            sx={{ flex: "1 1 280px", minWidth: 220 }}
-          >
-            <MenuItem value="all">None</MenuItem>
-            {years.map((year) => (
-              <MenuItem key={year} value={year}>
-                {year}
-              </MenuItem>
-            ))}
-          </TextField>
-          <IconButton
-            aria-label="Reset filters"
-            onClick={handleResetFilters}
-            className="!h-[53px] !w-[60px] !rounded !border !border-[rgba(0,0,0,0.23)] !text-[rgba(0,0,0,0.6)]"
-          >
-            <FilterAltOutlinedIcon />
-          </IconButton>
+          {useFilterMenu ? (
+            <IconButton
+              aria-label="Open filters"
+              onClick={(event) => setFilterCategoryAnchorEl(event.currentTarget)}
+              className="!h-[53px] !w-[60px] !rounded !border !border-[rgba(0,0,0,0.23)] !text-[rgba(0,0,0,0.6)]"
+            >
+              <FilterAltOutlinedIcon />
+            </IconButton>
+          ) : (
+            <>
+              <TextField
+                select
+                label="Filter By Year"
+                variant="outlined"
+                fullWidth
+                value={yearFilter}
+                onChange={(e) => {
+                  setYearFilter(e.target.value);
+                  setPageIndex(0);
+                }}
+                sx={{ flex: "1 1 280px", minWidth: 220 }}
+              >
+                <MenuItem value="all">None</MenuItem>
+                {years.map((year) => (
+                  <MenuItem key={year} value={year}>
+                    {year}
+                  </MenuItem>
+                ))}
+              </TextField>
+              <IconButton
+                aria-label="Reset filters"
+                onClick={handleResetFilters}
+                className="!h-[53px] !w-[60px] !rounded !border !border-[rgba(0,0,0,0.23)] !text-[rgba(0,0,0,0.6)]"
+              >
+                <FilterAltOutlinedIcon />
+              </IconButton>
+            </>
+          )}
         </div>
 
         {filteredData.length === 0 ? (

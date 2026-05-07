@@ -329,6 +329,10 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
                   label: "Review Applications",
                   path: "/dashboard/review-applications",
                 },
+                {
+                  label: "Previous Campaigns",
+                  path: "/dashboard/previous-campaigns",
+                },
                 { label: "List of Users", path: "/dashboard/users" },
               ].map(({ label, path }) => {
                 const isSelected =
@@ -619,6 +623,10 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
                   {
                     label: "Review Applications",
                     path: "/dashboard/review-applications",
+                  },
+                  {
+                    label: "Previous Campaigns",
+                    path: "/dashboard/previous-campaigns",
                   },
                   { label: "List of Users", path: "/dashboard/users" },
                 ].map(({ label, path }) => {

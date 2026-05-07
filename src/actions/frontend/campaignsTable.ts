@@ -58,6 +58,27 @@ export async function readApprovedCampaigns(competition_id?: number): Promise<Ca
   return (data ?? []).map(mapCampaignLeader);
 }
 
+export async function readPreviousCampaigns(
+  currentCompetitionId?: number,
+): Promise<CampaignWithLeader[]> {
+  if (currentCompetitionId === undefined) {
+    return [];
+  }
+
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select(BASE_SELECT)
+    .neq("competition_id", currentCompetitionId)
+    .neq("status", "in_progress")
+    .eq("campaign_members.role", "campaign_leader")
+    .order("date_created", { ascending: false });
+
+  if (error) throw error;
+  return (data ?? []).map(mapCampaignLeader);
+}
+
 export async function readPreviousChallengeApplications(user_id?: string): Promise<CampaignWithLeader[]> {
   const supabase = await createServerClient();
   const {
