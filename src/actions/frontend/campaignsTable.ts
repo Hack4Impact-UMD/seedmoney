@@ -51,7 +51,8 @@ export async function readApprovedCampaigns(competition_id?: number): Promise<Ca
     .from("campaigns")
     .select(BASE_SELECT)
     .eq("competition_id", competition_id)
-    .in("status", ["approved", "published"])
+    .in("status", ["approved", "published", "publish_failed"])
+    .order("date_created", { ascending: false })
     .eq("campaign_members.role", "campaign_leader");
 
   if (error) throw error;

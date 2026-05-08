@@ -6,6 +6,19 @@ import Error from "@/src/app/error";
 
 import useReadApprovedCampaigns from "@/src/hooks/campaigns/table/useReadApprovedCampaigns";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
+import type { Status } from "@/src/types/db/enums";
+
+const approvedCampaignStatusOptions: Status[] = [
+  "approved",
+  "published",
+  "publish_failed",
+];
+
+const approvedCampaignStatusPriority: Status[] = [
+  "publish_failed",
+  "published",
+  "approved",
+];
 
 export default function ApprovedCampaignsPage() {
   const {
@@ -45,7 +58,14 @@ export default function ApprovedCampaignsPage() {
         <CampaignsTable
           initialData={campaigns || []}
           pageTitle="Approved Campaigns"
-          pageListLabel="Approved Campaigns List"
+          pageListLabel="Full Campaign List"
+          desktopFilterMode="status"
+          statusOptionsOverride={approvedCampaignStatusOptions}
+          statusSortPriority={approvedCampaignStatusPriority}
+          desktopSearchPlaceholder="Campaign Title, Campaign Leader, etc..."
+          showDesktopResetButton={false}
+          hideYearColumn
+          statusColumnLabel="Website Status"
         />
       </div>
     </div>

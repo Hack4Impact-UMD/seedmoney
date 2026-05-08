@@ -30,6 +30,14 @@ interface Props {
   pageTitle?: string;
   pageListLabel?: string;
   useFilterMenu?: boolean;
+  desktopFilterMode?: "year" | "status";
+  filterStatusLabelMap?: Partial<Record<Status, string>>;
+  statusOptionsOverride?: Status[];
+  statusSortPriority?: Status[];
+  desktopSearchPlaceholder?: string;
+  showDesktopResetButton?: boolean;
+  hideYearColumn?: boolean;
+  statusColumnLabel?: string;
   adminRouteResolver?: (campaign: CampaignWithLeader) => string;
 }
 
@@ -48,6 +56,13 @@ const statusLabels: Partial<Record<Status, string>> = {
 
 function getStatusLabel(status: string) {
   return statusLabels[status as Status] ?? status;
+}
+
+function getFilterStatusLabel(
+  status: string,
+  filterStatusLabelMap?: Partial<Record<Status, string>>,
+) {
+  return filterStatusLabelMap?.[status as Status] ?? getStatusLabel(status);
 }
 
 function getCampaignYear(dateCreated: string) {
@@ -94,11 +109,20 @@ export default function CampaignsTable({
   pageTitle = "Campaigns",
   pageListLabel = `${pageTitle} List`,
   useFilterMenu = false,
+  desktopFilterMode = "year",
+  filterStatusLabelMap,
+  statusOptionsOverride,
+  statusSortPriority = [],
+  desktopSearchPlaceholder,
+  showDesktopResetButton = true,
+  hideYearColumn = false,
+  statusColumnLabel = "Status",
   adminRouteResolver,
 }: Props) {
   const router = useRouter();
   const [campaignSearch, setCampaignSearch] = useState("");
   const [yearFilter, setYearFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
@@ -132,11 +156,18 @@ export default function CampaignsTable({
 
   const filteredData = useMemo(() => {
     const normalizedSearch = campaignSearch.trim().toLowerCase();
-    return (initialData ?? []).filter((campaign) => {
+    const filtered = (initialData ?? []).filter((campaign) => {
       const campaignYear = getCampaignYear(campaign.date_created);
       const matchesDesktopYear =
+        desktopFilterMode !== "year" ||
         yearFilter === "all" || campaignYear === yearFilter;
       if (!matchesDesktopYear) return false;
+
+      const matchesDesktopStatus =
+        desktopFilterMode !== "status" ||
+        statusFilter === "all" ||
+        campaign.status === statusFilter;
+      if (!matchesDesktopStatus) return false;
 
       const matchesSelectedYears =
         selectedYears.length === 0 || selectedYears.includes(campaignYear);
@@ -150,17 +181,60 @@ export default function CampaignsTable({
       return (
         campaign.name.toLowerCase().includes(normalizedSearch) ||
         campaign.campaign_leader.toLowerCase().includes(normalizedSearch) ||
-        getStatusLabel(campaign.status).toLowerCase().includes(normalizedSearch)
+        getFilterStatusLabel(
+          campaign.status,
+          filterStatusLabelMap,
+        ).toLowerCase().includes(normalizedSearch)
       );
     });
-  }, [campaignSearch, initialData, selectedStatuses, selectedYears, yearFilter]);
+
+    if (statusSortPriority.length === 0) {
+      return filtered;
+    }
+
+    const priorityMap = new Map(
+      statusSortPriority.map((status, index) => [status, index]),
+    );
+
+    return filtered
+      .map((campaign, index) => ({ campaign, index }))
+      .sort((a, b) => {
+        const aPriority = priorityMap.get(a.campaign.status as Status);
+        const bPriority = priorityMap.get(b.campaign.status as Status);
+
+        if (aPriority !== undefined || bPriority !== undefined) {
+          if (aPriority === undefined) return 1;
+          if (bPriority === undefined) return -1;
+          if (aPriority !== bPriority) return aPriority - bPriority;
+        }
+
+        return a.index - b.index;
+      })
+      .map(({ campaign }) => campaign);
+  }, [
+    campaignSearch,
+    desktopFilterMode,
+    filterStatusLabelMap,
+    initialData,
+    selectedStatuses,
+    selectedYears,
+    statusSortPriority,
+    statusFilter,
+    yearFilter,
+  ]);
 
   const statusOptions = useMemo(
     () =>
-      [...new Set((initialData ?? []).map((campaign) => campaign.status))]
+      (statusOptionsOverride?.length
+        ? statusOptionsOverride
+        : [...new Set((initialData ?? []).map((campaign) => campaign.status))])
         .map((status) => status as Status)
-        .sort((a, b) => getStatusLabel(a).localeCompare(getStatusLabel(b))),
-    [initialData],
+        .sort((a, b) =>
+          getFilterStatusLabel(a, filterStatusLabelMap).localeCompare(
+            getFilterStatusLabel(b, filterStatusLabelMap),
+          ),
+        ),
+    [filterStatusLabelMap, initialData, statusOptionsOverride],
   );
 
   const mobileFilteredData = useMemo(() => {
@@ -184,6 +258,7 @@ export default function CampaignsTable({
 
   const mobileResetKey = [
     campaignSearch,
+    statusFilter,
     yearFilter,
     selectedYears.join(","),
     selectedStatuses.join(","),
@@ -236,6 +311,7 @@ export default function CampaignsTable({
   const handleResetFilters = () => {
     setCampaignSearch("");
     setYearFilter("all");
+    setStatusFilter("all");
     setPageIndex(0);
   };
 
@@ -274,7 +350,9 @@ export default function CampaignsTable({
       current.includes(value)
         ? current.filter((item) => item !== value)
         : [...current, value].sort((a, b) =>
-            getStatusLabel(a).localeCompare(getStatusLabel(b)),
+            getFilterStatusLabel(a, filterStatusLabelMap).localeCompare(
+              getFilterStatusLabel(b, filterStatusLabelMap),
+            ),
           ),
     );
   };
@@ -309,7 +387,9 @@ export default function CampaignsTable({
       return `Year: ${values.join(", ")}`;
     }
 
-    return `Status: ${values.map((value) => getStatusLabel(value)).join(", ")}`;
+    return `Status: ${values
+      .map((value) => getFilterStatusLabel(value, filterStatusLabelMap))
+      .join(", ")}`;
   };
 
   return (
@@ -596,7 +676,7 @@ export default function CampaignsTable({
                   >
                     <span>
                       {activeMobileFilter === "status"
-                        ? getStatusLabel(optionValue)
+                        ? getFilterStatusLabel(optionValue, filterStatusLabelMap)
                         : optionValue}
                     </span>
                     {isSelected && <CheckIcon className="!text-[#2D7A45]" />}
@@ -620,7 +700,12 @@ export default function CampaignsTable({
         <div className="flex flex-wrap items-center gap-4 px-4 pb-4 pt-6">
           <TextField
             label="Search"
-            placeholder={useFilterMenu ? "Name, email, etc..." : "Search by title or name"}
+            placeholder={
+              desktopSearchPlaceholder ??
+              (useFilterMenu
+                ? "Name, email, etc..."
+                : "Search by title or name")
+            }
             variant="outlined"
             fullWidth
             value={campaignSearch}
@@ -640,32 +725,56 @@ export default function CampaignsTable({
             </IconButton>
           ) : (
             <>
-              <TextField
-                select
-                label="Filter By Year"
-                variant="outlined"
-                fullWidth
-                value={yearFilter}
-                onChange={(e) => {
-                  setYearFilter(e.target.value);
-                  setPageIndex(0);
-                }}
-                sx={{ flex: "1 1 280px", minWidth: 220 }}
-              >
-                <MenuItem value="all">None</MenuItem>
-                {years.map((year) => (
-                  <MenuItem key={year} value={year}>
-                    {year}
-                  </MenuItem>
-                ))}
-              </TextField>
-              <IconButton
-                aria-label="Reset filters"
-                onClick={handleResetFilters}
-                className="!h-[53px] !w-[60px] !rounded !border !border-[rgba(0,0,0,0.23)] !text-[rgba(0,0,0,0.6)]"
-              >
-                <FilterAltOutlinedIcon />
-              </IconButton>
+              {desktopFilterMode === "status" ? (
+                <TextField
+                  select
+                  label="Filter By Website Status"
+                  variant="outlined"
+                  fullWidth
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setPageIndex(0);
+                  }}
+                  sx={{ flex: "1 1 280px", minWidth: 220 }}
+                >
+                  <MenuItem value="all">None</MenuItem>
+                  {statusOptions.map((status) => (
+                    <MenuItem key={status} value={status}>
+                      {getFilterStatusLabel(status, filterStatusLabelMap)}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              ) : (
+                <TextField
+                  select
+                  label="Filter By Year"
+                  variant="outlined"
+                  fullWidth
+                  value={yearFilter}
+                  onChange={(e) => {
+                    setYearFilter(e.target.value);
+                    setPageIndex(0);
+                  }}
+                  sx={{ flex: "1 1 280px", minWidth: 220 }}
+                >
+                  <MenuItem value="all">None</MenuItem>
+                  {years.map((year) => (
+                    <MenuItem key={year} value={year}>
+                      {year}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+              {showDesktopResetButton && (
+                <IconButton
+                  aria-label="Reset filters"
+                  onClick={handleResetFilters}
+                  className="!h-[53px] !w-[60px] !rounded !border !border-[rgba(0,0,0,0.23)] !text-[rgba(0,0,0,0.6)]"
+                >
+                  <FilterAltOutlinedIcon />
+                </IconButton>
+              )}
             </>
           )}
         </div>
@@ -681,18 +790,20 @@ export default function CampaignsTable({
                 <thead>
                   <tr className="border-b border-[rgba(0,0,0,0.12)]">
                     {[
-                      "Year",
+                      !hideYearColumn ? "Year" : null,
                       "Campaign Title",
                       "Campaign Leader",
                       "$ Raised",
                       "Goal",
                       "Goal Progress",
-                      "Status",
+                      statusColumnLabel,
                       "",
-                    ].map((header, index) => (
+                    ]
+                      .filter((header) => header !== null)
+                      .map((header, index, headers) => (
                       <th
                         key={header || "actions"}
-                        className={`px-4 py-4 text-left text-sm font-bold tracking-[0.17px] text-[rgba(0,0,0,0.87)] ${index === 7 ? "w-10" : "whitespace-nowrap"}`}
+                        className={`px-4 py-4 text-left text-sm font-bold tracking-[0.17px] text-[rgba(0,0,0,0.87)] ${index === headers.length - 1 ? "w-10" : "whitespace-nowrap"}`}
                       >
                         {header}
                       </th>
@@ -713,9 +824,11 @@ export default function CampaignsTable({
                           handleCampaignClick(campaign.campaign_id)
                         }
                       >
-                        <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
-                          {getCampaignYear(campaign.date_created)}
-                        </td>
+                        {!hideYearColumn && (
+                          <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
+                            {getCampaignYear(campaign.date_created)}
+                          </td>
+                        )}
                         <td className="max-w-[180px] px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
                           <span className="block truncate">
                             {campaign.name || "Untitled Campaign"}
