@@ -45,6 +45,10 @@ const BASE_SELECT = `
   )`;
 
 export async function readApprovedCampaigns(competition_id?: number): Promise<CampaignWithLeader[]> {
+  if (competition_id === undefined) {
+    return [];
+  }
+
   const supabase = await createServerClient();
 
   const { data, error } = await supabase

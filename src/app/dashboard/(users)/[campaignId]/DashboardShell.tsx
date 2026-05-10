@@ -112,6 +112,11 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   if (campaignsData.length === 0) notFound();
 
   const campaignData = campaignsData[0];
+  const competitionStartDate = currentCompetitionData?.start_date;
+  const competitionEndDate = currentCompetitionData?.end_date;
+  const createdYear = competitionStartDate
+    ? moment(competitionStartDate).format("YYYY")
+    : null;
 
   const selectedCampaignId = Number(campaignId);
 
@@ -205,9 +210,12 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     );
   }
 
-  const isChallengeActive =
-    moment().isAfter(currentCompetitionData?.start_date) &&
-    moment().isBefore(currentCompetitionData?.end_date);
+  const isChallengeActive = Boolean(
+    competitionStartDate &&
+      competitionEndDate &&
+      moment().isAfter(competitionStartDate) &&
+      moment().isBefore(competitionEndDate),
+  );
 
   return (
     <div className="flex min-h-screen overflow-x-hidden">
@@ -218,10 +226,11 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <h3 className="text-2xl md:text-4xl font-bold text-[#096B2E]">
               {campaignData.name}
             </h3>
-            <p className="text-sm text-[#A6A6A6] md:ml-[10px] md:mt-[5px]">
-              Created in{" "}
-              {moment(currentCompetitionData?.start_date).format("YYYY")}
-            </p>
+            {createdYear && (
+              <p className="text-sm text-[#A6A6A6] md:ml-[10px] md:mt-[5px]">
+                Created in {createdYear}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -290,7 +299,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
               startDate={currentCompetitionData?.start_date ?? null}
               endDate={currentCompetitionData?.end_date ?? null}
               is_current={
-                campaignData.competition_id ==
+                campaignData.competition_id ===
                 currentCompetitionData?.competition_id
               }
             />
@@ -325,7 +334,10 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             variant="contained"
             size="small"
             className="mt-4 !ml-3"
-            onClick={() => window.open(campaignData.givebutterlink, "_blank")}
+            onClick={() => {
+              window.open(campaignData.givebutterlink, "_blank");
+              setViewCampaignModal(false);
+            }}
           >
             Proceed
             <LogoutIcon className="!ml-[5px] !text-[18px]" />

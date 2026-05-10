@@ -56,12 +56,31 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
 
   const selectedCampaignId = Number(campaignId);
   const isAdmin = userData?.is_admin ?? false;
+  const parsedFullName = useMemo(() => {
+    const fullName = user?.user_metadata?.full_name;
+
+    if (typeof fullName !== "string") {
+      return { firstName: "", lastName: "" };
+    }
+
+    const parts = fullName.trim().split(/\s+/).filter(Boolean);
+
+    if (parts.length === 0) {
+      return { firstName: "", lastName: "" };
+    }
+
+    return {
+      firstName: parts[0],
+      lastName: parts.slice(1).join(" "),
+    };
+  }, [user?.user_metadata?.full_name]);
 
   const firstName =
     savedName?.firstName ??
     userData?.first_name ??
-    user?.user_metadata.full_name;
-  const lastName = savedName?.lastName ?? userData?.last_name ?? "";
+    parsedFullName.firstName;
+  const lastName =
+    savedName?.lastName ?? userData?.last_name ?? parsedFullName.lastName;
   const email = userData?.email ?? user?.email ?? "";
   const displayName = [firstName, lastName].filter(Boolean).join(" ");
   const isGoogleAuth = user?.app_metadata?.provider === "google";

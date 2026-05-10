@@ -25,6 +25,7 @@ export default function ApprovedCampaignsPage() {
     data: currentCompetition,
     isLoading: isLoadingCompetition,
     error: competitionError,
+    refetch: refetchCompetition,
   } = useReadCurrentCompetition();
   const {
     data: campaigns,
@@ -36,13 +37,13 @@ export default function ApprovedCampaignsPage() {
   if (isLoadingCompetition || isLoading) return <Loading />;
 
   if (competitionError)
-    return <Error error={competitionError} reset={() => {}} />;
+    return <Error error={competitionError} reset={() => refetchCompetition()} />;
 
   if (!currentCompetition)
     return (
       <Error
         error={{ name: "Not found", message: "Competition not found" }}
-        reset={() => {}}
+        reset={() => refetchCompetition()}
       />
     );
 
