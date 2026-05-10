@@ -37,12 +37,7 @@ import InformationSection from "@/src/components/dashboard/InformationSection";
 
 type DashboardTab = "Overview" | "Donations" | "Analytics";
 
-
-export default function DashboardShell({
-  children,
-}: {
-  children: ReactNode;
-}) {
+export default function DashboardShell({ children }: { children: ReactNode }) {
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
@@ -53,18 +48,28 @@ export default function DashboardShell({
     isLoading: isLoadingUser,
     error: userError,
   } = useUserByAuthId(user?.id || "");
-  const { data: campaignsData, isLoading, error} = useReadCampaign({ campaignId: Number(campaignId) });
+  const {
+    data: campaignsData,
+    isLoading,
+    error,
+  } = useReadCampaign({ campaignId: Number(campaignId) });
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const {
     percent: raisedPercent,
     isLoading: raisedLoading,
     isError: raisedError,
-  } = useRaisedChangePercent(Number(campaignId), currentCompetitionData?.start_date);
+  } = useRaisedChangePercent(
+    Number(campaignId),
+    currentCompetitionData?.start_date,
+  );
   const {
     percent: donorsPercent,
     isLoading: donorsLoading,
     isError: donorsError,
-  } = useDonorsChangePercent(Number(campaignId), currentCompetitionData?.start_date);
+  } = useDonorsChangePercent(
+    Number(campaignId),
+    currentCompetitionData?.start_date,
+  );
   const raisedChangePercent =
     raisedLoading || raisedError ? null : raisedPercent;
   const donorsChangePercent =
@@ -82,7 +87,7 @@ export default function DashboardShell({
 
   useEffect(() => {
     if (userData?.is_admin) {
-      router.replace(`/dashboard/ongoing-campaigns/${campaignId}`);
+      router.replace(`/dashboard/approved-campaigns/${campaignId}`);
     }
   }, [campaignId, router, userData?.is_admin]);
 
@@ -100,12 +105,18 @@ export default function DashboardShell({
   if (userError) throw userError;
   if (isLoadingUser) return <div>Loading...</div>;
   if (userData?.is_admin) return null;
-  if (isLoading ) return <div>Loading...</div>;
+  if (isLoading) return <div>Loading...</div>;
   if (error) throw error;
-  if (!campaignsData) return <div className="flex min-h-screen" >Unable to load campaign.</div>;
+  if (!campaignsData)
+    return <div className="flex min-h-screen">Unable to load campaign.</div>;
   if (campaignsData.length === 0) notFound();
 
   const campaignData = campaignsData[0];
+  const competitionStartDate = currentCompetitionData?.start_date;
+  const competitionEndDate = currentCompetitionData?.end_date;
+  const createdYear = competitionStartDate
+    ? moment(competitionStartDate).format("YYYY")
+    : null;
 
   const selectedCampaignId = Number(campaignId);
 
@@ -142,13 +153,14 @@ export default function DashboardShell({
   if (campaignData.status === "in_progress") {
     return (
       <div className="flex min-h-screen">
-        <Navbar/>
+        <Navbar />
         <div className="flex-1 bg-[#F6FAF9] p-10">
-          <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
+          <h3 className="text-4xl font-bold text-[#096B2E]">
+            {campaignData.name}
+          </h3>
           <div className="flex-1 bg-[#F6FAF9] mt-10">
             <NotComplete onContinueApplication={handleContinueApplication} />
             <InformationSection />
-
           </div>
         </div>
       </div>
@@ -158,9 +170,11 @@ export default function DashboardShell({
   if (campaignData.status === "pending") {
     return (
       <div className="flex min-h-screen">
-        <Navbar/>
+        <Navbar />
         <div className="flex-1 bg-[#F6FAF9] p-10">
-          <h3 className="text-4xl font-bold text-[#096B2E]">{campaignData.name}</h3>
+          <h3 className="text-4xl font-bold text-[#096B2E]">
+            {campaignData.name}
+          </h3>
           <div className="flex-1 bg-[#F6FAF9] mt-10">
             <Pending />
 
@@ -174,7 +188,6 @@ export default function DashboardShell({
             Your application has been submitted successfully.
           </BaseAlert>
         </div>
-
       </div>
     );
   }
@@ -197,22 +210,27 @@ export default function DashboardShell({
     );
   }
 
-  const isChallengeActive =
-  moment().isAfter(currentCompetitionData?.start_date) &&
-  moment().isBefore(currentCompetitionData?.end_date);
+  const isChallengeActive = Boolean(
+    competitionStartDate &&
+      competitionEndDate &&
+      moment().isAfter(competitionStartDate) &&
+      moment().isBefore(competitionEndDate),
+  );
 
   return (
     <div className="flex min-h-screen overflow-x-hidden">
-      <Navbar/>
+      <Navbar />
       <div className="flex-1 min-w-0 overflow-x-hidden bg-[#F6FAF9] p-4 pb-24 md:p-10 md:pb-10">
         <div className="mb-1 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col md:flex-row md:items-center">
             <h3 className="text-2xl md:text-4xl font-bold text-[#096B2E]">
               {campaignData.name}
             </h3>
-            <p className="text-sm text-[#A6A6A6] md:ml-[10px] md:mt-[5px]">
-              Created in {moment(currentCompetitionData?.start_date).format("YYYY")}
-            </p>
+            {createdYear && (
+              <p className="text-sm text-[#A6A6A6] md:ml-[10px] md:mt-[5px]">
+                Created in {createdYear}
+              </p>
+            )}
           </div>
 
           <div className="flex flex-wrap gap-2">
@@ -233,7 +251,12 @@ export default function DashboardShell({
         <DashboardTabs selectedTab={selectedTab} onChange={handleTabChange} />
 
         <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
-          <Button size="small" variant="contained" className="!shrink-0" onClick={() => setViewCampaignModal(true)}>
+          <Button
+            size="small"
+            variant="contained"
+            className="!shrink-0"
+            onClick={() => setViewCampaignModal(true)}
+          >
             View Campaign
             <OpenInNew fontSize="small" className="text-[#FFFFFF] ml-[5px]" />
           </Button>
@@ -272,11 +295,13 @@ export default function DashboardShell({
               donorsChangePercent={donorsChangePercent}
             />
 
-
             <DaysRemainingCard
               startDate={currentCompetitionData?.start_date ?? null}
               endDate={currentCompetitionData?.end_date ?? null}
-              is_current={campaignData.competition_id == currentCompetitionData?.competition_id}
+              is_current={
+                campaignData.competition_id ===
+                currentCompetitionData?.competition_id
+              }
             />
           </div>
         </div>
@@ -285,39 +310,62 @@ export default function DashboardShell({
         <DashboardFooter />
       </div>
 
+      <BaseModal
+        open={viewCampaignModal}
+        onClose={() => setViewCampaignModal(false)}
+        title="You are about to leave the site"
+      >
+        <p className="text-[#666666] !text-[16px]">
+          The link you have clicked will open a new website in a separate tab.
+          Would you like to proceed?{" "}
+        </p>
 
-      
-      <BaseModal open={viewCampaignModal} onClose={() => setViewCampaignModal(false)} title="You are about to leave the site">
-          
-          <p className = "text-[#666666] !text-[16px]">The link you have clicked will open a new website in a separate tab. Would you like to proceed? </p>
+        <div className="flex flex-row mt-5 w-full justify-end">
+          <Button
+            variant="outlined"
+            size="small"
+            className="mt-4  !border-none !text-[#666666]"
+            onClick={() => setViewCampaignModal(false)}
+          >
+            Cancel
+          </Button>
 
-          <div className ="flex flex-row mt-5 w-full justify-end">
-            <Button variant="outlined" size = "small" className="mt-4  !border-none !text-[#666666]" onClick={() => setViewCampaignModal(false)}>Cancel</Button>
-
-            <Button variant="contained" size = "small" className = "mt-4 !ml-3" onClick={() => window.open(campaignData.givebutterlink, '_blank')}>
-              Proceed
-              <LogoutIcon className="!ml-[5px] !text-[18px]" />
-              
-            </Button>
-          </div>
-
-      
+          <Button
+            variant="contained"
+            size="small"
+            className="mt-4 !ml-3"
+            onClick={() => {
+              window.open(campaignData.givebutterlink, "_blank");
+              setViewCampaignModal(false);
+            }}
+          >
+            Proceed
+            <LogoutIcon className="!ml-[5px] !text-[18px]" />
+          </Button>
+        </div>
       </BaseModal>
 
-
-          
-      <BaseAlert open={toast} onClose={() => setToast(false)} title="Successfully Copied!">
-          <p>Link has been copied to clipboard</p>
+      <BaseAlert
+        open={toast}
+        onClose={() => setToast(false)}
+        title="Successfully Copied!"
+      >
+        <p>Link has been copied to clipboard</p>
       </BaseAlert>
-      {currentCompetitionData != null && campaignData.competition_id !== currentCompetitionData.competition_id &&
-        <BaseAlert
-          open={true}
-          onClose={() => {}}
-          title="This campaign has ended!"
-        >
-          <p>This page now displays the final <br></br>statistics of your campaign</p>
-        </BaseAlert>
-      }
+      {currentCompetitionData != null &&
+        campaignData.competition_id !==
+          currentCompetitionData.competition_id && (
+          <BaseAlert
+            open={true}
+            onClose={() => {}}
+            title="This campaign has ended!"
+          >
+            <p>
+              This page now displays the final <br></br>statistics of your
+              campaign
+            </p>
+          </BaseAlert>
+        )}
     </div>
   );
 }

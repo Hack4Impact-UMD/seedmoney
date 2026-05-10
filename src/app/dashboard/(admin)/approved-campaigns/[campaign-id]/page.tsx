@@ -97,7 +97,7 @@ export default function AdminCampaignPage() {
   }, [earnings, competitionData?.start_date, competitionData?.end_date]);
 
   const handleBack = () => {
-    router.push("/dashboard/ongoing-campaigns");
+    router.push("/dashboard/approved-campaigns");
   };
 
   if (!Number.isFinite(campaignId)) {
@@ -177,7 +177,7 @@ export default function AdminCampaignPage() {
             size="small"
             variant="outlined"
             onClick={() =>
-              router.push(`/dashboard/ongoing-campaigns/${campaignId}/edit`)
+              router.push(`/dashboard/approved-campaigns/${campaignId}/edit`)
             }
           >
             Edit

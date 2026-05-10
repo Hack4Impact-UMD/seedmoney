@@ -29,6 +29,16 @@ interface Props {
   initialData: CampaignWithLeader[];
   pageTitle?: string;
   pageListLabel?: string;
+  useFilterMenu?: boolean;
+  desktopFilterMode?: "year" | "status";
+  filterStatusLabelMap?: Partial<Record<Status, string>>;
+  statusOptionsOverride?: Status[];
+  statusSortPriority?: Status[];
+  desktopSearchPlaceholder?: string;
+  showDesktopResetButton?: boolean;
+  hideYearColumn?: boolean;
+  statusColumnLabel?: string;
+  adminRouteResolver?: (campaign: CampaignWithLeader) => string;
 }
 
 const pageSizeOptions = [5, 10, 20];
@@ -46,6 +56,13 @@ const statusLabels: Partial<Record<Status, string>> = {
 
 function getStatusLabel(status: string) {
   return statusLabels[status as Status] ?? status;
+}
+
+function getFilterStatusLabel(
+  status: string,
+  filterStatusLabelMap?: Partial<Record<Status, string>>,
+) {
+  return filterStatusLabelMap?.[status as Status] ?? getStatusLabel(status);
 }
 
 function getCampaignYear(dateCreated: string) {
@@ -84,22 +101,28 @@ function getStatusChipClasses(status: string) {
 }
 
 function StatusChip({ status }: { status: string }) {
-  return (
-    <Chip
-      variant={status as Status}
-      label={getStatusLabel(status)}
-    />
-  );
+  return <Chip variant={status as Status} label={getStatusLabel(status)} />;
 }
 
 export default function CampaignsTable({
   initialData,
   pageTitle = "Campaigns",
   pageListLabel = `${pageTitle} List`,
+  useFilterMenu = false,
+  desktopFilterMode = "year",
+  filterStatusLabelMap,
+  statusOptionsOverride,
+  statusSortPriority = [],
+  desktopSearchPlaceholder,
+  showDesktopResetButton = true,
+  hideYearColumn = false,
+  statusColumnLabel = "Status",
+  adminRouteResolver,
 }: Props) {
   const router = useRouter();
   const [campaignSearch, setCampaignSearch] = useState("");
   const [yearFilter, setYearFilter] = useState("all");
+  const [statusFilter, setStatusFilter] = useState("all");
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(10);
   const [selectedYears, setSelectedYears] = useState<string[]>([]);
@@ -115,35 +138,103 @@ export default function CampaignsTable({
     useState(false);
 
   const { user } = useAuth();
-  const { data: userData, isLoading: isLoadingUser, error: userError } = useUserByAuthId(user?.id || "");
+  const {
+    data: userData,
+    isLoading: isLoadingUser,
+    error: userError,
+  } = useUserByAuthId(user?.id || "");
 
   const years = useMemo(
     () =>
-      [...new Set((initialData ?? []).map((c) => getCampaignYear(c.date_created)))]
-        .sort((a, b) => Number(b) - Number(a)),
+      [
+        ...new Set(
+          (initialData ?? []).map((c) => getCampaignYear(c.date_created)),
+        ),
+      ].sort((a, b) => Number(b) - Number(a)),
     [initialData],
   );
 
   const filteredData = useMemo(() => {
     const normalizedSearch = campaignSearch.trim().toLowerCase();
-    return (initialData ?? []).filter((campaign) => {
-      const matchesYear = yearFilter === "all" || getCampaignYear(campaign.date_created) === yearFilter;
-      if (!matchesYear) return false;
+    const filtered = (initialData ?? []).filter((campaign) => {
+      const campaignYear = getCampaignYear(campaign.date_created);
+      const matchesDesktopYear =
+        desktopFilterMode !== "year" ||
+        yearFilter === "all" || campaignYear === yearFilter;
+      if (!matchesDesktopYear) return false;
+
+      const matchesDesktopStatus =
+        desktopFilterMode !== "status" ||
+        statusFilter === "all" ||
+        campaign.status === statusFilter;
+      if (!matchesDesktopStatus) return false;
+
+      const matchesSelectedYears =
+        selectedYears.length === 0 || selectedYears.includes(campaignYear);
+      if (!matchesSelectedYears) return false;
+
+      const matchesSelectedStatuses =
+        selectedStatuses.length === 0 || selectedStatuses.includes(campaign.status);
+      if (!matchesSelectedStatuses) return false;
+
       if (!normalizedSearch) return true;
       return (
         campaign.name.toLowerCase().includes(normalizedSearch) ||
         campaign.campaign_leader.toLowerCase().includes(normalizedSearch) ||
-        getStatusLabel(campaign.status).toLowerCase().includes(normalizedSearch)
+        getFilterStatusLabel(
+          campaign.status,
+          filterStatusLabelMap,
+        ).toLowerCase().includes(normalizedSearch)
       );
     });
-  }, [campaignSearch, initialData, yearFilter]);
+
+    if (statusSortPriority.length === 0) {
+      return filtered;
+    }
+
+    const priorityMap = new Map(
+      statusSortPriority.map((status, index) => [status, index]),
+    );
+
+    return filtered
+      .map((campaign, index) => ({ campaign, index }))
+      .sort((a, b) => {
+        const aPriority = priorityMap.get(a.campaign.status as Status);
+        const bPriority = priorityMap.get(b.campaign.status as Status);
+
+        if (aPriority !== undefined || bPriority !== undefined) {
+          if (aPriority === undefined) return 1;
+          if (bPriority === undefined) return -1;
+          if (aPriority !== bPriority) return aPriority - bPriority;
+        }
+
+        return a.index - b.index;
+      })
+      .map(({ campaign }) => campaign);
+  }, [
+    campaignSearch,
+    desktopFilterMode,
+    filterStatusLabelMap,
+    initialData,
+    selectedStatuses,
+    selectedYears,
+    statusSortPriority,
+    statusFilter,
+    yearFilter,
+  ]);
 
   const statusOptions = useMemo(
     () =>
-      [...new Set((initialData ?? []).map((campaign) => campaign.status))]
+      (statusOptionsOverride?.length
+        ? statusOptionsOverride
+        : [...new Set((initialData ?? []).map((campaign) => campaign.status))])
         .map((status) => status as Status)
-        .sort((a, b) => getStatusLabel(a).localeCompare(getStatusLabel(b))),
-    [initialData],
+        .sort((a, b) =>
+          getFilterStatusLabel(a, filterStatusLabelMap).localeCompare(
+            getFilterStatusLabel(b, filterStatusLabelMap),
+          ),
+        ),
+    [filterStatusLabelMap, initialData, statusOptionsOverride],
   );
 
   const mobileFilteredData = useMemo(() => {
@@ -167,6 +258,7 @@ export default function CampaignsTable({
 
   const mobileResetKey = [
     campaignSearch,
+    statusFilter,
     yearFilter,
     selectedYears.join(","),
     selectedStatuses.join(","),
@@ -194,23 +286,32 @@ export default function CampaignsTable({
     return filteredData.slice(start, start + pageSize);
   }, [currentPageIndex, filteredData, pageSize]);
 
-  const firstRow = filteredData.length === 0 ? 0 : currentPageIndex * pageSize + 1;
+  const firstRow =
+    filteredData.length === 0 ? 0 : currentPageIndex * pageSize + 1;
 
-  const lastRow = Math.min((currentPageIndex + 1) * pageSize, filteredData.length);
+  const lastRow = Math.min(
+    (currentPageIndex + 1) * pageSize,
+    filteredData.length,
+  );
 
   if (isLoadingUser) return null;
   if (userError || !userData) throw new Error("Unauthorized");
 
   const handleCampaignClick = (campaignId: number) => {
-    const path = userData.is_admin
-      ? `/dashboard/ongoing-campaigns/${campaignId}`
-      : `/dashboard/${campaignId}`;
+    const campaign = initialData.find((item) => item.campaign_id === campaignId);
+    const path =
+      userData.is_admin && campaign && adminRouteResolver
+        ? adminRouteResolver(campaign)
+        : userData.is_admin
+          ? `/dashboard/approved-campaigns/${campaignId}`
+          : `/dashboard/${campaignId}`;
     router.push(path);
   };
 
   const handleResetFilters = () => {
     setCampaignSearch("");
     setYearFilter("all");
+    setStatusFilter("all");
     setPageIndex(0);
   };
 
@@ -232,7 +333,10 @@ export default function CampaignsTable({
     setMobileFilterOpenedFromChip(openedFromChip);
   };
 
-  const toggleMobileFilterValue = (category: MobileFilterCategory, value: string) => {
+  const toggleMobileFilterValue = (
+    category: MobileFilterCategory,
+    value: string,
+  ) => {
     if (category === "year") {
       setSelectedYears((current) =>
         current.includes(value)
@@ -246,7 +350,9 @@ export default function CampaignsTable({
       current.includes(value)
         ? current.filter((item) => item !== value)
         : [...current, value].sort((a, b) =>
-            getStatusLabel(a).localeCompare(getStatusLabel(b)),
+            getFilterStatusLabel(a, filterStatusLabelMap).localeCompare(
+              getFilterStatusLabel(b, filterStatusLabelMap),
+            ),
           ),
     );
   };
@@ -281,7 +387,9 @@ export default function CampaignsTable({
       return `Year: ${values.join(", ")}`;
     }
 
-    return `Status: ${values.map((value) => getStatusLabel(value)).join(", ")}`;
+    return `Status: ${values
+      .map((value) => getFilterStatusLabel(value, filterStatusLabelMap))
+      .join(", ")}`;
   };
 
   return (
@@ -314,7 +422,9 @@ export default function CampaignsTable({
             />
             <IconButton
               aria-label="Open filters"
-              onClick={(event) => setFilterCategoryAnchorEl(event.currentTarget)}
+              onClick={(event) =>
+                setFilterCategoryAnchorEl(event.currentTarget)
+              }
               className="!h-10 !w-10 !rounded-[4px] !border !border-[#D0D5DD] !bg-white !text-[#667085]"
             >
               <FilterAltOutlinedIcon />
@@ -456,7 +566,8 @@ export default function CampaignsTable({
 
           {mobileFilteredData.length > 0 && (
             <div className="pt-2 text-center text-[12px] text-[#667085]">
-              Showing {visibleMobileCampaignCount} of {mobileFilteredData.length}
+              Showing {visibleMobileCampaignCount} of{" "}
+              {mobileFilteredData.length}
             </div>
           )}
 
@@ -512,7 +623,9 @@ export default function CampaignsTable({
         onClose={closeMobileFilterMenus}
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
-        slotProps={{ paper: { className: "!mt-2 !min-w-[164px] !rounded-[8px]" } }}
+        slotProps={{
+          paper: { className: "!mt-2 !min-w-[164px] !rounded-[8px]" },
+        }}
       >
         {activeMobileFilter
           ? [
@@ -536,7 +649,9 @@ export default function CampaignsTable({
                   </IconButton>
                 )}
                 <span className="flex-1 text-[14px] font-semibold text-[#344054]">
-                  {activeMobileFilter === "year" ? "Select Year" : "Select Status"}
+                  {activeMobileFilter === "year"
+                    ? "Select Year"
+                    : "Select Status"}
                 </span>
                 <IconButton
                   size="small"
@@ -548,7 +663,8 @@ export default function CampaignsTable({
               </div>,
               ...mobileFilterOptions.map((option) => {
                 const optionValue = String(option);
-                const isSelected = selectedMobileFilterValues.includes(optionValue);
+                const isSelected =
+                  selectedMobileFilterValues.includes(optionValue);
 
                 return (
                   <MenuItem
@@ -560,7 +676,7 @@ export default function CampaignsTable({
                   >
                     <span>
                       {activeMobileFilter === "status"
-                        ? getStatusLabel(optionValue)
+                        ? getFilterStatusLabel(optionValue, filterStatusLabelMap)
                         : optionValue}
                     </span>
                     {isSelected && <CheckIcon className="!text-[#2D7A45]" />}
@@ -573,7 +689,9 @@ export default function CampaignsTable({
 
       <div className="hidden overflow-hidden rounded-2xl border border-[#EAECF0] bg-white shadow-[0px_1px_2px_rgba(16,24,40,0.05)] md:block">
         <div className="px-4 pt-6">
-          <h2 className="text-[16px] font-bold leading-6 text-[rgba(0,0,0,0.87)]">Campaign List</h2>
+          <h2 className="text-[16px] font-bold leading-6 text-[rgba(0,0,0,0.87)]">
+            {pageListLabel}
+          </h2>
           <p className="mt-1 text-sm text-[#6A7282]">
             {initialData.length} Campaign{initialData.length === 1 ? "" : "s"}
           </p>
@@ -582,46 +700,110 @@ export default function CampaignsTable({
         <div className="flex flex-wrap items-center gap-4 px-4 pb-4 pt-6">
           <TextField
             label="Search"
-            placeholder="Search by title or name"
+            placeholder={
+              desktopSearchPlaceholder ??
+              (useFilterMenu
+                ? "Name, email, etc..."
+                : "Search by title or name")
+            }
             variant="outlined"
             fullWidth
             value={campaignSearch}
-            onChange={(e) => { setCampaignSearch(e.target.value); setPageIndex(0); }}
+            onChange={(e) => {
+              setCampaignSearch(e.target.value);
+              setPageIndex(0);
+            }}
             sx={{ flex: "1 1 320px", minWidth: 220 }}
           />
-          <TextField
-            select
-            label="Filter By Year"
-            variant="outlined"
-            fullWidth
-            value={yearFilter}
-            onChange={(e) => { setYearFilter(e.target.value); setPageIndex(0); }}
-            sx={{ flex: "1 1 280px", minWidth: 220 }}
-          >
-            <MenuItem value="all">None</MenuItem>
-            {years.map((year) => <MenuItem key={year} value={year}>{year}</MenuItem>)}
-          </TextField>
-          <IconButton
-            aria-label="Reset filters"
-            onClick={handleResetFilters}
-            className="!h-[53px] !w-[60px] !rounded !border !border-[rgba(0,0,0,0.23)] !text-[rgba(0,0,0,0.6)]"
-          >
-            <FilterAltOutlinedIcon />
-          </IconButton>
+          {useFilterMenu ? (
+            <IconButton
+              aria-label="Open filters"
+              onClick={(event) => setFilterCategoryAnchorEl(event.currentTarget)}
+              className="!h-[53px] !w-[60px] !rounded !border !border-[rgba(0,0,0,0.23)] !text-[rgba(0,0,0,0.6)]"
+            >
+              <FilterAltOutlinedIcon />
+            </IconButton>
+          ) : (
+            <>
+              {desktopFilterMode === "status" ? (
+                <TextField
+                  select
+                  label="Filter By Website Status"
+                  variant="outlined"
+                  fullWidth
+                  value={statusFilter}
+                  onChange={(e) => {
+                    setStatusFilter(e.target.value);
+                    setPageIndex(0);
+                  }}
+                  sx={{ flex: "1 1 280px", minWidth: 220 }}
+                >
+                  <MenuItem value="all">None</MenuItem>
+                  {statusOptions.map((status) => (
+                    <MenuItem key={status} value={status}>
+                      {getFilterStatusLabel(status, filterStatusLabelMap)}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              ) : (
+                <TextField
+                  select
+                  label="Filter By Year"
+                  variant="outlined"
+                  fullWidth
+                  value={yearFilter}
+                  onChange={(e) => {
+                    setYearFilter(e.target.value);
+                    setPageIndex(0);
+                  }}
+                  sx={{ flex: "1 1 280px", minWidth: 220 }}
+                >
+                  <MenuItem value="all">None</MenuItem>
+                  {years.map((year) => (
+                    <MenuItem key={year} value={year}>
+                      {year}
+                    </MenuItem>
+                  ))}
+                </TextField>
+              )}
+              {showDesktopResetButton && (
+                <IconButton
+                  aria-label="Reset filters"
+                  onClick={handleResetFilters}
+                  className="!h-[53px] !w-[60px] !rounded !border !border-[rgba(0,0,0,0.23)] !text-[rgba(0,0,0,0.6)]"
+                >
+                  <FilterAltOutlinedIcon />
+                </IconButton>
+              )}
+            </>
+          )}
         </div>
 
         {filteredData.length === 0 ? (
-          <div className="px-4 py-12 text-center text-sm text-[#6A7282]">No campaigns found.</div>
+          <div className="px-4 py-12 text-center text-sm text-[#6A7282]">
+            No campaigns found.
+          </div>
         ) : (
           <>
             <div className="overflow-x-auto">
               <table className="min-w-full border-collapse">
                 <thead>
                   <tr className="border-b border-[rgba(0,0,0,0.12)]">
-                    {["Year", "Campaign Title", "Campaign Leader", "$ Raised", "Goal", "Goal Progress", "Status", ""].map((header, index) => (
+                    {[
+                      !hideYearColumn ? "Year" : null,
+                      "Campaign Title",
+                      "Campaign Leader",
+                      "$ Raised",
+                      "Goal",
+                      "Goal Progress",
+                      statusColumnLabel,
+                      "",
+                    ]
+                      .filter((header) => header !== null)
+                      .map((header, index, headers) => (
                       <th
                         key={header || "actions"}
-                        className={`px-4 py-4 text-left text-sm font-bold tracking-[0.17px] text-[rgba(0,0,0,0.87)] ${index === 7 ? "w-10" : "whitespace-nowrap"}`}
+                        className={`px-4 py-4 text-left text-sm font-bold tracking-[0.17px] text-[rgba(0,0,0,0.87)] ${index === headers.length - 1 ? "w-10" : "whitespace-nowrap"}`}
                       >
                         {header}
                       </th>
@@ -630,35 +812,62 @@ export default function CampaignsTable({
                 </thead>
                 <tbody>
                   {paginatedData.map((campaign) => {
-                    const displayedProgress = Math.min(getGoalProgress(campaign.raised, campaign.goal), 100);
+                    const displayedProgress = Math.min(
+                      getGoalProgress(campaign.raised, campaign.goal),
+                      100,
+                    );
                     return (
                       <tr
                         key={campaign.campaign_id}
                         className="cursor-pointer border-b border-[rgba(0,0,0,0.12)] transition-colors hover:bg-[#F9FAFB]"
-                        onClick={() => handleCampaignClick(campaign.campaign_id)}
+                        onClick={() =>
+                          handleCampaignClick(campaign.campaign_id)
+                        }
                       >
-                        <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">{getCampaignYear(campaign.date_created)}</td>
+                        {!hideYearColumn && (
+                          <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
+                            {getCampaignYear(campaign.date_created)}
+                          </td>
+                        )}
                         <td className="max-w-[180px] px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
-                          <span className="block truncate">{campaign.name || "Untitled Campaign"}</span>
+                          <span className="block truncate">
+                            {campaign.name || "Untitled Campaign"}
+                          </span>
                         </td>
                         <td className="max-w-[150px] px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
-                          <span className="block truncate">{campaign.campaign_leader || "N/A"}</span>
+                          <span className="block truncate">
+                            {campaign.campaign_leader || "N/A"}
+                          </span>
                         </td>
-                        <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">{formatCurrency(campaign.raised)}</td>
-                        <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">{formatCurrency(campaign.goal)}</td>
+                        <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
+                          {formatCurrency(campaign.raised)}
+                        </td>
+                        <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
+                          {formatCurrency(campaign.goal)}
+                        </td>
                         <td className="min-w-[150px] px-4 py-4">
                           <div className="flex items-center gap-4">
                             <div className="h-1 min-w-[72px] flex-1 overflow-hidden rounded-full bg-[rgba(25,118,210,0.3)]">
-                              <div className="h-full rounded-full bg-[#1976D2]" style={{ width: `${displayedProgress}%` }} />
+                              <div
+                                className="h-full rounded-full bg-[#1976D2]"
+                                style={{ width: `${displayedProgress}%` }}
+                              />
                             </div>
-                            <span className="text-sm text-[rgba(0,0,0,0.87)]">{displayedProgress}%</span>
+                            <span className="text-sm text-[rgba(0,0,0,0.87)]">
+                              {displayedProgress}%
+                            </span>
                           </div>
                         </td>
-                        <td className="px-4 py-4"><StatusChip status={campaign.status} /></td>
+                        <td className="px-4 py-4">
+                          <StatusChip status={campaign.status} />
+                        </td>
                         <td className="px-2 py-2">
                           <IconButton
                             aria-label={`Open ${campaign.name || "campaign"}`}
-                            onClick={(e) => { e.stopPropagation(); handleCampaignClick(campaign.campaign_id); }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              handleCampaignClick(campaign.campaign_id);
+                            }}
                           >
                             <KeyboardArrowRightIcon className="text-[rgba(0,0,0,0.54)]" />
                           </IconButton>
@@ -675,18 +884,39 @@ export default function CampaignsTable({
                 <span>Rows per page:</span>
                 <select
                   value={pageSize}
-                  onChange={(e) => { setPageSize(Number(e.target.value)); setPageIndex(0); }}
+                  onChange={(e) => {
+                    setPageSize(Number(e.target.value));
+                    setPageIndex(0);
+                  }}
                   className="bg-transparent text-xs text-[rgba(0,0,0,0.87)] outline-none"
                 >
-                  {pageSizeOptions.map((size) => <option key={size} value={size}>{size}</option>)}
+                  {pageSizeOptions.map((size) => (
+                    <option key={size} value={size}>
+                      {size}
+                    </option>
+                  ))}
                 </select>
               </div>
-              <span className="text-[rgba(0,0,0,0.87)]">{firstRow}-{lastRow} of {filteredData.length}</span>
+              <span className="text-[rgba(0,0,0,0.87)]">
+                {firstRow}-{lastRow} of {filteredData.length}
+              </span>
               <div className="flex items-center">
-                <IconButton aria-label="Previous page" disabled={currentPageIndex === 0} onClick={() => setPageIndex(Math.max(currentPageIndex - 1, 0))}>
+                <IconButton
+                  aria-label="Previous page"
+                  disabled={currentPageIndex === 0}
+                  onClick={() =>
+                    setPageIndex(Math.max(currentPageIndex - 1, 0))
+                  }
+                >
                   <KeyboardArrowLeftIcon />
                 </IconButton>
-                <IconButton aria-label="Next page" disabled={currentPageIndex >= totalPages - 1} onClick={() => setPageIndex(Math.min(currentPageIndex + 1, totalPages - 1))}>
+                <IconButton
+                  aria-label="Next page"
+                  disabled={currentPageIndex >= totalPages - 1}
+                  onClick={() =>
+                    setPageIndex(Math.min(currentPageIndex + 1, totalPages - 1))
+                  }
+                >
                   <KeyboardArrowRightIcon />
                 </IconButton>
               </div>

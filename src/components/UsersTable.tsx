@@ -134,7 +134,7 @@ function getCampaignStatusPath(status: Status, campaignId: number) {
     case "published":
     case "publish_failed":
     case "archived":
-      return `/dashboard/ongoing-campaigns/${campaignId}`;
+      return `/dashboard/approved-campaigns/${campaignId}`;
     default:
       return null;
   }
@@ -306,12 +306,14 @@ export default function UsersTable({
   const router = useRouter();
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
-  const [mobileStatusFilters, setMobileStatusFilters] = useState<FilterStatus[]>(
-    [],
-  );
+  const [mobileStatusFilters, setMobileStatusFilters] = useState<
+    FilterStatus[]
+  >([]);
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
-  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(null);
+  const [filterAnchorEl, setFilterAnchorEl] = useState<null | HTMLElement>(
+    null,
+  );
   const [sortAnchorEl, setSortAnchorEl] = useState<null | HTMLElement>(null);
   const [deleteTarget, setDeleteTarget] = useState<UsersTableRow | null>(null);
   const [deleteUnlockIn, setDeleteUnlockIn] = useState(0);
@@ -510,38 +512,53 @@ export default function UsersTable({
   const firstRow = sortedData.length === 0 ? 0 : pageIndex * pageSize + 1;
   const lastRow = Math.min((pageIndex + 1) * pageSize, sortedData.length);
 
-  const handleSearchChange = useCallback((value: string) => {
-    setSearch(value);
-    table.setPageIndex(0);
-  }, [table]);
+  const handleSearchChange = useCallback(
+    (value: string) => {
+      setSearch(value);
+      table.setPageIndex(0);
+    },
+    [table],
+  );
 
-  const handleDesktopStatusChange = useCallback((value: string) => {
-    setStatusFilter(value);
-    setMobileStatusFilters([]);
-    table.setPageIndex(0);
-  }, [table]);
+  const handleDesktopStatusChange = useCallback(
+    (value: string) => {
+      setStatusFilter(value);
+      setMobileStatusFilters([]);
+      table.setPageIndex(0);
+    },
+    [table],
+  );
 
-  const handleToggleMobileStatusFilter = useCallback((value: FilterStatus) => {
-    setStatusFilter("");
-    setMobileStatusFilters((current) => {
-      const next = current.includes(value)
-        ? current.filter((item) => item !== value)
-        : [...current, value];
+  const handleToggleMobileStatusFilter = useCallback(
+    (value: FilterStatus) => {
+      setStatusFilter("");
+      setMobileStatusFilters((current) => {
+        const next = current.includes(value)
+          ? current.filter((item) => item !== value)
+          : [...current, value];
 
-      return next;
-    });
-    table.setPageIndex(0);
-  }, [table]);
+        return next;
+      });
+      table.setPageIndex(0);
+    },
+    [table],
+  );
 
-  const handleSortFieldChange = useCallback((value: SortField) => {
-    setSortField(value);
-    table.setPageIndex(0);
-  }, [table]);
+  const handleSortFieldChange = useCallback(
+    (value: SortField) => {
+      setSortField(value);
+      table.setPageIndex(0);
+    },
+    [table],
+  );
 
-  const handleSortDirectionChange = useCallback((value: SortDirection) => {
-    setSortDirection(value);
-    table.setPageIndex(0);
-  }, [table]);
+  const handleSortDirectionChange = useCallback(
+    (value: SortDirection) => {
+      setSortDirection(value);
+      table.setPageIndex(0);
+    },
+    [table],
+  );
 
   const isFilterMenuOpen = Boolean(filterAnchorEl);
   const isSortMenuOpen = Boolean(sortAnchorEl);
@@ -606,7 +623,9 @@ export default function UsersTable({
           >
             <div className="flex min-w-[200px] items-center justify-between gap-4">
               <span>{option.label}</span>
-              {sortField === option.value && <CheckIcon className="!text-[#2D7A45]" />}
+              {sortField === option.value && (
+                <CheckIcon className="!text-[#2D7A45]" />
+              )}
             </div>
           </MenuItem>
         ))}
@@ -619,7 +638,9 @@ export default function UsersTable({
         >
           <div className="flex min-w-[200px] items-center justify-between gap-4">
             <span>Ascending</span>
-            {sortDirection === "asc" && <CheckIcon className="!text-[#2D7A45]" />}
+            {sortDirection === "asc" && (
+              <CheckIcon className="!text-[#2D7A45]" />
+            )}
           </div>
         </MenuItem>
         <MenuItem
@@ -628,7 +649,9 @@ export default function UsersTable({
         >
           <div className="flex min-w-[200px] items-center justify-between gap-4">
             <span>Descending</span>
-            {sortDirection === "desc" && <CheckIcon className="!text-[#2D7A45]" />}
+            {sortDirection === "desc" && (
+              <CheckIcon className="!text-[#2D7A45]" />
+            )}
           </div>
         </MenuItem>
       </Menu>
@@ -636,7 +659,8 @@ export default function UsersTable({
       <div className="overflow-hidden rounded-xl bg-white md:mx-auto md:w-full md:overflow-x-auto">
         <div className="px-4 pt-5 md:hidden">
           <div className="text-sm text-[#1f2320]">
-            <span className="font-semibold">User List</span> - {sortedData.length} User
+            <span className="font-semibold">User List</span> -{" "}
+            {sortedData.length} User
             {sortedData.length === 1 ? "" : "s"}
           </div>
 
@@ -745,7 +769,9 @@ export default function UsersTable({
                   >
                     <div className="flex items-start justify-between gap-4 px-5 py-4">
                       <div>
-                        <p className="text-[13px] text-[#7B827D]">First Name:</p>
+                        <p className="text-[13px] text-[#7B827D]">
+                          First Name:
+                        </p>
                         <p className="mt-1 text-[18px] font-semibold text-[#1f2320]">
                           {user.first_name}
                         </p>
@@ -764,7 +790,9 @@ export default function UsersTable({
                     <div className="border-t border-[#CFD8CF] px-5 py-4">
                       <div className="flex items-center justify-between gap-4 border-b border-[#E3E8E3] py-3 text-[14px]">
                         <span className="text-[#6A706B]">Last Name</span>
-                        <span className="font-medium text-[#1f2320]">{user.last_name}</span>
+                        <span className="font-medium text-[#1f2320]">
+                          {user.last_name}
+                        </span>
                       </div>
                       <div className="flex items-center justify-between gap-4 border-b border-[#E3E8E3] py-3 text-[14px]">
                         <span className="text-[#6A706B]">Email</span>
@@ -779,7 +807,9 @@ export default function UsersTable({
                         </span>
                       </div>
                       <div className="flex items-center justify-between gap-4 pt-3 text-[14px]">
-                        <span className="text-[#6A706B]">Submission Status</span>
+                        <span className="text-[#6A706B]">
+                          Submission Status
+                        </span>
                         {aggregateStatus ? (
                           <CampaignsSummaryBadge
                             status={aggregateStatus}
@@ -962,77 +992,86 @@ export default function UsersTable({
         </div>
       </BaseModal>
 
-      {statusTarget && (() => {
-        const groups = groupByStatus(statusTarget.campaigns);
-        const fullName = `${statusTarget.first_name} ${statusTarget.last_name}`;
+      {statusTarget &&
+        (() => {
+          const groups = groupByStatus(statusTarget.campaigns);
+          const fullName = `${statusTarget.first_name} ${statusTarget.last_name}`;
 
-        return (
-          <BaseModal
-            open={true}
-            onClose={() => setStatusTarget(null)}
-            title={undefined}
-          >
-            <div className="mb-6 flex items-start justify-between gap-4">
-              <h2 className="text-[20px] font-semibold text-[#123A1E]">
-                Application Status
-              </h2>
-              <button
-                type="button"
-                onClick={() => setStatusTarget(null)}
-                className="text-[#666666] transition-colors hover:text-[#1f2320]"
-                aria-label="Close application status dialog"
-              >
-                <CloseIcon />
-              </button>
-            </div>
-            <div className="max-h-[50vh] flex-1 overflow-y-auto">
-              {APP_STATUS_ORDER.filter((status) => groups[status]).map((status) => {
-                const campaigns = groups[status]!;
-                const config = APP_STATUS_CONFIG[status];
+          return (
+            <BaseModal
+              open={true}
+              onClose={() => setStatusTarget(null)}
+              title={undefined}
+            >
+              <div className="mb-6 flex items-start justify-between gap-4">
+                <h2 className="text-[20px] font-semibold text-[#123A1E]">
+                  Application Status
+                </h2>
+                <button
+                  type="button"
+                  onClick={() => setStatusTarget(null)}
+                  className="text-[#666666] transition-colors hover:text-[#1f2320]"
+                  aria-label="Close application status dialog"
+                >
+                  <CloseIcon />
+                </button>
+              </div>
+              <div className="max-h-[50vh] flex-1 overflow-y-auto">
+                {APP_STATUS_ORDER.filter((status) => groups[status]).map(
+                  (status) => {
+                    const campaigns = groups[status]!;
+                    const config = APP_STATUS_CONFIG[status];
 
-                return (
-                  <div key={status} className="mb-5 last:mb-0">
-                    <p className="mb-3 text-gray-800">
-                      {getStatusSummaryText(status, campaigns.length, fullName)}
-                    </p>
-                    {status !== "in_progress" && (
-                      <div className="flex flex-col gap-3 pl-4">
-                        {campaigns.map((campaign) => (
-                          <div
-                            key={campaign.campaign_id}
-                            className="flex items-center justify-between gap-4"
-                          >
-                            <span className="text-gray-700">{campaign.name}</span>
-                            <Button
-                              variant="contained"
-                              size="medium"
-                              onClick={() => {
-                                const path = getCampaignStatusPath(
-                                  status,
-                                  campaign.campaign_id,
-                                );
+                    return (
+                      <div key={status} className="mb-5 last:mb-0">
+                        <p className="mb-3 text-gray-800">
+                          {getStatusSummaryText(
+                            status,
+                            campaigns.length,
+                            fullName,
+                          )}
+                        </p>
+                        {status !== "in_progress" && (
+                          <div className="flex flex-col gap-3 pl-4">
+                            {campaigns.map((campaign) => (
+                              <div
+                                key={campaign.campaign_id}
+                                className="flex items-center justify-between gap-4"
+                              >
+                                <span className="text-gray-700">
+                                  {campaign.name}
+                                </span>
+                                <Button
+                                  variant="contained"
+                                  size="medium"
+                                  onClick={() => {
+                                    const path = getCampaignStatusPath(
+                                      status,
+                                      campaign.campaign_id,
+                                    );
 
-                                if (!path) {
-                                  return;
-                                }
+                                    if (!path) {
+                                      return;
+                                    }
 
-                                setStatusTarget(null);
-                                router.push(path);
-                              }}
-                            >
-                              {config.buttonLabel}
-                            </Button>
+                                    setStatusTarget(null);
+                                    router.push(path);
+                                  }}
+                                >
+                                  {config.buttonLabel}
+                                </Button>
+                              </div>
+                            ))}
                           </div>
-                        ))}
+                        )}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          </BaseModal>
-        );
-      })()}
+                    );
+                  },
+                )}
+              </div>
+            </BaseModal>
+          );
+        })()}
 
       <BaseAlert
         open={toast}

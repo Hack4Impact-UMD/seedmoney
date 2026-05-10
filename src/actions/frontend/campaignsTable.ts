@@ -44,15 +44,41 @@ const BASE_SELECT = `
     )
   )`;
 
-export async function readOngoingCampaigns(competition_id?: number): Promise<CampaignWithLeader[]> {
+export async function readApprovedCampaigns(competition_id?: number): Promise<CampaignWithLeader[]> {
+  if (competition_id === undefined) {
+    return [];
+  }
+
   const supabase = await createServerClient();
 
   const { data, error } = await supabase
     .from("campaigns")
     .select(BASE_SELECT)
     .eq("competition_id", competition_id)
-    .in("status", ["approved", "published"])
+    .in("status", ["approved", "published", "publish_failed"])
+    .order("date_created", { ascending: false })
     .eq("campaign_members.role", "campaign_leader");
+
+  if (error) throw error;
+  return (data ?? []).map(mapCampaignLeader);
+}
+
+export async function readPreviousCampaigns(
+  currentCompetitionId?: number,
+): Promise<CampaignWithLeader[]> {
+  if (currentCompetitionId === undefined) {
+    return [];
+  }
+
+  const supabase = await createServerClient();
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select(BASE_SELECT)
+    .neq("competition_id", currentCompetitionId)
+    .neq("status", "in_progress")
+    .eq("campaign_members.role", "campaign_leader")
+    .order("date_created", { ascending: false });
 
   if (error) throw error;
   return (data ?? []).map(mapCampaignLeader);
