@@ -44,7 +44,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="Legal Name of Beneficiary Organization*"
+          label="Legal Name of Beneficiary Organization (Required)"
           fullWidth
           value={formData.organizationName}
           onChange={onTextChange("organizationName")}
@@ -132,7 +132,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="First Name*"
+          label="First Name (Required)"
           fullWidth
           value={formData.contactFirstName}
           onChange={onTextChange("contactFirstName")}
@@ -140,7 +140,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="Last Name*"
+          label="Last Name (Required)"
           fullWidth
           value={formData.contactLastName}
           onChange={onTextChange("contactLastName")}
@@ -148,7 +148,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="Email*"
+          label="Email (Required)"
           fullWidth
           value={formData.contactEmail}
           onChange={onTextChange("contactEmail")}
@@ -156,7 +156,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="Role or Title"
+          label="Role or Title (Optional)"
           fullWidth
           value={formData.contactRole}
           onChange={onTextChange("contactRole")}

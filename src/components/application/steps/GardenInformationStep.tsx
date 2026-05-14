@@ -117,7 +117,7 @@ export default function GardenInformationStep() {
           {(field) => (
             <TextField
               select
-              label="Country*"
+              label="Country (Required)"
               variant="standard"
               fullWidth
               name="gardenCountry"
@@ -144,7 +144,11 @@ export default function GardenInformationStep() {
                 displayEmpty: true,
                 renderValue: (selected) => {
                   if (!selected) {
-                    return <span className="text-gray-400">Country*</span>;
+                    return (
+                      <span className="text-gray-400">
+                        Country (Required)
+                      </span>
+                    );
                   }
                   return String(selected);
                 },
@@ -174,7 +178,7 @@ export default function GardenInformationStep() {
             isUsGardenCountry ? (
               <TextField
                 select
-                label="State / Province*"
+                label="State / Province (Required)"
                 variant="standard"
                 fullWidth
                 name="gardenState"
@@ -191,7 +195,9 @@ export default function GardenInformationStep() {
                   renderValue: (selected) => {
                     if (!selected) {
                       return (
-                        <span className="text-gray-400">State / Province*</span>
+                        <span className="text-gray-400">
+                          State / Province (Required)
+                        </span>
                       );
                     }
                     const selectedState = STATES.find(
@@ -221,7 +227,7 @@ export default function GardenInformationStep() {
             ) : (
               <TextField
                 variant="standard"
-                label="State / Province*"
+                label="State / Province (Required)"
                 helperText="Write N/A if not applicable"
                 fullWidth
                 name="gardenState"
@@ -245,7 +251,7 @@ export default function GardenInformationStep() {
         <form.Field name="gardenCity">
           {(field) => (
             <TextField
-              label="City*"
+              label="City (Required)"
               variant="standard"
               fullWidth
               name="gardenCity"
@@ -315,7 +321,7 @@ export default function GardenInformationStep() {
                 <input
                   type="text"
                   name="gardenCategoryOther"
-                  placeholder="Please specify"
+                  placeholder="Please specify (Required)"
                   value={field.state.value}
                   onBlur={async (e) => {
                     field.handleBlur();
@@ -419,7 +425,7 @@ export default function GardenInformationStep() {
                   <input
                     type="text"
                     name="gardenBeneficiariesOther"
-                    placeholder="Please specify"
+                    placeholder="Please specify (Required)"
                     value={
                       field.state.value.find(
                         (item) => !beneficiaryOptions.includes(item),

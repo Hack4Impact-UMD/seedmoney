@@ -167,7 +167,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="Legal Name of Beneficiary Organization*"
+              label="Legal Name of Beneficiary Organization (Required)"
               fullWidth
               name="organizationName"
               autoComplete="organization"
@@ -447,7 +447,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="First Name*"
+              label="First Name (Required)"
               fullWidth
               name="contactFirstName"
               autoComplete="given-name"
@@ -468,7 +468,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="Last Name*"
+              label="Last Name (Required)"
               fullWidth
               name="contactLastName"
               autoComplete="family-name"
@@ -489,7 +489,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="Email*"
+              label="Email (Required)"
               fullWidth
               name="contactEmail"
               autoComplete="email"
@@ -510,7 +510,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="Role or Title"
+              label="Role or Title (Optional)"
               fullWidth
               name="contactRole"
               autoComplete="organization-title"

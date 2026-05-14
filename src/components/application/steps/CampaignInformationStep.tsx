@@ -107,7 +107,7 @@ export default function CampaignInformationStep() {
         <form.Field name="campaignTitle">
           {(field) => (
             <TextField
-              label="Campaign Title"
+              label="Campaign Title (Required)"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -144,6 +144,7 @@ export default function CampaignInformationStep() {
               <TextField
                 variant="standard"
                 fullWidth
+                label="Number of people served (Required)"
                 value={field.state.value}
                 onBlur={async (e) => {
                   field.handleBlur();
@@ -164,7 +165,7 @@ export default function CampaignInformationStep() {
         <form.Field name="gardenSize">
           {(field) => (
             <TextField
-              label="Approximate garden size or scope"
+              label="Approximate garden size or scope (Required)"
               variant="standard"
               fullWidth
               type="text"
@@ -242,7 +243,7 @@ export default function CampaignInformationStep() {
 
             return (
               <TextField
-                label="Fundraising Goal (USD)"
+                label="Fundraising Goal (USD) (Required)"
                 variant="standard"
                 fullWidth
                 type="number"

@@ -40,7 +40,7 @@ export default function GardenInformationSection({
         </h2>
 
         <TextField
-          label="Country"
+          label="Country (Required)"
           variant="standard"
           fullWidth
           value={formData.gardenCountry}
@@ -48,7 +48,7 @@ export default function GardenInformationSection({
         />
 
         <TextField
-          label="State / Province"
+          label="State / Province (Required)"
           variant="standard"
           fullWidth
           value={formData.gardenState}
@@ -56,7 +56,7 @@ export default function GardenInformationSection({
         />
 
         <TextField
-          label="City"
+          label="City (Required)"
           variant="standard"
           fullWidth
           value={formData.gardenCity}

@@ -662,7 +662,7 @@ export default function GardenStoryStep() {
               return (
                 <TextField
                   variant="filled"
-                  label={question1.question}
+                  label={`${question1.question} (Required)`}
                   fullWidth
                   multiline
                   minRows={5}
@@ -722,7 +722,7 @@ export default function GardenStoryStep() {
               return (
                 <TextField
                   variant="filled"
-                  label={question2.question}
+                  label={`${question2.question} (Required)`}
                   fullWidth
                   multiline
                   minRows={5}
@@ -782,7 +782,7 @@ export default function GardenStoryStep() {
               return (
                 <TextField
                   variant="filled"
-                  label={question3.question}
+                  label={`${question3.question} (Required)`}
                   fullWidth
                   multiline
                   minRows={5}
@@ -842,7 +842,7 @@ export default function GardenStoryStep() {
               return (
                 <TextField
                   variant="filled"
-                  label={question4.question}
+                  label={`${question4.question} (Required)`}
                   fullWidth
                   multiline
                   minRows={5}

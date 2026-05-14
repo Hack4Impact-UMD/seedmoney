@@ -52,7 +52,7 @@ export default function CampaignInformationSection({
         </p>
 
         <TextField
-          label="Campaign Title"
+          label="Campaign Title (Required)"
           value={formData.campaignTitle}
           onChange={onTextChange("campaignTitle")}
           helperText="60 max characters"
@@ -73,6 +73,7 @@ export default function CampaignInformationSection({
           <TextField
             variant="standard"
             fullWidth
+            label="Number of people served (Required)"
             value={formData.beneficiaryCount}
             onChange={(event) =>
               setFieldValue(
@@ -118,7 +119,7 @@ export default function CampaignInformationSection({
         </div>
 
         <TextField
-          label="Approximate garden size or scope"
+          label="Approximate garden size or scope (Required)"
           variant="standard"
           fullWidth
           value={formData.gardenSize}
@@ -136,7 +137,7 @@ export default function CampaignInformationSection({
         </p>
 
         <TextField
-          label="Fundraising Goal (USD)"
+          label="Fundraising Goal (USD) (Required)"
           variant="standard"
           fullWidth
           type="number"
