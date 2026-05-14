@@ -639,7 +639,7 @@ export default function GardenStoryStep() {
   return (
     <div className="mx-auto my-10 flex w-full max-w-[640px] flex-col gap-5">
       {/* Garden Story */}
-      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
+      <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-8">
         <h2 className="text-[20px] font-medium">
           Garden Story <span className="text-orange-500">*</span>
         </h2>
@@ -671,6 +671,11 @@ export default function GardenStoryStep() {
                   value={field.state.value}
                   InputLabelProps={{
                     sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
+                  }}
+                  slotProps={{
+                    formHelperText: {
+                      className: "!mx-0",
+                    },
                   }}
                   sx={{
                     "& .MuiFilledInput-root": {
@@ -727,6 +732,11 @@ export default function GardenStoryStep() {
                   InputLabelProps={{
                     sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
                   }}
+                  slotProps={{
+                    formHelperText: {
+                      className: "!mx-0",
+                    },
+                  }}
                   sx={{
                     "& .MuiFilledInput-root": {
                       pt: "40px",
@@ -782,6 +792,11 @@ export default function GardenStoryStep() {
                   InputLabelProps={{
                     sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
                   }}
+                  slotProps={{
+                    formHelperText: {
+                      className: "!mx-0",
+                    },
+                  }}
                   sx={{
                     "& .MuiFilledInput-root": {
                       pt: "40px",
@@ -836,6 +851,11 @@ export default function GardenStoryStep() {
                   value={field.state.value}
                   InputLabelProps={{
                     sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
+                  }}
+                  slotProps={{
+                    formHelperText: {
+                      className: "!mx-0",
+                    },
                   }}
                   sx={{
                     "& .MuiFilledInput-root": {

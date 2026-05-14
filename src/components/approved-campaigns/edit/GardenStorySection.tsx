@@ -22,7 +22,7 @@ function StoryComparisonBlock({
 }: StoryComparisonBlockProps) {
   return (
     <>
-        <div className="mt-8 col-span-1 lg:col-span-2">
+        <div className="mt-12 first:mt-0 col-span-1 lg:col-span-2">
         <h2 className="font-bold">{question}</h2>
       </div>
 

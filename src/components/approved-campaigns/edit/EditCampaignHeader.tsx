@@ -14,7 +14,7 @@ export default function EditCampaignHeader({
   tag,
 }: EditCampaignHeaderProps) {
   return (
-    <div className="flex flex-col-reverse md:flex-col mb-5">
+    <div className="flex flex-col-reverse gap-2 md:flex-col mb-5">
       <h3 className="text-4xl font-bold text-[#096B2E]">
         {text}
       </h3>

@@ -465,7 +465,7 @@ export default function ReviewSubmitPage() {
         />
       )}
 
-      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-5">
+      <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-8">
         <h3 className="text-[17px] font-medium">
           Garden Story <span className="text-orange-500">*</span>
         </h3>
