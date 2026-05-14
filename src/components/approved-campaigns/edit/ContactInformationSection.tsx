@@ -19,6 +19,16 @@ interface ContactInformationSectionProps {
   setFieldValue: SetFieldValue;
 }
 
+function formatOrganizationIdentifier(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 9);
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+}
+
 export default function ContactInformationSection({
   formData,
   onTextChange,
@@ -42,10 +52,21 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="EIN or Public-Sector Identifier*"
+          label="EIN or Public-Sector Identifier (Required)"
           fullWidth
+          placeholder="e.g., 52-3456789"
+          helperText='For US nonprofits, your 9-digit IRS EIN. For schools or government entities, your institutional identifier. For Non US nonprofits, use "00-0000000"'
+          inputProps={{
+            inputMode: "numeric",
+            maxLength: 10,
+          }}
           value={formData.organizationIdentifier}
-          onChange={onTextChange("organizationIdentifier")}
+          onChange={(e) =>
+            setFieldValue(
+              "organizationIdentifier",
+              formatOrganizationIdentifier(e.target.value),
+            )
+          }
         />
       </div>
 
