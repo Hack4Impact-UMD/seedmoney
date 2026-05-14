@@ -953,9 +953,9 @@ export default function GardenStoryStep() {
 
               <p className="text-sm">
                 <span className="text-blue-600 cursor-pointer hover:underline">
-                  Link
+                  Upload
                 </span>{" "}
-                or drag and drop
+                or drag and drop (Required)
               </p>
 
               <p className="text-xs text-gray-500">
@@ -1089,9 +1089,9 @@ export default function GardenStoryStep() {
 
               <p className="text-sm">
                 <span className="text-blue-600 cursor-pointer hover:underline">
-                  Link
+                  Upload
                 </span>{" "}
-                or drag and drop
+                or drag and drop (Optional)
               </p>
 
               <p className="text-xs text-gray-500">
