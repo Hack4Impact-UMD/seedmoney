@@ -208,7 +208,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label={<>Street 1*</>}
+              label="Address Line 1 (Required)"
               fullWidth
               name="mailingStreet1"
               autoComplete="new-password"
@@ -229,7 +229,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="Street 2"
+              label="Apartment, suite, etc. (Optional)"
               fullWidth
               name="mailingStreet2"
               autoComplete="new-password"
@@ -251,7 +251,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               select
-              label="Country*"
+              label="Country (Required)"
               variant="standard"
               fullWidth
               name="mailingCountry"
@@ -278,7 +278,11 @@ export default function ContactInformationStep() {
                 displayEmpty: true,
                 renderValue: (selected) => {
                   if (!selected) {
-                    return <span className="text-gray-400">Country*</span>;
+                    return (
+                      <span className="text-gray-400">
+                        Country (Required)
+                      </span>
+                    );
                   }
                   return String(selected);
                 },
@@ -305,7 +309,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="City*"
+              label="City or Town (Required)"
               fullWidth
               name="mailingCity"
               autoComplete="new-password"
@@ -328,7 +332,7 @@ export default function ContactInformationStep() {
             isUsMailingCountry ? (
               <TextField
                 select
-                label="State / Province*"
+                label="State or Province (Required)"
                 variant="standard"
                 fullWidth
                 name="mailingState"
@@ -343,7 +347,9 @@ export default function ContactInformationStep() {
                   renderValue: (selected) => {
                     if (!selected) {
                       return (
-                        <span className="text-gray-400">State / Province*</span>
+                        <span className="text-gray-400">
+                          State or Province (Required)
+                        </span>
                       );
                     }
                     const selectedState = STATES.find(
@@ -366,7 +372,7 @@ export default function ContactInformationStep() {
             ) : (
               <TextField
                 variant="standard"
-                label="State / Province*"
+                label="State or Province (Required)"
                 helperText="Write N/A if not applicable"
                 fullWidth
                 name="mailingState"
@@ -389,7 +395,7 @@ export default function ContactInformationStep() {
           {(field) => (
             <TextField
               variant="standard"
-              label="ZIP/Postal Code*"
+              label="ZIP/Postal Code (Required)"
               fullWidth
               name="mailingZip"
               autoComplete="new-password"

@@ -57,7 +57,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="Street 1*"
+          label="Address Line 1 (Required)"
           fullWidth
           value={formData.mailingStreet1}
           onChange={onTextChange("mailingStreet1")}
@@ -65,7 +65,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="Street 2"
+          label="Apartment, suite, etc. (Optional)"
           fullWidth
           value={formData.mailingStreet2}
           onChange={onTextChange("mailingStreet2")}
@@ -73,7 +73,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="Country*"
+          label="Country (Required)"
           fullWidth
           value={formData.mailingCountry}
           onChange={onTextChange("mailingCountry")}
@@ -81,7 +81,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="State / Province*"
+          label="State or Province (Required)"
           fullWidth
           value={formData.mailingState}
           onChange={onTextChange("mailingState")}
@@ -89,7 +89,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="City*"
+          label="City or Town (Required)"
           fullWidth
           value={formData.mailingCity}
           onChange={onTextChange("mailingCity")}
@@ -97,7 +97,7 @@ export default function ContactInformationSection({
 
         <TextField
           variant="standard"
-          label="ZIP/Postal Code*"
+          label="ZIP/Postal Code (Required)"
           fullWidth
           value={formData.mailingZip}
           onChange={onTextChange("mailingZip")}

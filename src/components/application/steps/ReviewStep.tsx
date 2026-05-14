@@ -625,16 +625,20 @@ export default function ReviewSubmitPage() {
           <span className="text-orange-500">*</span>
         </h3>
 
-        <ValueRow label="Street 1" value={values.mailingStreet1} required />
-        <ValueRow label="Street 2" value={values.mailingStreet2} />
-        <ValueRow label="City" value={values.mailingCity} required />
         <ValueRow
-          label="State / Province"
+          label="Address Line 1"
+          value={values.mailingStreet1}
+          required
+        />
+        <ValueRow label="Apartment, suite, etc." value={values.mailingStreet2} />
+        <ValueRow label="City or Town" value={values.mailingCity} required />
+        <ValueRow
+          label="State or Province"
           value={stateNames[values.mailingState] ?? values.mailingState}
           required
         />
         <ValueRow
-          label="ZIP / Postal Code"
+          label="ZIP/Postal Code"
           value={values.mailingZip}
           required
         />
