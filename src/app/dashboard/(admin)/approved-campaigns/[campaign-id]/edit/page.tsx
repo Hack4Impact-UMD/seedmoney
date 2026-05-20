@@ -31,6 +31,8 @@ import {
 import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 
+const MAX_BENEFICIARY_SELECTIONS = 3;
+
 export default function EditCampaignPage() {
   const router = useRouter();
   const params = useParams();
@@ -133,7 +135,9 @@ export default function EditCampaignPage() {
       const current = prev.gardenBeneficiaries;
       const next = current.includes(option)
         ? current.filter((item) => item !== option)
-        : [...current, option];
+        : current.length >= MAX_BENEFICIARY_SELECTIONS
+          ? current
+          : [...current, option];
       return { ...prev, gardenBeneficiaries: next };
     });
   }, []);

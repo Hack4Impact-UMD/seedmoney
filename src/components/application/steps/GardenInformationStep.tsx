@@ -29,6 +29,7 @@ const beneficiaryOptions = [
   "Urban communities",
   "Other (please specify)",
 ];
+const MAX_BENEFICIARY_SELECTIONS = 3;
 
 export default function GardenInformationStep() {
   const form = useApplicationForm();
@@ -360,7 +361,7 @@ export default function GardenInformationStep() {
           Challenge - it won&apos;t appear on your campaign page.
         </p>
 
-        <p className="text-sm">Select up to three populations (Required):</p>
+        <p className="text-sm">Select up to three populations:</p>
 
         <form.Field name="gardenBeneficiaries">
           {(field) => {
@@ -373,18 +374,32 @@ export default function GardenInformationStep() {
                     option === OTHER_OPTION
                       ? isOtherBeneficiarySelected
                       : field.state.value.includes(option);
+                  const isDisabled =
+                    !isChecked &&
+                    field.state.value.length >= MAX_BENEFICIARY_SELECTIONS;
 
                   return (
                     <label
                       key={option}
-                      className="flex items-center gap-3 cursor-pointer group"
+                      className={`flex items-center gap-3 group ${
+                        isDisabled
+                          ? "cursor-not-allowed opacity-50"
+                          : "cursor-pointer"
+                      }`}
                     >
                       <input
                         type="checkbox"
                         checked={isChecked}
+                        disabled={isDisabled}
                         onChange={(e) => {
                           if (option === OTHER_OPTION) {
                             if (e.target.checked) {
+                              if (
+                                field.state.value.length >=
+                                MAX_BENEFICIARY_SELECTIONS
+                              ) {
+                                return;
+                              }
                               setIsOtherBeneficiarySelected(true);
                             } else {
                               setIsOtherBeneficiarySelected(false);
@@ -400,6 +415,12 @@ export default function GardenInformationStep() {
                           }
 
                           if (e.target.checked) {
+                            if (
+                              field.state.value.length >=
+                              MAX_BENEFICIARY_SELECTIONS
+                            ) {
+                              return;
+                            }
                             const nextValue = [...field.state.value, option];
                             field.handleChange(nextValue);
                             void saveGardenInformationDraft({
@@ -448,6 +469,16 @@ export default function GardenInformationStep() {
                       const withoutCustom = field.state.value.filter((item) =>
                         beneficiaryOptions.includes(item),
                       );
+                      const hasCustomValue =
+                        field.state.value.length > withoutCustom.length;
+
+                      if (
+                        customValue &&
+                        !hasCustomValue &&
+                        withoutCustom.length >= MAX_BENEFICIARY_SELECTIONS
+                      ) {
+                        return;
+                      }
 
                       field.handleChange(
                         customValue

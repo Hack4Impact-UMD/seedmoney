@@ -17,6 +17,8 @@ interface GardenInformationSectionProps {
   onToggleBeneficiary: (option: string) => void;
 }
 
+const MAX_BENEFICIARY_SELECTIONS = 3;
+
 export default function GardenInformationSection({
   formData,
   categoryOptions,
@@ -104,21 +106,28 @@ export default function GardenInformationSection({
           Challenge - it won&apos;t appear on your campaign page.
         </p>
 
-        <p className="text-sm">Select up to three populations (Required):</p>
+        <p className="text-sm">Select up to three populations:</p>
 
         <div className="flex flex-col gap-3">
           {beneficiaryOptions.map((option) => {
             const isChecked = formData.gardenBeneficiaries.includes(option);
+            const isDisabled =
+              !isChecked &&
+              formData.gardenBeneficiaries.length >=
+                MAX_BENEFICIARY_SELECTIONS;
             return (
               <label
                 key={option}
-                className="flex items-center gap-3 cursor-pointer group"
+                className={`flex items-center gap-3 group ${
+                  isDisabled ? "cursor-not-allowed opacity-50" : "cursor-pointer"
+                }`}
               >
                 <input
                   type="checkbox"
                   checked={isChecked}
+                  disabled={isDisabled}
                   onChange={() => onToggleBeneficiary(option)}
-                  className="w-[18px] h-[18px] cursor-pointer"
+                  className="w-[18px] h-[18px] cursor-pointer disabled:cursor-not-allowed"
                 />
                 <span className="text-sm group-hover:text-gray-900">
                   {option}
