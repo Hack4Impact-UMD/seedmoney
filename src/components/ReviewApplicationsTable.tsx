@@ -191,26 +191,55 @@ export default function ReviewApplicationsTable({ applications }: Props) {
 
       if (status === "approved") {
         const results = await createGivebutterCampaigns(ids);
+        const failedCampaignIds: number[] = [];
+        const successfulCampaignUpdates: Promise<unknown>[] = [];
 
-        await Promise.all(
-          results.map(async (result, index) => {
-            if (result.status === "rejected") {
-              console.error(
-                `Failed to create Givebutter campaign for ID ${ids[index]}:`,
-                result.reason,
-              );
-              return;
-            }
-            await updateCampaignMutation.mutateAsync({
-              campaignId: ids[index],
+        results.forEach((result, index) => {
+          const campaignId = ids[index];
+          if (campaignId === undefined) return;
+
+          if (result.status === "rejected") {
+            failedCampaignIds.push(campaignId);
+            console.error(
+              `Failed to create Givebutter campaign for ID ${campaignId}:`,
+              result.reason,
+            );
+            return;
+          }
+
+          successfulCampaignUpdates.push(
+            updateCampaignMutation.mutateAsync({
+              campaignId,
               campaignData: {
                 givebutter_id: result.value.id,
                 givebutter_slug: result.value.slug,
                 givebutterlink: result.value.url,
               },
-            });
-          }),
-        );
+            }),
+          );
+        });
+
+        if (failedCampaignIds.length > 0) {
+          await Promise.all(
+            failedCampaignIds.map((id) =>
+              updateCampaignMutation.mutateAsync({
+                campaignId: id,
+                campaignData: { status: "publish_failed" },
+              }),
+            ),
+          );
+        }
+
+        await Promise.all(successfulCampaignUpdates);
+
+        if (failedCampaignIds.length > 0) {
+          setNotification({ action: "error", campaignNames: [] });
+          setSnackbarOpen(true);
+          setSelectedIds([]);
+          setPendingAction(null);
+          await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
+          return;
+        }
       }
 
       const action =
