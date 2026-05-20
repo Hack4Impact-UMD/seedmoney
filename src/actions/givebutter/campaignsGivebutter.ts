@@ -6,9 +6,77 @@ import type { Campaign } from "@/src/types";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const BUCKET_NAME = "campaign_images";
+const GIVEBUTTER_MAX_ATTEMPTS = 3;
+const GIVEBUTTER_RETRY_BASE_DELAY_MS = 500;
 
 const getPublicUrl = (storagePath: string) =>
   `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${storagePath}`;
+
+function isRetryableGivebutterStatus(status: number) {
+  return status === 408 || status === 429 || status >= 500;
+}
+
+function getRetryDelayMs(response: Response | null, attempt: number) {
+  const retryAfter = response?.headers.get("retry-after");
+  const retryAfterSeconds = retryAfter ? Number(retryAfter) : NaN;
+
+  if (Number.isFinite(retryAfterSeconds) && retryAfterSeconds > 0) {
+    return retryAfterSeconds * 1000;
+  }
+
+  return GIVEBUTTER_RETRY_BASE_DELAY_MS * 2 ** attempt;
+}
+
+function wait(ms: number) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function fetchGivebutterWithRetry(
+  url: string,
+  init: RequestInit,
+): Promise<Response> {
+  let lastError: unknown;
+
+  for (let attempt = 0; attempt < GIVEBUTTER_MAX_ATTEMPTS; attempt += 1) {
+    let response: Response | null = null;
+
+    try {
+      response = await fetch(url, init);
+
+      if (
+        response.ok ||
+        !isRetryableGivebutterStatus(response.status) ||
+        attempt === GIVEBUTTER_MAX_ATTEMPTS - 1
+      ) {
+        return response;
+      }
+    } catch (error) {
+      lastError = error;
+
+      if (attempt === GIVEBUTTER_MAX_ATTEMPTS - 1) {
+        throw error;
+      }
+    }
+
+    await wait(getRetryDelayMs(response, attempt));
+  }
+
+  throw lastError;
+}
+
+async function readErrorBody(response: Response) {
+  const text = await response.text();
+
+  if (!text) {
+    return response.statusText;
+  }
+
+  try {
+    return JSON.parse(text);
+  } catch {
+    return text;
+  }
+}
 
 export async function createGivebutterCampaigns(campaignIds: number[]) {
   const supabase = await createServerClient();
@@ -78,37 +146,48 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         }),
       };
 
-      const createResponse = await fetch("https://api.givebutter.com/v1/campaigns", {
-        method: "POST",
-        headers: {
-          "Authorization": `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
-          "Content-Type": "application/json",
+      // Do not retry this POST without an idempotency key; a lost response
+      // after a successful create could duplicate campaigns in Givebutter.
+      const createResponse = await fetch(
+        "https://api.givebutter.com/v1/campaigns",
+        {
+          method: "POST",
+          headers: {
+            "Authorization": `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(body),
         },
-        body: JSON.stringify(body),
-      });
+      );
 
       if (!createResponse.ok) {
-        const error = await createResponse.json();
+        const error = await readErrorBody(createResponse);
         throw new Error(`Failed to create campaign (${createResponse.status}): ${JSON.stringify(error)}`);
       }
 
       const givebutterCampaign = await createResponse.json();
 
-      const patchResponse = await fetch(`https://api.givebutter.com/v1/campaigns/${givebutterCampaign.id}`, {
-        method: "PUT",
-        headers: {
-          "Authorization": `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
-          "Content-Type": "application/json",
+      const patchResponse = await fetchGivebutterWithRetry(
+        `https://api.givebutter.com/v1/campaigns/${givebutterCampaign.id}`,
+        {
+          method: "PUT",
+          headers: {
+            "Authorization": `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ published: 0 }),
         },
-        body: JSON.stringify({ published: 0 }),
-      });
+      );
 
       if (!patchResponse.ok) {
-        const error = await patchResponse.json();
+        const error = await readErrorBody(patchResponse);
         throw new Error(`Failed to unpublish campaign (${patchResponse.status}): ${JSON.stringify(error)}`);
       }
 
-      return patchResponse.json();
+      return {
+        ...(await patchResponse.json()),
+        campaignId: campaign.campaign_id,
+      };
     }),
   );
 

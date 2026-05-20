@@ -169,7 +169,7 @@ export default function CampaignReviewPage() {
         });
 
         if (newStatus === "approved") {
-          let givebutterPushCompleted = false;
+          let givebutterSyncCompleted = false;
 
           try {
             const results = await createGivebutterCampaign.mutateAsync([
@@ -180,7 +180,6 @@ export default function CampaignReviewPage() {
             if (result.status === "rejected") {
               throw new Error(result.reason);
             }
-            givebutterPushCompleted = true;
 
             await updateCampaignMutation.mutateAsync({
               campaignId: parsedCampaignId,
@@ -190,8 +189,9 @@ export default function CampaignReviewPage() {
                 givebutterlink: result.value.url,
               },
             });
+            givebutterSyncCompleted = true;
           } catch (err) {
-            if (!givebutterPushCompleted) {
+            if (!givebutterSyncCompleted) {
               await updateCampaignMutation.mutateAsync({
                 campaignId: parsedCampaignId,
                 campaignData: { status: "publish_failed" },
