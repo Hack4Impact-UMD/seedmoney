@@ -91,14 +91,14 @@ function getBestStatus(campaigns: UserCampaign[]): Status {
 
 const APP_STATUS_CONFIG: Record<
   Status,
-  { label: string; buttonLabel: string }
+  { label: string; buttonLabel: string | null }
 > = {
   in_progress: { label: "in-progress", buttonLabel: "VIEW APPLICATION" },
   pending: { label: "pending", buttonLabel: "VIEW APPLICATION" },
   approved: { label: "approved", buttonLabel: "VIEW CAMPAIGN" },
   denied: { label: "denied", buttonLabel: "VIEW APPLICATION" },
   published: { label: "published", buttonLabel: "VIEW CAMPAIGN" },
-  publish_failed: { label: "publish failed", buttonLabel: "VIEW CAMPAIGN" },
+  publish_failed: { label: "publish failed", buttonLabel: null },
   archived: { label: "archived", buttonLabel: "VIEW CAMPAIGN" },
 };
 
@@ -165,7 +165,7 @@ function getStatusSummaryText(status: Status, count: number, fullName: string) {
     case "published":
       return `${fullName} has ${count} published campaign${count === 1 ? "" : "s"}:`;
     case "publish_failed":
-      return `${fullName} has ${count} publish failed campaign${count === 1 ? "" : "s"}:`;
+      return `${fullName} has ${count} campaign${count === 1 ? "" : "s"} that failed to publish:`;
     case "archived":
       return `${fullName} has ${count} archived campaign${count === 1 ? "" : "s"}:`;
     case "in_progress":
@@ -1005,7 +1005,7 @@ export default function UsersTable({
             >
               <div className="mb-6 flex items-start justify-between gap-4">
                 <h2 className="text-[20px] font-semibold text-[#123A1E]">
-                  Application Status
+                  Submission Status
                 </h2>
                 <button
                   type="button"
@@ -1041,25 +1041,27 @@ export default function UsersTable({
                                 <span className="text-gray-700">
                                   {campaign.name}
                                 </span>
-                                <Button
-                                  variant="contained"
-                                  size="medium"
-                                  onClick={() => {
-                                    const path = getCampaignStatusPath(
-                                      status,
-                                      campaign.campaign_id,
-                                    );
+                                {config.buttonLabel && (
+                                  <Button
+                                    variant="contained"
+                                    size="medium"
+                                    onClick={() => {
+                                      const path = getCampaignStatusPath(
+                                        status,
+                                        campaign.campaign_id,
+                                      );
 
-                                    if (!path) {
-                                      return;
-                                    }
+                                      if (!path) {
+                                        return;
+                                      }
 
-                                    setStatusTarget(null);
-                                    router.push(path);
-                                  }}
-                                >
-                                  {config.buttonLabel}
-                                </Button>
+                                      setStatusTarget(null);
+                                      router.push(path);
+                                    }}
+                                  >
+                                    {config.buttonLabel}
+                                  </Button>
+                                )}
                               </div>
                             ))}
                           </div>
