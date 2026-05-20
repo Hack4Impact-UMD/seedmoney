@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-} from "@mui/material";
+import { TextField } from "@mui/material";
 
 import {
   EditCampaignFormData,
@@ -56,7 +50,7 @@ export default function GardenInformationSection({
         />
 
         <TextField
-          label="City (Required)"
+          label="City or Town (Required)"
           variant="standard"
           fullWidth
           value={formData.gardenCity}
@@ -69,7 +63,13 @@ export default function GardenInformationSection({
           Primary Project Category <span className="text-orange-500">*</span>
         </h2>
 
-        <p className="text-sm">Select one:</p>
+        <p className="text-sm text-gray-600">
+          Select the category that BEST describes your project. This helps
+          SeedMoney understand the types of gardens in the Challenge - it
+          won&apos;t appear on your campaign page.
+        </p>
+
+        <p className="text-sm">Select one (Required):</p>
 
         <div className="flex flex-col gap-3">
           {categoryOptions.map((option) => (
@@ -98,7 +98,13 @@ export default function GardenInformationSection({
           <span className="text-orange-500">*</span>
         </h2>
 
-        <p className="text-sm">Select all that apply:</p>
+        <p className="text-sm text-gray-600">
+          Select up to 3 that BEST describe the primary communities your garden
+          serves. This information helps SeedMoney report on the impact of the
+          Challenge - it won&apos;t appear on your campaign page.
+        </p>
+
+        <p className="text-sm">Select up to three populations (Required):</p>
 
         <div className="flex flex-col gap-3">
           {beneficiaryOptions.map((option) => {

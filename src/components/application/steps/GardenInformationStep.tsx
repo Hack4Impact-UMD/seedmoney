@@ -251,7 +251,7 @@ export default function GardenInformationStep() {
         <form.Field name="gardenCity">
           {(field) => (
             <TextField
-              label="City (Required)"
+              label="City or Town (Required)"
               variant="standard"
               fullWidth
               name="gardenCity"
@@ -278,7 +278,13 @@ export default function GardenInformationStep() {
           Primary Project Category <span className="text-orange-500">*</span>
         </h2>
 
-        <p className="text-sm">Select one:</p>
+        <p className="text-sm text-gray-600">
+          Select the category that BEST describes your project. This helps
+          SeedMoney understand the types of gardens in the Challenge - it
+          won&apos;t appear on your campaign page.
+        </p>
+
+        <p className="text-sm">Select one (Required):</p>
 
         <form.Field name="gardenCategory">
           {(field) => (
@@ -348,7 +354,13 @@ export default function GardenInformationStep() {
           <span className="text-orange-500">*</span>
         </h2>
 
-        <p className="text-sm">Select all that apply:</p>
+        <p className="text-sm text-gray-600">
+          Select up to 3 that BEST describe the primary communities your garden
+          serves. This information helps SeedMoney report on the impact of the
+          Challenge - it won&apos;t appear on your campaign page.
+        </p>
+
+        <p className="text-sm">Select up to three populations (Required):</p>
 
         <form.Field name="gardenBeneficiaries">
           {(field) => {

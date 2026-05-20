@@ -66,14 +66,12 @@ export default function CampaignInformationSection({
           Project Details & Impact <span className="text-orange-500">*</span>
         </h2>
 
-        <div className="flex flex-col gap-2">
-          <p className="text-sm text-gray-600">
-            About how many people will benefit from this garden this year?
-          </p>
+        <div>
           <TextField
             variant="standard"
             fullWidth
-            label="Number of people served (Required)"
+            label="About how many people will benefit from this garden this year? (Required)"
+            helperText="An estimate is fine - include gardeners, volunteers, families who receive produce, students, etc."
             value={formData.beneficiaryCount}
             onChange={(event) =>
               setFieldValue(
@@ -90,7 +88,9 @@ export default function CampaignInformationSection({
           />
         </div>
 
-        <p className="pt-2 text-sm">Is this a new or existing garden?</p>
+        <p className="pt-2 text-sm">
+          Is this a new or existing garden? (Required)
+        </p>
 
         <div className="flex flex-col gap-4">
           <label className="flex items-center gap-3 cursor-pointer group">
@@ -102,7 +102,9 @@ export default function CampaignInformationSection({
               onChange={() => setFieldValue("gardenStatus", "new")}
               className="w-5 h-5 cursor-pointer"
             />
-            <span className="text-sm">New garden</span>
+            <span className="text-sm">
+              New - this garden is being started this year
+            </span>
           </label>
 
           <label className="flex items-center gap-3 cursor-pointer group">
@@ -114,12 +116,15 @@ export default function CampaignInformationSection({
               onChange={() => setFieldValue("gardenStatus", "existing")}
               className="w-5 h-5 cursor-pointer"
             />
-            <span className="text-sm">Existing garden</span>
+            <span className="text-sm">
+              Existing - this garden has been operating for one or more seasons
+            </span>
           </label>
         </div>
 
         <TextField
           label="Approximate garden size or scope (Required)"
+          helperText="e.g., 12 raised beds, quarter-acre lot, two-acre farm, three school garden sites"
           variant="standard"
           fullWidth
           value={formData.gardenSize}
@@ -133,7 +138,9 @@ export default function CampaignInformationSection({
         </h2>
 
         <p className="text-sm text-gray-600">
-          Most SeedMoney projects set goals between $500 and $5,000
+          Most SeedMoney projects set goals between $500 and $5,000. Choose a
+          goal that feels ambitious but achievable for your network. You&apos;ll
+          keep 100% of what you raise, whether you reach your goal or not.
         </p>
 
         <TextField

@@ -359,7 +359,7 @@ export default function ReviewSubmitPage() {
                   <div className="w-2 h-2 bg-blue-600 rounded-full" />
                 )}
               </div>
-              <span>New garden</span>
+              <span>New - this garden is being started this year</span>
             </div>
 
             <div className="flex items-center gap-2">
@@ -374,7 +374,10 @@ export default function ReviewSubmitPage() {
                   <div className="w-2 h-2 bg-blue-600 rounded-full" />
                 )}
               </div>
-              <span>Existing garden</span>
+              <span>
+                Existing - this garden has been operating for one or more
+                seasons
+              </span>
             </div>
           </div>
         </div>

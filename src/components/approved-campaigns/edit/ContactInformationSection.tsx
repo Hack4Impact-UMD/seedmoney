@@ -1,12 +1,6 @@
 "use client";
 
-import {
-  FormControl,
-  InputLabel,
-  MenuItem,
-  Select,
-  TextField,
-} from "@mui/material";
+import { TextField } from "@mui/material";
 import {
   EditCampaignFormData,
   SetFieldValue,
@@ -46,6 +40,8 @@ export default function ContactInformationSection({
           variant="standard"
           label="Legal Name of Beneficiary Organization (Required)"
           fullWidth
+          placeholder="e.g., Riverside Neighborhood Association, Inc."
+          helperText="The official name of the nonprofit, school, government entity, or fiscal sponsor that will receive funds. We cannot send funds to individuals."
           value={formData.organizationName}
           onChange={onTextChange("organizationName")}
         />
@@ -88,6 +84,7 @@ export default function ContactInformationSection({
           variant="standard"
           label="Apartment, suite, etc. (Optional)"
           fullWidth
+          helperText="e.g., 3rd floor"
           value={formData.mailingStreet2}
           onChange={onTextChange("mailingStreet2")}
         />
@@ -120,6 +117,7 @@ export default function ContactInformationSection({
           variant="standard"
           label="ZIP/Postal Code (Required)"
           fullWidth
+          helperText='Enter "00000" if not applicable'
           value={formData.mailingZip}
           onChange={onTextChange("mailingZip")}
         />
@@ -150,6 +148,7 @@ export default function ContactInformationSection({
           variant="standard"
           label="Email (Required)"
           fullWidth
+          helperText="This email will be used for your dashboard login and all campaign notifications. Please use an address you check regularly."
           value={formData.contactEmail}
           onChange={onTextChange("contactEmail")}
         />
@@ -158,6 +157,7 @@ export default function ContactInformationSection({
           variant="standard"
           label="Role or Title (Optional)"
           fullWidth
+          placeholder="e.g., Garden Coordinator, Executive Director, Volunteer Lead"
           value={formData.contactRole}
           onChange={onTextChange("contactRole")}
         />

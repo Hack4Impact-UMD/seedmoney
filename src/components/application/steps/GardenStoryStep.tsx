@@ -668,6 +668,7 @@ export default function GardenStoryStep() {
                   minRows={5}
                   maxRows={10}
                   name="storyLocationAndAudience"
+                  placeholder="The Full Belly Community Garden in Scarborough, Maine, provides over 300 pounds of organic produce annually to local food-insecure families and seniors. Beyond its harvest, it serves as an educational hub for at-risk youth and neighbors through nature exploration and hands-on gardening workshops."
                   value={field.state.value}
                   InputLabelProps={{
                     sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
@@ -728,6 +729,7 @@ export default function GardenStoryStep() {
                   minRows={5}
                   maxRows={10}
                   name="storyChallenge"
+                  placeholder="The Full Belly Community Garden addresses the challenge of food insecurity, specifically the difficulty many local families and seniors face in accessing fresh, affordable organic produce."
                   value={field.state.value}
                   InputLabelProps={{
                     sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
@@ -788,6 +790,7 @@ export default function GardenStoryStep() {
                   minRows={5}
                   maxRows={10}
                   name="storySeasonActivity"
+                  placeholder='During the growing season, it serves as a "vibrant oasis" where volunteers host monthly workshops to teach gardening skills and provide a safe space for at-risk youth to explore nature.'
                   value={field.state.value}
                   InputLabelProps={{
                     sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },
@@ -848,6 +851,7 @@ export default function GardenStoryStep() {
                   minRows={5}
                   maxRows={10}
                   name="storyCampaignImpact"
+                  placeholder="These contributions allow the garden to continue its mission of providing over 300 pounds of organic food to local food-insecure families and seniors at the Elm Street Senior Center."
                   value={field.state.value}
                   InputLabelProps={{
                     sx: { whiteSpace: "normal", pr: 2, lineHeight: 1.2 },

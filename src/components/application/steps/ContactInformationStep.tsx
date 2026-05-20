@@ -171,6 +171,8 @@ export default function ContactInformationStep() {
               fullWidth
               name="organizationName"
               autoComplete="organization"
+              placeholder="e.g., Riverside Neighborhood Association, Inc."
+              helperText="The official name of the nonprofit, school, government entity, or fiscal sponsor that will receive funds. We cannot send funds to individuals."
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -257,6 +259,7 @@ export default function ContactInformationStep() {
               fullWidth
               name="mailingStreet2"
               autoComplete="new-password"
+              helperText="e.g., 3rd floor"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -423,6 +426,7 @@ export default function ContactInformationStep() {
               fullWidth
               name="mailingZip"
               autoComplete="new-password"
+              helperText='Enter "00000" if not applicable'
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -493,6 +497,7 @@ export default function ContactInformationStep() {
               fullWidth
               name="contactEmail"
               autoComplete="email"
+              helperText="This email will be used for your dashboard login and all campaign notifications. Please use an address you check regularly."
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
@@ -514,6 +519,7 @@ export default function ContactInformationStep() {
               fullWidth
               name="contactRole"
               autoComplete="organization-title"
+              placeholder="e.g., Garden Coordinator, Executive Director, Volunteer Lead"
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();

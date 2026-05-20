@@ -9,7 +9,7 @@ interface StoryComparisonBlockProps {
   aiValue: string;
   finalValue: string;
   onFinalChange: ReturnType<TextChangeHandler>;
-  saveLabel: string;
+  finalPlaceholder: string;
 }
 
 function StoryComparisonBlock({
@@ -18,7 +18,7 @@ function StoryComparisonBlock({
   aiValue,
   finalValue,
   onFinalChange,
-  saveLabel,
+  finalPlaceholder,
 }: StoryComparisonBlockProps) {
   return (
     <>
@@ -68,7 +68,7 @@ function StoryComparisonBlock({
       <div className="w-full">
         <TextField
           variant="standard"
-          placeholder="Write your final version here..."
+          placeholder={finalPlaceholder}
           fullWidth
           multiline
           value={finalValue}
@@ -112,7 +112,7 @@ export default function GardenStorySection({
               aiValue={formData.storyLocationAndAudienceAI}
               finalValue={formData.storyLocationAndAudienceFinal}
               onFinalChange={onTextChange("storyLocationAndAudienceFinal")}
-              saveLabel="Saving final story:"
+              finalPlaceholder="The Full Belly Community Garden in Scarborough, Maine, provides over 300 pounds of organic produce annually to local food-insecure families and seniors. Beyond its harvest, it serves as an educational hub for at-risk youth and neighbors through nature exploration and hands-on gardening workshops."
             />
           )}
 
@@ -123,7 +123,7 @@ export default function GardenStorySection({
               aiValue={formData.storyChallengeAI}
               finalValue={formData.storyChallengeFinal}
               onFinalChange={onTextChange("storyChallengeFinal")}
-              saveLabel="Saving final story challenge:"
+              finalPlaceholder="The Full Belly Community Garden addresses the challenge of food insecurity, specifically the difficulty many local families and seniors face in accessing fresh, affordable organic produce."
             />
           )}
 
@@ -134,7 +134,7 @@ export default function GardenStorySection({
               aiValue={formData.storySeasonActivityAI}
               finalValue={formData.storySeasonActivityFinal}
               onFinalChange={onTextChange("storySeasonActivityFinal")}
-              saveLabel="Saving final story season activity:"
+              finalPlaceholder='During the growing season, it serves as a "vibrant oasis" where volunteers host monthly workshops to teach gardening skills and provide a safe space for at-risk youth to explore nature.'
             />
           )}
 
@@ -145,7 +145,7 @@ export default function GardenStorySection({
               aiValue={formData.storyCampaignImpactAI}
               finalValue={formData.storyCampaignImpactFinal}
               onFinalChange={onTextChange("storyCampaignImpactFinal")}
-              saveLabel="Saving final story campaign impact:"
+              finalPlaceholder="These contributions allow the garden to continue its mission of providing over 300 pounds of organic food to local food-insecure families and seniors at the Elm Street Senior Center."
             />
           )}
         </div>
