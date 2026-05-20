@@ -32,6 +32,7 @@ interface Props {
   initialData: UsersTableRow[];
   competitionYearMap: Map<number, number>;
   selectedYear: number;
+  currentYear: number;
 }
 
 type AggregateStatus = Status | "mixed";
@@ -51,13 +52,13 @@ const STATUS_LABELS: Record<AggregateStatus, string> = {
 };
 
 const FILTER_OPTIONS: { value: FilterStatus; label: string }[] = [
-  { value: "approved", label: "Approved" },
-  { value: "pending", label: "Pending" },
-  { value: "denied", label: "Denied" },
-  { value: "in_progress", label: "In Progress" },
-  { value: "not_started", label: "Not Started" },
   { value: "published", label: "Published" },
   { value: "publish_failed", label: "Publish Failed" },
+  { value: "approved", label: "Approved" },
+  { value: "denied", label: "Denied" },
+  { value: "pending", label: "Pending" },
+  { value: "in_progress", label: "In Progress" },
+  { value: "not_started", label: "Not Started" },
   { value: "archived", label: "Archived" },
 ];
 
@@ -75,12 +76,11 @@ function getAggregateStatus(campaigns: UserCampaign[]): AggregateStatus {
 }
 
 const STATUS_PRIORITY: Status[] = [
-  "approved",
-  "published",
   "publish_failed",
+  "published",
+  "approved",
   "pending",
   "in_progress",
-  "denied",
   "archived",
 ];
 
@@ -173,6 +173,44 @@ function getStatusSummaryText(status: Status, count: number, fullName: string) {
   }
 }
 
+const STATUS_CHIP_STYLES: Record<AggregateStatus, {
+  avatarClassName: string;
+  chipClassName: string;
+}> = {
+  publish_failed: {
+    avatarClassName: "bg-[#C62828]!",
+    chipClassName: "border-[#D32F2F]! text-[#D32F2F]!",
+  },
+  published: {
+    avatarClassName: "bg-[#1B5E20]!",
+    chipClassName: "border-[#2E7D32]! text-[#2E7D32]!",
+  },
+  approved: {
+    avatarClassName: "bg-[#1976D2]!",
+    chipClassName: "border-[#1976D2]! text-[#1976D2]!",
+  },
+  pending: {
+    avatarClassName: "bg-[#7B1FA2]!",
+    chipClassName: "border-[#9C27B0]! text-[#9C27B0]!",
+  },
+  in_progress: {
+    avatarClassName: "bg-[#E65100]!",
+    chipClassName: "border-[#EF6C00]! text-[#EF6C00]!",
+  },
+  denied: {
+    avatarClassName: "bg-[#C62828]!",
+    chipClassName: "border-[#E53935]! text-[#C62828]!",
+  },
+  archived: {
+    avatarClassName: "bg-[#757575]!",
+    chipClassName: "border-[#BDBDBD]! text-[#9E9E9E]!",
+  },
+  mixed: {
+    avatarClassName: "bg-[#757575]!",
+    chipClassName: "border-[#BDBDBD]! text-[#9E9E9E]!",
+  },
+};
+
 function CampaignsSummaryBadge({
   status,
   count,
@@ -184,99 +222,8 @@ function CampaignsSummaryBadge({
   onClick?: () => void;
   bestStatus?: Status;
 }) {
-  if (status === "approved" || status === "published" || status === "pending") {
-    return (
-      <span onClick={onClick} className="cursor-pointer">
-        <Chip
-          variant="outlined"
-          label={STATUS_LABELS[status]}
-          {...(count > 1 && {
-            avatar: (
-              <Avatar className="bg-[#1B5E20]! text-white! font-bold! text-xs!">
-                {count}
-              </Avatar>
-            ),
-          })}
-          className="border-[#2E7D32]! text-[#2E7D32]! font-medium! text-sm! cursor-pointer!"
-        />
-      </span>
-    );
-  }
-
-  if (status === "denied") {
-    return (
-      <span onClick={onClick} className="cursor-pointer">
-        <Chip
-          variant="outlined"
-          label={STATUS_LABELS[status]}
-          {...(count > 1 && {
-            avatar: (
-              <Avatar className="bg-[#C62828]! text-white! font-bold! text-xs!">
-                {count}
-              </Avatar>
-            ),
-          })}
-          className="border-[#E53935]! text-[#C62828]! font-medium! text-sm! cursor-pointer!"
-        />
-      </span>
-    );
-  }
-
-  if (status === "in_progress") {
-    return (
-      <span onClick={onClick} className="cursor-pointer">
-        <Chip
-          variant="outlined"
-          label={STATUS_LABELS[status]}
-          {...(count > 1 && {
-            avatar: (
-              <Avatar className="bg-[#01579B]! text-white! font-bold! text-xs!">
-                {count}
-              </Avatar>
-            ),
-          })}
-          className="border-[#0288D1]! text-[#0288D1]! font-medium! text-sm! cursor-pointer!"
-        />
-      </span>
-    );
-  }
-
-  if (status === "mixed") {
-    let avatarBg = "bg-[#757575]!";
-    let chipColors = "border-[#BDBDBD]! text-[#9E9E9E]!";
-
-    if (
-      bestStatus === "approved" ||
-      bestStatus === "published" ||
-      bestStatus === "pending"
-    ) {
-      avatarBg = "bg-[#1B5E20]!";
-      chipColors = "border-[#2E7D32]! text-[#2E7D32]!";
-    } else if (bestStatus === "in_progress") {
-      avatarBg = "bg-[#01579B]!";
-      chipColors = "border-[#0288D1]! text-[#0288D1]!";
-    } else if (bestStatus === "denied") {
-      avatarBg = "bg-[#C62828]!";
-      chipColors = "border-[#E53935]! text-[#C62828]!";
-    }
-
-    return (
-      <span onClick={onClick} className="cursor-pointer">
-        <Chip
-          variant="outlined"
-          label={STATUS_LABELS[status]}
-          {...(count > 1 && {
-            avatar: (
-              <Avatar className={`${avatarBg} text-white! font-bold! text-xs!`}>
-                {count}
-              </Avatar>
-            ),
-          })}
-          className={`${chipColors} font-medium! text-sm! cursor-pointer!`}
-        />
-      </span>
-    );
-  }
+  const styleStatus = status === "mixed" && bestStatus ? bestStatus : status;
+  const styles = STATUS_CHIP_STYLES[styleStatus];
 
   return (
     <span onClick={onClick} className="cursor-pointer">
@@ -285,12 +232,14 @@ function CampaignsSummaryBadge({
         label={STATUS_LABELS[status]}
         {...(count > 1 && {
           avatar: (
-            <Avatar className="bg-[#757575]! text-white! font-bold! text-xs!">
+            <Avatar
+              className={`${styles.avatarClassName} text-white! font-bold! text-xs!`}
+            >
               {count}
             </Avatar>
           ),
         })}
-        className="border-[#BDBDBD]! text-[#BDBDBD]! font-medium! text-sm! cursor-pointer!"
+        className={`${styles.chipClassName} font-medium! text-sm! cursor-pointer!`}
       />
     </span>
   );
@@ -302,6 +251,7 @@ export default function UsersTable({
   initialData,
   competitionYearMap,
   selectedYear,
+  currentYear,
 }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -371,7 +321,7 @@ export default function UsersTable({
       }),
       columnHelper.display({
         id: "campaigns",
-        header: "Campaigns",
+        header: "Submission Status",
         cell: ({ row }) => {
           const { campaigns } = row.original;
           if (campaigns.length === 0) {
@@ -421,9 +371,15 @@ export default function UsersTable({
       campaigns: user.campaigns.filter((campaign) => {
         if (!campaign || !campaign.competition_id) return false;
         return competitionYearMap.get(campaign.competition_id) === selectedYear;
-      }),
+      }).map((campaign) => ({
+        ...campaign,
+        status:
+          selectedYear !== currentYear && campaign.status === "approved"
+            ? "archived"
+            : campaign.status,
+      })),
     }));
-  }, [initialData, competitionYearMap, selectedYear]);
+  }, [currentYear, initialData, competitionYearMap, selectedYear]);
 
   const activeStatusFilters = useMemo<FilterStatus[]>(() => {
     if (mobileStatusFilters.length) {
@@ -725,7 +681,7 @@ export default function UsersTable({
             <div className="flex items-center gap-2">
               <div className="relative w-64">
                 <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs text-gray-400">
-                  Filter By Application Status
+                  Filter By Submission Status
                 </label>
                 <div className="flex items-center rounded-lg border border-gray-400 px-3 py-2.5">
                   <select

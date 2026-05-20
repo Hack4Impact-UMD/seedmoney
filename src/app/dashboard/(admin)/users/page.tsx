@@ -24,12 +24,12 @@ export default function Users() {
   }, [competitionYearMap]);
 
   const currentCompetition = competitions.find((c) => c.is_current);
-  const defaultYear = currentCompetition
+  const currentYear = currentCompetition
     ? new Date(currentCompetition.start_date).getFullYear()
     : new Date().getFullYear();
 
   const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const activeYear = selectedYear ?? defaultYear;
+  const activeYear = selectedYear ?? currentYear;
 
   const isLoading = isLoadingUsers || isLoadingCompetitions;
 
@@ -95,6 +95,7 @@ export default function Users() {
               initialData={usersTableRows}
               competitionYearMap={competitionYearMap}
               selectedYear={activeYear}
+              currentYear={currentYear}
             />
           )}
         </div>
