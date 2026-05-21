@@ -23,7 +23,6 @@ import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import Button from "@mui/material/Button";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
-import useDonorsChangePercent from "@/src/hooks/transactions/useDonorsChangePercent";
 import BaseModal from "@/src/components/bases/BaseModal";
 import LogoutIcon from "@mui/icons-material/Logout";
 import OpenInNew from "@mui/icons-material/OpenInNew";
@@ -43,6 +42,11 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const { campaignId } = useParams<{ campaignId: string }>();
   const { user } = useAuth();
+  const selectedTab: DashboardTab = pathname.endsWith("/donors")
+    ? "Donations"
+    : pathname.endsWith("/analytics")
+      ? "Analytics"
+      : "Overview";
   const {
     data: userData,
     isLoading: isLoadingUser,
@@ -61,19 +65,10 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   } = useRaisedChangePercent(
     Number(campaignId),
     currentCompetitionData?.start_date,
-  );
-  const {
-    percent: donorsPercent,
-    isLoading: donorsLoading,
-    isError: donorsError,
-  } = useDonorsChangePercent(
-    Number(campaignId),
-    currentCompetitionData?.start_date,
+    { enabled: selectedTab === "Overview" },
   );
   const raisedChangePercent =
     raisedLoading || raisedError ? null : raisedPercent;
-  const donorsChangePercent =
-    donorsLoading || donorsError ? null : donorsPercent;
   const [toast, setToast] = useState(false);
   const [viewCampaignModal, setViewCampaignModal] = useState(false);
   const submissionToastOpen = searchParams.get("submitted") === "1";
@@ -119,12 +114,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     : null;
 
   const selectedCampaignId = Number(campaignId);
-
-  const selectedTab: DashboardTab = pathname.endsWith("/donors")
-    ? "Donations"
-    : pathname.endsWith("/analytics")
-      ? "Analytics"
-      : "Overview";
 
   const handleTabChange = (newValue: string) => {
     const basePath = `/dashboard/${selectedCampaignId}`;
@@ -292,7 +281,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-6">
             <TotalDonorsCard
               totalDonors={campaignData.donors}
-              donorsChangePercent={donorsChangePercent}
             />
 
             <DaysRemainingCard

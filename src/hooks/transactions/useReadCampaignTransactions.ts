@@ -2,7 +2,10 @@ import { useQuery } from "@tanstack/react-query";
 import { readTransactionsByCampaign } from "@/src/actions/db/transactions";
 import type { Transaction } from "@/src/types/db/transactions";
 
-export default function useReadCampaignTransactions(campaignId: number) {
+export default function useReadCampaignTransactions(
+  campaignId: number,
+  options?: { enabled?: boolean },
+) {
   return useQuery<Transaction[]>({
     queryKey: [campaignId, "transactions", "read"],
     queryFn: async () => {
@@ -12,6 +15,6 @@ export default function useReadCampaignTransactions(campaignId: number) {
     },
     staleTime: 1000 * 60 * 5,
     retry: 2,
-    enabled: !!campaignId,
+    enabled: !!campaignId && (options?.enabled ?? true),
   });
 }
