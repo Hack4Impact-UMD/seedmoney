@@ -13,7 +13,7 @@ export function TotalDonorsCard({
   totalDonors,
 }: {
   totalDonors: number;
-  donorsChangePercent: number | null;
+  donorsChangePercent?: number | null;
 }) {
   return (
     <div className="bg-white rounded-lg border border-[#e5e5e5] p-4 overflow-hidden">

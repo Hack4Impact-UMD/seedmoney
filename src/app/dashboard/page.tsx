@@ -41,17 +41,18 @@ export default function DashboardIndexPage() {
   const { data: userData, isLoading: isLoadingUser } = useUserByAuthId(
     user?.id || "",
   );
+  const isAdmin = !!userData?.is_admin;
   const { data: campaigns = [], isLoading: isLoadingCampaigns } =
     useReadCampaignsFromMembers(user?.id || "");
   const { data: allCampaigns = [], isLoading: isLoadingAll } =
-    useReadAllCampaigns();
+    useReadAllCampaigns({ enabled: isAdmin });
   const {
     data: currentCompetitionData,
     isLoading: isLoadingCurrentCompetition,
   } = useReadCurrentCompetition();
-  const { data: allCompetitions = [] } = useReadAllCompetitions();
-
-  const isAdmin = !!userData?.is_admin;
+  const { data: allCompetitions = [] } = useReadAllCompetitions({
+    enabled: isAdmin,
+  });
 
   const effectiveCompetitionId =
     selectedCompetitionId ?? currentCompetitionData?.competition_id ?? null;
