@@ -253,12 +253,30 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             size="small"
             variant="outlined"
             className="!shrink-0"
-            onClick={() => {
-              navigator.clipboard.writeText(campaignData.givebutterlink);
+            onClick={async () => {
+              const campaignUrl = campaignData.givebutterlink;
+              const isMobile =
+                typeof window !== "undefined" &&
+                window.matchMedia("(max-width: 767px)").matches;
+
+              if (isMobile && navigator.share) {
+                try {
+                  await navigator.share({
+                    title: campaignData.name,
+                    url: campaignUrl,
+                  });
+                  return;
+                } catch {
+                  // Fall back to copying the link below.
+                }
+              }
+
+              await navigator.clipboard.writeText(campaignUrl);
               setToast(true);
             }}
           >
-            Share Campaign
+            <span className="md:hidden">Share campaign</span>
+            <span className="hidden md:inline">Copy campaign link</span>
           </Button>
           <Button
             size="small"
