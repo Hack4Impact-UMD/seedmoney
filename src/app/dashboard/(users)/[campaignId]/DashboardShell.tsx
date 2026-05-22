@@ -266,13 +266,22 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                     url: campaignUrl,
                   });
                   return;
-                } catch {
-                  // Fall back to copying the link below.
+                } catch (error) {
+                  if (
+                    error instanceof DOMException &&
+                    error.name === "AbortError"
+                  ) {
+                    return;
+                  }
                 }
               }
 
-              await navigator.clipboard.writeText(campaignUrl);
-              setToast(true);
+              try {
+                await navigator.clipboard.writeText(campaignUrl);
+                setToast(true);
+              } catch {
+                return;
+              }
             }}
           >
             <span className="md:hidden">Share campaign</span>
