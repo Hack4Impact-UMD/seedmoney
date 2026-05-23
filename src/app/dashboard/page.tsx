@@ -77,6 +77,9 @@ export default function DashboardIndexPage() {
 
   const startDate = selectedCompetition?.start_date ?? null;
   const endDate = selectedCompetition?.end_date ?? null;
+  const isCompletedChallengeYear = endDate
+    ? moment().isAfter(moment(endDate), "day")
+    : false;
   const selectedCompetitionKey = selectedCompetition?.competition_id ?? null;
 
   const elapsedPercent = useMemo(() => {
@@ -274,7 +277,7 @@ export default function DashboardIndexPage() {
         {isAdmin && (
           <>
             <h4 className="mt-8 mb-4 text-lg font-semibold text-[#054A1F]">
-              Quick Statistics
+              {isCompletedChallengeYear ? "Final Statistics" : "Quick Statistics"}
             </h4>
 
             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
