@@ -36,7 +36,7 @@ export default function Pending({
           size="small"
           onClick={onViewApplication}
           endIcon={<ArrowForwardIcon />}
-          className="!mt-6"
+          className="mt-6!"
         >
           View Application
         </Button>

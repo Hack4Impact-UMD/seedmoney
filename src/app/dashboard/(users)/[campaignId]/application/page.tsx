@@ -34,10 +34,10 @@ export default function ViewPendingApplicationPage() {
     refetch,
   } = useCampaignEditData(parsedCampaignId);
 
-  if (!parsedCampaignId) return null;
+  if (!parsedCampaignId) notFound();
   if (isLoading) return <Loading />;
   if (error) return <AppError error={error as Error} reset={() => refetch()} />;
-  if (!campaignEditData) return null;
+  if (!campaignEditData) notFound();
   if (campaignEditData.mappedData.status !== "pending") notFound();
 
   const formData = campaignEditData.mappedData;
