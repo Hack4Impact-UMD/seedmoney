@@ -153,6 +153,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <NotComplete onContinueApplication={handleContinueApplication} />
             <InformationSection />
           </div>
+          <DashboardFooter />
         </div>
       </div>
     );
@@ -186,6 +187,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
             <InformationSection />
           </div>
+          <DashboardFooter />
           <BaseAlert
             open={submissionToastOpen}
             onClose={handleCloseSubmissionToast}
@@ -224,7 +226,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   );
 
   return (
-    <div className="flex min-h-screen overflow-x-hidden">
+    <div className="flex min-h-screen">
       <Navbar />
       <div className="flex-1 min-w-0 overflow-x-hidden bg-[#F6FAF9] p-4 pb-24 md:p-10 md:pb-10">
         <div className="mb-1 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">

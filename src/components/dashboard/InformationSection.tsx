@@ -1,4 +1,3 @@
-import DashboardFooter from "../DashboardFooter";
 import FaqSection from "./FaqSection";
 import HelpForm from "./HelpForm";
 
@@ -8,7 +7,6 @@ export default function InformationSection() {
 
       <FaqSection />
       <HelpForm />
-      <DashboardFooter />
 
     </div>
   )
