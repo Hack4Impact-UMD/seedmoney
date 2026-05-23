@@ -136,11 +136,13 @@ function UploadedAssetCard({
   fileSize,
   onDelete,
   deleteLabel,
+  readOnly = false,
 }: {
   fileName: string;
   fileSize: number;
   onDelete: () => void;
   deleteLabel: string;
+  readOnly?: boolean;
 }) {
   return (
     <div className="mt-2 flex items-center justify-between rounded-lg border border-black/10 px-4 py-3">
@@ -162,21 +164,23 @@ function UploadedAssetCard({
       </div>
 
       <div className="flex items-center gap-4">
-        <IconButton
-          size="small"
-          aria-label={deleteLabel}
-          onClick={onDelete}
-          sx={{
-            p: 0,
-            color: "rgba(0, 0, 0, 0.54)",
-            cursor: "pointer",
-            "& .MuiSvgIcon-root": {
-              pointerEvents: "none",
-            },
-          }}
-        >
-          <Delete />
-        </IconButton>
+        {!readOnly && (
+          <IconButton
+            size="small"
+            aria-label={deleteLabel}
+            onClick={onDelete}
+            sx={{
+              p: 0,
+              color: "rgba(0, 0, 0, 0.54)",
+              cursor: "pointer",
+              "& .MuiSvgIcon-root": {
+                pointerEvents: "none",
+              },
+            }}
+          >
+            <Delete />
+          </IconButton>
+        )}
         <CheckCircle color="success" />
       </div>
     </div>
@@ -190,12 +194,14 @@ interface CampaignMediaSectionProps {
     records: HydratedCampaignImageRecord[],
     options?: { syncInitialData?: boolean },
   ) => void;
+  readOnly?: boolean;
 }
 
 export default function CampaignMediaSection({
   formData,
   campaignId,
   syncImageRecords,
+  readOnly = false,
 }: CampaignMediaSectionProps) {
   const ERROR_ICON_FILTER =
     "brightness(0) saturate(100%) invert(24%) sepia(95%) saturate(2815%) hue-rotate(347deg) brightness(93%) contrast(100%)";
@@ -312,6 +318,7 @@ export default function CampaignMediaSection({
       });
     },
     maxSize: 10485760,
+    disabled: readOnly,
   });
 
   const {
@@ -396,7 +403,7 @@ export default function CampaignMediaSection({
       });
     },
     maxSize: 10485760,
-    disabled: supportingPhotos.length >= 5,
+    disabled: readOnly || supportingPhotos.length >= 5,
   });
 
   const handleSetAsMain = async (record: HydratedCampaignImageRecord) => {
@@ -532,21 +539,23 @@ export default function CampaignMediaSection({
         {mainPhoto ? (
           <>
             <div className="relative w-full max-w-[650px] aspect-[650/358] overflow-hidden border border-gray-300">
-              <Button
-                variant="outlined"
-                onClick={() => setCropTarget({ type: "main" })}
-                sx={{
-                  position: "absolute",
-                  top: 12,
-                  left: 12,
-                  px: 1,
-                  py: 0.5,
-                  minWidth: 0,
-                  zIndex: 1,
-                }}
-              >
-                Crop
-              </Button>
+              {!readOnly && (
+                <Button
+                  variant="outlined"
+                  onClick={() => setCropTarget({ type: "main" })}
+                  sx={{
+                    position: "absolute",
+                    top: 12,
+                    left: 12,
+                    px: 1,
+                    py: 0.5,
+                    minWidth: 0,
+                    zIndex: 1,
+                  }}
+                >
+                  Crop
+                </Button>
+              )}
               <img
                 src={mainPhoto.signedUrl}
                 alt={mainPhoto.fileName || "Main campaign photo"}
@@ -558,6 +567,7 @@ export default function CampaignMediaSection({
               fileSize={mainPhoto.fileSize ?? 0}
               deleteLabel={`Delete ${mainPhoto.fileName || "main photo"}`}
               onDelete={() => handleDeleteMainPhoto(mainPhoto)}
+              readOnly={readOnly}
             />
           </>
         ) : uploadError ? (
@@ -566,6 +576,8 @@ export default function CampaignMediaSection({
             onClear={() => setUploadError(null)}
             errorIconFilter={ERROR_ICON_FILTER}
           />
+        ) : readOnly ? (
+          <p className="text-sm text-gray-500">No main photo uploaded.</p>
         ) : (
           <div {...getRootProps({ className: "dropzone" })}>
             <input {...getInputProps()} />
@@ -614,7 +626,7 @@ export default function CampaignMediaSection({
           />
         )}
 
-        {supportingPhotos.length < 5 && (
+        {!readOnly && supportingPhotos.length < 5 && (
           <div {...getSupportingRootProps({ className: "dropzone" })}>
             <input {...getSupportingInputProps()} />
             <div className="border border-dashed border-gray-300 rounded-xl flex flex-col items-center justify-center py-10 gap-3 text-center">
@@ -642,24 +654,26 @@ export default function CampaignMediaSection({
         {supportingPhotos.map((record) => (
           <div key={record.id} className="flex flex-col gap-2">
             <div className="relative w-full max-w-[650px] aspect-[650/358] overflow-hidden border border-gray-300">
-              <div className="absolute left-3 top-3 z-[1] flex items-center gap-2">
-                <Button
-                  variant="outlined"
-                  onClick={() => handleSetAsMain(record)}
-                  sx={{ px: 1, py: 0.5, minWidth: 0 }}
-                >
-                  Set as Main Photo
-                </Button>
-                <Button
-                  variant="outlined"
-                  onClick={() =>
-                    setCropTarget({ type: "supporting", recordId: record.id })
-                  }
-                  sx={{ px: 1, py: 0.5, minWidth: 0 }}
-                >
-                  Crop
-                </Button>
-              </div>
+              {!readOnly && (
+                <div className="absolute left-3 top-3 z-[1] flex items-center gap-2">
+                  <Button
+                    variant="outlined"
+                    onClick={() => handleSetAsMain(record)}
+                    sx={{ px: 1, py: 0.5, minWidth: 0 }}
+                  >
+                    Set as Main Photo
+                  </Button>
+                  <Button
+                    variant="outlined"
+                    onClick={() =>
+                      setCropTarget({ type: "supporting", recordId: record.id })
+                    }
+                    sx={{ px: 1, py: 0.5, minWidth: 0 }}
+                  >
+                    Crop
+                  </Button>
+                </div>
+              )}
               <img
                 src={record.signedUrl}
                 alt={record.fileName || "Supporting campaign photo"}
@@ -671,9 +685,13 @@ export default function CampaignMediaSection({
               fileSize={record.fileSize ?? 0}
               deleteLabel={`Delete ${record.fileName || "supporting photo"}`}
               onDelete={() => handleDeleteSupportingPhoto(record)}
+              readOnly={readOnly}
             />
           </div>
         ))}
+        {readOnly && supportingPhotos.length === 0 && (
+          <p className="text-sm text-gray-500">No supporting photos uploaded.</p>
+        )}
       </div>
 
       <BaseAlert
