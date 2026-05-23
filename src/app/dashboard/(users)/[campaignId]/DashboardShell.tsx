@@ -135,6 +135,8 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     router.push("/apply/campaign");
   };
 
+  const isViewingPendingApplication = pathname.endsWith("/application");
+
   const handleNewCampaign = () => {
     router.push("/apply");
   };
@@ -157,6 +159,17 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   }
 
   if (campaignData.status === "pending") {
+    if (isViewingPendingApplication) {
+      return (
+        <div className="flex min-h-screen">
+          <Navbar />
+          <div className="min-w-0 flex-1 overflow-y-auto bg-[#F6FAF9] p-4 pb-24 md:p-10 md:pb-10">
+            {children}
+          </div>
+        </div>
+      );
+    }
+
     return (
       <div className="flex min-h-screen">
         <Navbar />
@@ -165,7 +178,11 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             {campaignData.name}
           </h3>
           <div className="flex-1 bg-[#F6FAF9] mt-10">
-            <Pending />
+            <Pending
+              onViewApplication={() =>
+                router.push(`/dashboard/${selectedCampaignId}/application`)
+              }
+            />
 
             <InformationSection />
           </div>
