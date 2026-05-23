@@ -1,6 +1,7 @@
 "use client";
 
 import { useEffect, useMemo, useState } from "react";
+import Image from "next/image";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import moment from "moment";
@@ -77,6 +78,9 @@ export default function DashboardIndexPage() {
 
   const startDate = selectedCompetition?.start_date ?? null;
   const endDate = selectedCompetition?.end_date ?? null;
+  const isChallengeNotStarted = startDate
+    ? moment().isBefore(moment(startDate), "day")
+    : false;
   const isCompletedChallengeYear = endDate
     ? moment().isAfter(moment(endDate), "day")
     : false;
@@ -250,7 +254,9 @@ export default function DashboardIndexPage() {
               {daysLeft !== null && (
                 <div className="flex w-full min-w-0 flex-col items-start gap-2 sm:w-auto sm:min-w-[420px] sm:flex-row sm:items-center sm:gap-3">
                   <span className="text-sm text-gray-500 sm:whitespace-nowrap">
-                    {daysLeft} days left in this year&apos;s campaign
+                    {isChallengeNotStarted
+                      ? "Challenge has not started yet."
+                      : `${daysLeft} days left in this year's campaign`}
                   </span>
 
                   <div className="relative h-2 w-40 rounded-full bg-[#56bd604a] overflow-hidden">
@@ -276,84 +282,123 @@ export default function DashboardIndexPage() {
 
         {isAdmin && (
           <>
-            <h4 className="mt-8 mb-4 text-lg font-semibold text-[#054A1F]">
-              {isCompletedChallengeYear ? "Final Statistics" : "Quick Statistics"}
-            </h4>
+            {isChallengeNotStarted ? (
+              <div className="mt-8 flex w-full flex-col items-center rounded-2xl border border-black/10 bg-white px-6 py-20 text-center md:py-24">
+                <div className="mb-6 flex h-20 w-20 items-center justify-center rounded-full border-2 border-[#00A63E]">
+                  <Image
+                    src="/seedMoneyLogo.png"
+                    alt="SeedMoney logo"
+                    width={56}
+                    height={49}
+                  />
+                </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              <SummaryCard
-                label="Donations Received"
-                value={stats.donationsReceived.toLocaleString()}
-                icon={<VolunteerActivismIcon fontSize="small" />}
-              />
-              <SummaryCard
-                label="Ongoing Campaigns"
-                value={stats.ongoingCampaigns.toLocaleString()}
-                icon={<OutlinedFlagIcon fontSize="small" />}
-              />
-              <SummaryCard
-                label="Total Raised"
-                value={`$${stats.totalRaised.toLocaleString()}`}
-                icon={<AttachMoneyIcon fontSize="small" />}
-              />
-            </div>
-
-            <div className="mt-10 flex items-center justify-between flex-wrap gap-4">
-              <div className="flex items-center gap-3 flex-wrap">
-                <h4 className="text-lg font-semibold text-[#054A1F]">
-                  Top Campaigns
+                <h4 className="mb-6 text-center text-2xl font-bold text-[#666]">
+                  The challenge hasn&apos;t begun
                 </h4>
 
-                <div className="flex items-center gap-2">
-                  {SORT_OPTIONS.map((opt) => {
-                    const active = sortKey === opt.key;
+                <div className="flex flex-col items-center gap-6">
+                  <Link
+                    href="/dashboard/review-applications"
+                    className="rounded-lg bg-[#2D7A45] px-6 py-3 text-center text-lg font-bold uppercase text-white hover:bg-[#123A1E]"
+                  >
+                    Review Applications
+                  </Link>
 
-                    return (
-                      <button
-                        key={opt.key}
-                        type="button"
-                        onClick={() => setSortKey(opt.key)}
-                        className={`text-sm font-medium rounded-full px-4 py-1.5 border transition-colors ${
-                          active
-                            ? "bg-[#2D7A45] text-white border-[#2D7A45]"
-                            : "bg-white text-[#2D7A45] border-[#2D7A45] hover:bg-[#e8f5ec]"
-                        }`}
-                      >
-                        {opt.label}
-                      </button>
-                    );
-                  })}
+                  <Link
+                    href="/dashboard/approved-campaigns"
+                    className="rounded-lg border border-[#123A1E] bg-white px-6 py-3 text-center text-lg font-bold uppercase text-[#123A1E] hover:bg-[#e8f5ec]"
+                  >
+                    View Approved Campaigns
+                  </Link>
                 </div>
               </div>
+            ) : (
+              <>
+                <h4 className="mt-8 mb-4 text-lg font-semibold text-[#054A1F]">
+                  {isCompletedChallengeYear
+                    ? "Final Statistics"
+                    : "Quick Statistics"}
+                </h4>
 
-              <Link
-                href="/dashboard/approved-campaigns"
-                className="text-sm font-semibold text-[#2D7A45] hover:underline"
-              >
-                VIEW ALL CAMPAIGNS →
-              </Link>
-            </div>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+                  <SummaryCard
+                    label="Donations Received"
+                    value={stats.donationsReceived.toLocaleString()}
+                    icon={<VolunteerActivismIcon fontSize="small" />}
+                  />
+                  <SummaryCard
+                    label="Ongoing Campaigns"
+                    value={stats.ongoingCampaigns.toLocaleString()}
+                    icon={<OutlinedFlagIcon fontSize="small" />}
+                  />
+                  <SummaryCard
+                    label="Total Raised"
+                    value={`$${stats.totalRaised.toLocaleString()}`}
+                    icon={<AttachMoneyIcon fontSize="small" />}
+                  />
+                </div>
 
-            <div className="mt-6">
-              {isLoadingAll ? (
-                <div className="text-gray-500">Loading campaigns...</div>
-              ) : topCampaigns.length === 0 ? (
-                <div className="bg-white rounded-lg border border-[#e5e5e5] p-8 text-center text-gray-500">
-                  No campaigns yet.
+                <div className="mt-10 flex items-center justify-between flex-wrap gap-4">
+                  <div className="flex items-center gap-3 flex-wrap">
+                    <h4 className="text-lg font-semibold text-[#054A1F]">
+                      Top Campaigns
+                    </h4>
+
+                    <div className="flex items-center gap-2">
+                      {SORT_OPTIONS.map((opt) => {
+                        const active = sortKey === opt.key;
+
+                        return (
+                          <button
+                            key={opt.key}
+                            type="button"
+                            onClick={() => setSortKey(opt.key)}
+                            className={`text-sm font-medium rounded-full px-4 py-1.5 border transition-colors ${
+                              active
+                                ? "bg-[#2D7A45] text-white border-[#2D7A45]"
+                                : "bg-white text-[#2D7A45] border-[#2D7A45] hover:bg-[#e8f5ec]"
+                            }`}
+                          >
+                            {opt.label}
+                          </button>
+                        );
+                      })}
+                    </div>
+                  </div>
+
+                  <Link
+                    href="/dashboard/approved-campaigns"
+                    className="text-sm font-semibold text-[#2D7A45] hover:underline"
+                  >
+                    VIEW ALL CAMPAIGNS →
+                  </Link>
                 </div>
-              ) : (
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                  {topCampaigns.map((c, i) => (
-                    <CampaignCard
-                      key={c.campaign_id}
-                      campaign={c}
-                      rank={i + 1}
-                      imageUrl={imageUrlsByCampaignId[c.campaign_id] ?? null}
-                    />
-                  ))}
+
+                <div className="mt-6">
+                  {isLoadingAll ? (
+                    <div className="text-gray-500">Loading campaigns...</div>
+                  ) : topCampaigns.length === 0 ? (
+                    <div className="bg-white rounded-lg border border-[#e5e5e5] p-8 text-center text-gray-500">
+                      No campaigns yet.
+                    </div>
+                  ) : (
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {topCampaigns.map((c, i) => (
+                        <CampaignCard
+                          key={c.campaign_id}
+                          campaign={c}
+                          rank={i + 1}
+                          imageUrl={
+                            imageUrlsByCampaignId[c.campaign_id] ?? null
+                          }
+                        />
+                      ))}
+                    </div>
+                  )}
                 </div>
-              )}
-            </div>
+              </>
+            )}
           </>
         )}
         <div className="mt-auto">
