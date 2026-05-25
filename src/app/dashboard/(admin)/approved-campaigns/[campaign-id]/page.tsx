@@ -6,6 +6,9 @@ import moment from "moment";
 
 import Navbar from "@/src/components/Navbar";
 import DonorsTable from "@/src/components/DonorsTable";
+import DashboardTabs, {
+  type DashboardTabItem,
+} from "@/src/components/dashboard/DashboardTabs";
 import { TotalRaisedCard } from "@/src/components/dashboard/TotalRaisedCard";
 import { TotalDonorsCard } from "@/src/components/dashboard/TotalDonorsCard";
 import { DaysRemainingCard } from "@/src/components/dashboard/DaysRemainingCard";
@@ -26,6 +29,12 @@ import Button from "@mui/material/Button";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import LogoutIcon from "@mui/icons-material/Logout";
+
+const ADMIN_DASHBOARD_TABS: readonly DashboardTabItem[] = [
+  { label: "Overview", sectionId: "dashboard-overview" },
+  { label: "Donations", sectionId: "dashboard-donations" },
+  { label: "Analytics", sectionId: "dashboard-analytics" },
+];
 
 export default function AdminCampaignPage() {
   const params = useParams();
@@ -143,87 +152,95 @@ export default function AdminCampaignPage() {
           Back
         </p>
 
-        <div className="flex flex-wrap gap-3">
-          <Button
-            size="small"
-            variant="contained"
-            onClick={() => setViewCampaignModal(true)}
-          >
-            View Campaign Site
-            <OpenInNew fontSize="small" className="ml-[5px]" />
-          </Button>
+        <DashboardTabs tabs={ADMIN_DASHBOARD_TABS} />
 
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => {
-              navigator.clipboard.writeText(campaignData.givebutterlink ?? "");
-              setToast(true);
-            }}
-          >
-            Copy Campaign Site Link
-          </Button>
+        <section id="dashboard-overview" className="scroll-mt-20 space-y-3">
+          <div className="flex flex-wrap gap-3">
+            <Button
+              size="small"
+              variant="contained"
+              onClick={() => setViewCampaignModal(true)}
+            >
+              View Campaign Site
+              <OpenInNew fontSize="small" className="ml-[5px]" />
+            </Button>
 
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() => router.push("/leaderboard")}
-          >
-            View Leaderboard
-            <OpenInNew fontSize="small" className="ml-[5px]" />
-          </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => {
+                navigator.clipboard.writeText(campaignData.givebutterlink ?? "");
+                setToast(true);
+              }}
+            >
+              Copy Campaign Site Link
+            </Button>
 
-          <Button
-            size="small"
-            variant="outlined"
-            onClick={() =>
-              router.push(`/dashboard/approved-campaigns/${campaignId}/edit`)
-            }
-          >
-            Edit
-          </Button>
-        </div>
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() => router.push("/leaderboard")}
+            >
+              View Leaderboard
+              <OpenInNew fontSize="small" className="ml-[5px]" />
+            </Button>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-          <TotalRaisedCard
-            totalRaised={campaignData.raised}
-            campaignGoal={campaignData.goal}
-            raisedChangePercent={raisedChangePercent}
-          />
+            <Button
+              size="small"
+              variant="outlined"
+              onClick={() =>
+                router.push(`/dashboard/approved-campaigns/${campaignId}/edit`)
+              }
+            >
+              Edit
+            </Button>
+          </div>
 
-          <div className="grid grid-rows-2 gap-8">
-            <TotalDonorsCard
-              totalDonors={campaignData.donors}
-              donorsChangePercent={donorsChangePercent}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <TotalRaisedCard
+              totalRaised={campaignData.raised}
+              campaignGoal={campaignData.goal}
+              raisedChangePercent={raisedChangePercent}
             />
 
-            <DaysRemainingCard
-              startDate={competitionData?.start_date ?? null}
-              endDate={competitionData?.end_date ?? null}
-              is_current={!isPastCampaign}
+            <div className="grid grid-rows-2 gap-8">
+              <TotalDonorsCard
+                totalDonors={campaignData.donors}
+                donorsChangePercent={donorsChangePercent}
+              />
+
+              <DaysRemainingCard
+                startDate={competitionData?.start_date ?? null}
+                endDate={competitionData?.end_date ?? null}
+                is_current={!isPastCampaign}
+              />
+            </div>
+          </div>
+        </section>
+
+        <section id="dashboard-donations" className="scroll-mt-20">
+          <DonorsTable campaignId={campaignId} campaignName={campaignData.name} />
+        </section>
+
+        <section id="dashboard-analytics" className="scroll-mt-20">
+          {txnsError || dates.length === 0 ? (
+            <div className="bg-white rounded-lg border border-[#e5e5e5] p-6 h-[360px] flex flex-col items-center justify-center text-center">
+              <p className="font-medium text-black">No donations yet</p>
+              <p className="text-sm text-gray-500 mt-1">
+                Once donations start rolling in, you&apos;ll see your earnings
+                trend here.
+              </p>
+            </div>
+          ) : (
+            <EarningsTrendCard
+              dates={dates}
+              dailyValues={dailyValues}
+              totalValues={totalValues}
+              campaignGoal={campaignData.goal}
+              todayIso={todayIso}
             />
-          </div>
-        </div>
-
-        {txnsError || dates.length === 0 ? (
-          <div className="bg-white rounded-lg border border-[#e5e5e5] p-6 h-[360px] flex flex-col items-center justify-center text-center">
-            <p className="font-medium text-black">No donations yet</p>
-            <p className="text-sm text-gray-500 mt-1">
-              Once donations start rolling in, you&apos;ll see your earnings
-              trend here.
-            </p>
-          </div>
-        ) : (
-          <EarningsTrendCard
-            dates={dates}
-            dailyValues={dailyValues}
-            totalValues={totalValues}
-            campaignGoal={campaignData.goal}
-            todayIso={todayIso}
-          />
-        )}
-
-        <DonorsTable campaignId={campaignId} campaignName={campaignData.name} />
+          )}
+        </section>
       </div>
 
       <BaseModal

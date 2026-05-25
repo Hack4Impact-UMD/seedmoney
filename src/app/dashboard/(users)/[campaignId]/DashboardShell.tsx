@@ -11,7 +11,9 @@ import {
 } from "next/navigation";
 import { useState } from "react";
 import Navbar from "@/src/components/Navbar";
-import DashboardTabs from "@/src/components/dashboard/DashboardTabs";
+import DashboardTabs, {
+  type DashboardTabItem,
+} from "@/src/components/dashboard/DashboardTabs";
 import NotComplete from "@/src/components/dashboard/NotComplete";
 import Pending from "@/src/components/dashboard/Pending";
 import Denied from "@/src/components/dashboard/Denied";
@@ -34,7 +36,12 @@ import { getStatusLabel } from "@/src/lib/utils/statusConversions";
 import moment from "moment";
 import InformationSection from "@/src/components/dashboard/InformationSection";
 
-type DashboardTab = "Overview" | "Donations" | "Analytics";
+const USER_DASHBOARD_TABS: readonly DashboardTabItem[] = [
+  { label: "Overview", sectionId: "dashboard-overview" },
+  { label: "Donations", sectionId: "dashboard-donations" },
+  { label: "Analytics", sectionId: "dashboard-analytics" },
+  { label: "Help", sectionId: "dashboard-help" },
+];
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
   const router = useRouter();
@@ -42,11 +49,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   const searchParams = useSearchParams();
   const { campaignId } = useParams<{ campaignId: string }>();
   const { user } = useAuth();
-  const selectedTab: DashboardTab = pathname.endsWith("/donors")
-    ? "Donations"
-    : pathname.endsWith("/analytics")
-      ? "Analytics"
-      : "Overview";
   const {
     data: userData,
     isLoading: isLoadingUser,
@@ -65,7 +67,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   } = useRaisedChangePercent(
     Number(campaignId),
     currentCompetitionData?.start_date,
-    { enabled: selectedTab === "Overview" },
   );
   const raisedChangePercent =
     raisedLoading || raisedError ? null : raisedPercent;
@@ -114,22 +115,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     : null;
 
   const selectedCampaignId = Number(campaignId);
-
-  const handleTabChange = (newValue: string) => {
-    const basePath = `/dashboard/${selectedCampaignId}`;
-
-    if (newValue === "Donations") {
-      router.push(`${basePath}/donors`);
-      return;
-    }
-
-    if (newValue === "Analytics") {
-      router.push(`${basePath}/analytics`);
-      return;
-    }
-
-    router.push(basePath);
-  };
 
   const handleContinueApplication = () => {
     router.push("/apply/campaign");
@@ -228,7 +213,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   return (
     <div className="flex min-h-screen">
       <Navbar />
-      <div className="flex-1 min-w-0 overflow-x-hidden bg-[#F6FAF9] p-4 pb-24 md:p-10 md:pb-10">
+      <div className="flex-1 min-w-0 overflow-x-clip bg-[#F6FAF9] p-4 pb-24 md:p-10 md:pb-10">
         <div className="mb-1 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col md:flex-row md:items-center">
             <h3 className="text-2xl md:text-4xl font-bold text-[#096B2E]">
@@ -256,89 +241,91 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <DashboardTabs selectedTab={selectedTab} onChange={handleTabChange} />
+        <DashboardTabs tabs={USER_DASHBOARD_TABS} />
 
-        <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
-          <Button
-            size="small"
-            variant="contained"
-            className="!shrink-0"
-            onClick={() => setViewCampaignModal(true)}
-          >
-            View Campaign
-            <OpenInNew fontSize="small" className="text-[#FFFFFF] ml-[5px]" />
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            className="!shrink-0"
-            onClick={async () => {
-              const campaignUrl = campaignData.givebutterlink;
-              const isMobile =
-                typeof window !== "undefined" &&
-                window.matchMedia("(max-width: 767px)").matches;
+        <section id="dashboard-overview" className="scroll-mt-20">
+          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
+            <Button
+              size="small"
+              variant="contained"
+              className="!shrink-0"
+              onClick={() => setViewCampaignModal(true)}
+            >
+              View Campaign
+              <OpenInNew fontSize="small" className="text-[#FFFFFF] ml-[5px]" />
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              className="!shrink-0"
+              onClick={async () => {
+                const campaignUrl = campaignData.givebutterlink;
+                const isMobile =
+                  typeof window !== "undefined" &&
+                  window.matchMedia("(max-width: 767px)").matches;
 
-              if (isMobile && navigator.share) {
-                try {
-                  await navigator.share({
-                    title: campaignData.name,
-                    url: campaignUrl,
-                  });
-                  return;
-                } catch (error) {
-                  if (
-                    error instanceof DOMException &&
-                    error.name === "AbortError"
-                  ) {
+                if (isMobile && navigator.share) {
+                  try {
+                    await navigator.share({
+                      title: campaignData.name,
+                      url: campaignUrl,
+                    });
                     return;
+                  } catch (error) {
+                    if (
+                      error instanceof DOMException &&
+                      error.name === "AbortError"
+                    ) {
+                      return;
+                    }
                   }
                 }
-              }
 
-              try {
-                await navigator.clipboard.writeText(campaignUrl);
-                setToast(true);
-              } catch {
-                return;
-              }
-            }}
-          >
-            <span className="md:hidden">Share campaign</span>
-            <span className="hidden md:inline">Copy campaign link</span>
-          </Button>
-          <Button
-            size="small"
-            variant="outlined"
-            className="!shrink-0"
-            onClick={() => router.push("/leaderboard")}
-          >
-            Leaderboard
-            <OpenInNew fontSize="small" className="text-[#123A1E] ml-[5px]" />
-          </Button>
-        </div>
-
-        <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-          <TotalRaisedCard
-            totalRaised={campaignData.raised}
-            campaignGoal={campaignData.goal}
-            raisedChangePercent={raisedChangePercent}
-          />
-
-          <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-6">
-            <TotalDonorsCard
-              totalDonors={campaignData.donors}
-            />
-
-            <DaysRemainingCard
-              startDate={currentCompetitionData?.start_date ?? null}
-              endDate={currentCompetitionData?.end_date ?? null}
-              is_current={
-                campaignData.competition_id ===
-                currentCompetitionData?.competition_id
-              }
-            />
+                try {
+                  await navigator.clipboard.writeText(campaignUrl);
+                  setToast(true);
+                } catch {
+                  return;
+                }
+              }}
+            >
+              <span className="md:hidden">Share campaign</span>
+              <span className="hidden md:inline">Copy campaign link</span>
+            </Button>
+            <Button
+              size="small"
+              variant="outlined"
+              className="!shrink-0"
+              onClick={() => router.push("/leaderboard")}
+            >
+              Leaderboard
+              <OpenInNew fontSize="small" className="text-[#123A1E] ml-[5px]" />
+            </Button>
           </div>
-        </div>
+
+          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+            <TotalRaisedCard
+              totalRaised={campaignData.raised}
+              campaignGoal={campaignData.goal}
+              raisedChangePercent={raisedChangePercent}
+            />
+
+            <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-6">
+              <TotalDonorsCard
+                totalDonors={campaignData.donors}
+              />
+
+              <DaysRemainingCard
+                startDate={currentCompetitionData?.start_date ?? null}
+                endDate={currentCompetitionData?.end_date ?? null}
+                is_current={
+                  campaignData.competition_id ===
+                  currentCompetitionData?.competition_id
+                }
+              />
+            </div>
+          </div>
+        </section>
 
         <div className="mt-8">{children}</div>
         <DashboardFooter />
