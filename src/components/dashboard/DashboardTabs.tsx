@@ -25,10 +25,21 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
   );
   const selectedSectionIdRef = useRef(selectedSectionId);
   const tabsRef = useRef<HTMLDivElement | null>(null);
+  const scrollTargetRef = useRef<string | null>(null);
+  const scrollTimeoutRef = useRef<number | null>(null);
 
   const activateSection = useCallback((sectionId: string) => {
     selectedSectionIdRef.current = sectionId;
     setSelectedSectionId(sectionId);
+  }, []);
+
+  const releaseScrollTarget = useCallback(() => {
+    scrollTargetRef.current = null;
+
+    if (scrollTimeoutRef.current !== null) {
+      window.clearTimeout(scrollTimeoutRef.current);
+      scrollTimeoutRef.current = null;
+    }
   }, []);
 
   useEffect(() => {
@@ -45,33 +56,25 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
     const updateActiveSection = () => {
       frameId = null;
 
-      const stickyBottom =
-        (tabsRef.current?.getBoundingClientRect().bottom ?? 0) + 1;
-      const visibleSections = sections.filter((section) => {
-        const bounds = section.getBoundingClientRect();
-
-        return bounds.bottom > stickyBottom && bounds.top < window.innerHeight;
-      });
-
-      if (
-        visibleSections.some(
-          (section) => section.id === selectedSectionIdRef.current,
-        )
-      ) {
+      if (scrollTargetRef.current !== null) {
         return;
       }
 
-      const lastPassedSection = sections
-        .filter(
-          (section) => {
-            const bounds = section.getBoundingClientRect();
-
-            return bounds.top <= stickyBottom && bounds.bottom > stickyBottom;
-          },
-        )
-        .at(-1);
-      const nextSection =
-        lastPassedSection ?? visibleSections[0] ?? sections[0];
+      const stickyBottom =
+        (tabsRef.current?.getBoundingClientRect().bottom ?? 0) + 1;
+      const activationLine =
+        stickyBottom +
+        Math.min(160, (window.innerHeight - stickyBottom) * 0.25);
+      const isAtDocumentEnd =
+        window.scrollY + window.innerHeight >=
+        document.documentElement.scrollHeight - 1;
+      const nextSection = isAtDocumentEnd
+        ? sections[sections.length - 1]
+        : sections
+            .findLast(
+              (section) =>
+                section.getBoundingClientRect().top <= activationLine,
+            ) ?? sections[0];
 
       if (nextSection.id !== selectedSectionIdRef.current) {
         activateSection(nextSection.id);
@@ -84,9 +87,34 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
       }
     };
 
+    const releaseAndUpdate = () => {
+      releaseScrollTarget();
+      scheduleUpdate();
+    };
+
+    const handleManualKeyScroll = (event: KeyboardEvent) => {
+      if (
+        [
+          "ArrowDown",
+          "ArrowUp",
+          "End",
+          "Home",
+          "PageDown",
+          "PageUp",
+          " ",
+        ].includes(event.key)
+      ) {
+        releaseAndUpdate();
+      }
+    };
+
     scheduleUpdate();
     window.addEventListener("scroll", scheduleUpdate, { passive: true });
     window.addEventListener("resize", scheduleUpdate);
+    window.addEventListener("scrollend", releaseAndUpdate);
+    window.addEventListener("wheel", releaseAndUpdate, { passive: true });
+    window.addEventListener("touchstart", releaseAndUpdate, { passive: true });
+    window.addEventListener("keydown", handleManualKeyScroll);
 
     return () => {
       if (frameId !== null) {
@@ -95,15 +123,23 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
 
       window.removeEventListener("scroll", scheduleUpdate);
       window.removeEventListener("resize", scheduleUpdate);
+      window.removeEventListener("scrollend", releaseAndUpdate);
+      window.removeEventListener("wheel", releaseAndUpdate);
+      window.removeEventListener("touchstart", releaseAndUpdate);
+      window.removeEventListener("keydown", handleManualKeyScroll);
+      releaseScrollTarget();
     };
-  }, [activateSection, tabs]);
+  }, [activateSection, releaseScrollTarget, tabs]);
 
   const handleChange = (_: SyntheticEvent, newValue: string) => {
+    releaseScrollTarget();
+    scrollTargetRef.current = newValue;
     activateSection(newValue);
     document.getElementById(newValue)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
+    scrollTimeoutRef.current = window.setTimeout(releaseScrollTarget, 1500);
   };
 
   return (
