@@ -1,6 +1,12 @@
 "use client";
 
-import { useEffect, useState, type SyntheticEvent } from "react";
+import {
+  useCallback,
+  useEffect,
+  useRef,
+  useState,
+  type SyntheticEvent,
+} from "react";
 import Tabs from "@mui/material/Tabs";
 import Tab from "@mui/material/Tab";
 
@@ -17,6 +23,13 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
   const [selectedSectionId, setSelectedSectionId] = useState(
     tabs[0]?.sectionId ?? "",
   );
+  const selectedSectionIdRef = useRef(selectedSectionId);
+  const tabsRef = useRef<HTMLDivElement | null>(null);
+
+  const activateSection = useCallback((sectionId: string) => {
+    selectedSectionIdRef.current = sectionId;
+    setSelectedSectionId(sectionId);
+  }, []);
 
   useEffect(() => {
     const sections = tabs
@@ -27,33 +40,66 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
       return;
     }
 
-    const observer = new IntersectionObserver(
-      (entries) => {
-        const closestVisibleSection = entries
-          .filter((entry) => entry.isIntersecting)
-          .sort(
-            (a, b) =>
-              Math.abs(a.boundingClientRect.top) -
-              Math.abs(b.boundingClientRect.top),
-          )[0];
+    let frameId: number | null = null;
 
-        if (closestVisibleSection) {
-          setSelectedSectionId(closestVisibleSection.target.id);
-        }
-      },
-      {
-        rootMargin: "-72px 0px -55% 0px",
-        threshold: [0, 0.1],
-      },
-    );
+    const updateActiveSection = () => {
+      frameId = null;
 
-    sections.forEach((section) => observer.observe(section));
+      const stickyBottom =
+        (tabsRef.current?.getBoundingClientRect().bottom ?? 0) + 1;
+      const visibleSections = sections.filter((section) => {
+        const bounds = section.getBoundingClientRect();
 
-    return () => observer.disconnect();
-  }, [tabs]);
+        return bounds.bottom > stickyBottom && bounds.top < window.innerHeight;
+      });
+
+      if (
+        visibleSections.some(
+          (section) => section.id === selectedSectionIdRef.current,
+        )
+      ) {
+        return;
+      }
+
+      const lastPassedSection = sections
+        .filter(
+          (section) => {
+            const bounds = section.getBoundingClientRect();
+
+            return bounds.top <= stickyBottom && bounds.bottom > stickyBottom;
+          },
+        )
+        .at(-1);
+      const nextSection =
+        lastPassedSection ?? visibleSections[0] ?? sections[0];
+
+      if (nextSection.id !== selectedSectionIdRef.current) {
+        activateSection(nextSection.id);
+      }
+    };
+
+    const scheduleUpdate = () => {
+      if (frameId === null) {
+        frameId = window.requestAnimationFrame(updateActiveSection);
+      }
+    };
+
+    scheduleUpdate();
+    window.addEventListener("scroll", scheduleUpdate, { passive: true });
+    window.addEventListener("resize", scheduleUpdate);
+
+    return () => {
+      if (frameId !== null) {
+        window.cancelAnimationFrame(frameId);
+      }
+
+      window.removeEventListener("scroll", scheduleUpdate);
+      window.removeEventListener("resize", scheduleUpdate);
+    };
+  }, [activateSection, tabs]);
 
   const handleChange = (_: SyntheticEvent, newValue: string) => {
-    setSelectedSectionId(newValue);
+    activateSection(newValue);
     document.getElementById(newValue)?.scrollIntoView({
       behavior: "smooth",
       block: "start",
@@ -62,6 +108,7 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
 
   return (
     <Tabs
+      ref={tabsRef}
       value={selectedSectionId}
       onChange={handleChange}
       aria-label="Dashboard tabs"
