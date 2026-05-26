@@ -51,6 +51,7 @@ export default function ReviewApplicationsTable({
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(5);
   const [pendingAction, setPendingAction] = useState<ReviewAction | null>(null);
+  const [pendingToggle, setPendingToggle] = useState(false);
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [notification, setNotification] = useState<{
     action: "approved" | "denied" | "reverted" | "error";
@@ -332,6 +333,11 @@ export default function ReviewApplicationsTable({
     }
   };
 
+  const handleConfirmToggle = () => {
+    onToggleApplication();
+    setPendingToggle(false);
+  };
+
   const hasSelectedRows = selectedIds.length > 0;
   const isDeniedTab = tab === "DENIED";
   const isActionModalOpen = pendingAction !== null;
@@ -346,6 +352,28 @@ export default function ReviewApplicationsTable({
   const modalVerb =
     pendingAction === "APPROVE" ? "approve" : pendingAction === "DENY" ? "deny" : "revert";
   const currentActionLabel = isDeniedTab ? "RESTORE" : "DENY";
+
+  const toggleModalTitle = isApplicationOpen
+    ? "Close Application Submissions"
+    : "Open Application Submissions";
+  const toggleModalBody = isApplicationOpen
+    ? "You are about to close application submissions. Are you sure you would like to proceed?"
+    : "You are about to open up application submissions. Are you sure you would like to proceed?";
+
+  const toggleSwitch = (
+    <FormControlLabel
+      control={
+        <Switch
+          checked={isApplicationOpen}
+          onChange={() => setPendingToggle(true)}
+          disabled={isTogglingApplication}
+        />
+      }
+      label={
+        <span className="text-[14px] text-[#4e5450]">Allow Application Submissions</span>
+      }
+    />
+  );
 
   return (
     <div className="relative w-full max-w-[1200px] pb-24 pt-2">
@@ -441,21 +469,6 @@ export default function ReviewApplicationsTable({
           {hasSelectedRows && (
             <p className="mt-2 text-[13px] text-[#7b827d]">{selectedIds.length} Selected</p>
           )}
-        </div>
-
-        <div className="mb-3">
-          <FormControlLabel
-            control={
-              <Switch
-                checked={isApplicationOpen}
-                onChange={onToggleApplication}
-                disabled={isTogglingApplication}
-              />
-            }
-            label={
-              <span className="text-[13px] text-[#4e5450]">Allow Application Submissions</span>
-            }
-          />
         </div>
 
         <div className="border-b border-[#d6e0d7]">
@@ -620,6 +633,7 @@ export default function ReviewApplicationsTable({
       {/* Desktop */}
       <div className="hidden md:block">
         <div className="mb-5">
+
           <div className="mt-4 flex items-center justify-between border-b border-[#d6e0d7]">
             <div className="flex items-end gap-7">
               {(["PENDING", "DENIED"] as TabStatus[]).map((status) => {
@@ -658,20 +672,7 @@ export default function ReviewApplicationsTable({
               })}
             </div>
 
-            <div className="pb-2">
-              <FormControlLabel
-                control={
-                  <Switch
-                    checked={isApplicationOpen}
-                    onChange={onToggleApplication}
-                    disabled={isTogglingApplication}
-                  />
-                }
-                label={
-                  <span className="text-[14px] text-[#4e5450]">Allow Application Submissions</span>
-                }
-              />
-            </div>
+            <div className="pb-2">{toggleSwitch}</div>
           </div>
         </div>
 
@@ -848,6 +849,7 @@ export default function ReviewApplicationsTable({
         </div>
       </div>
 
+      {/* Action Modal */}
       {isActionModalOpen && (
         <BaseModal open={isActionModalOpen} onClose={handleCloseActionModal} title={modalTitle}>
           <div className="px-4 pb-4 text-[16px] text-[#727873]">
@@ -883,6 +885,30 @@ export default function ReviewApplicationsTable({
           </div>
         </BaseModal>
       )}
+
+      {/* Toggle Application Modal */}
+      <BaseModal
+        open={pendingToggle}
+        onClose={() => setPendingToggle(false)}
+        title={toggleModalTitle}
+      >
+        <div className="px-4 pb-4 text-[16px] text-[#727873]">
+          <p>{toggleModalBody}</p>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-4 pb-4">
+          <Button onClick={() => setPendingToggle(false)} variant="text">
+            CANCEL
+          </Button>
+          <Button
+            onClick={handleConfirmToggle}
+            disabled={isTogglingApplication}
+            variant="contained"
+            size="small"
+          >
+            PROCEED
+          </Button>
+        </div>
+      </BaseModal>
     </div>
   );
 }
