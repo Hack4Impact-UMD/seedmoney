@@ -5,10 +5,8 @@ import {
   useEffect,
   useRef,
   useState,
-  type SyntheticEvent,
+  type MouseEvent,
 } from "react";
-import Tabs from "@mui/material/Tabs";
-import Tab from "@mui/material/Tab";
 
 export type DashboardTabItem = {
   label: string;
@@ -131,7 +129,11 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
     };
   }, [activateSection, releaseScrollTarget, tabs]);
 
-  const handleChange = (_: SyntheticEvent, newValue: string) => {
+  const handleChange = (
+    event: MouseEvent<HTMLAnchorElement>,
+    newValue: string,
+  ) => {
+    event.preventDefault();
     releaseScrollTarget();
     scrollTargetRef.current = newValue;
     activateSection(newValue);
@@ -143,23 +145,32 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
   };
 
   return (
-    <Tabs
+    <nav
       ref={tabsRef}
-      value={selectedSectionId}
-      onChange={handleChange}
-      aria-label="Dashboard tabs"
-      className="sticky top-0 z-10 w-fit bg-inherit [&_.MuiTabs-indicator]:!h-[3px] [&_.MuiTabs-indicator]:!bg-[#1976D2] mt-5 mb-5"
-      variant="standard"
+      aria-label="Dashboard sections"
+      className="sticky top-0 z-10 mt-5 mb-5 w-fit bg-inherit"
     >
-      {tabs.map((tab) => (
-        <Tab
-          key={tab.sectionId}
-          disableRipple
-          value={tab.sectionId}
-          label={tab.label}
-          className="!min-w-0 !min-h-[38px] !px-5  !normal-case !font-semibold !text-sm !leading-[1.25] !text-black/60 [&.Mui-selected]:!text-[#1976D2]"
-        />
-      ))}
-    </Tabs>
+      <div className="flex">
+        {tabs.map((tab) => {
+          const isCurrent = selectedSectionId === tab.sectionId;
+
+          return (
+            <a
+              key={tab.sectionId}
+              href={`#${tab.sectionId}`}
+              aria-current={isCurrent ? "location" : undefined}
+              onClick={(event) => handleChange(event, tab.sectionId)}
+              className={`inline-flex min-h-[38px] items-center border-b-[3px] px-5 text-sm font-semibold leading-[1.25] no-underline ${
+                isCurrent
+                  ? "border-[#1976D2] text-[#1976D2]"
+                  : "border-transparent text-black/60"
+              }`}
+            >
+              {tab.label}
+            </a>
+          );
+        })}
+      </div>
+    </nav>
   );
 }
