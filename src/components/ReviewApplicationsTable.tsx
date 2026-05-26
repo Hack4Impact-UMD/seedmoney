@@ -10,7 +10,7 @@ import ImportExportIcon from "@mui/icons-material/ImportExport";
 import SearchIcon from "@mui/icons-material/Search";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
-import { Button, Menu, MenuItem } from "@mui/material";
+import { Button, FormControlLabel, Menu, MenuItem, Switch } from "@mui/material";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import BaseModal from "@/src/components/bases/BaseModal";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
@@ -33,9 +33,17 @@ const formatDate = (dateStr: string) => {
 
 interface Props {
   applications: ReviewApplicationRow[];
+  isApplicationOpen: boolean;
+  isTogglingApplication: boolean;
+  onToggleApplication: () => void;
 }
 
-export default function ReviewApplicationsTable({ applications }: Props) {
+export default function ReviewApplicationsTable({
+  applications,
+  isApplicationOpen,
+  isTogglingApplication,
+  onToggleApplication,
+}: Props) {
   const [tab, setTab] = useState<TabStatus>("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("submissionDate");
@@ -43,9 +51,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
   const [pageIndex, setPageIndex] = useState(0);
   const [pageSize, setPageSize] = useState(5);
   const [pendingAction, setPendingAction] = useState<ReviewAction | null>(null);
-  const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<null | HTMLElement>(
-    null,
-  );
+  const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [notification, setNotification] = useState<{
     action: "approved" | "denied" | "reverted" | "error";
     campaignNames: string[];
@@ -69,13 +75,8 @@ export default function ReviewApplicationsTable({ applications }: Props) {
     const action = searchParams.get("action");
     const campaignName = searchParams.get("campaign");
 
-    if (!action || !campaignName) {
-      return null;
-    }
-
-    if (action !== "approved" && action !== "denied" && action !== "reverted") {
-      return null;
-    }
+    if (!action || !campaignName) return null;
+    if (action !== "approved" && action !== "denied" && action !== "reverted") return null;
 
     return {
       action,
@@ -98,6 +99,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
     }, 4000);
     return () => clearTimeout(timer);
   }, [isAlertOpen, clearActionSearchParams]);
+
   const pendingCount = useMemo(
     () => applications.filter((a) => a.status === "pending").length,
     [applications],
@@ -122,28 +124,18 @@ export default function ReviewApplicationsTable({ applications }: Props) {
 
     nextApplications.sort((a, b) => {
       if (sortBy === "submissionDate") {
-        return (
-          new Date(b.submissionDate).getTime() -
-          new Date(a.submissionDate).getTime()
-        );
+        return new Date(b.submissionDate).getTime() - new Date(a.submissionDate).getTime();
       }
-
       if (sortBy === "campaignTitle") {
         return a.campaignTitle.localeCompare(b.campaignTitle);
       }
-
       return a.campaignLeader.localeCompare(b.campaignLeader);
     });
 
     return nextApplications;
   }, [filteredApplications, sortBy]);
 
-  const mobileResetKey = [
-    tab,
-    searchQuery,
-    sortBy,
-    sortedApplications.length,
-  ].join("|");
+  const mobileResetKey = [tab, searchQuery, sortBy, sortedApplications.length].join("|");
 
   const {
     visibleItems: visibleMobileApplications,
@@ -157,21 +149,15 @@ export default function ReviewApplicationsTable({ applications }: Props) {
     resetKey: mobileResetKey,
   });
 
-  const totalPages = Math.max(
-    1,
-    Math.ceil(sortedApplications.length / pageSize),
-  );
+  const totalPages = Math.max(1, Math.ceil(sortedApplications.length / pageSize));
   const currentPageIndex = Math.min(pageIndex, totalPages - 1);
   const paginatedApplications = useMemo(() => {
     const start = currentPageIndex * pageSize;
     return sortedApplications.slice(start, start + pageSize);
   }, [currentPageIndex, pageSize, sortedApplications]);
-  const firstRow =
-    sortedApplications.length === 0 ? 0 : currentPageIndex * pageSize + 1;
-  const lastRow = Math.min(
-    (currentPageIndex + 1) * pageSize,
-    sortedApplications.length,
-  );
+
+  const firstRow = sortedApplications.length === 0 ? 0 : currentPageIndex * pageSize + 1;
+  const lastRow = Math.min((currentPageIndex + 1) * pageSize, sortedApplications.length);
   const selectedApplications = applications.filter((application) =>
     selectedIds.includes(application.campaignId),
   );
@@ -192,35 +178,26 @@ export default function ReviewApplicationsTable({ applications }: Props) {
       if (status === "approved") {
         const results = await createGivebutterCampaigns(ids);
         const failedCampaignIds: number[] = [];
-        const successfulCampaignUpdates: {
-          campaignId: number;
-          update: Promise<unknown>;
-        }[] = [];
+        const successfulCampaignUpdates: { campaignId: number; update: Promise<unknown> }[] = [];
 
         results.forEach((result) => {
           if (result.status === "rejected") {
-            console.error(
-              "Failed to create Givebutter campaign:",
-              result.reason,
-            );
+            console.error("Failed to create Givebutter campaign:", result.reason);
             return;
           }
 
           const campaignId = result.value.campaignId;
-
-          successfulCampaignUpdates.push(
-            {
+          successfulCampaignUpdates.push({
+            campaignId,
+            update: updateCampaignMutation.mutateAsync({
               campaignId,
-              update: updateCampaignMutation.mutateAsync({
-                campaignId,
-                campaignData: {
-                  givebutter_id: result.value.id,
-                  givebutter_slug: result.value.slug,
-                  givebutterlink: result.value.url,
-                },
-              }),
-            },
-          );
+              campaignData: {
+                givebutter_id: result.value.id,
+                givebutter_slug: result.value.slug,
+                givebutterlink: result.value.url,
+              },
+            }),
+          });
         });
 
         const successfulCampaignIds = new Set(
@@ -229,9 +206,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
             .map((result) => result.value.campaignId),
         );
 
-        failedCampaignIds.push(
-          ...ids.filter((id) => !successfulCampaignIds.has(id)),
-        );
+        failedCampaignIds.push(...ids.filter((id) => !successfulCampaignIds.has(id)));
 
         if (failedCampaignIds.length > 0) {
           await Promise.all(
@@ -247,11 +222,8 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         const successfulUpdateResults = await Promise.allSettled(
           successfulCampaignUpdates.map(({ update }) => update),
         );
-        const failedSuccessfulUpdateIds = successfulUpdateResults.flatMap(
-          (result, index) =>
-            result.status === "rejected"
-              ? [successfulCampaignUpdates[index].campaignId]
-              : [],
+        const failedSuccessfulUpdateIds = successfulUpdateResults.flatMap((result, index) =>
+          result.status === "rejected" ? [successfulCampaignUpdates[index].campaignId] : [],
         );
 
         failedCampaignIds.push(...failedSuccessfulUpdateIds);
@@ -278,16 +250,11 @@ export default function ReviewApplicationsTable({ applications }: Props) {
       }
 
       const action =
-        status === "approved"
-          ? "approved"
-          : status === "denied"
-            ? "denied"
-            : "reverted";
+        status === "approved" ? "approved" : status === "denied" ? "denied" : "reverted";
       setNotification({ action, campaignNames: names });
       setSnackbarOpen(true);
       setSelectedIds([]);
       setPendingAction(null);
-
       await queryClient.invalidateQueries({ queryKey: ["campaigns"] });
     } catch (error) {
       console.error("Error updating campaigns:", error);
@@ -377,11 +344,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         ? "Confirm Denial"
         : "Confirm Revert";
   const modalVerb =
-    pendingAction === "APPROVE"
-      ? "approve"
-      : pendingAction === "DENY"
-        ? "deny"
-        : "revert";
+    pendingAction === "APPROVE" ? "approve" : pendingAction === "DENY" ? "deny" : "revert";
   const currentActionLabel = isDeniedTab ? "RESTORE" : "DENY";
 
   return (
@@ -404,29 +367,27 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         }
       >
         <div>
-          {activeNotification?.action !== "error" &&
-            activeNotification?.campaignNames && (
-              <>
+          {activeNotification?.action !== "error" && activeNotification?.campaignNames && (
+            <>
+              <p className="text-sm">
+                {activeNotification.action === "approved"
+                  ? "You have successfully approved:"
+                  : activeNotification.action === "denied"
+                    ? "You have successfully denied:"
+                    : "You have successfully restored:"}
+              </p>
+              <ul className="my-1 list-disc pl-5 text-sm">
+                {activeNotification.campaignNames.map((name) => (
+                  <li key={name}>{name}</li>
+                ))}
+              </ul>
+              {activeNotification.action === "approved" && (
                 <p className="text-sm">
-                  {activeNotification.action === "approved"
-                    ? "You have successfully approved:"
-                    : activeNotification.action === "denied"
-                      ? "You have successfully denied:"
-                      : "You have successfully restored:"}
+                  You can view it on the &ldquo;Approved Campaigns&rdquo; page.
                 </p>
-                <ul className="my-1 list-disc pl-5 text-sm">
-                  {activeNotification.campaignNames.map((name) => (
-                    <li key={name}>{name}</li>
-                  ))}
-                </ul>
-                {activeNotification.action === "approved" && (
-                  <p className="text-sm">
-                    You can view it on the &ldquo;Approved Campaigns&rdquo;
-                    page.
-                  </p>
-                )}
-              </>
-            )}
+              )}
+            </>
+          )}
           {notification?.action === "error" && (
             <p className="text-sm">An error occurred. Please try again.</p>
           )}
@@ -446,9 +407,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         >
           <div className="flex min-w-[180px] items-center justify-between gap-4">
             <span>Submission Date</span>
-            {sortBy === "submissionDate" && (
-              <CheckIcon className="!text-[#2D7A45]" />
-            )}
+            {sortBy === "submissionDate" && <CheckIcon className="!text-[#2D7A45]" />}
           </div>
         </MenuItem>
         <MenuItem
@@ -457,9 +416,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         >
           <div className="flex min-w-[180px] items-center justify-between gap-4">
             <span>Campaign Title</span>
-            {sortBy === "campaignTitle" && (
-              <CheckIcon className="!text-[#2D7A45]" />
-            )}
+            {sortBy === "campaignTitle" && <CheckIcon className="!text-[#2D7A45]" />}
           </div>
         </MenuItem>
         <MenuItem
@@ -468,30 +425,37 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         >
           <div className="flex min-w-[180px] items-center justify-between gap-4">
             <span>Campaign Leader</span>
-            {sortBy === "campaignLeader" && (
-              <CheckIcon className="!text-[#2D7A45]" />
-            )}
+            {sortBy === "campaignLeader" && <CheckIcon className="!text-[#2D7A45]" />}
           </div>
         </MenuItem>
       </Menu>
 
+      {/* Mobile */}
       <div className="md:hidden">
         <div className="mb-3">
-          <h2 className="text-[22px] font-bold text-[#214E34]">
-            Review Applications
-          </h2>
+          <h2 className="text-[22px] font-bold text-[#214E34]">Review Applications</h2>
           <p className="mt-2 text-[14px] text-[#49514c]">
-            <span className="font-semibold text-[#1f2320]">
-              Campaign Application List
-            </span>{" "}
-            - {sortedApplications.length} Application
-            {sortedApplications.length === 1 ? "" : "s"}
+            <span className="font-semibold text-[#1f2320]">Campaign Application List</span>{" "}
+            - {sortedApplications.length} Application{sortedApplications.length === 1 ? "" : "s"}
           </p>
           {hasSelectedRows && (
-            <p className="mt-2 text-[13px] text-[#7b827d]">
-              {selectedIds.length} Selected
-            </p>
+            <p className="mt-2 text-[13px] text-[#7b827d]">{selectedIds.length} Selected</p>
           )}
+        </div>
+
+        <div className="mb-3">
+          <FormControlLabel
+            control={
+              <Switch
+                checked={isApplicationOpen}
+                onChange={onToggleApplication}
+                disabled={isTogglingApplication}
+              />
+            }
+            label={
+              <span className="text-[13px] text-[#4e5450]">Allow Application Submissions</span>
+            }
+          />
         </div>
 
         <div className="border-b border-[#d6e0d7]">
@@ -515,9 +479,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
                     <span
                       className={clsx(
                         "inline-flex h-5 min-w-5 items-center justify-center rounded-full px-1.5 text-[11px] font-semibold",
-                        isActive
-                          ? "bg-[#3D83F6] text-white"
-                          : "bg-[#d9e7ff] text-[#3D83F6]",
+                        isActive ? "bg-[#3D83F6] text-white" : "bg-[#d9e7ff] text-[#3D83F6]",
                       )}
                     >
                       {pendingCount}
@@ -546,7 +508,6 @@ export default function ReviewApplicationsTable({ applications }: Props) {
               className="h-11 w-full rounded-[10px] border border-[#d9dfd9] bg-white pl-10 pr-4 text-[15px] text-[#475049] outline-none transition-colors placeholder:text-[#a9afa9] focus:border-[#8db097]"
             />
           </label>
-
           <button
             type="button"
             onClick={handleOpenSortMenu}
@@ -569,9 +530,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
           </Button>
           <Button
             disabled={!hasSelectedRows}
-            onClick={() =>
-              handleOpenActionModal(isDeniedTab ? "REVERT" : "DENY")
-            }
+            onClick={() => handleOpenActionModal(isDeniedTab ? "REVERT" : "DENY")}
             variant="outlined"
             size="large"
             fullWidth
@@ -601,27 +560,18 @@ export default function ReviewApplicationsTable({ applications }: Props) {
                     <input
                       type="checkbox"
                       checked={isSelected}
-                      onChange={() =>
-                        handleToggleSelection(application.campaignId)
-                      }
+                      onChange={() => handleToggleSelection(application.campaignId)}
                       className="mt-1 h-5 w-5 cursor-pointer rounded border-[#afb6b1] accent-[#6f7670]"
                     />
-
                     <div className="min-w-0 flex-1">
-                      <p className="text-[12px] text-[#7b827d]">
-                        Campaign Title:
-                      </p>
+                      <p className="text-[12px] text-[#7b827d]">Campaign Title:</p>
                       <p className="mt-0.5 text-[16px] font-semibold leading-6 text-[#1f2320]">
                         {application.campaignTitle}
                       </p>
                     </div>
-
                     <Button
                       onClick={() =>
-                        router.push(
-                          "/dashboard/review-applications/" +
-                            application.campaignId,
-                        )
+                        router.push("/dashboard/review-applications/" + application.campaignId)
                       }
                       variant="outlined"
                       size="small"
@@ -653,20 +603,12 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         {sortedApplications.length > 0 && (
           <div className="mt-4 flex flex-col items-center gap-3 text-[12px] text-[#7b827d]">
             <span>
-              Showing {visibleMobileApplicationCount} of{" "}
-              {sortedApplications.length}
+              Showing {visibleMobileApplicationCount} of {sortedApplications.length}
             </span>
             {hasMoreMobileApplications && (
               <>
-                <div
-                  ref={mobileApplicationsSentinelRef}
-                  className="h-1 w-full"
-                />
-                <Button
-                  variant="outlined"
-                  size="small"
-                  onClick={loadMoreMobileApplications}
-                >
+                <div ref={mobileApplicationsSentinelRef} className="h-1 w-full" />
+                <Button variant="outlined" size="small" onClick={loadMoreMobileApplications}>
                   Load More
                 </Button>
               </>
@@ -675,45 +617,61 @@ export default function ReviewApplicationsTable({ applications }: Props) {
         )}
       </div>
 
+      {/* Desktop */}
       <div className="hidden md:block">
         <div className="mb-5">
-          <div className="mt-4 flex items-end gap-7 border-b border-[#d6e0d7]">
-            {(["PENDING", "DENIED"] as TabStatus[]).map((status) => {
-              const isActive = status === tab;
-              const label = status === "PENDING" ? "Pending" : "Denied";
+          <div className="mt-4 flex items-center justify-between border-b border-[#d6e0d7]">
+            <div className="flex items-end gap-7">
+              {(["PENDING", "DENIED"] as TabStatus[]).map((status) => {
+                const isActive = status === tab;
+                const label = status === "PENDING" ? "Pending" : "Denied";
 
-              return (
-                <button
-                  key={status}
-                  type="button"
-                  onClick={() => handleTabChange(status)}
-                  className={clsx(
-                    "relative flex items-center gap-2 pb-3 text-[14px] font-semibold uppercase tracking-[0.04em] transition-colors",
-                    isActive ? "text-[#3D83F6]" : "text-[#5b615c]",
-                  )}
-                >
-                  <span>{label}</span>
-                  {status === "PENDING" && pendingCount > 0 && (
+                return (
+                  <button
+                    key={status}
+                    type="button"
+                    onClick={() => handleTabChange(status)}
+                    className={clsx(
+                      "relative flex items-center gap-2 pb-3 text-[14px] font-semibold uppercase tracking-[0.04em] transition-colors",
+                      isActive ? "text-[#3D83F6]" : "text-[#5b615c]",
+                    )}
+                  >
+                    <span>{label}</span>
+                    {status === "PENDING" && pendingCount > 0 && (
+                      <span
+                        className={clsx(
+                          "inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold",
+                          isActive ? "bg-[#3D83F6] text-white" : "bg-[#d9e7ff] text-[#3D83F6]",
+                        )}
+                      >
+                        {pendingCount}
+                      </span>
+                    )}
                     <span
                       className={clsx(
-                        "inline-flex h-6 min-w-6 items-center justify-center rounded-full px-2 text-xs font-semibold",
-                        isActive
-                          ? "bg-[#3D83F6] text-white"
-                          : "bg-[#d9e7ff] text-[#3D83F6]",
+                        "absolute inset-x-0 bottom-0 h-[3px] rounded-full transition-opacity",
+                        isActive ? "bg-[#3D83F6] opacity-100" : "opacity-0",
                       )}
-                    >
-                      {pendingCount}
-                    </span>
-                  )}
-                  <span
-                    className={clsx(
-                      "absolute inset-x-0 bottom-0 h-[3px] rounded-full transition-opacity",
-                      isActive ? "bg-[#3D83F6] opacity-100" : "opacity-0",
-                    )}
+                    />
+                  </button>
+                );
+              })}
+            </div>
+
+            <div className="pb-2">
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isApplicationOpen}
+                    onChange={onToggleApplication}
+                    disabled={isTogglingApplication}
                   />
-                </button>
-              );
-            })}
+                }
+                label={
+                  <span className="text-[14px] text-[#4e5450]">Allow Application Submissions</span>
+                }
+              />
+            </div>
           </div>
         </div>
 
@@ -725,8 +683,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
                   Campaign Application List
                 </h2>
                 <p className="mt-0.5 text-sm text-[#9ca3af]">
-                  {sortedApplications.length} Application
-                  {sortedApplications.length === 1 ? "" : "s"}
+                  {sortedApplications.length} Application{sortedApplications.length === 1 ? "" : "s"}
                 </p>
               </div>
 
@@ -792,18 +749,13 @@ export default function ReviewApplicationsTable({ applications }: Props) {
               <tbody>
                 {paginatedApplications.length === 0 ? (
                   <tr>
-                    <td
-                      colSpan={7}
-                      className="px-5 py-8 text-center text-sm text-[#8a918b]"
-                    >
+                    <td colSpan={7} className="px-5 py-8 text-center text-sm text-[#8a918b]">
                       No applications found for this view.
                     </td>
                   </tr>
                 ) : (
                   paginatedApplications.map((application) => {
-                    const isSelected = selectedIds.includes(
-                      application.campaignId,
-                    );
+                    const isSelected = selectedIds.includes(application.campaignId);
 
                     return (
                       <tr
@@ -818,9 +770,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
                             <input
                               type="checkbox"
                               checked={isSelected}
-                              onChange={() =>
-                                handleToggleSelection(application.campaignId)
-                              }
+                              onChange={() => handleToggleSelection(application.campaignId)}
                               className="h-4 w-4 cursor-pointer rounded border-[#afb6b1] accent-[#6f7670]"
                             />
                           </div>
@@ -828,9 +778,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
                         <td className="px-2 py-3 text-[#49514c]">
                           {formatDate(application.submissionDate)}
                         </td>
-                        <td className="px-2 py-3 text-[#49514c]">
-                          {application.campaignTitle}
-                        </td>
+                        <td className="px-2 py-3 text-[#49514c]">{application.campaignTitle}</td>
                         <td className="px-2 py-3 text-[#49514c]">
                           {application.campaignLeader || "—"}
                         </td>
@@ -838,8 +786,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
                           <Button
                             onClick={() =>
                               router.push(
-                                "/dashboard/review-applications/" +
-                                  application.campaignId,
+                                "/dashboard/review-applications/" + application.campaignId,
                               )
                             }
                             variant="outlined"
@@ -862,9 +809,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
               <div className="relative">
                 <select
                   value={pageSize}
-                  onChange={(event) =>
-                    handlePageSizeChange(Number(event.target.value))
-                  }
+                  onChange={(event) => handlePageSizeChange(Number(event.target.value))}
                   className="appearance-none bg-transparent pr-5 font-medium text-[#6c736d] outline-none"
                 >
                   {pageSizeOptions.map((size) => (
@@ -893,10 +838,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
               <button
                 type="button"
                 onClick={handleNextPage}
-                disabled={
-                  currentPageIndex >= totalPages - 1 ||
-                  sortedApplications.length === 0
-                }
+                disabled={currentPageIndex >= totalPages - 1 || sortedApplications.length === 0}
                 className="rounded-full p-1 text-[#8d948e] transition-colors hover:bg-[#f0f4f0] disabled:cursor-not-allowed disabled:opacity-40"
               >
                 <ChevronRightIcon />
@@ -907,11 +849,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
       </div>
 
       {isActionModalOpen && (
-        <BaseModal
-          open={isActionModalOpen}
-          onClose={handleCloseActionModal}
-          title={modalTitle}
-        >
+        <BaseModal open={isActionModalOpen} onClose={handleCloseActionModal} title={modalTitle}>
           <div className="px-4 pb-4 text-[16px] text-[#727873]">
             <p>
               {pendingAction === "REVERT"
@@ -920,9 +858,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
             </p>
             <ul className="mt-2 list-disc pl-6 text-[#222622]">
               {selectedApplications.map((application) => (
-                <li key={application.campaignId}>
-                  {application.campaignTitle}
-                </li>
+                <li key={application.campaignId}>{application.campaignTitle}</li>
               ))}
             </ul>
             <p className="mt-3">
@@ -933,11 +869,7 @@ export default function ReviewApplicationsTable({ applications }: Props) {
           </div>
 
           <div className="flex items-center justify-end gap-3 px-4 pb-4">
-            <Button
-              onClick={handleCloseActionModal}
-              disabled={isConfirming}
-              variant="text"
-            >
+            <Button onClick={handleCloseActionModal} disabled={isConfirming} variant="text">
               CANCEL
             </Button>
             <Button

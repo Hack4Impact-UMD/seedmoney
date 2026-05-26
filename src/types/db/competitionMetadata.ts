@@ -3,4 +3,5 @@ export type CompetitionMetadata = {
   start_date: string,
   end_date: string,
   is_current: boolean
+  is_application_open: boolean
 }

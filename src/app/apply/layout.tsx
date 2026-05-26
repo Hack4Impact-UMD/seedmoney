@@ -5,12 +5,20 @@ import { readCurrentDraftCampaignForUser } from "@/src/actions/db/campaigns";
 import { ApplicationFormData } from "@/src/types/form";
 import { readAnswersByCampaign } from "@/src/actions/db/answers";
 import { readCampaignImagesByCampaign } from "@/src/actions/db/campaign-image-records";
+import { readCurrentCompetition } from "@/src/actions/db/competition-metadata";
+import { redirect } from "next/navigation";
 
 export default async function ApplyLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const competition = await readCurrentCompetition();
+
+  if (competition && !competition?.is_application_open) {
+    redirect("/");
+  }
+
   const supabase = await createServerClient();
   const {
     data: { user },

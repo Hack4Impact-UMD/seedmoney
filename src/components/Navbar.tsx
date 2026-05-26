@@ -29,6 +29,7 @@ import ChangeEmailModal from "@/src/components/settings-modals/ChangeEmailModal"
 import ChangePasswordModal from "@/src/components/settings-modals/ChangePasswordModal";
 import useUpdateUser from "@/src/hooks/users/useUpdateUser";
 import StartApplicationModal from "@/src/components/StartApplicationModal";
+import Tooltip from "@mui/material/Tooltip";
 
 export default function Navbar({ compact = false }: { compact?: boolean }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -478,16 +479,24 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
                 compact ? "gap-2 px-3 pb-4" : "gap-3 px-4 pb-6",
               )}
             >
-              <Button
-                size={compact ? "medium" : "large"}
-                variant="outlined"
-                startIcon={!isCollapsed && <AddIcon />}
-                onClick={() => setOpenApplyModal(true)}
-                fullWidth
-                className="hover:!bg-gray-100"
+              <Tooltip
+                title={!currentCompetitionData?.is_application_open ? "Application is closed for this cycle" : ""}
+                placement="top"
               >
-                {isCollapsed ? <AddIcon /> : "New Campaign"}
-              </Button>
+                <span>
+                  <Button
+                    size={compact ? "medium" : "large"}
+                    variant={currentCompetitionData?.is_application_open ? "outlined" : "contained"}
+                    startIcon={!isCollapsed && <AddIcon />}
+                    onClick={() => setOpenApplyModal(true)}
+                    fullWidth
+                    className="hover:!bg-gray-100"
+                    disabled={!currentCompetitionData?.is_application_open}
+                  >
+                    {isCollapsed ? <AddIcon /> : "New Campaign"}
+                  </Button>
+                </span>
+              </Tooltip>
               <Button
                 onClick={handleSettings}
                 size="medium"
@@ -513,6 +522,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
             </div>
           </>
         )}
+
         <StartApplicationModal
           open={openApplyModal}
           onClose={() => setOpenApplyModal(false)}
