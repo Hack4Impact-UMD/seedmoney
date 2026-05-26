@@ -8,7 +8,6 @@ export default function InformationSection() {
 
       <FaqSection />
       <HelpForm />
-      <DashboardFooter />
 
     </div>
   )

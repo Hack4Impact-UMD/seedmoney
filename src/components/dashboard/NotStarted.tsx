@@ -15,6 +15,8 @@ export default function NotStarted() {
   const [openApplyModal, setOpenApplyModal] = useState(false);
   const { data: currentCompetitionData } = useReadCurrentCompetition();
 
+  const isApplicationOpen = currentCompetitionData?.is_application_open;
+
   return (
     <>
       <Box className="flex w-full flex-col items-center justify-center rounded-2xl bg-white px-6 py-20 text-center shadow-sm md:px-16">
@@ -27,23 +29,38 @@ export default function NotStarted() {
           />
         </Box>
 
-        <Typography className="!text-2xl !font-semibold !text-gray-800 !mb-2">
-          No campaigns created
-        </Typography>
+        {isApplicationOpen ? (
+          <>
+            <Typography className="!text-2xl !font-semibold !text-gray-800 !mb-2">
+              No campaigns created
+            </Typography>
 
-        <Typography className="!text-base !text-gray-500 !mb-8 text-center">
-          Create your first campaign to start sharing your story and receiving
-          support.
-        </Typography>
+            <Typography className="!text-base !text-gray-500 !mb-8 text-center">
+              Create your first campaign to start sharing your story and
+              receiving support.
+            </Typography>
 
-        <Button
-          variant="contained"
-          size="medium"
-          startIcon={<AddIcon />}
-          onClick={() => setOpenApplyModal(true)}
-        >
-          New Campaign
-        </Button>
+            <Button
+              variant="contained"
+              size="medium"
+              startIcon={<AddIcon />}
+              onClick={() => setOpenApplyModal(true)}
+            >
+              New Campaign
+            </Button>
+          </>
+        ) : (
+          <>
+            <Typography className="!text-2xl !font-semibold !mb-2 !text-[#666666]">
+              Applications closed
+            </Typography>
+
+            <Typography className="!text-base !text-gray-500 !mt-2 text-center">
+              The campaign is already in progress and no longer accepting
+              applications
+            </Typography>
+          </>
+        )}
       </Box>
 
       <StartApplicationModal

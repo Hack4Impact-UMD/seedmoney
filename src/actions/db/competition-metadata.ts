@@ -52,3 +52,24 @@ export async function readCompetitionById(
 
   return data as CompetitionMetadata;
 }
+
+export async function updateCompetition(
+  competitionId: number,
+  updates: Partial<CompetitionMetadata>,
+): Promise<CompetitionMetadata | null> {
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("competition_metadata")
+    .update(updates)
+    .eq("competition_id", competitionId)
+    .select()
+    .single();
+
+  if (error) {
+    console.error("Error updating competition:", error.message);
+    return null;
+  }
+
+  return data as CompetitionMetadata;
+}
