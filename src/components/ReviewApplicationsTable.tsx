@@ -11,6 +11,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { usePathname, useRouter, useSearchParams } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import { Button, FormControlLabel, Menu, MenuItem, Switch } from "@mui/material";
+import { Button, FormControlLabel, Menu, MenuItem, Switch } from "@mui/material";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import BaseModal from "@/src/components/bases/BaseModal";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
@@ -459,14 +460,18 @@ export default function ReviewApplicationsTable({
       </Menu>
 
       {/* Mobile */}
+      {/* Mobile */}
       <div className="md:hidden">
         <div className="mb-3">
           <h2 className="text-[22px] font-bold text-[#214E34]">Review Applications</h2>
           <p className="mt-2 text-[14px] text-[#49514c]">
             <span className="font-semibold text-[#1f2320]">Campaign Application List</span>{" "}
             - {sortedApplications.length} Application{sortedApplications.length === 1 ? "" : "s"}
+            <span className="font-semibold text-[#1f2320]">Campaign Application List</span>{" "}
+            - {sortedApplications.length} Application{sortedApplications.length === 1 ? "" : "s"}
           </p>
           {hasSelectedRows && (
+            <p className="mt-2 text-[13px] text-[#7b827d]">{selectedIds.length} Selected</p>
             <p className="mt-2 text-[13px] text-[#7b827d]">{selectedIds.length} Selected</p>
           )}
         </div>
@@ -646,8 +651,14 @@ export default function ReviewApplicationsTable({
       </div>
 
       {/* Desktop */}
+      {/* Desktop */}
       <div className="hidden md:block">
         <div className="mb-5">
+          <div className="mt-4 flex items-center justify-between border-b border-[#d6e0d7]">
+            <div className="flex items-end gap-7">
+              {(["PENDING", "DENIED"] as TabStatus[]).map((status) => {
+                const isActive = status === tab;
+                const label = status === "PENDING" ? "Pending" : "Denied";
           <div className="mt-4 flex items-center justify-between border-b border-[#d6e0d7]">
             <div className="flex items-end gap-7">
               {(["PENDING", "DENIED"] as TabStatus[]).map((status) => {
