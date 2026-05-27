@@ -5,6 +5,7 @@ import Button from "@mui/material/Button";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import CheckIcon from "@mui/icons-material/Check";
+import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
 import ImportExportIcon from "@mui/icons-material/ImportExport";
 import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
 import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
@@ -161,6 +162,14 @@ export default function DonorsTable({
     window.URL.revokeObjectURL(url);
   }, [exportFileName, sanitizeCsvValue, sortedData]);
 
+  const handleCopyEmail = useCallback(async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+    } catch {
+      return;
+    }
+  }, []);
+
   const columnHelper = createColumnHelper<Donor>();
 
   const columns = [
@@ -180,7 +189,26 @@ export default function DonorsTable({
     }),
     columnHelper.accessor("email", {
       header: "Contributor Email",
-      cell: (info) => info.getValue(),
+      cell: (info) => {
+        const email = info.getValue();
+
+        return (
+          <div className="group/email inline-flex max-w-full items-center gap-2">
+            <a href={`mailto:${email}`} className="truncate underline">
+              {email}
+            </a>
+            <button
+              type="button"
+              title="Copy email"
+              aria-label={`Copy ${email}`}
+              onClick={() => void handleCopyEmail(email)}
+              className="shrink-0 text-gray-500 opacity-0 transition-opacity group-hover/email:opacity-100 group-focus-within/email:opacity-100"
+            >
+              <ContentCopyOutlinedIcon className="text-[16px]!" />
+            </button>
+          </div>
+        );
+      },
     }),
     columnHelper.accessor("date", {
       header: "Date",
@@ -373,13 +401,34 @@ export default function DonorsTable({
                     {[
                       { label: "Contributor Name", value: donor.name },
                       { label: "Amount", value: `$${donor.amount.toFixed(2)}` },
-                      { label: "Contributor Email", value: donor.email },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                         <span className="text-xs text-gray-400">{label}</span>
                         <span className="text-sm text-gray-800 text-right max-w-[55%] truncate">{value}</span>
                       </div>
                     ))}
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-100">
+                      <span className="shrink-0 text-xs text-gray-400">
+                        Contributor Email
+                      </span>
+                      <div className="flex min-w-0 max-w-[62%] items-center gap-2">
+                        <a
+                          href={`mailto:${donor.email}`}
+                          className="truncate text-sm text-gray-800 underline"
+                        >
+                          {donor.email}
+                        </a>
+                        <button
+                          type="button"
+                          title="Copy email"
+                          aria-label={`Copy ${donor.email}`}
+                          onClick={() => void handleCopyEmail(donor.email)}
+                          className="shrink-0 text-gray-500"
+                        >
+                          <ContentCopyOutlinedIcon className="text-[16px]!" />
+                        </button>
+                      </div>
+                    </div>
                     <div className="flex items-center justify-between px-4 py-3">
                       <span className="text-xs text-gray-400">Status</span>
                       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${isSuccess ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
