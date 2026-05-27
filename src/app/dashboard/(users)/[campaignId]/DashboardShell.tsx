@@ -241,7 +241,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           </div>
         </div>
 
-        <DashboardTabs tabs={USER_DASHBOARD_TABS} />
+        <DashboardTabs tabs={USER_DASHBOARD_TABS} showMobileScrollControls />
 
         <section id="dashboard-overview" className="scroll-mt-20">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">

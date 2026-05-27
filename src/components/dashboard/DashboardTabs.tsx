@@ -1,5 +1,7 @@
 "use client";
 
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {
   useCallback,
   useEffect,
@@ -15,14 +17,30 @@ export type DashboardTabItem = {
 
 type DashboardTabsProps = {
   tabs: readonly DashboardTabItem[];
+  showMobileScrollControls?: boolean;
 };
 
-export default function DashboardTabs({ tabs }: DashboardTabsProps) {
+type TabScrollControls = {
+  canScrollLeft: boolean;
+  canScrollRight: boolean;
+};
+
+export default function DashboardTabs({
+  tabs,
+  showMobileScrollControls = false,
+}: DashboardTabsProps) {
   const [selectedSectionId, setSelectedSectionId] = useState(
     tabs[0]?.sectionId ?? "",
   );
+  const [tabScrollControls, setTabScrollControls] = useState<TabScrollControls>(
+    {
+      canScrollLeft: false,
+      canScrollRight: false,
+    },
+  );
   const selectedSectionIdRef = useRef(selectedSectionId);
   const tabsRef = useRef<HTMLElement | null>(null);
+  const tabsScrollerRef = useRef<HTMLDivElement | null>(null);
   const scrollTargetRef = useRef<string | null>(null);
   const scrollTimeoutRef = useRef<number | null>(null);
 
@@ -134,6 +152,65 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
     };
   }, [activateSection, releaseScrollTarget, tabs]);
 
+  const updateTabScrollControls = useCallback(() => {
+    const scroller = tabsScrollerRef.current;
+
+    if (!scroller) {
+      return;
+    }
+
+    const remainingScroll = scroller.scrollWidth - scroller.clientWidth;
+    const boundaryOffset = 1;
+    const nextControls = {
+      canScrollLeft: scroller.scrollLeft > boundaryOffset,
+      canScrollRight:
+        remainingScroll > boundaryOffset &&
+        scroller.scrollLeft < remainingScroll - boundaryOffset,
+    };
+
+    setTabScrollControls((controls) =>
+      controls.canScrollLeft === nextControls.canScrollLeft &&
+      controls.canScrollRight === nextControls.canScrollRight
+        ? controls
+        : nextControls,
+    );
+  }, []);
+
+  useEffect(() => {
+    if (!showMobileScrollControls) {
+      return;
+    }
+
+    const scroller = tabsScrollerRef.current;
+
+    if (!scroller) {
+      return;
+    }
+
+    const initialMeasurementFrame = window.requestAnimationFrame(
+      updateTabScrollControls,
+    );
+    scroller.addEventListener("scroll", updateTabScrollControls, {
+      passive: true,
+    });
+
+    const resizeObserver = new ResizeObserver(updateTabScrollControls);
+    resizeObserver.observe(scroller);
+
+    return () => {
+      window.cancelAnimationFrame(initialMeasurementFrame);
+      scroller.removeEventListener("scroll", updateTabScrollControls);
+      resizeObserver.disconnect();
+    };
+  }, [showMobileScrollControls, tabs, updateTabScrollControls]);
+
+  const scrollTabs = (direction: -1 | 1) => {
+    tabsScrollerRef.current?.scrollBy({
+      left: direction * tabsScrollerRef.current.clientWidth,
+      behavior: "smooth",
+    });
+  };
+
   const handleChange = (
     event: MouseEvent<HTMLAnchorElement>,
     newValue: string,
@@ -186,26 +263,57 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
       aria-label="Dashboard sections"
       className="sticky top-0 z-10 mt-5 mb-5 w-full bg-inherit md:w-fit"
     >
-      <div className="flex w-full">
-        {tabs.map((tab) => {
-          const isCurrent = selectedSectionId === tab.sectionId;
+      <div className="flex w-full items-stretch">
+        {showMobileScrollControls && tabScrollControls.canScrollLeft && (
+          <button
+            type="button"
+            aria-label="Show previous dashboard tabs"
+            onClick={() => scrollTabs(-1)}
+            className="flex w-10 shrink-0 items-center justify-center text-black/60 md:hidden"
+          >
+            <ChevronLeftIcon fontSize="small" />
+          </button>
+        )}
+        <div
+          ref={showMobileScrollControls ? tabsScrollerRef : undefined}
+          className={`flex min-w-0 flex-1 ${
+            showMobileScrollControls
+              ? "overflow-x-auto scrollbar-hide md:overflow-visible"
+              : ""
+          }`}
+        >
+          {tabs.map((tab) => {
+            const isCurrent = selectedSectionId === tab.sectionId;
 
-          return (
-            <a
-              key={tab.sectionId}
-              href={`#${tab.sectionId}`}
-              aria-current={isCurrent ? "location" : undefined}
-              onClick={(event) => handleChange(event, tab.sectionId)}
-              className={`inline-flex min-h-[38px] min-w-0 flex-1 items-center justify-center border-b-[3px] px-0 text-sm font-semibold leading-[1.25] no-underline md:flex-none md:px-5 ${
-                isCurrent
-                  ? "border-[#1976D2] text-[#1976D2]"
-                  : "border-transparent text-black/60"
-              }`}
-            >
-              {tab.label}
-            </a>
-          );
-        })}
+            return (
+              <a
+                key={tab.sectionId}
+                href={`#${tab.sectionId}`}
+                aria-current={isCurrent ? "location" : undefined}
+                onClick={(event) => handleChange(event, tab.sectionId)}
+                className={`inline-flex min-h-[38px] min-w-0 items-center justify-center border-b-[3px] text-sm font-semibold leading-[1.25] no-underline md:flex-none md:px-5 ${
+                  showMobileScrollControls ? "shrink-0 px-4" : "flex-1 px-0"
+                } ${
+                  isCurrent
+                    ? "border-[#1976D2] text-[#1976D2]"
+                    : "border-transparent text-black/60"
+                }`}
+              >
+                {tab.label}
+              </a>
+            );
+          })}
+        </div>
+        {showMobileScrollControls && tabScrollControls.canScrollRight && (
+          <button
+            type="button"
+            aria-label="Show more dashboard tabs"
+            onClick={() => scrollTabs(1)}
+            className="flex w-10 shrink-0 items-center justify-center text-black/60 md:hidden"
+          >
+            <ChevronRightIcon fontSize="small" />
+          </button>
+        )}
       </div>
     </nav>
   );
