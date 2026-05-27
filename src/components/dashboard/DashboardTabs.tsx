@@ -22,7 +22,7 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
     tabs[0]?.sectionId ?? "",
   );
   const selectedSectionIdRef = useRef(selectedSectionId);
-  const tabsRef = useRef<HTMLDivElement | null>(null);
+  const tabsRef = useRef<HTMLElement | null>(null);
   const scrollTargetRef = useRef<string | null>(null);
   const scrollTimeoutRef = useRef<number | null>(null);
 
@@ -66,13 +66,18 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
       const isAtDocumentEnd =
         window.scrollY + window.innerHeight >=
         document.documentElement.scrollHeight - 1;
-      const nextSection = isAtDocumentEnd
+      let nextSection = isAtDocumentEnd
         ? sections[sections.length - 1]
-        : sections
-            .findLast(
-              (section) =>
-                section.getBoundingClientRect().top <= activationLine,
-            ) ?? sections[0];
+        : sections[0];
+
+      if (!isAtDocumentEnd) {
+        for (let index = sections.length - 1; index >= 0; index -= 1) {
+          if (sections[index].getBoundingClientRect().top <= activationLine) {
+            nextSection = sections[index];
+            break;
+          }
+        }
+      }
 
       if (nextSection.id !== selectedSectionIdRef.current) {
         activateSection(nextSection.id);
@@ -133,11 +138,42 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
     event: MouseEvent<HTMLAnchorElement>,
     newValue: string,
   ) => {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    const target = document.getElementById(newValue);
+
+    if (!target) {
+      return;
+    }
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (reduceMotion) {
+      releaseScrollTarget();
+      activateSection(newValue);
+      return;
+    }
+
     event.preventDefault();
     releaseScrollTarget();
     scrollTargetRef.current = newValue;
     activateSection(newValue);
-    document.getElementById(newValue)?.scrollIntoView({
+
+    if (window.location.hash !== `#${newValue}`) {
+      window.history.pushState(null, "", `#${newValue}`);
+    }
+
+    target.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
