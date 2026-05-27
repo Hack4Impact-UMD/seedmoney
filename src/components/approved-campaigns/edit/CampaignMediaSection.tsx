@@ -530,7 +530,7 @@ export default function CampaignMediaSection({
     <>
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-bold">
-          Main Photo <span className="text-orange-500">*</span>
+          Main Photo <span className="text-red-500">*</span>
         </h2>
         <p className="text-sm">
           Upload one clear, high-quality photo that best represents your
@@ -606,7 +606,7 @@ export default function CampaignMediaSection({
 
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-bold">
-          Supporting Photos <span className="text-orange-500">*</span>
+          Supporting Photos <span className="text-red-500">*</span>
         </h2>
         <p className="text-sm">
           You may upload up to five additional photos that help tell your

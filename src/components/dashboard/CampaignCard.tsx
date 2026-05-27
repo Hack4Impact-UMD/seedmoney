@@ -101,7 +101,7 @@ export default function CampaignCard({
 
           <p className="text-xs text-gray-500 mb-4">
             {(donors ?? 0).toLocaleString()}{" "}
-            {(donors ?? 0) === 1 ? "donor" : "donors"}
+            {(donors ?? 0) === 1 ? "donation" : "donations"}
           </p>
 
           <Link

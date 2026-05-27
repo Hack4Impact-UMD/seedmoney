@@ -23,7 +23,7 @@ export default function LeaderboardHero({
         <div className="flex justify-end gap-6 text-sm font-bold md:gap-10 md:text-[18px]">
           <span>{totalCampaigns.toLocaleString()} campaigns</span>
           <span>${totalRaised.toLocaleString()} raised</span>
-          <span>{totalDonors.toLocaleString()} donors</span>
+          <span>{totalDonors.toLocaleString()} donations</span>
         </div>
 
         <div className="mx-auto max-w-[920px] text-center">

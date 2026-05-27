@@ -27,7 +27,7 @@ type SortKey = "most_raised" | "least_raised" | "most_donors";
 const SORT_OPTIONS: { key: SortKey; label: string }[] = [
   { key: "most_raised", label: "Most Raised" },
   { key: "least_raised", label: "Least Raised" },
-  { key: "most_donors", label: "Most Donors" },
+  { key: "most_donors", label: "Most Donations" },
 ];
 
 export default function DashboardIndexPage() {
@@ -257,7 +257,7 @@ export default function DashboardIndexPage() {
                   <span className="text-sm text-gray-500 sm:whitespace-nowrap">
                     {isChallengeNotStarted
                       ? "Challenge has not started yet."
-                      : `${daysLeft} days left in this year's campaign`}
+                      : `${daysLeft} days left in this year's challenge`}
                   </span>
 
                   <div className="relative h-2 w-40 rounded-full bg-[#56bd604a] overflow-hidden">

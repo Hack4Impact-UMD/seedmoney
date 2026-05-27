@@ -641,7 +641,7 @@ export default function GardenStoryStep() {
       {/* Garden Story */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-8">
         <h2 className="text-[20px] font-medium">
-          Garden Story <span className="text-orange-500">*</span>
+          Garden Story <span className="text-red-500">*</span>
         </h2>
 
         <p className="text-sm text-gray-600">
@@ -896,7 +896,7 @@ export default function GardenStoryStep() {
       {/* Main Photo */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[20px] font-medium">
-          Main Photo <span className="text-orange-500">*</span>
+          Main Photo <span className="text-red-500">*</span>
         </h2>
 
         <p className="text-sm text-gray-600">

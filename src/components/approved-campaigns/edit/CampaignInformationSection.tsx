@@ -43,7 +43,7 @@ export default function CampaignInformationSection({
       <h1 className="text-2xl font-bold">Campaign Information</h1>
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-bold">
-          Campaign Title <span className="text-orange-500">*</span>
+          Campaign Title <span className="text-red-500">*</span>
         </h2>
 
         <p className="text-sm text-gray-600">
@@ -63,7 +63,7 @@ export default function CampaignInformationSection({
 
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-bold">
-          Project Details & Impact <span className="text-orange-500">*</span>
+          Project Details & Impact <span className="text-red-500">*</span>
         </h2>
 
         <div>
@@ -134,7 +134,7 @@ export default function CampaignInformationSection({
 
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-bold">
-          Fundraising Goal <span className="text-orange-500">*</span>
+          Fundraising Goal <span className="text-red-500">*</span>
         </h2>
 
         <p className="text-sm text-gray-600">

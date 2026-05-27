@@ -23,7 +23,7 @@ export default function ReviewApplicationsPage() {
       <Navbar />
       <div className="flex-1 bg-gray-50 px-4 py-6 md:p-10">
         <h3 className="hidden text-4xl font-bold text-[#096B2E] md:block">
-          Review Campaigns
+          Review Applications
         </h3>
         <ReviewApplicationsTable
           applications={campaigns || []}

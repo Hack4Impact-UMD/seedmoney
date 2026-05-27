@@ -130,7 +130,7 @@ export default function DonorsTable({
       .replace(/[<>:"/\\|?*\x00-\x1F]/g, "")
       .replace(/\s+/g, "-");
 
-    return `${normalizedCampaignName || `campaign-${campaignId}`}-donors.csv`;
+    return `${normalizedCampaignName || `campaign-${campaignId}`}-donations.csv`;
   }, [campaignId, campaignName, campaignsData]);
 
   const handleExportCsv = useCallback(() => {
@@ -139,11 +139,11 @@ export default function DonorsTable({
     }
 
     const rows = [
-      ["ID", "Amount", "Contributor", "Contributor Email", "Date", "Status"],
+      ["ID", "Contributor Name", "Amount", "Contributor Email", "Date", "Status"],
       ...sortedData.map((donor) => [
         sanitizeCsvValue(donor.id),
-        sanitizeCsvValue(donor.amount.toFixed(2)),
         sanitizeCsvValue(donor.name),
+        sanitizeCsvValue(donor.amount.toFixed(2)),
         sanitizeCsvValue(donor.email),
         sanitizeCsvValue(donor.date.split("T")[0]),
         sanitizeCsvValue(donor.status),
@@ -188,13 +188,13 @@ export default function DonorsTable({
         <span className="font-medium text-gray-700">{info.getValue()}</span>
       ),
     }),
+    columnHelper.accessor("name", {
+      header: "Contributor Name",
+      cell: (info) => info.getValue(),
+    }),
     columnHelper.accessor("amount", {
       header: "Amount",
       cell: (info) => `$${info.getValue().toFixed(2)}`,
-    }),
-    columnHelper.accessor("name", {
-      header: "Contributor",
-      cell: (info) => info.getValue(),
     }),
     columnHelper.accessor("email", {
       header: "Contributor Email",
@@ -277,7 +277,7 @@ export default function DonorsTable({
   };
 
   if (isLoading) {
-    return <div className="p-8 text-center text-gray-500">Loading donors...</div>;
+    return <div className="p-8 text-center text-gray-500">Loading donations...</div>;
   }
 
   return (
@@ -318,7 +318,7 @@ export default function DonorsTable({
         <div className="px-5 pt-6">
           <div className="flex items-start justify-between gap-2 mb-1">
             <div>
-              <h2 className="text-black">Donation List</h2>
+              <h2 className="font-bold text-black">Donation List</h2>
               <p className="text-sm text-gray-500">
                 {filteredData.length} Donation{filteredData.length === 1 ? "" : "s"}
               </p>
@@ -363,7 +363,7 @@ export default function DonorsTable({
         </div>
 
         {sortedData.length === 0 ? (
-          <div className="p-8 text-center text-gray-500">No donors available.</div>
+          <div className="p-8 text-center text-gray-500">No donations available.</div>
         ) : (
           <>
             <div className="flex items-center justify-center gap-3 px-4 pb-6 pt-2 text-sm text-[#666666] md:hidden">

@@ -26,7 +26,7 @@ type LeaderboardFiltersProps = {
 const sortLabels: Record<Exclude<LeaderboardSort, "grantStat">, string> = {
   mostRaised: "Most Raised",
   leastRaised: "Least Raised",
-  mostDonors: "Most Donors",
+  mostDonors: "Most Donations",
 };
 
 export default function LeaderboardFilters({

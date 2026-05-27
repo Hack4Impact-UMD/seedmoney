@@ -112,7 +112,7 @@ export default function GardenInformationStep() {
       {/* Garden Location */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[18px] font-medium">
-          Garden Location <span className="text-orange-500">*</span>
+          Garden Location <span className="text-red-500">*</span>
         </h2>
         <form.Field name="gardenCountry">
           {(field) => (
@@ -276,7 +276,7 @@ export default function GardenInformationStep() {
       {/* Primary Project Category */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[18px] font-medium">
-          Primary Project Category <span className="text-orange-500">*</span>
+          Primary Project Category <span className="text-red-500">*</span>
         </h2>
 
         <p className="text-sm text-gray-600">
@@ -352,7 +352,7 @@ export default function GardenInformationStep() {
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[18px] font-medium">
           Beneficiary Populations Served{" "}
-          <span className="text-orange-500">*</span>
+          <span className="text-red-500">*</span>
         </h2>
 
         <p className="text-sm text-gray-600">

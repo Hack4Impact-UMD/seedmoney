@@ -315,7 +315,7 @@ export default function EditCampaignPage() {
                   onCancel={handleAttemptDiscard}
                 />
                 <div className="text-sm text-gray-500 mt-4 flex items-center">
-                  <span className="text-orange-500 text-lg mr-1">*</span> = required field
+                  <span className="text-red-500 text-lg mr-1">*</span> = required field
                 </div>
               </div>
             )}

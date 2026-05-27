@@ -301,7 +301,7 @@ export default function ReviewSubmitPage() {
       {!campaignComplete && (
         <ReviewBanner
           href="/apply/campaign"
-          message="Please complete campaign information"
+          message='Please complete "Campaign Information"'
         />
       )}
       {goalValue < 1 && (
@@ -314,7 +314,7 @@ export default function ReviewSubmitPage() {
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
         <div>
           <h3 className="text-[17px] font-medium">
-            Campaign Title <span className="text-orange-500">*</span>
+            Campaign Title <span className="text-red-500">*</span>
           </h3>
 
           <p className="text-sm text-gray-600 mt-1">
@@ -332,7 +332,7 @@ export default function ReviewSubmitPage() {
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-5">
         <h3 className="text-[17px] font-medium">
-          Project Details & Impact <span className="text-orange-500">*</span>
+          Project Details & Impact <span className="text-red-500">*</span>
         </h3>
 
         <ValueRow
@@ -390,7 +390,7 @@ export default function ReviewSubmitPage() {
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
         <h3 className="text-[17px] font-medium">
-          Fundraising Goal <span className="text-orange-500">*</span>
+          Fundraising Goal <span className="text-red-500">*</span>
         </h3>
 
         <p className="text-sm text-gray-600">
@@ -409,13 +409,13 @@ export default function ReviewSubmitPage() {
       {!gardenComplete && (
         <ReviewBanner
           href="/apply/garden"
-          message="Please complete garden information"
+          message='Please complete "Garden Information"'
         />
       )}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-5">
         <h3 className="text-[17px] font-medium">
-          Garden Location <span className="text-orange-500">*</span>
+          Garden Location <span className="text-red-500">*</span>
         </h3>
 
         <ValueRow
@@ -433,7 +433,7 @@ export default function ReviewSubmitPage() {
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-2">
         <h3 className="text-[17px] font-medium">
-          Primary Project Category <span className="text-orange-500">*</span>
+          Primary Project Category <span className="text-red-500">*</span>
         </h3>
 
         <ValueRow label="Category" value={values.gardenCategory} required />
@@ -442,7 +442,7 @@ export default function ReviewSubmitPage() {
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-2">
         <h3 className="text-[17px] font-medium">
           Beneficiary Populations Served{" "}
-          <span className="text-orange-500">*</span>
+          <span className="text-red-500">*</span>
         </h3>
 
         <p>
@@ -464,13 +464,13 @@ export default function ReviewSubmitPage() {
       {!storyComplete && (
         <ReviewBanner
           href="/apply/story"
-          message="Please complete garden story"
+          message='Please complete "Garden Story"'
         />
       )}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-8">
         <h3 className="text-[17px] font-medium">
-          Garden Story <span className="text-orange-500">*</span>
+          Garden Story <span className="text-red-500">*</span>
         </h3>
 
         <p className="text-sm">2-3 sentences each</p>
@@ -499,7 +499,7 @@ export default function ReviewSubmitPage() {
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
         <h3 className="text-[17px] font-medium">
-          Main Photo <span className="text-orange-500">*</span>
+          Main Photo <span className="text-red-500">*</span>
         </h3>
 
         <p className="text-sm text-gray-600">
@@ -601,13 +601,13 @@ export default function ReviewSubmitPage() {
       {!contactComplete && (
         <ReviewBanner
           href="/apply/contact"
-          message="Please complete contact information"
+          message='Please complete "Contact Information"'
         />
       )}
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
         <h3 className="text-[17px] font-medium">
-          Organization Information <span className="text-orange-500">*</span>
+          Organization Information <span className="text-red-500">*</span>
         </h3>
 
         <ValueRow
@@ -625,7 +625,7 @@ export default function ReviewSubmitPage() {
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
         <h3 className="text-[17px] font-medium">
           Beneficiary Organization Mailing Address{" "}
-          <span className="text-orange-500">*</span>
+          <span className="text-red-500">*</span>
         </h3>
 
         <ValueRow
@@ -654,7 +654,7 @@ export default function ReviewSubmitPage() {
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-4">
         <h3 className="text-[17px] font-medium">
-          Primary Contact Information <span className="text-orange-500">*</span>
+          Primary Contact Information <span className="text-red-500">*</span>
         </h3>
 
         <ValueRow label="First Name" value={values.contactFirstName} required />

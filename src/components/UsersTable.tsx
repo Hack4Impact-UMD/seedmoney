@@ -655,7 +655,7 @@ export default function UsersTable({
         </div>
 
         <div className="hidden px-5 pt-8 md:block">
-          <h2 className="text-black sm:text-left text-center">
+          <h2 className="font-bold text-black sm:text-left text-center">
             {selectedYear} User List
           </h2>
           <p className="text-sm text-gray-500 sm:text-left text-center">

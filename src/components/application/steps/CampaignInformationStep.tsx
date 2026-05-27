@@ -95,7 +95,7 @@ export default function CampaignInformationStep() {
       {/* campaign title */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[18px] font-medium">
-          Campaign Title <span className="text-orange-500">*</span>
+          Campaign Title <span className="text-red-500">*</span>
         </h2>
 
         <p className="text-sm text-gray-600">
@@ -132,7 +132,7 @@ export default function CampaignInformationStep() {
       {/* project details & impact */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[18px] font-medium">
-          Project Details & Impact <span className="text-orange-500">*</span>
+          Project Details & Impact <span className="text-red-500">*</span>
         </h2>
 
         <form.Field name="beneficiaryCount">
@@ -238,7 +238,7 @@ export default function CampaignInformationStep() {
       {/* fundraising goal */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[18px] font-medium">
-          Fundraising Goal <span className="text-orange-500">*</span>
+          Fundraising Goal <span className="text-red-500">*</span>
         </h2>
 
         <p className="text-sm text-gray-600">

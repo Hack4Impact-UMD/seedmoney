@@ -32,7 +32,7 @@ export default function GardenInformationSection({
       <h1 className="text-2xl font-bold">Garden Information</h1>
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-bold">
-          Garden Location <span className="text-orange-500">*</span>
+          Garden Location <span className="text-red-500">*</span>
         </h2>
 
         <TextField
@@ -62,7 +62,7 @@ export default function GardenInformationSection({
 
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-bold">
-          Primary Project Category <span className="text-orange-500">*</span>
+          Primary Project Category <span className="text-red-500">*</span>
         </h2>
 
         <p className="text-sm text-gray-600">
@@ -97,7 +97,7 @@ export default function GardenInformationSection({
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-bold">
           Beneficiary Populations Served{" "}
-          <span className="text-orange-500">*</span>
+          <span className="text-red-500">*</span>
         </h2>
 
         <p className="text-sm text-gray-600">

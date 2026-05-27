@@ -28,7 +28,7 @@ export function EarningsTrendCard({
       {/* Header row */}
       <div className="flex justify-between items-start mb-1">
         <div>
-          <p className="text-black font-medium">Earnings Trend</p>
+          <p className="font-bold text-black">Earnings Trend</p>
           <p className="text-sm text-gray-500">
             Your earnings over the campaign
           </p>

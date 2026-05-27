@@ -35,7 +35,7 @@ export default function FaqSection() {
           </AccordionSummary>
           <AccordionDetails>
             <Typography className="text-slate-500 text-sm leading-relaxed">
-              Every approved campaign in the SeedMoney Challenge is eligible for a matching grant of up to $500. Grants are awarded based on fundraising milestones: campaigns that raise at least $150 from 3 or more donors qualify for a base grant, with larger grants for campaigns that reach higher thresholds. Full details are in your{" "}
+              Every approved campaign in the SeedMoney Challenge is eligible for a matching grant of up to $500. Grants are awarded based on fundraising milestones: campaigns that raise at least $150 from 3 or more donations qualify for a base grant, with larger grants for campaigns that reach higher thresholds. Full details are in your{" "}
               <Link href="/apply/terms" className="text-[#0288D1] underline underline-offset-4">
                 Grantee Agreement
               </Link>
@@ -46,11 +46,11 @@ export default function FaqSection() {
 
         <Accordion elevation={0} className="border border-[#e5e5e5] rounded-lg before:hidden" sx={{ "&:not(:last-child)": { marginBottom: "1rem" }, borderRadius: "8px !important" }}>
           <AccordionSummary expandIcon={<ExpandMoreIcon />}>
-            <Typography className="font-bold text-slate-700">How and when do I thank my donors?</Typography>
+            <Typography className="font-bold text-slate-700">How and when do I acknowledge donations?</Typography>
           </AccordionSummary>
           <AccordionDetails>
             <Typography className="text-slate-500 text-sm leading-relaxed">
-              We strongly encourage sending personal thank-you messages to each donor. You can download your full donor list using the CSV button above. GiveButter sends an automatic donation receipt, but a personal note from you makes a huge difference. We recommend thanking donors within 48 hours of their gift.
+              We strongly encourage sending a personal thank-you message for each donation. You can download your full donation list using the CSV button above. GiveButter sends an automatic donation receipt, but a personal note from you makes a huge difference. We recommend acknowledging donations within 48 hours of receipt.
             </Typography>
           </AccordionDetails>
         </Accordion>

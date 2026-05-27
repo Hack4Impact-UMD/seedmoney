@@ -72,8 +72,17 @@ export default function GrantAgreementStep() {
   };
 
   const renderAgreementLabel = (item: (typeof GRANT_AGREEMENT_ITEMS)[number]) => {
+    const requiredMarker = item.required ? (
+      <span className="text-red-500">*</span>
+    ) : null;
+
     if (item.kind !== "aiOptIn") {
-      return item.text;
+      return (
+        <>
+          {item.text.replace(/\*$/, "")}
+          {requiredMarker}
+        </>
+      );
     }
 
     const [beforeOptInLink, afterOptInLink] = item.text.split("opt-in statement");
@@ -93,6 +102,7 @@ export default function GrantAgreementStep() {
           opt-in statement
         </button>
         {afterOptInLink}
+        {requiredMarker}
       </span>
     );
   };

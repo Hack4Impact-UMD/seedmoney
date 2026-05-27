@@ -464,7 +464,7 @@ export default function ReviewApplicationsTable({
           <h2 className="text-[22px] font-bold text-[#214E34]">Review Applications</h2>
           <p className="mt-2 text-[14px] text-[#49514c]">
             <span className="font-semibold text-[#1f2320]">Campaign Application List</span>{" "}
-            - {sortedApplications.length} Application{sortedApplications.length === 1 ? "" : "s"}
+            - {sortedApplications.length} Campaign{sortedApplications.length === 1 ? "" : "s"}
           </p>
           {hasSelectedRows && (
             <p className="mt-2 text-[13px] text-[#7b827d]">{selectedIds.length} Selected</p>
@@ -680,11 +680,11 @@ export default function ReviewApplicationsTable({
           <div className="border-b border-[#eef2ee] px-5 pb-3 pt-4 sm:px-6">
             <div className="flex flex-col gap-3">
               <div>
-                <h2 className="text-[16px] font-medium text-[#4e5450]">
+                <h2 className="text-[16px] font-bold text-[#4e5450]">
                   Campaign Application List
                 </h2>
                 <p className="mt-0.5 text-sm text-[#9ca3af]">
-                  {sortedApplications.length} Application{sortedApplications.length === 1 ? "" : "s"}
+                  {sortedApplications.length} Campaign{sortedApplications.length === 1 ? "" : "s"}
                 </p>
               </div>
 

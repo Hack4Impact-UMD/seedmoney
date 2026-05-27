@@ -160,7 +160,7 @@ export default function ContactInformationStep() {
       {/* Organization Information */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[18px] font-medium">
-          Organization Information <span className="text-orange-500">*</span>
+          Organization Information <span className="text-red-500">*</span>
         </h2>
 
         <form.Field name="organizationName">
@@ -227,7 +227,7 @@ export default function ContactInformationStep() {
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[18px] font-medium">
           Beneficiary Organization Mailing Address{" "}
-          <span className="text-orange-500">*</span>
+          <span className="text-red-500">*</span>
         </h2>
 
         <form.Field name="mailingStreet1">
@@ -444,7 +444,7 @@ export default function ContactInformationStep() {
       {/* Primary Contact Information */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[18px] font-medium">
-          Primary Contact Information <span className="text-orange-500">*</span>
+          Primary Contact Information <span className="text-red-500">*</span>
         </h2>
 
         <form.Field name="contactFirstName">

@@ -82,7 +82,7 @@ export default function LeaderboardCard({
               </span>
             </p>
             <p className={`${leaderboardTypography.openSans} text-[13px] font-bold text-[#2B5A3F]`}>
-              {campaign.donors.toLocaleString()} donors
+              {campaign.donors.toLocaleString()} donations
             </p>
           </div>
 

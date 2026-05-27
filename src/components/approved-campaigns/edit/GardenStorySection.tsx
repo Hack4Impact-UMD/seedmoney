@@ -100,7 +100,7 @@ export default function GardenStorySection({
       <h1 className="text-2xl font-bold">Garden Story</h1>
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-bold">
-          Garden Story <span className="text-orange-500">*</span>
+          Garden Story <span className="text-red-500">*</span>
         </h2>
         <p className="text-sm">2-3 sentences each</p>
 
