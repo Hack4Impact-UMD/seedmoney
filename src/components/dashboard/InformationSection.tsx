@@ -1,4 +1,3 @@
-import DashboardFooter from "../DashboardFooter";
 import FaqSection from "./FaqSection";
 import HelpForm from "./HelpForm";
 

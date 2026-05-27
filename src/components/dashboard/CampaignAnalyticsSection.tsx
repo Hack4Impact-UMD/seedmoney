@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo } from "react";
-import { useParams } from "next/navigation";
 import moment from "moment";
 
 import { EarningsTrendCard } from "@/src/components/dashboard/EarningsTrendCard";
@@ -15,34 +14,32 @@ import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadC
 import useReadCompetitionById from "@/src/hooks/competition-metadata/useReadCompetitionById";
 import type { Campaign } from "@/src/types/db/campaigns";
 
-export default function CampaignAnalyticsPage() {
-  const { campaignId } = useParams<{ campaignId: string }>();
-  const campaignIdNum = Number(campaignId);
-
+export default function CampaignAnalyticsSection({
+  campaignId,
+}: {
+  campaignId: number;
+}) {
   const {
     data: transactions,
     isLoading: txnsLoading,
     isError: txnsError,
-  } = useReadCampaignTransactions(campaignIdNum);
+  } = useReadCampaignTransactions(campaignId);
 
   const {
     data: campaignData,
     isLoading: campaignLoading,
     isError: campaignError,
-  } = useReadCampaign({ campaignId: campaignIdNum });
+  } = useReadCampaign({ campaignId });
 
-  // Narrow to single campaign
   const campaign: Campaign | null = Array.isArray(campaignData)
     ? (campaignData[0] ?? null)
     : (campaignData ?? null);
 
-  // Fetch current competition only to detect if this is a past campaign
   const { data: currentCompetitionData } = useReadCurrentCompetition();
 
   const isPastCampaign =
     campaign?.competition_id !== currentCompetitionData?.competition_id;
 
-  // Fetch the campaign's own competition for correct dates
   const {
     data: competitionData,
     isLoading: competitionLoading,
@@ -75,7 +72,7 @@ export default function CampaignAnalyticsPage() {
     return (
       <div className="flex flex-col gap-6 mt-6">
         <div className="bg-white rounded-lg border border-[#e5e5e5] p-6 h-[360px] flex items-center justify-center text-gray-500">
-          Loading…
+          Loading...
         </div>
       </div>
     );

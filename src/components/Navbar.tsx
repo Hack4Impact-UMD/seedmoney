@@ -257,7 +257,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
     <>
       <nav
         className={clsx(
-          "!sticky !top-0 !z-20 hidden md:flex h-screen min-h-0 flex-col shrink-0 overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out",
+          "sticky top-0 z-20 hidden h-screen min-h-0 shrink-0 self-start flex-col overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out md:flex",
           isCollapsed
             ? "!w-[96px]"
             : compact
