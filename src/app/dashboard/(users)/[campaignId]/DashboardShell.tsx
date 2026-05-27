@@ -367,9 +367,10 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
       <BaseAlert
         open={toast}
         onClose={() => setToast(false)}
-        title="Successfully Copied!"
+        title="Link copied!"
+        copySuccess
       >
-        <p>Link has been copied to clipboard</p>
+        <p>Campaign link has been copied to clipboard</p>
       </BaseAlert>
       {currentCompetitionData != null &&
         campaignData.competition_id !==

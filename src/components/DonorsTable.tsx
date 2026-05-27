@@ -541,9 +541,10 @@ export default function DonorsTable({
       <BaseAlert
         open={copyAlertOpen}
         onClose={() => setCopyAlertOpen(false)}
-        title="Successfully Copied!"
+        title="Email copied!"
+        copySuccess
       >
-        <p>Email has been copied to clipboard</p>
+        <p>Contributor email has been copied to clipboard</p>
       </BaseAlert>
     </div>
   );

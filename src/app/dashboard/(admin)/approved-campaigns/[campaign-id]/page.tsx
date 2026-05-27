@@ -167,9 +167,15 @@ export default function AdminCampaignPage() {
             <Button
               size="small"
               variant="outlined"
-              onClick={() => {
-                navigator.clipboard.writeText(campaignData.givebutterlink ?? "");
-                setToast(true);
+              onClick={async () => {
+                try {
+                  await navigator.clipboard.writeText(
+                    campaignData.givebutterlink ?? "",
+                  );
+                  setToast(true);
+                } catch {
+                  return;
+                }
               }}
             >
               Copy Campaign Site Link
@@ -279,9 +285,10 @@ export default function AdminCampaignPage() {
       <BaseAlert
         open={toast}
         onClose={() => setToast(false)}
-        title="Successfully Copied!"
+        title="Link copied!"
+        copySuccess
       >
-        <p>Link has been copied to clipboard</p>
+        <p>Campaign link has been copied to clipboard</p>
       </BaseAlert>
     </div>
   );
