@@ -25,7 +25,7 @@ interface DonorsTableProps {
   campaignName?: string;
 }
 
-type DonorSort = "id" | "amount_asc" | "amount_desc" | "name" | "email";
+type DonorSort = "date" | "id" | "amount_asc" | "amount_desc" | "name" | "email";
 
 const mobilePageSize = 3;
 const sortOptions: { label: string; value: DonorSort }[] = [
@@ -45,7 +45,7 @@ export default function DonorsTable({
     campaignName ? undefined : { campaignId },
   );
   const [searchQuery, setSearchQuery] = useState("");
-  const [sortBy, setSortBy] = useState<DonorSort>("id");
+  const [sortBy, setSortBy] = useState<DonorSort>("date");
   const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
   const [mobilePageIndex, setMobilePageIndex] = useState(0);
 
@@ -92,11 +92,17 @@ export default function DonorsTable({
         case "amount_desc":
           return second.amount - first.amount;
         case "name":
-          return first.name.localeCompare(second.name);
+          return first.name.localeCompare(second.name, undefined, {
+            sensitivity: "base",
+          });
         case "email":
-          return first.email.localeCompare(second.email);
+          return first.email.localeCompare(second.email, undefined, {
+            sensitivity: "base",
+          });
         case "id":
           return first.id - second.id;
+        case "date":
+          return first.date.localeCompare(second.date);
       }
     });
 
