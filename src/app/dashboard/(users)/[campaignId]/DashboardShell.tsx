@@ -26,7 +26,6 @@ import Button from "@mui/material/Button";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
 import BaseModal from "@/src/components/bases/BaseModal";
-import LogoutIcon from "@mui/icons-material/Logout";
 import OpenInNew from "@mui/icons-material/OpenInNew";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import DashboardFooter from "@/src/components/DashboardFooter";
@@ -361,7 +360,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             }}
           >
             Proceed
-            <LogoutIcon className="!ml-[5px] !text-[18px]" />
           </Button>
         </div>
       </BaseModal>

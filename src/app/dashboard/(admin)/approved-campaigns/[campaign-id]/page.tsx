@@ -28,7 +28,6 @@ import { ArrowBack, OpenInNew } from "@mui/icons-material";
 import Button from "@mui/material/Button";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
-import LogoutIcon from "@mui/icons-material/Logout";
 
 const ADMIN_DASHBOARD_TABS: readonly DashboardTabItem[] = [
   { label: "Overview", sectionId: "dashboard-overview" },
@@ -273,7 +272,6 @@ export default function AdminCampaignPage() {
             }}
           >
             Proceed
-            <LogoutIcon className="!ml-[5px] !text-[18px]" />
           </Button>
         </div>
       </BaseModal>

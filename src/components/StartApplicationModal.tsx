@@ -1,7 +1,6 @@
 "use client";
 
 import Button from "@mui/material/Button";
-import Logout from "@mui/icons-material/Logout";
 import moment from "moment";
 
 import BaseModal from "@/src/components/bases/BaseModal";
@@ -51,7 +50,6 @@ export default function StartApplicationModal({
           variant="contained"
           size="medium"
           onClick={onStart}
-          endIcon={<Logout />}
         >
           Start Application
         </Button>
