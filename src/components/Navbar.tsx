@@ -133,6 +133,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
   const currentYear = moment(currentCompetitionData?.start_date).format("YYYY");
   const isViewAllSelected = pathname === "/dashboard/view-all";
   const currentCompetitionId = currentCompetitionData?.competition_id;
+  const isApplicationOpen = currentCompetitionData?.is_application_open === true;
 
   const { currentYearCampaigns, previousCampaigns } = useMemo(() => {
     const currentYearCampaigns = campaigns
@@ -255,9 +256,20 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
 
   return (
     <>
+      <div
+        aria-hidden="true"
+        className={clsx(
+          "hidden shrink-0 transition-[width] duration-300 ease-in-out md:block",
+          isCollapsed
+            ? "!w-[96px]"
+            : compact
+              ? "!w-[260px]"
+              : "!w-[300px] xl:!w-[300px]",
+        )}
+      />
       <nav
         className={clsx(
-          "sticky top-0 z-20 hidden h-screen min-h-0 shrink-0 self-start flex-col overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out md:flex",
+          "fixed inset-y-0 left-0 z-20 hidden min-h-0 flex-col overflow-visible bg-[#2D7A45] transition-[width] duration-300 ease-in-out md:flex",
           isCollapsed
             ? "!w-[96px]"
             : compact
@@ -480,18 +492,18 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
               )}
             >
               <Tooltip
-                title={!currentCompetitionData?.is_application_open ? "Application is closed for this cycle" : ""}
+                title={!isApplicationOpen ? "Application is closed for this cycle" : ""}
                 placement="top"
               >
                 <span>
                   <Button
                     size={compact ? "medium" : "large"}
-                    variant={currentCompetitionData?.is_application_open ? "outlined" : "contained"}
+                    variant={isApplicationOpen ? "outlined" : "contained"}
                     startIcon={!isCollapsed && <AddIcon />}
                     onClick={() => setOpenApplyModal(true)}
                     fullWidth
-                    className="hover:!bg-gray-100"
-                    disabled={!currentCompetitionData?.is_application_open}
+                    className="hover:!bg-gray-100 disabled:!bg-white disabled:!text-[#A6A6A6]"
+                    disabled={!isApplicationOpen}
                   >
                     {isCollapsed ? <AddIcon /> : "New Campaign"}
                   </Button>
@@ -694,11 +706,12 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
                 fullWidth
                 variant="contained"
                 startIcon={<AddIcon className="!text-[24px]" />}
+                disabled={!isApplicationOpen}
                 onClick={() => {
                   setIsCampaignSheetOpen(false);
                   setOpenApplyModal(true);
                 }}
-                className="!mb-2 !justify-center !rounded-[8px] !bg-white !px-[26px] !py-3 !text-[20px] !font-bold !leading-[1.5] !text-[#123A1E] hover:!bg-[#f5f5f5]"
+                className="!mb-2 !justify-center !rounded-[8px] !bg-white !px-[26px] !py-3 !text-[20px] !font-bold !leading-[1.5] !text-[#123A1E] hover:!bg-[#f5f5f5] disabled:!bg-white disabled:!text-[#A6A6A6]"
               >
                 New Campaign
               </Button>

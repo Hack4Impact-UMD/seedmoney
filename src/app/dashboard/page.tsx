@@ -154,7 +154,8 @@ export default function DashboardIndexPage() {
   const { data: imageUrlsByCampaignId = {} } =
     useReadCampaignImageUrlsByCampaignIds(topCampaignIds);
 
-  const isLoading = isLoadingUser || isLoadingCampaigns;
+  const isLoading =
+    isLoadingUser || isLoadingCampaigns || isLoadingCurrentCompetition;
 
   const preferredUserCampaign = useMemo(() => {
     if (campaigns.length === 0) {
@@ -273,7 +274,7 @@ export default function DashboardIndexPage() {
 
         {isLoading && <div className="mt-10 text-gray-500">Loading...</div>}
 
-        {userData && !isAdmin && (
+        {!isLoading && userData && !isAdmin && (
           <div className="mt-10 flex flex-col gap-6">
             <NotStarted />
             <InformationSection />
