@@ -208,36 +208,38 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
       moment().isAfter(competitionStartDate) &&
       moment().isBefore(competitionEndDate),
   );
+  const challengeStatusChip = (
+    <Chip
+      variant={isChallengeActive ? "published" : "archived"}
+      label={`SeedMoney Challenge ${isChallengeActive ? "Active" : "Inactive"}`}
+    />
+  );
 
   return (
     <div className="flex min-h-screen">
       <Navbar />
       <div className="flex-1 min-w-0 overflow-x-clip bg-[#F6FAF9] p-4 pb-24 md:p-10 md:pb-10">
         <div className="mb-1 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
-          <div className="flex flex-col md:flex-row md:items-center">
-            <h3 className="text-2xl md:text-4xl font-bold text-[#096B2E]">
-              {campaignData.name}
-            </h3>
+          <div className="flex flex-col gap-2 md:flex-row md:items-center">
+            <div className="flex flex-wrap items-center gap-2 md:gap-5">
+              <h3 className="text-2xl md:text-4xl font-bold text-[#096B2E]">
+                {campaignData.name}
+              </h3>
+              {challengeStatusChip}
+            </div>
             {createdYear && (
-              <p className="text-sm text-[#A6A6A6] md:ml-[10px] md:mt-[5px]">
+              <p className="text-sm text-[#A6A6A6] md:ml-5 md:mt-[5px]">
                 Created in {createdYear}
               </p>
             )}
           </div>
 
-          <div className="flex flex-wrap gap-2">
-            {isChallengeActive ? (
-              <>
-                <Chip
-                  variant={campaignData.status}
-                  label={getStatusLabel(campaignData.status)}
-                />
-                <Chip variant="published" label="SeedMoney Challenge Active" />
-              </>
-            ) : (
-              <Chip variant="archived" label="SeedMoney Challenge Inactive" />
-            )}
-          </div>
+          {isChallengeActive && (
+            <Chip
+              variant={campaignData.status}
+              label={getStatusLabel(campaignData.status)}
+            />
+          )}
         </div>
 
         <DashboardTabs tabs={USER_DASHBOARD_TABS} showMobileScrollControls />
