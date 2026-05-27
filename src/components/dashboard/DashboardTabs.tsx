@@ -148,9 +148,9 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
     <nav
       ref={tabsRef}
       aria-label="Dashboard sections"
-      className="sticky top-0 z-10 mt-5 mb-5 w-fit bg-inherit"
+      className="sticky top-0 z-10 mt-5 mb-5 w-full bg-inherit md:w-fit"
     >
-      <div className="flex">
+      <div className="flex w-full">
         {tabs.map((tab) => {
           const isCurrent = selectedSectionId === tab.sectionId;
 
@@ -160,7 +160,7 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
               href={`#${tab.sectionId}`}
               aria-current={isCurrent ? "location" : undefined}
               onClick={(event) => handleChange(event, tab.sectionId)}
-              className={`inline-flex min-h-[38px] items-center border-b-[3px] px-5 text-sm font-semibold leading-[1.25] no-underline ${
+              className={`inline-flex min-h-[38px] min-w-0 flex-1 items-center justify-center border-b-[3px] px-0 text-sm font-semibold leading-[1.25] no-underline md:flex-none md:px-5 ${
                 isCurrent
                   ? "border-[#1976D2] text-[#1976D2]"
                   : "border-transparent text-black/60"
