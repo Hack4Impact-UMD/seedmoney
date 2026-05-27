@@ -22,7 +22,7 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
     tabs[0]?.sectionId ?? "",
   );
   const selectedSectionIdRef = useRef(selectedSectionId);
-  const tabsRef = useRef<HTMLDivElement | null>(null);
+  const tabsRef = useRef<HTMLElement | null>(null);
   const scrollTargetRef = useRef<string | null>(null);
   const scrollTimeoutRef = useRef<number | null>(null);
 
@@ -66,13 +66,18 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
       const isAtDocumentEnd =
         window.scrollY + window.innerHeight >=
         document.documentElement.scrollHeight - 1;
-      const nextSection = isAtDocumentEnd
+      let nextSection = isAtDocumentEnd
         ? sections[sections.length - 1]
-        : sections
-            .findLast(
-              (section) =>
-                section.getBoundingClientRect().top <= activationLine,
-            ) ?? sections[0];
+        : sections[0];
+
+      if (!isAtDocumentEnd) {
+        for (let index = sections.length - 1; index >= 0; index -= 1) {
+          if (sections[index].getBoundingClientRect().top <= activationLine) {
+            nextSection = sections[index];
+            break;
+          }
+        }
+      }
 
       if (nextSection.id !== selectedSectionIdRef.current) {
         activateSection(nextSection.id);
@@ -133,11 +138,42 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
     event: MouseEvent<HTMLAnchorElement>,
     newValue: string,
   ) => {
+    if (
+      event.button !== 0 ||
+      event.metaKey ||
+      event.ctrlKey ||
+      event.shiftKey ||
+      event.altKey
+    ) {
+      return;
+    }
+
+    const target = document.getElementById(newValue);
+
+    if (!target) {
+      return;
+    }
+
+    const reduceMotion = window.matchMedia(
+      "(prefers-reduced-motion: reduce)",
+    ).matches;
+
+    if (reduceMotion) {
+      releaseScrollTarget();
+      activateSection(newValue);
+      return;
+    }
+
     event.preventDefault();
     releaseScrollTarget();
     scrollTargetRef.current = newValue;
     activateSection(newValue);
-    document.getElementById(newValue)?.scrollIntoView({
+
+    if (window.location.hash !== `#${newValue}`) {
+      window.history.pushState(null, "", `#${newValue}`);
+    }
+
+    target.scrollIntoView({
       behavior: "smooth",
       block: "start",
     });
@@ -148,9 +184,9 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
     <nav
       ref={tabsRef}
       aria-label="Dashboard sections"
-      className="sticky top-0 z-10 mt-5 mb-5 w-fit bg-inherit"
+      className="sticky top-0 z-10 mt-5 mb-5 w-full bg-inherit md:w-fit"
     >
-      <div className="flex">
+      <div className="flex w-full">
         {tabs.map((tab) => {
           const isCurrent = selectedSectionId === tab.sectionId;
 
@@ -160,7 +196,7 @@ export default function DashboardTabs({ tabs }: DashboardTabsProps) {
               href={`#${tab.sectionId}`}
               aria-current={isCurrent ? "location" : undefined}
               onClick={(event) => handleChange(event, tab.sectionId)}
-              className={`inline-flex min-h-[38px] items-center border-b-[3px] px-5 text-sm font-semibold leading-[1.25] no-underline ${
+              className={`inline-flex min-h-[38px] min-w-0 flex-1 items-center justify-center border-b-[3px] px-0 text-sm font-semibold leading-[1.25] no-underline md:flex-none md:px-5 ${
                 isCurrent
                   ? "border-[#1976D2] text-[#1976D2]"
                   : "border-transparent text-black/60"
