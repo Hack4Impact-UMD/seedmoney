@@ -418,17 +418,17 @@ export default function ReviewSubmitPage() {
           Garden Location <span className="text-orange-500">*</span>
         </h3>
 
-        <ValueRow label="City" value={values.gardenCity} required />
-        <ValueRow
-          label="State / Province"
-          value={values.gardenState}
-          required
-        />
         <ValueRow
           label="Country"
           value={formatCountry(values.gardenCountry)}
           required
         />
+        <ValueRow
+          label="State / Province"
+          value={values.gardenState}
+          required
+        />
+        <ValueRow label="City" value={values.gardenCity} required />
       </div>
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-2">
