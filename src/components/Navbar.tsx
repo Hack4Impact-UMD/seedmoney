@@ -14,6 +14,11 @@ import AddIcon from "@mui/icons-material/Add";
 import LogoutIcon from "@mui/icons-material/Logout";
 import SettingsIcon from "@mui/icons-material/Settings";
 import MenuIcon from "@mui/icons-material/Menu";
+import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
+import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
+import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
+import HistoryIcon from "@mui/icons-material/History";
+import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import Image from "next/image";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { usePathname, useRouter, useParams } from "next/navigation";
@@ -30,6 +35,26 @@ import ChangePasswordModal from "@/src/components/settings-modals/ChangePassword
 import useUpdateUser from "@/src/hooks/users/useUpdateUser";
 import StartApplicationModal from "@/src/components/StartApplicationModal";
 import Tooltip from "@mui/material/Tooltip";
+
+const ADMIN_NAV_ITEMS = [
+  { label: "Home", path: "/dashboard", Icon: HomeOutlinedIcon },
+  {
+    label: "Approved Campaigns",
+    path: "/dashboard/approved-campaigns",
+    Icon: TaskAltOutlinedIcon,
+  },
+  {
+    label: "Review Applications",
+    path: "/dashboard/review-applications",
+    Icon: EditOutlinedIcon,
+  },
+  {
+    label: "Previous Campaigns",
+    path: "/dashboard/previous-campaigns",
+    Icon: HistoryIcon,
+  },
+  { label: "List of Users", path: "/dashboard/users", Icon: PersonOutlineIcon },
+] as const;
 
 export default function Navbar({ compact = false }: { compact?: boolean }) {
   const [isCollapsed, setIsCollapsed] = useState(false);
@@ -168,6 +193,9 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
   const navItemTextClass = compact
     ? "!px-[36px] !py-[16px] !text-[15px] !font-[600] !leading-[22px] !text-white"
     : "!px-[48px] !py-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white";
+  const adminNavItemTextClass = compact
+    ? "!m-0 !ml-[10px] !py-[16px] !pr-[16px] !text-[15px] !font-[600] !leading-[22px] !text-white"
+    : "!m-0 !ml-[10px] !py-[20px] !pr-[20px] !text-[16px] !font-[600] !leading-[24px] !text-white";
 
   const sectionHeadingClass = compact
     ? "mb-1 h-6 px-5 text-[12px] font-normal tracking-[0.08em] text-white"
@@ -351,22 +379,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
         {userData && isAdmin && (
           <div className="scrollbar-hide mt-5 flex min-h-0 flex-1 flex-col overflow-y-auto overscroll-contain">
             <List disablePadding>
-              {[
-                { label: "Home", path: "/dashboard" },
-                {
-                  label: "Approved Campaigns",
-                  path: "/dashboard/approved-campaigns",
-                },
-                {
-                  label: "Review Applications",
-                  path: "/dashboard/review-applications",
-                },
-                {
-                  label: "Previous Campaigns",
-                  path: "/dashboard/previous-campaigns",
-                },
-                { label: "List of Users", path: "/dashboard/users" },
-              ].map(({ label, path }) => {
+              {ADMIN_NAV_ITEMS.map(({ label, path, Icon }) => {
                 const isSelected =
                   path === "/dashboard"
                     ? pathname === path
@@ -385,14 +398,22 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
                         )}
                       />
                     ) : (
-                      <ListItemText
-                        primary={label}
-                        slotProps={{
-                          primary: {
-                            className: navItemTextClass,
-                          },
-                        }}
-                      />
+                      <>
+                        <Icon
+                          className={clsx(
+                            "!shrink-0 !text-[24px] !text-white",
+                            compact ? "!ml-[36px]" : "!ml-[48px]",
+                          )}
+                        />
+                        <ListItemText
+                          primary={label}
+                          slotProps={{
+                            primary: {
+                              className: adminNavItemTextClass,
+                            },
+                          }}
+                        />
+                      </>
                     )}
                   </ListItemButton>
                 );
@@ -655,22 +676,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
 
             {isAdmin && (
               <List disablePadding>
-                {[
-                  { label: "Home", path: "/dashboard" },
-                  {
-                    label: "Approved Campaigns",
-                    path: "/dashboard/approved-campaigns",
-                  },
-                  {
-                    label: "Review Applications",
-                    path: "/dashboard/review-applications",
-                  },
-                  {
-                    label: "Previous Campaigns",
-                    path: "/dashboard/previous-campaigns",
-                  },
-                  { label: "List of Users", path: "/dashboard/users" },
-                ].map(({ label, path }) => {
+                {ADMIN_NAV_ITEMS.map(({ label, path, Icon }) => {
                   const isSelected =
                     path === "/dashboard"
                       ? pathname === path
@@ -689,6 +695,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
                         isSelected ? "bg-[#123A1E]" : "bg-transparent",
                       )}
                     >
+                      <Icon className="!mr-[10px] !shrink-0 !text-[24px] !text-white" />
                       <span className="text-[20px] font-bold leading-[1.334] text-white">
                         {label}
                       </span>
