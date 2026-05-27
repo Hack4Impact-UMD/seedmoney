@@ -383,7 +383,7 @@ export default function ReviewSubmitPage() {
         </div>
 
         <ValueRow
-          label="Approximate garden size or scope"
+          label="Approximate garden size or scope (Optional)"
           value={values.gardenSize || ""}
         />
       </div>
@@ -552,7 +552,7 @@ export default function ReviewSubmitPage() {
       </div>
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-5">
-        <h3 className="text-[17px] font-medium">Supporting Photos</h3>
+        <h3 className="text-[17px] font-medium">Supporting Photos (Optional)</h3>
 
         <p className="text-sm text-gray-600">
           You may upload up to five additional photos that help tell your
@@ -633,7 +633,10 @@ export default function ReviewSubmitPage() {
           value={values.mailingStreet1}
           required
         />
-        <ValueRow label="Apartment, suite, etc." value={values.mailingStreet2} />
+        <ValueRow
+          label="Apartment, suite, etc. (Optional)"
+          value={values.mailingStreet2}
+        />
         <ValueRow label="City or Town" value={values.mailingCity} required />
         <ValueRow
           label="State or Province"
@@ -660,7 +663,7 @@ export default function ReviewSubmitPage() {
         <ValueRow label="First Name" value={values.contactFirstName} required />
         <ValueRow label="Last Name" value={values.contactLastName} required />
         <ValueRow label="Email" value={values.contactEmail} required />
-        <ValueRow label="Role or Title" value={values.contactRole} />
+        <ValueRow label="Role or Title (Optional)" value={values.contactRole} />
       </div>
 
       <div className="flex w-full flex-col-reverse gap-3 md:flex-row md:justify-between md:gap-0">

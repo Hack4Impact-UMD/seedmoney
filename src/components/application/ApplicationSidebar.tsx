@@ -248,9 +248,13 @@ export default function ApplicationSidebar() {
 
       {/* Desktop Actions */}
       <div className="hidden flex-col gap-3 md:flex">
-        <div className="mt-2 flex items-center gap-2 text-[13px] text-[#666]">
+        <div
+          className={`mt-2 flex items-center gap-2 text-[13px] ${
+            lastSaved ? "font-bold text-[#2D7A45]" : "text-[#666]"
+          }`}
+        >
           <Image
-            src="/icons/autosave.svg"
+            src={lastSaved ? "/icons/autosave-saved.svg" : "/icons/autosave.svg"}
             alt="Autosave icon"
             width={20}
             height={17}
@@ -277,9 +281,13 @@ export default function ApplicationSidebar() {
           <ArrowBack sx={{ fontSize: 16 }} />
           Exit
         </button>
-        <div className="flex items-center gap-2 text-[13px] text-[#666]">
+        <div
+          className={`flex items-center gap-2 text-[13px] ${
+            lastSaved ? "font-bold text-[#2D7A45]" : "text-[#666]"
+          }`}
+        >
           <Image
-            src="/icons/autosave.svg"
+            src={lastSaved ? "/icons/autosave-saved.svg" : "/icons/autosave.svg"}
             alt="Autosave icon"
             width={20}
             height={17}

@@ -166,7 +166,7 @@ export default function CampaignInformationStep() {
         <form.Field name="gardenSize">
           {(field) => (
             <TextField
-              label="Approximate garden size or scope (Required)"
+              label="Approximate garden size or scope (Optional)"
               helperText="e.g., 12 raised beds, quarter-acre lot, two-acre farm, three school garden sites"
               variant="standard"
               fullWidth

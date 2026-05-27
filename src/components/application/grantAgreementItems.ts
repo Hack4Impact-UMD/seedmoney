@@ -34,7 +34,7 @@ export const GRANT_AGREEMENT_ITEMS: GrantAgreementItem[] = [
     required: true,
   },
   {
-    text: "I authorize SeedMoney to use artificial intelligence (AI) to edit my campaign page text hosted on Givebutter, as described in the opt-in statement. (optional)",
+    text: "I authorize SeedMoney to use artificial intelligence (AI) to edit my campaign page text hosted on Givebutter, as described in the opt-in statement. (Optional)",
     required: false,
     kind: "aiOptIn",
   },

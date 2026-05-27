@@ -1030,7 +1030,7 @@ export default function GardenStoryStep() {
 
       {/* Supporting Photos */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
-        <h2 className="text-[20px] font-medium">Supporting Photos</h2>
+        <h2 className="text-[20px] font-medium">Supporting Photos (Optional)</h2>
 
         <p className="text-sm text-gray-600">
           You may upload up to five additional photos that help tell your

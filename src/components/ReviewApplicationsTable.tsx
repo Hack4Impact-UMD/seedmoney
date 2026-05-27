@@ -698,7 +698,7 @@ export default function ReviewApplicationsTable({
                     value={searchQuery}
                     onChange={(event) => handleSearchChange(event.target.value)}
                     placeholder="Start typing..."
-                    className="h-10 w-full rounded-md border border-[#d9dfd9] px-4 text-[14px] text-[#475049] outline-none transition-colors placeholder:text-[#a9afa9] focus:border-[#8db097]"
+                    className="h-14 w-full rounded-md border border-[#d9dfd9] px-4 text-[14px] text-[#475049] outline-none transition-colors placeholder:text-[#a9afa9] focus:border-[#8db097]"
                   />
                 </label>
 

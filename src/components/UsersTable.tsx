@@ -667,7 +667,7 @@ export default function UsersTable({
               <label className="absolute -top-2.5 left-3 bg-white px-1 text-xs text-gray-400">
                 Search
               </label>
-              <div className="flex items-center rounded-lg border border-gray-400 px-3 py-2.5 transition-colors focus-within:border-blue-500">
+              <div className="flex h-14 items-center rounded-lg border border-gray-400 px-3 transition-colors focus-within:border-blue-500">
                 <input
                   type="text"
                   value={search}
