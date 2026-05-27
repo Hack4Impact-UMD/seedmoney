@@ -311,7 +311,7 @@ export default function DonorsTable({
         ))}
       </Menu>
 
-      <div className="overflow-x-auto rounded-xl bg-white md:mx-auto md:w-full border border-1 border-[#e5e5e5]">
+      <div className="w-full min-w-0 overflow-x-auto rounded-xl bg-white border border-1 border-[#e5e5e5] md:mx-auto">
         <div className="px-5 pt-6">
           <div className="flex items-start justify-between gap-2 mb-1">
             <div>
@@ -396,11 +396,11 @@ export default function DonorsTable({
             </div>
 
             {/* Mobile card view */}
-            <div className="md:hidden px-4 pb-4 flex flex-col gap-3">
+            <div className="flex w-full flex-col gap-3 px-4 pb-4 md:hidden">
               {visibleMobileDonors.map((donor, index) => {
                 const isSuccess = donor.status.toLowerCase() === "succeeded" || donor.status.toLowerCase() === "paid";
                 return (
-                  <div key={donor.id} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                  <div key={donor.id} className="w-full min-w-0 overflow-hidden rounded-xl border border-gray-200 bg-white">
                     <div className="px-4 py-3 border-b border-gray-100">
                       <span className="font-semibold text-gray-800">{String(mobileFirstRow + index).padStart(2, "0")}</span>
                     </div>
