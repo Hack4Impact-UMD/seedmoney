@@ -2,6 +2,13 @@
 
 import React, { useCallback, useMemo, useState } from "react";
 import Button from "@mui/material/Button";
+import Menu from "@mui/material/Menu";
+import MenuItem from "@mui/material/MenuItem";
+import CheckIcon from "@mui/icons-material/Check";
+import ContentCopyOutlinedIcon from "@mui/icons-material/ContentCopyOutlined";
+import ImportExportIcon from "@mui/icons-material/ImportExport";
+import KeyboardArrowLeftIcon from "@mui/icons-material/KeyboardArrowLeft";
+import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import {
   createColumnHelper,
   getCoreRowModel,
@@ -18,6 +25,17 @@ interface DonorsTableProps {
   campaignName?: string;
 }
 
+type DonorSort = "date" | "id" | "amount_asc" | "amount_desc" | "name" | "email";
+
+const mobilePageSize = 3;
+const sortOptions: { label: string; value: DonorSort }[] = [
+  { label: "ID", value: "id" },
+  { label: "Amount Low to High", value: "amount_asc" },
+  { label: "Amount High to Low", value: "amount_desc" },
+  { label: "Contributor Name", value: "name" },
+  { label: "Contributor Email", value: "email" },
+];
+
 export default function DonorsTable({
   campaignId,
   campaignName,
@@ -27,6 +45,9 @@ export default function DonorsTable({
     campaignName ? undefined : { campaignId },
   );
   const [searchQuery, setSearchQuery] = useState("");
+  const [sortBy, setSortBy] = useState<DonorSort>("date");
+  const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
+  const [mobilePageIndex, setMobilePageIndex] = useState(0);
 
   const donors: Donor[] = useMemo(() => {
     if (!transactions) return [];
@@ -61,6 +82,33 @@ export default function DonorsTable({
     });
   }, [donors, searchQuery]);
 
+  const sortedData = useMemo(() => {
+    const sorted = [...filteredData];
+
+    sorted.sort((first, second) => {
+      switch (sortBy) {
+        case "amount_asc":
+          return first.amount - second.amount;
+        case "amount_desc":
+          return second.amount - first.amount;
+        case "name":
+          return first.name.localeCompare(second.name, undefined, {
+            sensitivity: "base",
+          });
+        case "email":
+          return first.email.localeCompare(second.email, undefined, {
+            sensitivity: "base",
+          });
+        case "id":
+          return first.id - second.id;
+        case "date":
+          return first.date.localeCompare(second.date);
+      }
+    });
+
+    return sorted;
+  }, [filteredData, sortBy]);
+
   const sanitizeCsvValue = useCallback((value: unknown) => {
     const stringValue = String(value);
 
@@ -84,13 +132,13 @@ export default function DonorsTable({
   }, [campaignId, campaignName, campaignsData]);
 
   const handleExportCsv = useCallback(() => {
-    if (filteredData.length === 0) {
+    if (sortedData.length === 0) {
       return;
     }
 
     const rows = [
       ["ID", "Amount", "Contributor", "Contributor Email", "Date", "Status"],
-      ...filteredData.map((donor) => [
+      ...sortedData.map((donor) => [
         sanitizeCsvValue(donor.id),
         sanitizeCsvValue(donor.amount.toFixed(2)),
         sanitizeCsvValue(donor.name),
@@ -118,7 +166,15 @@ export default function DonorsTable({
     link.click();
     document.body.removeChild(link);
     window.URL.revokeObjectURL(url);
-  }, [exportFileName, filteredData, sanitizeCsvValue]);
+  }, [exportFileName, sanitizeCsvValue, sortedData]);
+
+  const handleCopyEmail = useCallback(async (email: string) => {
+    try {
+      await navigator.clipboard.writeText(email);
+    } catch {
+      return;
+    }
+  }, []);
 
   const columnHelper = createColumnHelper<Donor>();
 
@@ -139,7 +195,26 @@ export default function DonorsTable({
     }),
     columnHelper.accessor("email", {
       header: "Contributor Email",
-      cell: (info) => info.getValue(),
+      cell: (info) => {
+        const email = info.getValue();
+
+        return (
+          <div className="group/email inline-flex max-w-full items-center gap-2">
+            <a href={`mailto:${email}`} className="truncate underline">
+              {email}
+            </a>
+            <button
+              type="button"
+              title="Copy email"
+              aria-label={`Copy ${email}`}
+              onClick={() => void handleCopyEmail(email)}
+              className="shrink-0 text-gray-500 opacity-0 transition-opacity group-hover/email:opacity-100 group-focus-within/email:opacity-100"
+            >
+              <ContentCopyOutlinedIcon className="text-[16px]!" />
+            </button>
+          </div>
+        );
+      },
     }),
     columnHelper.accessor("date", {
       header: "Date",
@@ -168,7 +243,7 @@ export default function DonorsTable({
   ];
 
   const table = useReactTable({
-    data: filteredData,
+    data: sortedData,
     columns,
     state: {
       globalFilter: searchQuery,
@@ -179,6 +254,24 @@ export default function DonorsTable({
     getFilteredRowModel: getFilteredRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
   });
+  const pageIndex = table.getState().pagination.pageIndex;
+  const pageSize = table.getState().pagination.pageSize;
+  const firstRow = sortedData.length === 0 ? 0 : pageIndex * pageSize + 1;
+  const lastRow = Math.min((pageIndex + 1) * pageSize, sortedData.length);
+  const mobilePageCount = Math.max(1, Math.ceil(sortedData.length / mobilePageSize));
+  const currentMobilePageIndex = Math.min(mobilePageIndex, mobilePageCount - 1);
+  const mobileFirstRow = currentMobilePageIndex * mobilePageSize + 1;
+  const visibleMobileDonors = sortedData.slice(
+    currentMobilePageIndex * mobilePageSize,
+    currentMobilePageIndex * mobilePageSize + mobilePageSize,
+  );
+
+  const handleSortChange = (value: DonorSort) => {
+    setSortBy(value);
+    setMobilePageIndex(0);
+    table.setPageIndex(0);
+    setSortAnchorEl(null);
+  };
 
   if (isLoading) {
     return <div className="p-8 text-center text-gray-500">Loading donors...</div>;
@@ -186,6 +279,38 @@ export default function DonorsTable({
 
   return (
     <div className="w-full">
+      <Menu
+        anchorEl={sortAnchorEl}
+        open={Boolean(sortAnchorEl)}
+        onClose={() => setSortAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+        slotProps={{
+          paper: {
+            className:
+              "mt-2 min-w-[260px] overflow-hidden rounded-md border border-[#e5e5e5] bg-white shadow-lg",
+          },
+        }}
+      >
+        <div className="border-b border-[#e5e5e5] px-5 py-4 text-base font-semibold text-[#212121]">
+          Sort By
+        </div>
+        {sortOptions.map((option) => (
+          <MenuItem
+            key={option.value}
+            onClick={() => handleSortChange(option.value)}
+            className="px-5! py-3!"
+          >
+            <div className="flex w-full min-w-[220px] items-center justify-between gap-4 text-base">
+              <span>{option.label}</span>
+              {sortBy === option.value && (
+                <CheckIcon className="text-[#2D7A45]!" />
+              )}
+            </div>
+          </MenuItem>
+        ))}
+      </Menu>
+
       <div className="overflow-x-auto rounded-xl bg-white md:mx-auto md:w-full border border-1 border-[#e5e5e5]">
         <div className="px-5 pt-6">
           <div className="flex items-start justify-between gap-2 mb-1">
@@ -197,7 +322,7 @@ export default function DonorsTable({
             </div>
             <button
               onClick={handleExportCsv}
-              disabled={filteredData.length === 0}
+              disabled={sortedData.length === 0}
               className="shrink-0 rounded-md border border-gray-300 px-3 py-1.5 text-xs font-semibold uppercase text-gray-700 hover:bg-gray-50 cursor-pointer disabled:opacity-40 disabled:cursor-not-allowed"
             >
               Export to CSV
@@ -212,43 +337,104 @@ export default function DonorsTable({
               <input
                 type="text"
                 value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
+                onChange={(e) => {
+                  setSearchQuery(e.target.value);
+                  setMobilePageIndex(0);
+                  table.setPageIndex(0);
+                }}
                 placeholder="Search"
                 className="w-full bg-transparent text-sm outline-none"
               />
             </div>
-            <button className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500">
-              <svg width="16" height="16" viewBox="0 0 20 20" fill="none" xmlns="http://www.w3.org/2000/svg">
-                <path d="M5 10H15M2.5 5H17.5M7.5 15H12.5" stroke="#6B7280" strokeWidth="1.67" strokeLinecap="round" strokeLinejoin="round"/>
-              </svg>
+            <button
+              type="button"
+              onClick={(event) => setSortAnchorEl(event.currentTarget)}
+              aria-label="Sort donations"
+              aria-haspopup="menu"
+              aria-expanded={Boolean(sortAnchorEl)}
+              className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg border border-gray-200 text-gray-500"
+            >
+              <ImportExportIcon className="h-5! w-5!" />
             </button>
           </div>
         </div>
 
-        {filteredData.length === 0 ? (
+        {sortedData.length === 0 ? (
           <div className="p-8 text-center text-gray-500">No donors available.</div>
         ) : (
           <>
+            <div className="flex items-center justify-center gap-3 px-4 pb-6 pt-2 text-sm text-[#666666] md:hidden">
+              <span>Viewing Page</span>
+              <button
+                type="button"
+                aria-label="Previous page"
+                onClick={() =>
+                  setMobilePageIndex(Math.max(currentMobilePageIndex - 1, 0))
+                }
+                disabled={currentMobilePageIndex === 0}
+                className="text-[#667085] disabled:opacity-30"
+              >
+                <KeyboardArrowLeftIcon />
+              </button>
+              <span className="flex h-11 min-w-[68px] items-center justify-center rounded-lg border border-[#D0D5DD] bg-white text-[#212121]">
+                {currentMobilePageIndex + 1}
+              </span>
+              <button
+                type="button"
+                aria-label="Next page"
+                onClick={() =>
+                  setMobilePageIndex(
+                    Math.min(currentMobilePageIndex + 1, mobilePageCount - 1),
+                  )
+                }
+                disabled={currentMobilePageIndex >= mobilePageCount - 1}
+                className="text-[#667085] disabled:opacity-30"
+              >
+                <KeyboardArrowRightIcon />
+              </button>
+              <span>of {mobilePageCount}</span>
+            </div>
+
             {/* Mobile card view */}
             <div className="md:hidden px-4 pb-4 flex flex-col gap-3">
-              {table.getRowModel().rows.map((row, index) => {
-                const donor = row.original;
+              {visibleMobileDonors.map((donor, index) => {
                 const isSuccess = donor.status.toLowerCase() === "succeeded" || donor.status.toLowerCase() === "paid";
                 return (
-                  <div key={row.id} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
+                  <div key={donor.id} className="rounded-xl border border-gray-200 bg-white overflow-hidden">
                     <div className="px-4 py-3 border-b border-gray-100">
-                      <span className="font-semibold text-gray-800">{String(index + 1).padStart(2, "0")}</span>
+                      <span className="font-semibold text-gray-800">{String(mobileFirstRow + index).padStart(2, "0")}</span>
                     </div>
                     {[
                       { label: "Contributor Name", value: donor.name },
                       { label: "Amount", value: `$${donor.amount.toFixed(2)}` },
-                      { label: "Contributor Email", value: donor.email },
                     ].map(({ label, value }) => (
                       <div key={label} className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
                         <span className="text-xs text-gray-400">{label}</span>
                         <span className="text-sm text-gray-800 text-right max-w-[55%] truncate">{value}</span>
                       </div>
                     ))}
+                    <div className="flex items-center justify-between gap-3 px-4 py-3 border-b border-gray-100">
+                      <span className="shrink-0 text-xs text-gray-400">
+                        Contributor Email
+                      </span>
+                      <div className="flex min-w-0 max-w-[62%] items-center gap-2">
+                        <a
+                          href={`mailto:${donor.email}`}
+                          className="truncate text-sm text-gray-800 underline"
+                        >
+                          {donor.email}
+                        </a>
+                        <button
+                          type="button"
+                          title="Copy email"
+                          aria-label={`Copy ${donor.email}`}
+                          onClick={() => void handleCopyEmail(donor.email)}
+                          className="shrink-0 text-gray-500"
+                        >
+                          <ContentCopyOutlinedIcon className="text-[16px]!" />
+                        </button>
+                      </div>
+                    </div>
                     <div className="flex items-center justify-between px-4 py-3">
                       <span className="text-xs text-gray-400">Status</span>
                       <span className={`inline-flex rounded-full px-3 py-1 text-xs font-medium ${isSuccess ? "bg-green-100 text-green-700" : "bg-yellow-100 text-yellow-700"}`}>
@@ -301,11 +487,12 @@ export default function DonorsTable({
               </tbody>
             </table>
 
-            <div className="hidden md:flex items-center justify-end gap-6 border-t border-gray-100 px-6 py-4 text-sm text-gray-500">
+            <div className="hidden items-center justify-end gap-6 border-t border-gray-100 px-6 py-4 text-sm text-gray-500 md:flex">
               <div className="flex items-center gap-2">
                 <span>Rows per page:</span>
                 <select
-                  value={table.getState().pagination.pageSize}
+                  aria-label="Rows per page"
+                  value={pageSize}
                   onChange={(e) => table.setPageSize(Number(e.target.value))}
                   className="cursor-pointer font-medium text-gray-700 outline-none"
                 >
@@ -318,20 +505,12 @@ export default function DonorsTable({
               </div>
 
               <span>
-                {table.getState().pagination.pageIndex *
-                  table.getState().pagination.pageSize +
-                  1}
-                -
-                {Math.min(
-                  (table.getState().pagination.pageIndex + 1) *
-                    table.getState().pagination.pageSize,
-                  filteredData.length,
-                )}{" "}
-                of {filteredData.length}
+                {firstRow}-{lastRow} of {sortedData.length}
               </span>
 
               <div className="flex items-center gap-2">
                 <Button
+                  aria-label="Previous page"
                   onClick={() => table.previousPage()}
                   disabled={!table.getCanPreviousPage()}
                   variant="text"
@@ -341,6 +520,7 @@ export default function DonorsTable({
                   &lt;
                 </Button>
                 <Button
+                  aria-label="Next page"
                   onClick={() => table.nextPage()}
                   disabled={!table.getCanNextPage()}
                   variant="text"
