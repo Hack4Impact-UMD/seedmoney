@@ -16,6 +16,7 @@ import {
   getPaginationRowModel,
 } from "@tanstack/table-core";
 import { flexRender, useReactTable } from "@tanstack/react-table";
+import BaseAlert from "@/src/components/bases/BaseAlert";
 import useReadTransactionsByCampaign from "@/src/hooks/transactions/useReadTransactionsByCampaign";
 import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import { Donor } from "@/src/types/frontend/donorsTable";
@@ -48,6 +49,7 @@ export default function DonorsTable({
   const [sortBy, setSortBy] = useState<DonorSort>("date");
   const [sortAnchorEl, setSortAnchorEl] = useState<HTMLElement | null>(null);
   const [mobilePageIndex, setMobilePageIndex] = useState(0);
+  const [copyAlertOpen, setCopyAlertOpen] = useState(false);
 
   const donors: Donor[] = useMemo(() => {
     if (!transactions) return [];
@@ -171,6 +173,7 @@ export default function DonorsTable({
   const handleCopyEmail = useCallback(async (email: string) => {
     try {
       await navigator.clipboard.writeText(email);
+      setCopyAlertOpen(true);
     } catch {
       return;
     }
@@ -534,6 +537,14 @@ export default function DonorsTable({
           </>
         )}
       </div>
+
+      <BaseAlert
+        open={copyAlertOpen}
+        onClose={() => setCopyAlertOpen(false)}
+        title="Successfully Copied!"
+      >
+        <p>Email has been copied to clipboard</p>
+      </BaseAlert>
     </div>
   );
 }
