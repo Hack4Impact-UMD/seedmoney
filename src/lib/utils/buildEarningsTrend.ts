@@ -7,6 +7,11 @@ export type DailyEarning = {
   total: number; // cumulative total raised
 };
 
+function toDateKey(value: string) {
+  const date = moment.parseZone(value, moment.ISO_8601, true);
+  return date.isValid() ? date.format("YYYY-MM-DD") : null;
+}
+
 /**
  * Aggregate raw transactions into per-day earnings with a running cumulative
  * total. Filters out non-success rows and returns an empty array for empty
@@ -20,8 +25,19 @@ export function transactionsToDailyEarnings(
   // Sum amount_donated per date, keeping only successful rows.
   const dailyByDate = new Map<string, number>();
   for (const t of transactions) {
-    if (t.status !== "succeeded") continue;
-    dailyByDate.set(t.date, (dailyByDate.get(t.date) ?? 0) + t.amount_donated);
+    const status = t.status.toLowerCase();
+    const date = toDateKey(t.date);
+    const amount = Number(t.amount_donated);
+
+    if (
+      (status !== "succeeded" && status !== "paid") ||
+      !date ||
+      !Number.isFinite(amount)
+    ) {
+      continue;
+    }
+
+    dailyByDate.set(date, (dailyByDate.get(date) ?? 0) + amount);
   }
 
   // Sort dates ascending and build the cumulative series.
@@ -75,7 +91,7 @@ export function buildEarningsTrendData(
     if (moment(d, "YYYY-MM-DD", true).isAfter(today, "day")) return null;
     const entry = dataByDate.get(d);
     if (entry) lastTotal = entry.total;
-    return lastTotal || null;
+    return lastTotal;
   });
 
   return { dates: allDates, dailyValues, totalValues };
