@@ -16,11 +16,12 @@ export interface TransactionPayload {
   data?: {
     id: number | string;
     campaign_id: number;
+    campaign_code: string;
     first_name: string;
     last_name: string;
     email: string;
     phone: string;
-    donated: number;
+    amount: number;
     payout: number;
     status: string;
     transacted_at: string;

@@ -10,7 +10,7 @@ export const transactionHandlers = {
     const { data: campaign, error } = await supabase
       .from("campaigns")
       .select("campaign_id")
-      .eq("givebutter_id", String(payload.data.id))
+      .eq("givebutter_slug", data.campaign_code)
       .maybeSingle();
 
     if (error) {
@@ -18,7 +18,7 @@ export const transactionHandlers = {
     }
 
     if (!campaign) {
-      throw new Error(`Campaign not found for Givebutter id ${data.id}`);
+      throw new Error(`Campaign not found for Givebutter code ${data.campaign_code}`);
     }
 
     await createTransaction({
@@ -27,7 +27,7 @@ export const transactionHandlers = {
       last_name: data.last_name,
       email: data.email,
       phone: data.phone,
-      amount_donated: data.donated,
+      amount_donated: data.amount,
       total_paid: data.payout,
       status: data.status,
       date: data.transacted_at,
