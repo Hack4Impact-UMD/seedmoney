@@ -10,7 +10,7 @@ export const transactionHandlers = {
     const { data: campaign, error } = await supabase
       .from("campaigns")
       .select("campaign_id")
-      .eq("campaign_id", data.campaign_id)
+      .eq("givebutter_id", data.campaign_id)
       .maybeSingle();
 
     if (error) {
