@@ -22,6 +22,14 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "Ignored" }, { status: 200 });
   }
 
-  await handler(body);
-  return NextResponse.json({ message: "OK" }, { status: 200 });
+  try {
+    await handler(body);
+    return NextResponse.json({ message: "OK" }, { status: 200 });
+  } catch (error) {
+    console.error("Givebutter webhook error:", error);
+    return NextResponse.json(
+      { error: "Webhook handler failed" },
+      { status: 500 },
+    );
+  }
 }
