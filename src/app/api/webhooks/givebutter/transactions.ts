@@ -1,11 +1,11 @@
 import { TransactionPayload } from "./types";
-import { createServiceRoleClient } from "@/src/lib/supabase-service-role";
+import { createWebhookSupabaseClient } from "@/src/lib/supabase-service-role";
 
 export const transactionHandlers = {
   "transaction.succeeded": async (payload: TransactionPayload) => {
     if (!payload.data) return;
     const data = payload.data;
-    const supabase = createServiceRoleClient();
+    const supabase = createWebhookSupabaseClient();
     const { data: campaign, error } = await supabase
       .from("campaigns")
       .select("campaign_id")

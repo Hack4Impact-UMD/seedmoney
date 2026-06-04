@@ -27,8 +27,11 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ message: "OK" }, { status: 200 });
   } catch (error) {
     console.error("Givebutter webhook error:", error);
+    const message =
+      error instanceof Error ? error.message : "Webhook handler failed";
+
     return NextResponse.json(
-      { error: "Webhook handler failed" },
+      { error: message },
       { status: 500 },
     );
   }
