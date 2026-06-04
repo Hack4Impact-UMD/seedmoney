@@ -11,7 +11,7 @@ export const campaignHandlers = {
     console.log(payload);
     await updateCampaignGivebutterID(Number(payload.data.id), {
       givebutter_id: String(payload.data.id),
-      givebutter_slug: payload.data.slug,
+      givebutter_slug: payload.data.code ?? payload.data.slug,
       name: payload.data.title,
       givebutterlink: payload.data.url,
       raised: payload.data.raised,
@@ -24,7 +24,7 @@ export const campaignHandlers = {
     if (!payload.data) return;
     await createCampaignGivebutter({
       givebutter_id: String(payload.data.id),
-      givebutter_slug: payload.data.slug,
+      givebutter_slug: payload.data.code ?? payload.data.slug,
       name: payload.data.title,
       organization_name: "",
       givebutterlink: payload.data.url,

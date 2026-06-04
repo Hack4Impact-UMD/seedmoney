@@ -189,7 +189,7 @@ export default function CampaignReviewPage() {
               campaignId: parsedCampaignId,
               campaignData: {
                 givebutter_id: result.value.id,
-                givebutter_slug: result.value.slug,
+                givebutter_slug: result.value.code ?? result.value.slug,
                 givebutterlink: result.value.url,
               },
             });

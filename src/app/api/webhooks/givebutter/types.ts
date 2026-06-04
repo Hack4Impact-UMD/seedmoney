@@ -5,6 +5,7 @@ export interface GivebuttercampaignPayload {
   event: string;
   data?: {
     id: number;
+    code?: string;
     slug: string;
     title: string;
     url: string;
