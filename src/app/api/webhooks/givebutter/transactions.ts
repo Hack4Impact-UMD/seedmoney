@@ -33,6 +33,7 @@ export const transactionHandlers = {
       total_paid: data.payout,
       status: data.status,
       date: data.transacted_at,
+      transacted_at: data.transacted_at,
     });
   },
 };

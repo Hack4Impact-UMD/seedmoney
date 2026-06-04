@@ -21,6 +21,27 @@ import useReadTransactionsByCampaign from "@/src/hooks/transactions/useReadTrans
 import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import { Donor } from "@/src/types/frontend/donorsTable";
 
+function formatLocalDate(value: string) {
+  if (!value.includes("T")) {
+    return value;
+  }
+
+  const date = new Date(value);
+
+  if (Number.isNaN(date.getTime())) {
+    return value.split("T")[0];
+  }
+
+  const parts = new Intl.DateTimeFormat("en-US", {
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+  }).formatToParts(date);
+  const partByType = new Map(parts.map((part) => [part.type, part.value]));
+
+  return `${partByType.get("year")}-${partByType.get("month")}-${partByType.get("day")}`;
+}
+
 interface DonorsTableProps {
   campaignId: number;
   campaignName?: string;
@@ -58,7 +79,7 @@ export default function DonorsTable({
       name: `${t.first_name} ${t.last_name}`,
       email: t.email,
       amount: t.amount_donated,
-      date: t.date,
+      date: t.transacted_at ?? t.date,
       status: t.status,
     }));
   }, [transactions]);
@@ -145,7 +166,7 @@ export default function DonorsTable({
         sanitizeCsvValue(donor.name),
         sanitizeCsvValue(donor.amount.toFixed(2)),
         sanitizeCsvValue(donor.email),
-        sanitizeCsvValue(donor.date.split("T")[0]),
+        sanitizeCsvValue(formatLocalDate(donor.date)),
         sanitizeCsvValue(donor.status),
       ]),
     ];
@@ -221,7 +242,7 @@ export default function DonorsTable({
     }),
     columnHelper.accessor("date", {
       header: "Date",
-      cell: (info) => info.getValue().split("T")[0],
+      cell: (info) => formatLocalDate(info.getValue()),
     }),
     columnHelper.accessor("status", {
       header: "Status",

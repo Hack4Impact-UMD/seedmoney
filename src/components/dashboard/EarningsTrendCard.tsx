@@ -22,6 +22,16 @@ export function EarningsTrendCard({
   todayIso: string;
 }) {
   const showTodayReferenceLine = dates.includes(todayIso);
+  const maxEarnings = Math.max(
+    0,
+    ...dailyValues.filter((v): v is number => v !== null),
+    ...totalValues.filter((v): v is number => v !== null),
+  );
+  const yAxisMax = Math.max(1, Math.ceil(maxEarnings * 1.25));
+  const showGoalReferenceLine =
+    Number.isFinite(campaignGoal) &&
+    campaignGoal > 0 &&
+    campaignGoal <= yAxisMax;
 
   return (
     <div className="bg-white rounded-lg border border-1 border-[#e5e5e5] p-6 pb-2">
@@ -59,6 +69,8 @@ export function EarningsTrendCard({
         ]}
         yAxis={[
           {
+            min: 0,
+            max: yAxisMax,
             valueFormatter: (v: number) => `$${v}`,
             tickLabelStyle: { fontSize: 11, fill: "#6B7280" },
           },
@@ -106,17 +118,19 @@ export function EarningsTrendCard({
           />
         )}
 
-        <ChartsReferenceLine
-          y={campaignGoal}
-          lineStyle={{
-            stroke: "#56BD60",
-            strokeDasharray: "4 4",
-            strokeWidth: 1.5,
-          }}
-          label={`Your Goal: $${campaignGoal}`}
-          labelAlign="end"
-          labelStyle={{ fill: "#56BD60", fontSize: 12, fontWeight: "bolder" }}
-        />
+        {showGoalReferenceLine && (
+          <ChartsReferenceLine
+            y={campaignGoal}
+            lineStyle={{
+              stroke: "#56BD60",
+              strokeDasharray: "4 4",
+              strokeWidth: 1.5,
+            }}
+            label={`Your Goal: $${campaignGoal}`}
+            labelAlign="end"
+            labelStyle={{ fill: "#56BD60", fontSize: 12, fontWeight: "bolder" }}
+          />
+        )}
       </LineChart>
     </div>
   );

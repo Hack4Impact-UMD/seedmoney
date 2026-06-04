@@ -7,6 +7,7 @@ export type Transaction = {
   phone: string,
   email: string;
   date: string;
+  transacted_at?: string | null;
   total_paid: number;
   status: string;
 }

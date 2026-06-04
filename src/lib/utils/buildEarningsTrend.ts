@@ -8,8 +8,16 @@ export type DailyEarning = {
 };
 
 function toDateKey(value: string) {
-  const date = moment.parseZone(value, moment.ISO_8601, true);
-  return date.isValid() ? date.format("YYYY-MM-DD") : null;
+  const date = moment(value, moment.ISO_8601, true).startOf("day");
+
+  if (!date.isValid()) {
+    return null;
+  }
+
+  const today = moment().startOf("day");
+  return date.isAfter(today, "day")
+    ? today.format("YYYY-MM-DD")
+    : date.format("YYYY-MM-DD");
 }
 
 /**
@@ -26,7 +34,7 @@ export function transactionsToDailyEarnings(
   const dailyByDate = new Map<string, number>();
   for (const t of transactions) {
     const status = t.status.toLowerCase();
-    const date = toDateKey(t.date);
+    const date = toDateKey(t.transacted_at ?? t.date);
     const amount = Number(t.amount_donated);
 
     if (
@@ -73,7 +81,12 @@ export function buildEarningsTrendData(
     cur.add(1, "day");
   }
 
-  const today = moment().startOf("day");
+  const latestEarningDate = moment(
+    earningsTrend[earningsTrend.length - 1].date,
+    "YYYY-MM-DD",
+    true,
+  ).startOf("day");
+  const today = moment.max(moment().startOf("day"), latestEarningDate);
 
   // Daily earnings: real value for past days with a donation, 0 for past days
   // with no donation, null for future days (null = no data point on the chart).
