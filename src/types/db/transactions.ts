@@ -14,6 +14,7 @@ export type Transaction = {
 export interface TransactionPayload {
   event: string;
   data?: {
+    id: number | string;
     campaign_id: number;
     first_name: string;
     last_name: string;
