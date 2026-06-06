@@ -160,6 +160,7 @@ export default function SettingsPage() {
           open
           onClose={() => setActiveModal(null)}
           userEmail={email}
+          isGoogleAuth={isGoogleAuth}
           onLogin={handleReauthenticate}
         />
       )}
