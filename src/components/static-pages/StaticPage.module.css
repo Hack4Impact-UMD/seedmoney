@@ -1,0 +1,531 @@
+.page,
+.htmlPage {
+  --green-900: #1a4a28;
+  --green-700: #096b2e;
+  --green-600: #43b45d;
+  --green-500: #52b788;
+  --green-400: #74c69d;
+  --green-200: #c6e9cf;
+  --green-100: #d8f3dc;
+  --green-50: #f6faf9;
+  --gold-500: #c9a227;
+  --gold-400: #d4b03a;
+  --gold-100: #fef9e7;
+  --silver-400: #8a9ba8;
+  --silver-100: #eef2f5;
+  --bronze-500: #b87333;
+  --bronze-100: #fdf2e9;
+  --slate-800: #243241;
+  --slate-600: #526171;
+  --slate-400: #7b8794;
+  --slate-200: #d8dee4;
+  --slate-100: #eef1f4;
+  --white: #ffffff;
+  color: var(--slate-800);
+  line-height: 1.6;
+  margin: 0 auto;
+  max-width: 760px;
+  padding: 48px 24px 64px;
+}
+
+.wide {
+  max-width: 820px;
+}
+
+.header,
+.htmlPage :global(.header) {
+  margin-bottom: 32px;
+  text-align: center;
+}
+
+.header h1,
+.htmlPage :global(.header h1) {
+  color: var(--green-900);
+  font-size: 2rem;
+  font-weight: 700;
+  letter-spacing: 0;
+  line-height: 1.2;
+  margin: 0 0 8px;
+}
+
+.eyebrow {
+  color: var(--green-700);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.subtitle,
+.htmlPage :global(.header .subtitle) {
+  color: var(--slate-600);
+  font-size: 0.95rem;
+  margin: 0 auto;
+  max-width: 560px;
+}
+
+.subtitle a,
+.htmlPage a {
+  color: var(--green-700);
+  font-weight: 700;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.legalContent {
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  padding: 28px;
+}
+
+.draftNote,
+.htmlPage :global(.draft-note) {
+  background: #fffaf0;
+  border: 1px solid #efd995;
+  border-left: 4px solid var(--gold-400);
+  border-radius: 10px;
+  color: #745a16;
+  font-size: 0.9rem;
+  font-style: italic;
+  margin-bottom: 28px;
+  padding: 14px 18px;
+}
+
+.draftNote strong,
+.htmlPage :global(.draft-note strong) {
+  color: var(--green-900);
+  font-style: normal;
+}
+
+.section + .section {
+  border-top: 1px solid var(--slate-100);
+  margin-top: 26px;
+  padding-top: 24px;
+}
+
+.section h2 {
+  color: var(--green-900);
+  font-size: 1.1rem;
+  font-weight: 700;
+  margin: 0 0 10px;
+}
+
+.section p,
+.section li {
+  color: var(--slate-600);
+  font-size: 0.95rem;
+}
+
+.section p + p {
+  margin-top: 12px;
+}
+
+.section ul {
+  display: grid;
+  gap: 8px;
+  list-style: disc;
+  margin: 10px 0 0 20px;
+}
+
+.htmlPage :global(.block-label) {
+  border-bottom: 2px solid var(--green-100);
+  color: var(--green-900);
+  font-size: 1.3rem;
+  font-weight: 700;
+  margin: 34px 0 12px;
+  padding-bottom: 8px;
+}
+
+.htmlPage :global(.lead) {
+  color: var(--slate-600);
+  font-size: 1.02rem;
+  margin: 0 auto 36px;
+  max-width: 640px;
+  text-align: center;
+}
+
+.htmlPage strong,
+.htmlPage :global(.lead strong) {
+  color: var(--green-700);
+  font-weight: 700;
+}
+
+.htmlPage :global(.faq-list) {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.htmlPage :global(details.faq) {
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 10px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+  overflow: hidden;
+}
+
+.htmlPage :global(details.faq summary) {
+  color: var(--green-900);
+  cursor: pointer;
+  font-size: 0.97rem;
+  font-weight: 700;
+  list-style: none;
+  padding: 16px 48px 16px 20px;
+  position: relative;
+}
+
+.htmlPage :global(details.faq summary::-webkit-details-marker) {
+  display: none;
+}
+
+.htmlPage :global(details.faq summary::after) {
+  border-bottom: 2px solid var(--green-600);
+  border-right: 2px solid var(--green-600);
+  content: "";
+  height: 9px;
+  position: absolute;
+  right: 22px;
+  top: 21px;
+  transform: rotate(45deg);
+  transition: transform 0.2s ease;
+  width: 9px;
+}
+
+.htmlPage :global(details.faq[open] summary::after) {
+  transform: rotate(-135deg);
+}
+
+.htmlPage :global(details.faq summary:hover) {
+  background: var(--green-50);
+}
+
+.htmlPage :global(details.faq .answer) {
+  color: var(--slate-600);
+  font-size: 0.92rem;
+  padding: 0 20px 18px;
+}
+
+.htmlPage :global(details.faq .answer p + p) {
+  margin-top: 10px;
+}
+
+.htmlPage :global(.contact),
+.htmlPage :global(.grand-total) {
+  background: var(--green-700);
+  border-radius: 12px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.08);
+  color: var(--white);
+  margin-top: 36px;
+  padding: 24px 28px;
+}
+
+.htmlPage :global(.contact) {
+  text-align: center;
+}
+
+.htmlPage :global(.contact h2) {
+  color: var(--white);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0 0 4px;
+}
+
+.htmlPage :global(.contact p),
+.htmlPage :global(.grand-total .gt-detail),
+.htmlPage :global(.grand-total .gt-label) {
+  color: var(--green-200);
+}
+
+.htmlPage :global(.contact a) {
+  color: var(--white);
+}
+
+.htmlPage :global(.summary-strip),
+.htmlPage :global(.dates) {
+  display: flex;
+  gap: 16px;
+  margin-bottom: 36px;
+}
+
+.htmlPage :global(.date-card),
+.htmlPage :global(.summary-card),
+.htmlPage :global(.intro),
+.htmlPage :global(.table-wrap) {
+  background: var(--white);
+  border: 1px solid var(--slate-200);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.htmlPage :global(.summary-card) {
+  flex: 1;
+  padding: 20px 16px;
+  text-align: center;
+}
+
+.htmlPage :global(.summary-card .number) {
+  color: var(--green-700);
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1.2;
+}
+
+.htmlPage :global(.summary-card .label),
+.htmlPage :global(.date-card .date-title),
+.htmlPage :global(.section-header .section-total),
+.htmlPage :global(.intro .example-label) {
+  color: var(--slate-400);
+  font-size: 0.78rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+}
+
+.htmlPage :global(.date-card) {
+  border-top: 3px solid var(--green-500);
+  flex: 1;
+  padding: 20px 18px;
+}
+
+.htmlPage :global(.date-card .date) {
+  color: var(--green-700);
+  font-size: 1.15rem;
+  font-weight: 700;
+  margin-bottom: 2px;
+}
+
+.htmlPage :global(.date-card .date-detail),
+.htmlPage :global(.reassurance),
+.htmlPage :global(.intro .intro-lead),
+.htmlPage :global(.intro .example p),
+.htmlPage :global(.footer-note) {
+  color: var(--slate-600);
+}
+
+.htmlPage :global(.reassurance) {
+  background: var(--white);
+  border: 1px solid var(--green-100);
+  border-radius: 12px;
+  margin-bottom: 36px;
+  padding: 16px 22px;
+  text-align: center;
+}
+
+.htmlPage :global(.intro) {
+  margin-bottom: 36px;
+  padding: 22px 24px;
+}
+
+.htmlPage :global(.intro .example) {
+  background: var(--green-50);
+  border-left: 3px solid var(--green-500);
+  border-radius: 8px;
+  margin-top: 16px;
+  padding: 14px 16px;
+}
+
+.htmlPage :global(.intro .example-label) {
+  color: var(--green-600);
+  margin-bottom: 4px;
+}
+
+.htmlPage :global(.section) {
+  margin-bottom: 32px;
+}
+
+.htmlPage :global(.section-header) {
+  align-items: center;
+  display: flex;
+  gap: 10px;
+  margin-bottom: 12px;
+  padding-left: 4px;
+}
+
+.htmlPage :global(.section-header .dot) {
+  border-radius: 50%;
+  flex-shrink: 0;
+  height: 10px;
+  width: 10px;
+}
+
+.htmlPage :global(.section-header h2) {
+  color: var(--green-900);
+  font-size: 1.2rem;
+  font-weight: 700;
+  margin: 0;
+}
+
+.htmlPage :global(.section-header .section-total) {
+  margin-left: auto;
+}
+
+.htmlPage :global(.table-wrap) {
+  overflow-x: auto;
+}
+
+.htmlPage :global(table) {
+  border-collapse: collapse;
+  font-size: 0.92rem;
+  min-width: 620px;
+  width: 100%;
+}
+
+.htmlPage :global(thead th) {
+  border-bottom: 2px solid var(--slate-100);
+  color: var(--slate-400);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.07em;
+  padding: 14px 20px 10px;
+  text-align: left;
+  text-transform: uppercase;
+}
+
+.htmlPage :global(thead th:nth-child(2)),
+.htmlPage :global(thead th:nth-child(3)),
+.htmlPage :global(thead th:nth-child(4)),
+.htmlPage :global(tbody td:nth-child(2)),
+.htmlPage :global(tbody td:nth-child(3)),
+.htmlPage :global(tbody td:nth-child(4)) {
+  text-align: right;
+}
+
+.htmlPage :global(tbody td) {
+  border-bottom: 1px solid var(--slate-100);
+  padding: 13px 20px;
+  vertical-align: middle;
+}
+
+.htmlPage :global(tbody tr:last-child td) {
+  border-bottom: none;
+}
+
+.htmlPage :global(tbody td:nth-child(2)),
+.htmlPage :global(tbody td:nth-child(4)) {
+  color: var(--green-700);
+  font-weight: 700;
+}
+
+.htmlPage :global(.rank),
+.htmlPage :global(.timing-icon) {
+  align-items: center;
+  display: inline-flex;
+  gap: 8px;
+}
+
+.htmlPage :global(.rank-badge) {
+  align-items: center;
+  border-radius: 8px;
+  display: inline-flex;
+  flex-shrink: 0;
+  font-size: 0.72rem;
+  font-weight: 700;
+  height: 28px;
+  justify-content: center;
+  width: 28px;
+}
+
+.htmlPage :global(.rank-badge.gold) {
+  background: var(--gold-100);
+  color: var(--gold-500);
+}
+
+.htmlPage :global(.rank-badge.silver) {
+  background: var(--silver-100);
+  color: var(--silver-400);
+}
+
+.htmlPage :global(.rank-badge.bronze) {
+  background: var(--bronze-100);
+  color: var(--bronze-500);
+}
+
+.htmlPage :global(.rank-badge.tier) {
+  background: var(--green-100);
+  color: var(--green-700);
+  font-size: 0.65rem;
+}
+
+.htmlPage :global(.rank-label) {
+  line-height: 1.3;
+}
+
+.htmlPage :global(.rank-sublabel) {
+  color: var(--slate-400);
+  display: block;
+  font-size: 0.78rem;
+  font-weight: 400;
+}
+
+.htmlPage :global(.subtotal td) {
+  background: var(--green-50);
+  border-bottom: none;
+  color: var(--green-900);
+  font-weight: 700;
+}
+
+.htmlPage :global(.timing-icon svg) {
+  flex-shrink: 0;
+  height: 16px;
+  width: 16px;
+}
+
+.htmlPage :global(.grand-total) {
+  align-items: center;
+  display: flex;
+  justify-content: space-between;
+  margin-top: 32px;
+}
+
+.htmlPage :global(.grand-total .gt-label) {
+  font-size: 1.15rem;
+  font-weight: 700;
+}
+
+.htmlPage :global(.grand-total .gt-amount) {
+  color: var(--white);
+  font-size: 2rem;
+  font-weight: 700;
+}
+
+.htmlPage :global(.footer-note) {
+  font-size: 0.82rem;
+  line-height: 1.7;
+  margin-top: 24px;
+  text-align: center;
+}
+
+@media (max-width: 640px) {
+  .page,
+  .htmlPage {
+    padding: 28px 14px 48px;
+  }
+
+  .header h1,
+  .htmlPage :global(.header h1) {
+    font-size: 1.55rem;
+  }
+
+  .legalContent {
+    padding: 20px;
+  }
+
+  .htmlPage :global(.summary-strip),
+  .htmlPage :global(.dates) {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .htmlPage :global(.lead) {
+    font-size: 0.95rem;
+  }
+
+  .htmlPage :global(.grand-total) {
+    flex-direction: column;
+    gap: 8px;
+    text-align: center;
+  }
+}
