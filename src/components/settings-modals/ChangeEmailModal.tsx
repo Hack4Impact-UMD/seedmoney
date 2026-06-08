@@ -16,6 +16,7 @@ type ChangeEmailModalProps = {
   open: boolean;
   onClose: () => void;
   userEmail?: string;
+  isGoogleAuth?: boolean;
   onLogin?: () => void;
 };
 
@@ -25,6 +26,7 @@ export default function ChangeEmailModal({
   open,
   onClose,
   userEmail = "Could not fetch email.",
+  isGoogleAuth = false,
   onLogin,
 }: ChangeEmailModalProps) {
   const [step, setStep] = useState(0);
@@ -70,6 +72,14 @@ export default function ChangeEmailModal({
     isExistingEmail === false;
 
   const handleSendEmailChange = async () => {
+    if (isGoogleAuth) {
+      return;
+    }
+
+    if (normalizedNewEmail.toLowerCase() === userEmail.toLowerCase()) {
+      return;
+    }
+
     try {
       setSubmitError(null);
       setIsSendingChangeEmail(true);

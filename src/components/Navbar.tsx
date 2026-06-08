@@ -109,7 +109,11 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
     savedName?.lastName ?? userData?.last_name ?? parsedFullName.lastName;
   const email = userData?.email ?? user?.email ?? "";
   const displayName = [firstName, lastName].filter(Boolean).join(" ");
-  const isGoogleAuth = user?.app_metadata?.provider === "google";
+  const isGoogleAuth =
+    user?.app_metadata?.provider === "google" ||
+    user?.app_metadata?.providers?.includes("google") === true ||
+    user?.identities?.some((identity) => identity.provider === "google") ===
+      true;
   const updateUser = useUpdateUser();
 
   const handleReauthenticate = async () => {
@@ -815,6 +819,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
           open
           onClose={() => setActiveSettingsModal(null)}
           userEmail={email}
+          isGoogleAuth={isGoogleAuth}
           onLogin={handleReauthenticate}
         />
       )}
