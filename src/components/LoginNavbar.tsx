@@ -54,12 +54,21 @@ export default function LoginNavbar({ session = null }: Props) {
               </>
             ) : (
               <>
+
+                <Link
+                  href="/how-it-works"
+                  className="text-white transition hover:underline"
+                >
+                  How it works
+                </Link>
+
                 <Link
                   href="/signup"
                   className="text-white transition hover:underline"
                 >
                   Sign Up
                 </Link>
+
                 <Link
                   href="/"
                   className="text-white transition hover:underline"
