@@ -193,3 +193,64 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
   return results;
 }
+
+
+export async function publishDueCampaigns() {
+  const supabase = await createServerClient();
+
+  const { data: competition, error: compError } = await supabase
+    .from("competition_metadata")
+    .select("competition_id, start_date")
+    .eq("is_current", true)
+    .single();
+
+  if (compError || !competition) throw new Error("No current competition found");
+
+  // Not time yet
+  if (new Date(competition.start_date) > new Date()) return;
+
+  const { data: campaigns, error } = await supabase
+    .from("campaigns")
+    .select("campaign_id, givebutter_id")
+    .eq("competition_id", competition.competition_id)
+    .eq("status", "approved");
+
+  if (error) throw new Error(error.message);
+  if (!campaigns?.length) return;
+
+  const results = await Promise.allSettled(
+    campaigns.map(async (campaign) => {
+      try {
+        const response = await fetchGivebutterWithRetry(
+          `https://api.givebutter.com/v1/campaigns/${campaign.givebutter_id}`,
+          {
+            method: "PUT",
+            headers: {
+              Authorization: `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({ published: 1 }),
+          },
+        );
+
+        if (!response.ok) {
+          const error = await readErrorBody(response);
+          throw new Error(`Givebutter error (${response.status}): ${JSON.stringify(error)}`);
+        }
+
+        await supabase
+          .from("campaigns")
+          .update({ status: "published" })
+          .eq("campaign_id", campaign.campaign_id);
+      } catch (err) {
+        await supabase
+          .from("campaigns")
+          .update({ status: "publish_failed" })
+          .eq("campaign_id", campaign.campaign_id);
+        throw err;
+      }
+    }),
+  );
+
+  return results;
+}
