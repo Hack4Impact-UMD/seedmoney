@@ -1,4 +1,7 @@
-import { createBrowserClient } from "@/src/lib/supabase-client";
+import {
+  createBrowserClient,
+  createServerClient,
+} from "@/src/lib/supabase-client";
 import {
   CampaignImageRecord,
   CampaignFile,
@@ -13,6 +16,14 @@ function getDisplayFileName(storagePath: string, storedName?: string) {
     /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}-/i,
     "",
   );
+}
+
+async function createReadClient() {
+  if (typeof window === "undefined") {
+    return await createServerClient();
+  }
+
+  return createBrowserClient();
 }
 
 export async function uploadCampaignImage({
@@ -85,7 +96,7 @@ export async function deleteCampaignImage(
 export async function readCampaignImagesByCampaign(
   campaignId: number,
 ): Promise<HydratedCampaignImageRecord[]> {
-  const supabase = createBrowserClient();
+  const supabase = await createReadClient();
 
   const { data, error } = await supabase
     .from("campaign_image_records")
@@ -149,7 +160,7 @@ export async function readCampaignImageUrlsByCampaignIds(
     return {};
   }
 
-  const supabase = createBrowserClient();
+  const supabase = await createReadClient();
 
   const { data, error } = await supabase
     .from("campaign_image_records")
