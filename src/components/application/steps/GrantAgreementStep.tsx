@@ -85,11 +85,11 @@ export default function GrantAgreementStep() {
       );
     }
 
-    const [beforeOptInLink, afterOptInLink] = item.text.split("opt-in statement");
+    const [beforeDetailsLink, afterDetailsLink] = item.text.split("Details.");
 
     return (
       <span>
-        {beforeOptInLink}
+        {beforeDetailsLink}
         <button
           type="button"
           onClick={(event) => {
@@ -99,9 +99,9 @@ export default function GrantAgreementStep() {
           }}
           className="cursor-pointer underline underline-offset-2 hover:text-[#123A1E]"
         >
-          opt-in statement
+          Details.
         </button>
-        {afterOptInLink}
+        {afterDetailsLink}
         {requiredMarker}
       </span>
     );
