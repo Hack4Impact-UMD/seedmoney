@@ -218,61 +218,6 @@ export default function ReviewSubmitPage() {
 
     await form.handleSubmit();
 
-    const aiPayload = values.aiOptIn
-      ? {
-          campaignId,
-          questions: [
-            {
-              questionId: question1.question_id,
-              questionText: question1.question,
-              originalText: values.storyLocationAndAudience,
-            },
-            {
-              questionId: question2.question_id,
-              questionText: question2.question,
-              originalText: values.storyChallenge,
-            },
-            {
-              questionId: question3.question_id,
-              questionText: question3.question,
-              originalText: values.storySeasonActivity,
-            },
-            {
-              questionId: question4.question_id,
-              questionText: question4.question,
-              originalText: values.storyCampaignImpact,
-            },
-          ],
-        }
-      : null;
-
-    if (aiPayload && typeof window !== "undefined") {
-      try {
-        const requestBody = JSON.stringify(aiPayload);
-        const response = await fetch("/api/ai-polish", {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-          body: requestBody,
-          credentials: "same-origin",
-        });
-
-        if (!response.ok) {
-          const errorBody = (await response.json().catch(() => null)) as
-            | { error?: string }
-            | null;
-
-          console.error(
-            "Error creating AI-polished answers before submit:",
-            errorBody?.error ?? response.statusText,
-          );
-        }
-      } catch (error) {
-        console.error("Error starting AI-polished answer creation:", error);
-      }
-    }
-
     await updateCampaign.mutateAsync({
       campaignId,
       campaignData: {
@@ -306,6 +251,67 @@ export default function ReviewSubmitPage() {
       }
     } catch (emailError) {
       console.error("Error sending campaign submitted email:", emailError);
+    }
+
+    const aiPayload = values.aiOptIn
+      ? {
+          campaignId,
+          questions: [
+            {
+              questionId: question1.question_id,
+              questionText: question1.question,
+              originalText: values.storyLocationAndAudience,
+            },
+            {
+              questionId: question2.question_id,
+              questionText: question2.question,
+              originalText: values.storyChallenge,
+            },
+            {
+              questionId: question3.question_id,
+              questionText: question3.question,
+              originalText: values.storySeasonActivity,
+            },
+            {
+              questionId: question4.question_id,
+              questionText: question4.question,
+              originalText: values.storyCampaignImpact,
+            },
+          ],
+        }
+      : null;
+
+    if (aiPayload && typeof window !== "undefined") {
+      try {
+        const requestBody = JSON.stringify(aiPayload);
+        const beaconPayload = new Blob([requestBody], {
+          type: "application/json",
+        });
+
+        const beaconQueued =
+          typeof navigator !== "undefined" &&
+          typeof navigator.sendBeacon === "function" &&
+          navigator.sendBeacon("/api/ai-polish", beaconPayload);
+
+        if (!beaconQueued) {
+          void fetch("/api/ai-polish", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: requestBody,
+            keepalive: true,
+            credentials: "same-origin",
+          }).catch((error) => {
+            console.error(
+              "Error creating AI-polished answers after submit:",
+              error,
+            );
+          });
+        }
+      } catch (error) {
+        console.error("Error starting AI-polished answer creation:", error);
+      }
     }
 
     router.push(`/dashboard/${campaignId}?submitted=1`);
