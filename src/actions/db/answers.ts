@@ -165,6 +165,7 @@ export async function createOriginalAnswer({
     campaign_id: campaignId,
     question_id: questionId,
     pre_ai_answer: originalAnswer,
+    ai_answer: "",
     final_answer: originalAnswer,
   });
 }

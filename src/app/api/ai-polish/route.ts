@@ -13,14 +13,6 @@ type AiPolishRequestBody = {
   }[];
 };
 
-function getErrorMessage(error: unknown) {
-  if (error instanceof Error) {
-    return error.message;
-  }
-
-  return String(error);
-}
-
 export async function POST(request: Request) {
   try {
     const supabase = await createServerClient();
@@ -67,10 +59,9 @@ export async function POST(request: Request) {
 
     return NextResponse.json({ ok: true });
   } catch (error) {
-    const errorMessage = getErrorMessage(error);
-    console.error("Error handling AI polish request:", errorMessage, error);
+    console.error("Error handling AI polish request:", error);
     return NextResponse.json(
-      { error: errorMessage },
+      { error: "Failed to process AI polish request" },
       { status: 500 },
     );
   }

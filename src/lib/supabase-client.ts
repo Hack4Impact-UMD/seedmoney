@@ -3,7 +3,6 @@ import {
   createServerClient as createSupabaseServerClient,
 } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
 
 const getSupabaseEnv = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -16,19 +15,6 @@ const getSupabaseEnv = () => {
   }
 
   return { url, anonKey };
-};
-
-const getSupabaseServiceRoleEnv = () => {
-  const url = process.env.NEXT_PUBLIC_SUPABASE_URL;
-  const serviceRoleKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-  if (!url || !serviceRoleKey) {
-    throw new Error(
-      "missing Supabase service role env vars, NEXT_PUBLIC_SUPABASE_URL and SUPABASE_SERVICE_ROLE_KEY must be set",
-    );
-  }
-
-  return { url, serviceRoleKey };
 };
 
 export const createBrowserClient = () => {
@@ -56,17 +42,6 @@ export const createServerClient = async () => {
           // noop — setAll is called from Server Components where cookies may be read-only
         }
       },
-    },
-  });
-};
-
-export const createServiceRoleClient = () => {
-  const { url, serviceRoleKey } = getSupabaseServiceRoleEnv();
-
-  return createClient(url, serviceRoleKey, {
-    auth: {
-      autoRefreshToken: false,
-      persistSession: false,
     },
   });
 };
