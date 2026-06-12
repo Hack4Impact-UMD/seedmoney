@@ -157,6 +157,7 @@ export async function createOriginalAnswer({
   if (existingAnswer) {
     return updateAnswer(existingAnswer.answer_id, {
       pre_ai_answer: originalAnswer,
+      final_answer: originalAnswer,
     });
   }
 
@@ -164,6 +165,7 @@ export async function createOriginalAnswer({
     campaign_id: campaignId,
     question_id: questionId,
     pre_ai_answer: originalAnswer,
+    final_answer: originalAnswer,
   });
 }
 
