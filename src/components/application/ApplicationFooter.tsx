@@ -1,6 +1,12 @@
 import Link from "next/link";
 import Divider from "@mui/material/Divider";
 
+const SUPPORT_EMAIL = "challenge@seedmoney.org";
+const SUPPORT_SUBJECT = "SeedMoney Challenge — support request";
+const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+  SUPPORT_SUBJECT,
+)}`;
+
 export default function ApplicationFooter() {
   return (
     <footer>
@@ -9,7 +15,7 @@ export default function ApplicationFooter() {
         <p className="mt-4 md:mt-0">© {new Date().getFullYear()} SeedMoney All Rights Reserved.</p>
         <div className="flex flex-col items-start gap-5 md:flex-row md:items-center">
           <Link href="/">SeedMoney</Link>
-          <Link href="/contact">Contact</Link>
+          <Link href={SUPPORT_MAILTO}>Contact</Link>
           <Link href="/faq">FAQ</Link>
           <Link href="/terms">Terms</Link>
           <Link href="/privacy">Privacy Policy</Link>

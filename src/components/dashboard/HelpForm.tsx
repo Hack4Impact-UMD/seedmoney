@@ -1,8 +1,11 @@
 import EmailOutlinedIcon from "@mui/icons-material/EmailOutlined";
 import { Button, Typography } from "@mui/material";
-import Link from "next/link";
 
 const SUPPORT_EMAIL = "challenge@seedmoney.org";
+const SUPPORT_SUBJECT = "SeedMoney Challenge — support request";
+const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
+  SUPPORT_SUBJECT,
+)}`;
 
 export default function HelpForm() {
   return (
@@ -33,32 +36,28 @@ export default function HelpForm() {
         we&apos;ll get back to you as soon as we can.
       </Typography>
 
-      <Button
-        component="a"
-        href={`mailto:${SUPPORT_EMAIL}`}
-        variant="contained"
-        size="medium"
-        startIcon={<EmailOutlinedIcon fontSize="small" />}
-      >
-        Contact Support
-      </Button>
+      <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
+        <Button
+          component="a"
+          href={SUPPORT_MAILTO}
+          variant="contained"
+          size="medium"
+          startIcon={<EmailOutlinedIcon fontSize="small" />}
+        >
+          Contact Support
+        </Button>
 
-      <Typography
-        sx={{
-          color: "text.secondary",
-          fontSize: "1rem",
-          lineHeight: 1.5,
-          mt: 2.5,
-        }}
-      >
-        Or email{" "}
-        <Link
-          href={`mailto:${SUPPORT_EMAIL}`}
-          className="font-bold text-inherit no-underline"
+        <Typography
+          component="span"
+          sx={{
+            color: "text.secondary",
+            fontSize: "1rem",
+            lineHeight: 1.5,
+          }}
         >
           {SUPPORT_EMAIL}
-        </Link>
-      </Typography>
+        </Typography>
+      </div>
     </section>
   );
 }
