@@ -8,4 +8,5 @@ export type Answers = {
 };
 
 
-export type NewAnswer = Omit<Answers, "answer_id">;
+export type NewAnswer = Omit<Answers, "answer_id" | "ai_answer" | "final_answer"> &
+  Partial<Pick<Answers, "ai_answer" | "final_answer">>;
