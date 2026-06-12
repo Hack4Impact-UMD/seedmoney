@@ -9,7 +9,6 @@ import {
 import useCreateCampaign from "@/src/hooks/campaigns/useCreateCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import { useEffect, useRef } from "react";
-import { sendDraftSavedEmailOnce } from "@/src/actions/db/campaigns";
 
 function getFormattedSaveTime() {
   return new Date().toLocaleTimeString([], {
@@ -53,10 +52,9 @@ export default function useSaveDraftCampaign() {
             date_created: new Date().toISOString(),
             ...campaignPayload,
           })
-          .then(async (draftCampaign) => {
+          .then((draftCampaign) => {
             draftCampaignIdRef.current = draftCampaign.campaign_id;
             setDraftCampaignId(draftCampaign.campaign_id);
-            await sendDraftSavedEmailOnce(draftCampaign.campaign_id);
             return draftCampaign.campaign_id;
           })
           .finally(() => {
@@ -81,7 +79,6 @@ export default function useSaveDraftCampaign() {
       campaignId: currentDraftCampaignId,
       campaignData: campaignPayload,
     });
-    await sendDraftSavedEmailOnce(currentDraftCampaignId);
     setLastSaved(getFormattedSaveTime());
     return currentDraftCampaignId;
   };

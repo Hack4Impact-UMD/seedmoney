@@ -1,5 +1,4 @@
 import type { Campaign } from "@/src/types";
-import { sendCampaignEmail } from "@/src/actions/email/campaignEmails";
 import {
   createBrowserClient,
   createServerClient,
@@ -226,36 +225,7 @@ export async function updateCampaign(
     return null;
   }
 
-  if (campaign.status === "approved") {
-    await sendCampaignEmail("campaign_approved", id);
-  } else if (campaign.status === "denied") {
-    await sendCampaignEmail("campaign_denied", id);
-  }
-
   return data as Campaign;
-}
-
-export async function sendDraftSavedEmailOnce(id: number): Promise<boolean> {
-  const supabase = createBrowserClient();
-
-  const { data, error } = await supabase
-    .from("campaigns")
-    .update({ draft_saved_email_sent: true })
-    .eq("campaign_id", id)
-    .eq("draft_saved_email_sent", false)
-    .select("campaign_id")
-    .maybeSingle();
-
-  if (error) {
-    console.error("Error marking draft saved email as sent:", error.message);
-    return false;
-  }
-
-  if (!data) {
-    return false;
-  }
-
-  return sendCampaignEmail("draft_saved", id);
 }
 
 export async function deleteCampaign(id: number): Promise<boolean> {
