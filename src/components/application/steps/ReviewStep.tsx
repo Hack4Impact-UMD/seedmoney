@@ -216,38 +216,6 @@ export default function ReviewSubmitPage() {
     );
     setPendingSupportingPhotoCrops({});
 
-    await updateCampaign.mutateAsync({
-      campaignId,
-      campaignData: {
-        status: "pending",
-        competition_id: currentCompetitionData.competition_id,
-        raised: 0,
-        donors: 0,
-        givebutter_id: "",
-        givebutter_slug: "",
-        givebutterlink: "",
-      },
-    });
-
-    try {
-      const supabase = createBrowserClient();
-      const { error: emailError } = await supabase.functions.invoke(
-        "send-campaign-email",
-        {
-          body: {
-            type: "campaign_submitted",
-            campaign_id: campaignId,
-          },
-        },
-      );
-
-      if (emailError) {
-        console.error("Error sending campaign submitted email:", emailError.message);
-      }
-    } catch (emailError) {
-      console.error("Error sending campaign submitted email:", emailError);
-    }
-
     await form.handleSubmit();
 
     const aiPayload = values.aiOptIn
@@ -281,34 +249,60 @@ export default function ReviewSubmitPage() {
     if (aiPayload && typeof window !== "undefined") {
       try {
         const requestBody = JSON.stringify(aiPayload);
-        const beaconPayload = new Blob([requestBody], {
-          type: "application/json",
+        const response = await fetch("/api/ai-polish", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: requestBody,
+          credentials: "same-origin",
         });
 
-        const beaconQueued =
-          typeof navigator !== "undefined" &&
-          typeof navigator.sendBeacon === "function" &&
-          navigator.sendBeacon("/api/ai-polish", beaconPayload);
+        if (!response.ok) {
+          const errorBody = (await response.json().catch(() => null)) as
+            | { error?: string }
+            | null;
 
-        if (!beaconQueued) {
-          void fetch("/api/ai-polish", {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-            },
-            body: requestBody,
-            keepalive: true,
-            credentials: "same-origin",
-          }).catch((error) => {
-            console.error(
-              "Error creating AI-polished answers after submit:",
-              error,
-            );
-          });
+          console.error(
+            "Error creating AI-polished answers before submit:",
+            errorBody?.error ?? response.statusText,
+          );
         }
       } catch (error) {
         console.error("Error starting AI-polished answer creation:", error);
       }
+    }
+
+    await updateCampaign.mutateAsync({
+      campaignId,
+      campaignData: {
+        status: "pending",
+        competition_id: currentCompetitionData.competition_id,
+        raised: 0,
+        donors: 0,
+        givebutter_id: "",
+        givebutter_slug: "",
+        givebutterlink: "",
+      },
+    });
+
+    try {
+      const supabase = createBrowserClient();
+      const { error: emailError } = await supabase.functions.invoke(
+        "send-campaign-email",
+        {
+          body: {
+            type: "campaign_submitted",
+            campaign_id: campaignId,
+          },
+        },
+      );
+
+      if (emailError) {
+        console.error("Error sending campaign submitted email:", emailError.message);
+      }
+    } catch (emailError) {
+      console.error("Error sending campaign submitted email:", emailError);
     }
 
     router.push(`/dashboard/${campaignId}?submitted=1`);
