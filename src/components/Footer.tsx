@@ -1,11 +1,6 @@
 'use client'
 import { Box, Container, Typography, Link, Divider, Stack} from '@mui/material';
-
-const SUPPORT_EMAIL = "challenge@seedmoney.org";
-const SUPPORT_SUBJECT = "SeedMoney Challenge — support request";
-const SUPPORT_MAILTO = `mailto:${SUPPORT_EMAIL}?subject=${encodeURIComponent(
-  SUPPORT_SUBJECT,
-)}`;
+import { SUPPORT_MAILTO } from "@/src/constants/emailConstants";
 
 export default function Footer() {
 
