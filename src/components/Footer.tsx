@@ -1,5 +1,6 @@
 'use client'
 import { Box, Container, Typography, Link, Divider, Stack} from '@mui/material';
+import { SUPPORT_MAILTO } from "@/src/constants/emailConstants";
 
 export default function Footer() {
 
@@ -16,9 +17,9 @@ export default function Footer() {
           <Box className="w-full sm:w-auto text-center sm:text-left mb-0 sm:mb-2">
             <Typography  className="!text-[#76b852] !font-bold !mb-2 !mt-4 !text-[12px]">SeedMoney</Typography>
             <Stack spacing={0.5} className="mb-2">
-              <Link onClick={() => console.log('Navigate -> /')} className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">Home</Link>
-              <Link onClick={() => console.log('Navigate -> /contact')} className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">Contact</Link>
-              <Link onClick={() => console.log('Navigate -> /faq')} className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">FAQ</Link>
+              <Link href="/" className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">Home</Link>
+              <Link href={SUPPORT_MAILTO} className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">Contact</Link>
+              <Link href="/faq" className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">FAQ</Link>
             </Stack>
           </Box>
 
@@ -26,9 +27,9 @@ export default function Footer() {
           <Box className="w-full sm:w-auto text-center sm:text-left " >
             <Typography className="!text-[#76b852] !font-bold !mb-2 !mt-4 !text-[12px]">Need help?</Typography>
             <Stack spacing={0.5} className="mb-2">
-              <Link onClick={() => console.log('Navigate -> /faq')} className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">FAQ</Link>
-              <Link onClick={() => console.log('Navigate -> /terms')} className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">Terms</Link>
-              <Link onClick={() => console.log('Navigate -> /privacy')} className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">Privacy Policy</Link>
+              <Link href="/faq" className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">FAQ</Link>
+              <Link href="/terms" className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">Terms</Link>
+              <Link href="/privacy" className="!text-[#EEEEEE] !no-underline !text-[12px] cursor-pointer">Privacy Policy</Link>
             </Stack>
           </Box>
         </Box>

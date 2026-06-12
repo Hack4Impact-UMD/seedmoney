@@ -17,58 +17,7 @@ import useReplaceCampaignImage from "@/src/hooks/campaign-image-records/useRepla
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
 import { createBrowserClient } from "@/src/lib/supabase-client";
-const stateNames: Record<string, string> = {
-  AL: "Alabama",
-  AK: "Alaska",
-  AZ: "Arizona",
-  AR: "Arkansas",
-  CA: "California",
-  CO: "Colorado",
-  CT: "Connecticut",
-  DE: "Delaware",
-  FL: "Florida",
-  GA: "Georgia",
-  HI: "Hawaii",
-  ID: "Idaho",
-  IL: "Illinois",
-  IN: "Indiana",
-  IA: "Iowa",
-  KS: "Kansas",
-  KY: "Kentucky",
-  LA: "Louisiana",
-  ME: "Maine",
-  MD: "Maryland",
-  MA: "Massachusetts",
-  MI: "Michigan",
-  MN: "Minnesota",
-  MS: "Mississippi",
-  MO: "Missouri",
-  MT: "Montana",
-  NE: "Nebraska",
-  NV: "Nevada",
-  NH: "New Hampshire",
-  NJ: "New Jersey",
-  NM: "New Mexico",
-  NY: "New York",
-  NC: "North Carolina",
-  ND: "North Dakota",
-  OH: "Ohio",
-  OK: "Oklahoma",
-  OR: "Oregon",
-  PA: "Pennsylvania",
-  RI: "Rhode Island",
-  SC: "South Carolina",
-  SD: "South Dakota",
-  TN: "Tennessee",
-  TX: "Texas",
-  UT: "Utah",
-  VT: "Vermont",
-  VA: "Virginia",
-  WA: "Washington",
-  WV: "West Virginia",
-  WI: "Wisconsin",
-  WY: "Wyoming",
-};
+import { STATE_NAMES } from "@/src/components/application/addressOptions";
 
 function ValueRow({
   label,
@@ -448,7 +397,7 @@ export default function ReviewSubmitPage() {
         />
         <ValueRow
           label="State / Province"
-          value={values.gardenState}
+          value={STATE_NAMES[values.gardenState] ?? values.gardenState}
           required
         />
         <ValueRow label="City" value={values.gardenCity} required />
@@ -663,7 +612,7 @@ export default function ReviewSubmitPage() {
         <ValueRow label="City or Town" value={values.mailingCity} required />
         <ValueRow
           label="State or Province"
-          value={stateNames[values.mailingState] ?? values.mailingState}
+          value={STATE_NAMES[values.mailingState] ?? values.mailingState}
           required
         />
         <ValueRow
