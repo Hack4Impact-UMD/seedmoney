@@ -12,10 +12,6 @@ begin
   end if;
 
   if tg_op = 'INSERT' then
-    if new.ai_answer is not null then
-      raise exception 'Users cannot set ai_answer';
-    end if;
-
     return new;
   end if;
 
@@ -30,10 +26,6 @@ begin
 
     if old.question_id is distinct from new.question_id then
       raise exception 'Users cannot change question_id';
-    end if;
-
-    if old.ai_answer is distinct from new.ai_answer then
-      raise exception 'Users cannot change ai_answer';
     end if;
 
     return new;

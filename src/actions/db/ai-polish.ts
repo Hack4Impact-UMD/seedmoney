@@ -2,9 +2,10 @@
 
 import OpenAI from "openai";
 import {
+  createAnswer,
   readAnswerByCampaignAndQuestion,
+  updateAnswer,
 } from "@/src/actions/db/answers";
-import { createServiceRoleClient } from "@/src/lib/supabase-client";
 import { Answers } from "@/src/types/db/answers";
 
 type PolishQuestionInput = {
@@ -141,42 +142,6 @@ type CreateAIAnswersInput = {
   }[];
 };
 
-async function updateAiAnswer(
-  answerId: number,
-  data: Pick<Answers, "pre_ai_answer" | "ai_answer" | "final_answer">,
-) {
-  const supabase = createServiceRoleClient();
-  const { data: updatedAnswer, error } = await supabase
-    .from("answers")
-    .update(data)
-    .eq("answer_id", answerId)
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error(`Error updating AI answer: ${error.message}`);
-  }
-
-  return updatedAnswer as Answers;
-}
-
-async function createAiAnswer(
-  data: Omit<Answers, "answer_id">,
-) {
-  const supabase = createServiceRoleClient();
-  const { data: createdAnswer, error } = await supabase
-    .from("answers")
-    .insert(data)
-    .select()
-    .single();
-
-  if (error) {
-    throw new Error(`Error creating AI answer: ${error.message}`);
-  }
-
-  return createdAnswer as Answers;
-}
-
 function hasReusableAiAnswer(
   existingAnswer: Answers | null,
   originalText: string,
@@ -295,20 +260,36 @@ export async function createAIAnswers({
       }
 
       if (existingAnswer) {
-        return updateAiAnswer(existingAnswer.answer_id, {
+        const updatedAnswer = await updateAnswer(existingAnswer.answer_id, {
           pre_ai_answer: question.originalText,
           ai_answer: aiAnswer,
           final_answer: aiAnswer,
         });
+
+        if (!updatedAnswer) {
+          throw new Error(
+            `Error updating answer for question ${question.questionId}`,
+          );
+        }
+
+        return updatedAnswer;
       }
 
-      return createAiAnswer({
+      const createdAnswer = await createAnswer({
         campaign_id: campaignId,
         question_id: question.questionId,
         pre_ai_answer: question.originalText,
         ai_answer: aiAnswer,
         final_answer: aiAnswer,
       });
+
+      if (!createdAnswer) {
+        throw new Error(
+          `Error creating answer for question ${question.questionId}`,
+        );
+      }
+
+      return createdAnswer;
     }),
   );
 
