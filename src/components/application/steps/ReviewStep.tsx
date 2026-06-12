@@ -16,6 +16,7 @@ import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useReplaceCampaignImage from "@/src/hooks/campaign-image-records/useReplaceCampaignImage";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
+import { sendCampaignEmail } from "@/src/actions/email/campaignEmails";
 const stateNames: Record<string, string> = {
   AL: "Alabama",
   AK: "Alaska",
@@ -227,6 +228,7 @@ export default function ReviewSubmitPage() {
         givebutterlink: "",
       },
     });
+    await sendCampaignEmail("campaign_submitted", campaignId);
 
     await form.handleSubmit();
 
