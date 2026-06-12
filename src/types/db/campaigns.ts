@@ -35,6 +35,7 @@ export type Campaign = {
   mailing_zipcode: string;
   competition_id: number | null;
   opt_in_ai: boolean;
+  draft_saved_email_sent: boolean;
 };
 
 export type GivebutterCampaignPayload = {
