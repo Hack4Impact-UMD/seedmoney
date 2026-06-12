@@ -6,30 +6,14 @@ language plpgsql
 security definer
 set search_path to 'public'
 as $function$
-declare
-  can_edit_final_answer boolean;
 begin
   if (select public.is_in_app_admin()) then
     return new;
   end if;
 
-  select exists (
-    select 1
-    from public.campaign_members cm
-    join public.campaigns c on c.campaign_id = cm.campaign_id
-    where cm.campaign_id = new.campaign_id
-      and cm.user_id = auth.uid()
-      and c.status = 'in_progress'::public.status
-  )
-  into can_edit_final_answer;
-
   if tg_op = 'INSERT' then
     if new.ai_answer is not null then
       raise exception 'Users cannot set ai_answer';
-    end if;
-
-    if new.final_answer is not null and not can_edit_final_answer then
-      raise exception 'Users cannot set final_answer';
     end if;
 
     return new;
@@ -50,10 +34,6 @@ begin
 
     if old.ai_answer is distinct from new.ai_answer then
       raise exception 'Users cannot change ai_answer';
-    end if;
-
-    if old.final_answer is distinct from new.final_answer and not can_edit_final_answer then
-      raise exception 'Users cannot change final_answer';
     end if;
 
     return new;
