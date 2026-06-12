@@ -1,4 +1,5 @@
 import type { Campaign } from "@/src/types";
+import { sendCampaignEmail } from "@/src/actions/email/campaignEmails";
 import {
   createBrowserClient,
   createServerClient,
@@ -223,6 +224,12 @@ export async function updateCampaign(
   if (!data) {
     console.warn("Campaign not found for update:", id);
     return null;
+  }
+
+  if (campaign.status === "approved") {
+    await sendCampaignEmail("campaign_approved", id);
+  } else if (campaign.status === "denied") {
+    await sendCampaignEmail("campaign_denied", id);
   }
 
   return data as Campaign;
