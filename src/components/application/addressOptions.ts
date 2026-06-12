@@ -49,7 +49,20 @@ export const STATES = [
   { code: "WV", name: "West Virginia" },
   { code: "WI", name: "Wisconsin" },
   { code: "WY", name: "Wyoming" },
+  { code: "AS", name: "American Samoa" },
+  { code: "GU", name: "Guam" },
+  { code: "MP", name: "Northern Mariana Islands" },
+  { code: "PR", name: "Puerto Rico" },
+  { code: "VI", name: "U.S. Virgin Islands" },
 ];
+
+export const STATE_NAMES = STATES.reduce<Record<string, string>>(
+  (stateNames, state) => {
+    stateNames[state.code] = state.name;
+    return stateNames;
+  },
+  {},
+);
 
 export const COUNTRIES = [
   "United States",
