@@ -18,7 +18,7 @@ import type { Status } from "@/src/types/db/enums";
 import { ReviewApplicationRow } from "@/src/types/frontend/campaignsTable";
 import { createGivebutterCampaigns } from "../actions/givebutter/campaignsGivebutter";
 import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
-import { createBrowserClient } from "@/src/lib/supabase-client";
+import { sendCampaignEmailWithLogs } from "@/src/lib/email/sendCampaignEmail";
 
 const pageSizeOptions = [5, 10, 20];
 
@@ -252,16 +252,14 @@ export default function ReviewApplicationsTable({
       }
 
       if (status === "approved" || status === "denied") {
-        const supabase = createBrowserClient();
         const emailType =
           status === "approved" ? "campaign_approved" : "campaign_denied";
         const emailResults = await Promise.allSettled(
           ids.map((campaignId) =>
-            supabase.functions.invoke("send-campaign-email", {
-              body: {
-                type: emailType,
-                campaign_id: campaignId,
-              },
+            sendCampaignEmailWithLogs({
+              type: emailType,
+              campaignId,
+              context: "bulk-review-applications-table",
             }),
           ),
         );
@@ -278,7 +276,7 @@ export default function ReviewApplicationsTable({
           if (result.value.error) {
             console.error(
               `Error sending ${emailType} email for campaign ${ids[index]}:`,
-              result.value.error.message,
+              result.value.error,
             );
           }
         });

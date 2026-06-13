@@ -16,8 +16,8 @@ import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useReplaceCampaignImage from "@/src/hooks/campaign-image-records/useReplaceCampaignImage";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
-import { createBrowserClient } from "@/src/lib/supabase-client";
 import { STATE_NAMES } from "@/src/components/application/addressOptions";
+import { sendCampaignEmailWithLogs } from "@/src/lib/email/sendCampaignEmail";
 
 function ValueRow({
   label,
@@ -181,21 +181,16 @@ export default function ReviewSubmitPage() {
     });
 
     try {
-      const supabase = createBrowserClient();
-      const { error: emailError } = await supabase.functions.invoke(
-        "send-campaign-email",
-        {
-          body: {
-            type: "campaign_submitted",
-            campaign_id: campaignId,
-          },
-        },
-      );
+      const { error: emailError } = await sendCampaignEmailWithLogs({
+        type: "campaign_submitted",
+        campaignId,
+        context: "application-submit",
+      });
 
       if (emailError) {
         console.error(
           "Error sending campaign submitted email:",
-          emailError.message,
+          emailError,
         );
       }
     } catch (emailError) {
