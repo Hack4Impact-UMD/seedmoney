@@ -28,7 +28,7 @@ import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import { useCreateGivebutterCampaign } from "@/src/hooks/givebutter/useCreateCampaign";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
-import { sendCampaignEmailWithLogs } from "@/src/lib/email/sendCampaignEmail";
+import { createBrowserClient } from "@/src/lib/supabase-client";
 
 const MAX_BENEFICIARY_SELECTIONS = 3;
 
@@ -217,20 +217,25 @@ export default function CampaignReviewPage() {
 
         if (newStatus === "approved" || newStatus === "denied") {
           try {
+            const supabase = createBrowserClient();
             const emailType =
               newStatus === "approved"
                 ? "campaign_approved"
                 : "campaign_denied";
-            const { error: emailError } = await sendCampaignEmailWithLogs({
-              type: emailType,
-              campaignId: parsedCampaignId,
-              context: "single-review-application-page",
-            });
+            const { error: emailError } = await supabase.functions.invoke(
+              "send-campaign-email",
+              {
+                body: {
+                  type: emailType,
+                  campaign_id: parsedCampaignId,
+                },
+              },
+            );
 
             if (emailError) {
               console.error(
                 `Error sending ${newStatus} campaign email:`,
-                emailError,
+                emailError.message,
               );
             }
           } catch (emailError) {
