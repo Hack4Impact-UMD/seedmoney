@@ -127,7 +127,8 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
       const supportingImagesArray = campaignImages.filter((r) => r.is_main === false);
       const image1 = supportingImagesArray[0] ? `<img src="${getPublicUrl(supportingImagesArray[0].storage_path)}" alt="Campaign image" />` : '';
       const image2 = supportingImagesArray[1] ? `<img src="${getPublicUrl(supportingImagesArray[1].storage_path)}" alt="Campaign image" />` : '';
-      const restImages = supportingImagesArray.slice(2).map((r) => `<img src="${getPublicUrl(r.storage_path)}" alt="Campaign image" />`).join("\n");
+      const image3 = supportingImagesArray[2] ? `<img src="${getPublicUrl(supportingImagesArray[2].storage_path)}" alt="Campaign image" />` : '';
+      const restImages = supportingImagesArray.slice(3).map((r) => `<img src="${getPublicUrl(r.storage_path)}" alt="Campaign image" />`).join("\n");
 
       const description = `
         <h3>Our Garden & Community</h3>
@@ -136,14 +137,14 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
         <h3>Our Challenge</h3>
         <p>${q2}</p>
+        ${image2}
 
         <h3>Seasonal Activity</h3>
         <p>${q3}</p>
-        ${image2}
+        ${image3}
 
         <h3>Campaign Impact</h3>
         <p>${q4}</p>
-
         ${restImages}
       `.trim();
 
@@ -212,7 +213,6 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
   return results;
 }
-
 
 export async function publishDueCampaigns() {
   const supabase = await createServerClient();
