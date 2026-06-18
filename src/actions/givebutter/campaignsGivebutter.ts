@@ -153,7 +153,6 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         subtitle: campaign.state === "N/A" 
           ? `${campaign.city}, ${campaign.country}` 
           : `${campaign.city}, ${campaign.state} ${campaign.country}`,
-        slug: generateCampaignSlug(campaign.name, campaign.date_created),
         description,
         ...(campaign.goal !== undefined && { goal: campaign.goal }),
         ...(mainImage && {
