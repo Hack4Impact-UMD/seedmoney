@@ -8,6 +8,7 @@ import Link from "next/link";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { signInWithGoogle as startGoogleSignIn } from "@/src/lib/google-auth";
 import { useRouter } from "next/navigation";
+import { Turnstile } from "@marsidev/react-turnstile"; // 👈 added
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -21,6 +22,7 @@ const SignupForm = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null); // 👈 added
 
   const router = useRouter();
 
@@ -36,12 +38,18 @@ const SignupForm = () => {
       return;
     }
 
+    if (!captchaToken) {
+      setErrorMsg("Please complete the CAPTCHA.");
+      return;
+    }
+
     const supabase = await createBrowserClient();
 
     const { error } = await supabase.auth.signUp({
       email,
       password,
       options: {
+        captchaToken,
         data: {
           first_name: firstName,
           middle_name: middleName,
@@ -213,6 +221,11 @@ const SignupForm = () => {
             .
           </span>
         }
+      />
+
+      <Turnstile
+        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+        onSuccess={(token) => setCaptchaToken(token)}
       />
 
       <Button

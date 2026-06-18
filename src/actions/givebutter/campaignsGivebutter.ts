@@ -139,11 +139,11 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         <p>${q2}</p>
         ${image2}
 
-        <h3>Seasonal Activity</h3>
+        <h3>Life in the Garden</h3>
         <p>${q3}</p>
         ${image3}
 
-        <h3>Campaign Impact</h3>
+        <h3>What Your Support Will Do</h3>
         <p>${q4}</p>
         ${restImages}
       `.trim();
