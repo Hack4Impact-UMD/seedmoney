@@ -168,6 +168,58 @@ export async function readCampaign(
   return data as Campaign[];
 }
 
+export async function readCampaignServer(
+  ids?: number | number[],
+): Promise<Campaign | Campaign[] | null> {
+  const supabase = await createServerClient();
+
+  // Return ALL campaigns
+  if (ids === undefined) {
+    const { data, error } = await supabase.from("campaigns").select("*");
+    
+
+    if (error) {
+      console.error("Error fetching campaigns:", error.message);
+      return null;
+    }
+
+    return data as Campaign[];
+  }
+
+  // Return a SINGLE campaign by ID
+  if (typeof ids === "number") {
+    console.log(ids);
+    const { data, error } = await supabase
+      .from("campaigns")
+      .select("*")
+      .eq("campaign_id", ids)
+      .maybeSingle();
+    if (error) {
+      console.error("Error reading campaign:", error.message);
+      return null;
+    }
+
+    return data as Campaign;
+  }
+
+  // Return MULTIPLE campaigns by array of IDs
+  if (ids.length === 0) {
+    return [];
+  }
+
+  const { data, error } = await supabase
+    .from("campaigns")
+    .select("*")
+    .in("campaign_id", ids);
+
+  if (error) {
+    console.error("Error reading campaigns:", error.message);
+    return null;
+  }
+
+  return data as Campaign[];
+}
+
 export async function readCampaignsByCompId(
   competitionId: number,
 ): Promise<Campaign[]> {

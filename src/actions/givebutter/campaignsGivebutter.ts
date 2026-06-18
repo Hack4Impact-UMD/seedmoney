@@ -1,5 +1,5 @@
 "use server";
-import { readCampaign } from "@/src/actions/db/campaigns";
+import { readCampaignServer } from "@/src/actions/db/campaigns";
 import { readAnswersByCampaignId } from "@/src/actions/db/answers";
 import { createServerClient } from "@/src/lib/supabase-client";
 import type { Campaign } from "@/src/types";
@@ -93,7 +93,7 @@ async function readErrorBody(response: Response) {
 export async function createGivebutterCampaigns(campaignIds: number[]) {
   const supabase = await createServerClient();
 
-  const campaigns = await readCampaign(campaignIds) as Campaign[];
+  const campaigns = await readCampaignServer(campaignIds) as Campaign[];
   if (!campaigns || campaigns.length === 0) {
     throw new Error("No campaigns found");
   }
