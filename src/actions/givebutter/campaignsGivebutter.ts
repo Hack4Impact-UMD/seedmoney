@@ -150,7 +150,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
       const body = {
         type: "fundraise",
         title: campaign.name,
-        subtitle: campaign.city + ", " + campaign.state + " " + campaign.country,
+        subtitle: campaign.state === "N/A" 
+          ? `${campaign.city}, ${campaign.country}` 
+          : `${campaign.city}, ${campaign.state} ${campaign.country}`,
         website: `https://givebutter.com/${generateCampaignSlug(campaign.name, campaign.date_created)}`,
         description,
         ...(campaign.goal !== undefined && { goal: campaign.goal }),
