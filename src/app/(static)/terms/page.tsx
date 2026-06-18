@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
-import {
-  ContentSection,
-  DraftNote,
-  StaticPage,
-} from "@/src/components/static-pages/StaticPage";
+import { ContentSection, StaticPage } from "@/src/components/static-pages/StaticPage";
 
 export const metadata: Metadata = {
   title: "Terms of Service | SeedMoney",
@@ -16,12 +12,6 @@ export default function TermsPage() {
       eyebrow="SeedMoney Challenge"
       title="Terms of Service for Campaign Leaders"
     >
-      <DraftNote>
-        Draft for review. A first draft, not legal advice; worth a quick
-        attorney review before publishing. [Effective date: target June 21,
-        2026.] Delete this note before publishing.
-      </DraftNote>
-
       <ContentSection title="Welcome">
         <p>
           The SeedMoney Challenge gives community food garden projects a place
@@ -129,10 +119,10 @@ export default function TermsPage() {
           GiveButter, which provides the payment and fundraising infrastructure;
           your use of that process is also subject to GiveButter&apos;s terms.
           SeedMoney administers the Challenge and is responsible for disbursing
-          grants and donations. Most donations reach campaigns in full, though
-          certain payment methods — such as donations from donor-advised funds —
-          carry a processing fee that is deducted from the donation. [Confirm
-          current fee details against GiveButter&apos;s terms before publishing.]
+          grants and donations. GiveButter&apos;s current pricing offers 0%
+          platform fees and covered processing fees when optional donor tips are
+          enabled; if tips are disabled, platform fees and standard payment
+          processing fees may apply.
         </p>
         <p>
           Donations are received by SeedMoney, a 501(c)(3) nonprofit
@@ -158,7 +148,8 @@ export default function TermsPage() {
       <ContentSection title="6. Grants">
         <p>
           SeedMoney offers grants to qualifying campaigns based on the criteria
-          in the then-current Grant Guidelines [link once published], which may
+          in the then-current{" "}
+          <a href="/how-it-works">How It Works grant guidelines</a>, which may
           change from year to year. Reaching a ranking or fundraising threshold
           does not by itself guarantee a grant — your campaign must also comply
           with these Terms and with any verification we request. SeedMoney may

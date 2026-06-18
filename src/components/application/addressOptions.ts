@@ -1,6 +1,7 @@
 export const STATES = [
   { code: "AL", name: "Alabama" },
   { code: "AK", name: "Alaska" },
+  { code: "AS", name: "American Samoa" },
   { code: "AZ", name: "Arizona" },
   { code: "AR", name: "Arkansas" },
   { code: "CA", name: "California" },
@@ -9,6 +10,7 @@ export const STATES = [
   { code: "DE", name: "Delaware" },
   { code: "FL", name: "Florida" },
   { code: "GA", name: "Georgia" },
+  { code: "GU", name: "Guam" },
   { code: "HI", name: "Hawaii" },
   { code: "ID", name: "Idaho" },
   { code: "IL", name: "Illinois" },
@@ -33,15 +35,18 @@ export const STATES = [
   { code: "NY", name: "New York" },
   { code: "NC", name: "North Carolina" },
   { code: "ND", name: "North Dakota" },
+  { code: "MP", name: "Northern Mariana Islands" },
   { code: "OH", name: "Ohio" },
   { code: "OK", name: "Oklahoma" },
   { code: "OR", name: "Oregon" },
   { code: "PA", name: "Pennsylvania" },
+  { code: "PR", name: "Puerto Rico" },
   { code: "RI", name: "Rhode Island" },
   { code: "SC", name: "South Carolina" },
   { code: "SD", name: "South Dakota" },
   { code: "TN", name: "Tennessee" },
   { code: "TX", name: "Texas" },
+  { code: "VI", name: "U.S. Virgin Islands" },
   { code: "UT", name: "Utah" },
   { code: "VT", name: "Vermont" },
   { code: "VA", name: "Virginia" },
@@ -50,6 +55,14 @@ export const STATES = [
   { code: "WI", name: "Wisconsin" },
   { code: "WY", name: "Wyoming" },
 ];
+
+export const STATE_NAMES = STATES.reduce<Record<string, string>>(
+  (stateNames, state) => {
+    stateNames[state.code] = state.name;
+    return stateNames;
+  },
+  {},
+);
 
 export const COUNTRIES = [
   "United States",

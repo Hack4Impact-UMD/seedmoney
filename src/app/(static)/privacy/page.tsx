@@ -1,9 +1,5 @@
 import type { Metadata } from "next";
-import {
-  ContentSection,
-  DraftNote,
-  StaticPage,
-} from "@/src/components/static-pages/StaticPage";
+import { ContentSection, StaticPage } from "@/src/components/static-pages/StaticPage";
 
 export const metadata: Metadata = {
   title: "Privacy Policy | SeedMoney",
@@ -13,13 +9,6 @@ export const metadata: Metadata = {
 export default function PrivacyPage() {
   return (
     <StaticPage eyebrow="SeedMoney Challenge" title="Privacy Policy">
-      <DraftNote>
-        Draft for review. A first draft, not legal advice; worth a quick
-        attorney review before publishing. Items in [brackets] need a decision
-        or confirmation before launch — see the notes at the end. [Effective
-        date: target June 21, 2026.] Delete this note before publishing.
-      </DraftNote>
-
       <ContentSection title="Our Approach to Privacy">
         <p>
           This Privacy Policy explains what personal information SeedMoney
@@ -78,10 +67,9 @@ export default function PrivacyPage() {
           technical information such as your device type, browser, IP address,
           and general usage activity. We use this information to keep the website
           running well, to monitor and help prevent fraud, and to understand how
-          the site is used. [Confirm with the development team whether the site
-          uses analytics or tracking cookies — see closing notes. If it does
-          not, this paragraph and the Cookies section below should be simplified
-          accordingly.]
+          the site is used. The website uses essential cookies for account
+          authentication, but the current application does not use analytics or
+          non-essential tracking cookies.
         </p>
         <p>
           We do not ask for or intentionally collect sensitive personal
@@ -243,12 +231,10 @@ export default function PrivacyPage() {
 
       <ContentSection title="Cookies and Similar Technologies">
         <p>
-          [Confirm with the development team before publishing.] The website
-          uses cookies and similar technologies that are necessary for it to
-          function, such as keeping you signed in to your account. If the website
-          also uses analytics or other non-essential tracking, that will be
-          described here, along with how to manage it. If the site uses only
-          essential cookies, this section can be shortened to say so.
+          The website uses cookies and similar technologies that are necessary
+          for it to function, such as keeping you signed in to your account. The
+          current application does not use analytics or other non-essential
+          tracking cookies.
         </p>
       </ContentSection>
 
@@ -280,34 +266,6 @@ export default function PrivacyPage() {
         </p>
       </ContentSection>
 
-      <ContentSection title="Pre-publication checklist (delete this section before publishing):">
-        <ul>
-          <li>
-            Analytics/cookies: Confirm with Hack4Impact whether
-            challenge.seedmoney.org uses Google Analytics or any non-essential
-            tracking. If yes, describe it in the Cookies section and the
-            “collected automatically” paragraph. If no, simplify both to
-            essential cookies only.
-          </li>
-          <li>
-            Marketing email tool: A separate decision; not a publication blocker
-            since the privacy policy does not name the marketing platform.
-            Update the policy if the eventual choice is one that would qualify
-            as a “service provider” processing personal data on SeedMoney&apos;s
-            behalf.
-          </li>
-          <li>Set the effective date and remove the draft note.</li>
-          <li>
-            Confirm this policy and the Terms of Service cross-link correctly
-            once both are published.
-          </li>
-          <li>
-            A lawyer reviewing this alongside the Terms of Service is
-            recommended, given international participants and the handling of
-            personal data.
-          </li>
-        </ul>
-      </ContentSection>
     </StaticPage>
   );
 }

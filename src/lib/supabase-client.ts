@@ -3,7 +3,6 @@ import {
   createServerClient as createSupabaseServerClient,
 } from "@supabase/ssr";
 import type { CookieOptions } from "@supabase/ssr";
-import { createClient } from "@supabase/supabase-js";
 
 const getSupabaseEnv = () => {
   const url = process.env.NEXT_PUBLIC_SUPABASE_URL;

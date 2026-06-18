@@ -7,13 +7,6 @@ export const metadata: Metadata = {
 };
 
 const faqHtml = `
-  <!-- DRAFT NOTE — delete before publishing -->
-  <div class="draft-note">
-    <strong>Draft for review.</strong> Trimmed and updated from the prior FAQ; questions already
-    answered on the How It Works page were removed so the two pages do not duplicate. Highlighted
-    items need a quick confirmation before publishing. Delete this note before going live.
-  </div>
-
   <!-- Header -->
   <div class="header">
     <h1>Frequently Asked Questions</h1>

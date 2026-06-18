@@ -55,34 +55,20 @@ export async function createCampaign(
     campaignData.competition_id = currentCompetition.competition_id;
   }
 
-  const { data: insertedData, error } = await supabase
-    .from("campaigns")
-    .insert(campaignData)
-    .select()
-    .single();
+  const { data: insertedData, error } = await supabase.rpc(
+    "create_campaign_with_leader",
+    {
+      campaign_data: campaignData,
+    },
+  );
 
   if (error) {
     console.error("Error creating campaign:", error.message);
     return null;
   }
 
-  const { error: campaignMemberError } = await supabase
-    .from("campaign_members")
-    .insert({
-      campaign_id: insertedData.campaign_id,
-      user_id: user.id,
-      role: "campaign_leader",
-    });
-
-  if (campaignMemberError) {
-    await supabase
-      .from("campaigns")
-      .delete()
-      .eq("campaign_id", insertedData.campaign_id);
-    console.error(
-      "Error creating campaign member:",
-      campaignMemberError.message,
-    );
+  if (!insertedData) {
+    console.error("Error creating campaign: no campaign returned");
     return null;
   }
 
