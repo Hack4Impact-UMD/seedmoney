@@ -191,7 +191,7 @@ export async function updateCampaign(
   id: number,
   campaign: Partial<Campaign>,
 ): Promise<Campaign | null> {
-  const supabase = createBrowserClient();
+  const supabase = await createServerClient();
   console.log("updateCampaign called", id, campaign);
 
   const { data, error } = await supabase

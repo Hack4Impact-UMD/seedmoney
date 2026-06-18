@@ -31,6 +31,18 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function generateCampaignSlug(title: string, dateCreated: string): string {
+  const year = new Date(dateCreated).getFullYear();
+  const slug = title
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/\s+/g, '-')
+    .replace(/-+/g, '-')
+    .replace(/^-+|-+$/g, '');
+  return `${slug}-${year}`;
+}
+
 async function fetchGivebutterWithRetry(
   url: string,
   init: RequestInit,
@@ -104,10 +116,6 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
       );
 
       const mainImage = campaignImages.find((r) => r.is_main === true);
-      const supportingImages = campaignImages
-        .filter((r) => r.is_main === false)
-        .map((r) => `<img src="${getPublicUrl(r.storage_path)}" alt="Campaign image" />`)
-        .join("\n");
 
       const answers = await readAnswersByCampaignId(campaign.campaign_id);
       const sortedAnswers = answers.sort(
@@ -116,25 +124,36 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
       const [q1, q2, q3, q4] = sortedAnswers.map((a) => a.final_answer ?? "");
 
+      const supportingImagesArray = campaignImages.filter((r) => r.is_main === false);
+      const image1 = supportingImagesArray[0] ? `<img src="${getPublicUrl(supportingImagesArray[0].storage_path)}" alt="Campaign image" />` : '';
+      const image2 = supportingImagesArray[1] ? `<img src="${getPublicUrl(supportingImagesArray[1].storage_path)}" alt="Campaign image" />` : '';
+      const restImages = supportingImagesArray.slice(2).map((r) => `<img src="${getPublicUrl(r.storage_path)}" alt="Campaign image" />`).join("\n");
+
       const description = `
         <h3>Our Garden & Community</h3>
         <p>${q1}</p>
+        ${image1}
 
         <h3>Our Challenge</h3>
         <p>${q2}</p>
 
         <h3>Seasonal Activity</h3>
         <p>${q3}</p>
+        ${image2}
 
         <h3>Campaign Impact</h3>
         <p>${q4}</p>
 
-        ${supportingImages}
+        ${restImages}
       `.trim();
 
       const body = {
         type: "fundraise",
         title: campaign.name,
+        subtitle: campaign.state === "N/A" 
+          ? `${campaign.city}, ${campaign.country}` 
+          : `${campaign.city}, ${campaign.state} ${campaign.country}`,
+        slug: generateCampaignSlug(campaign.name, campaign.date_created),
         description,
         ...(campaign.goal !== undefined && { goal: campaign.goal }),
         ...(mainImage && {
