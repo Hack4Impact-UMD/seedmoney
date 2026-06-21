@@ -2,11 +2,12 @@
 
 import Image from "next/image";
 import Link from "next/link";
-import { Button } from "@mui/material";
+import { Button, MenuItem, TextField } from "@mui/material";
 import {
   useAgreementGate,
   useApplicationForm,
   useDraftCampaignId,
+  useLastSaved,
   usePendingImageCrops,
 } from "@/src/components/application/ApplicationFormProvider";
 import { getApplicationCompletionState } from "@/src/components/application/applicationStepState";
@@ -16,57 +17,159 @@ import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useReplaceCampaignImage from "@/src/hooks/campaign-image-records/useReplaceCampaignImage";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadQuestion from "@/src/hooks/questions/useReadQuestion";
-import { STATE_NAMES } from "@/src/components/application/addressOptions";
+import useCreateOriginalAnswer from "@/src/hooks/answers/useCreateOriginalAnswer";
+import { applicationGardenCategories } from "@/src/constants/gardenCategories";
+import {
+  COUNTRIES,
+  STATES,
+} from "@/src/components/application/addressOptions";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 
-function ValueRow({
+const storyAnswerMinChars = 200;
+const storyAnswerMaxChars = 1000;
+
+function normalizeNumericInput(value: string) {
+  const trimmedValue = value.trim();
+
+  if (trimmedValue === "") {
+    return "";
+  }
+
+  const decimalMatch = trimmedValue.match(/[.,](?=\d{1,2}$)/);
+  const integerPortion = decimalMatch
+    ? trimmedValue.slice(0, decimalMatch.index)
+    : trimmedValue;
+  const digitsOnly = integerPortion.replace(/\D/g, "");
+
+  if (digitsOnly === "") {
+    return "";
+  }
+
+  return digitsOnly.replace(/^0+(?=\d)/, "");
+}
+
+function formatOrganizationIdentifier(value: string) {
+  const digits = value.replace(/\D/g, "").slice(0, 9);
+
+  if (digits.length <= 2) {
+    return digits;
+  }
+
+  return `${digits.slice(0, 2)}-${digits.slice(2)}`;
+}
+
+function isUsCountry(value: string) {
+  const normalizedValue = value.trim().toLowerCase();
+  return normalizedValue === "us" || normalizedValue === "united states";
+}
+
+function getFormattedSaveTime() {
+  return new Date().toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+}
+
+function EditableValueRow({
   label,
   value,
+  helperText,
+  multiline = false,
+  type = "text",
   required = false,
+  error,
+  onChange,
+  onBlur,
 }: {
   label: string;
   value: string | number;
+  helperText?: string;
+  multiline?: boolean;
+  type?: string;
   required?: boolean;
+  error?: boolean;
+  onChange: (value: string) => void;
+  onBlur?: (value: string) => void | Promise<void>;
 }) {
   const displayValue = String(value ?? "");
   const isMissing = required && displayValue.trim().length === 0;
 
   return (
-    <div className="flex flex-col gap-1">
-      <label
-        className={`text-sm ${isMissing ? "text-gray-400" : "text-gray-500"}`}
-      >
-        {label}
-      </label>
-      {isMissing ? (
-        <div className="border-b border-[#D32F2F] mt-2" />
-      ) : (
-        <>
-          <p className="whitespace-pre-wrap [overflow-wrap:anywhere]">
-            {displayValue}
-          </p>
-          <div className="border-b border-gray-300" />
-        </>
-      )}
-    </div>
+    <TextField
+      variant="standard"
+      fullWidth
+      label={label}
+      type={type}
+      multiline={multiline}
+      minRows={multiline ? 4 : undefined}
+      value={displayValue}
+      error={error ?? isMissing}
+      helperText={helperText}
+      onChange={(event) => onChange(event.target.value)}
+      onBlur={async (event) => {
+        try {
+          await onBlur?.(event.target.value);
+        } catch (error) {
+          console.error("Error saving review field:", error);
+        }
+      }}
+    />
   );
 }
 
-function ReviewBanner({ href, message }: { href: string; message: string }) {
+function EditableSelectRow({
+  label,
+  value,
+  options,
+  required = false,
+  onChange,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  required?: boolean;
+  onChange: (value: string) => void | Promise<void>;
+}) {
+  const hasOption = options.some((option) => option.value === value);
+
   return (
-    <div className="flex justify-between items-center bg-[#FDECEA] text-[#5F2120] px-4 py-3 rounded-md text-sm">
+    <TextField
+      select
+      variant="standard"
+      fullWidth
+      label={label}
+      value={value}
+      error={required && value.trim().length === 0}
+      onChange={async (event) => {
+        try {
+          await onChange(event.target.value);
+        } catch (error) {
+          console.error("Error saving review field:", error);
+        }
+      }}
+    >
+      <MenuItem value="">
+        <em>None</em>
+      </MenuItem>
+
+      {value && !hasOption && <MenuItem value={value}>{value}</MenuItem>}
+
+      {options.map((option) => (
+        <MenuItem key={option.value} value={option.value}>
+          {option.label}
+        </MenuItem>
+      ))}
+    </TextField>
+  );
+}
+
+function ReviewBanner({ message }: { message: string }) {
+  return (
+    <div className="flex items-center bg-[#FDECEA] text-[#5F2120] px-4 py-3 rounded-md text-sm">
       <div className="flex items-center gap-2">
         <Image src="/icons/error.svg" width={18} height={18} alt="error" />
         <span>{message}</span>
       </div>
-
-      <Link
-        href={href}
-        className="flex items-center gap-2 text-[#D32F2F] font-medium"
-      >
-        <Image src="/icons/pencil.svg" width={16} height={16} alt="edit" />
-        EDIT
-      </Link>
     </div>
   );
 }
@@ -80,6 +183,7 @@ export default function ReviewSubmitPage() {
   const router = useRouter();
   const { hasPassedAgreement } = useAgreementGate();
   const { draftCampaignId } = useDraftCampaignId();
+  const { setLastSaved } = useLastSaved();
   const {
     pendingMainPhotoCrop,
     setPendingMainPhotoCrop,
@@ -87,6 +191,7 @@ export default function ReviewSubmitPage() {
     setPendingSupportingPhotoCrops,
   } = usePendingImageCrops();
   const { saveDraftCampaign } = useSaveDraftCampaign();
+  const createOriginalAnswerMutation = useCreateOriginalAnswer();
   const updateCampaign = useUpdateCampaign();
   const replaceCampaignImage = useReplaceCampaignImage();
   const { data: currentCompetitionData } = useReadCurrentCompetition();
@@ -103,7 +208,11 @@ export default function ReviewSubmitPage() {
     reviewComplete,
   } = getApplicationCompletionState(values, hasPassedAgreement);
   const goalValue = Number(values.fundraisingGoal);
-  const canSubmit = reviewComplete && !!currentCompetitionData && goalValue > 1;
+  const hasValidFundraisingGoal = goalValue > 1;
+  const showFundraisingGoalError =
+    values.fundraisingGoal !== "" && !hasValidFundraisingGoal;
+  const canSubmit =
+    reviewComplete && !!currentCompetitionData && hasValidFundraisingGoal;
   const isLoadingQuestions =
     isLoadingQuestion1 ||
     isLoadingQuestion2 ||
@@ -117,6 +226,77 @@ export default function ReviewSubmitPage() {
   if (!question1 || !question2 || !question3 || !question4) {
     notFound();
   }
+
+  const saveCampaignInformationDraft = async (
+    overrides: Partial<typeof values> = {},
+  ) => {
+    const nextValues = {
+      ...form.state.values,
+      ...overrides,
+    };
+
+    await saveDraftCampaign({
+      name: nextValues.campaignTitle,
+      impact: nextValues.beneficiaryCount
+        ? Number(nextValues.beneficiaryCount)
+        : undefined,
+      size: nextValues.gardenSize.trim() || undefined,
+      existence: nextValues.gardenStatus || undefined,
+      goal: nextValues.fundraisingGoal
+        ? Number(nextValues.fundraisingGoal)
+        : undefined,
+    });
+  };
+
+  const saveGardenInformationDraft = async (
+    overrides: Partial<typeof values> = {},
+  ) => {
+    const nextValues = {
+      ...form.state.values,
+      ...overrides,
+    };
+
+    await saveDraftCampaign({
+      city: nextValues.gardenCity,
+      state: nextValues.gardenState,
+      country: nextValues.gardenCountry,
+      project_category: nextValues.gardenCategory,
+      project_beneficiaries: nextValues.gardenBeneficiaries,
+    });
+  };
+
+  const saveContactDraft = async (overrides: Partial<typeof values> = {}) => {
+    const nextValues = {
+      ...form.state.values,
+      ...overrides,
+    };
+
+    await saveDraftCampaign({
+      organization_name: nextValues.organizationName,
+      ein: nextValues.organizationIdentifier,
+      mailing_street_1: nextValues.mailingStreet1,
+      mailing_street_2: nextValues.mailingStreet2,
+      mailing_city: nextValues.mailingCity,
+      mailing_state: nextValues.mailingState,
+      mailing_zipcode: nextValues.mailingZip,
+      mailing_country: nextValues.mailingCountry,
+      contact_first_name: nextValues.contactFirstName,
+      contact_last_name: nextValues.contactLastName,
+      contact_email: nextValues.contactEmail,
+      contact_role: nextValues.contactRole,
+    });
+  };
+
+  const saveStoryAnswer = async (questionId: number, originalAnswer: string) => {
+    const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+
+    await createOriginalAnswerMutation.mutateAsync({
+      campaignId,
+      questionId,
+      originalAnswer,
+    });
+    setLastSaved(getFormattedSaveTime());
+  };
 
   const handleSubmitApplication = async () => {
     if (!currentCompetitionData) {
@@ -272,13 +452,11 @@ export default function ReviewSubmitPage() {
 
       {!campaignComplete && (
         <ReviewBanner
-          href="/apply/campaign"
           message='Please complete "Campaign Information"'
         />
       )}
-      {goalValue < 1 && (
+      {showFundraisingGoalError && (
         <ReviewBanner
-          href="/apply/campaign"
           message="Fundraising goal must be greater than $1"
         />
       )}
@@ -295,10 +473,14 @@ export default function ReviewSubmitPage() {
           </p>
         </div>
 
-        <ValueRow
+        <EditableValueRow
           label="Campaign Title"
           value={values.campaignTitle}
           required
+          onChange={(value) => form.setFieldValue("campaignTitle", value)}
+          onBlur={(value) =>
+            saveCampaignInformationDraft({ campaignTitle: value })
+          }
         />
       </div>
 
@@ -307,10 +489,19 @@ export default function ReviewSubmitPage() {
           Project Details & Impact <span className="text-red-500">*</span>
         </h3>
 
-        <ValueRow
+        <EditableValueRow
           label="About how many people will benefit from this garden this year?"
           value={values.beneficiaryCount}
           required
+          type="number"
+          onChange={(value) =>
+            form.setFieldValue("beneficiaryCount", normalizeNumericInput(value))
+          }
+          onBlur={(value) =>
+            saveCampaignInformationDraft({
+              beneficiaryCount: normalizeNumericInput(value),
+            })
+          }
         />
 
         <div className="flex flex-col gap-2">
@@ -318,45 +509,49 @@ export default function ReviewSubmitPage() {
             Is this a new or existing garden?
           </label>
 
-          <div className="flex flex-col gap-2">
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-4 h-4 rounded-full border-2 ${
-                  values.gardenStatus === "new"
-                    ? "border-blue-600"
-                    : "border-gray-400"
-                } flex items-center justify-center`}
-              >
-                {values.gardenStatus === "new" && (
-                  <div className="w-2 h-2 bg-blue-600 rounded-full" />
-                )}
-              </div>
+          <div className="flex flex-col gap-3">
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="radio"
+                name="reviewGardenStatus"
+                value="new"
+                checked={values.gardenStatus === "new"}
+                onChange={async () => {
+                  form.setFieldValue("gardenStatus", "new");
+                  await saveCampaignInformationDraft({ gardenStatus: "new" });
+                }}
+                className="w-6 h-6 accent-blue-600 cursor-pointer"
+              />
               <span>New - this garden is being started this year</span>
-            </div>
+            </label>
 
-            <div className="flex items-center gap-2">
-              <div
-                className={`w-4 h-4 rounded-full border-2 ${
-                  values.gardenStatus === "existing"
-                    ? "border-blue-600"
-                    : "border-gray-400"
-                } flex items-center justify-center`}
-              >
-                {values.gardenStatus === "existing" && (
-                  <div className="w-2 h-2 bg-blue-600 rounded-full" />
-                )}
-              </div>
+            <label className="flex items-center gap-3 cursor-pointer group">
+              <input
+                type="radio"
+                name="reviewGardenStatus"
+                value="existing"
+                checked={values.gardenStatus === "existing"}
+                onChange={async () => {
+                  form.setFieldValue("gardenStatus", "existing");
+                  await saveCampaignInformationDraft({
+                    gardenStatus: "existing",
+                  });
+                }}
+                className="w-6 h-6 accent-blue-600 cursor-pointer"
+              />
               <span>
                 Existing - this garden has been operating for one or more
                 seasons
               </span>
-            </div>
+            </label>
           </div>
         </div>
 
-        <ValueRow
+        <EditableValueRow
           label="Approximate garden size or scope (Optional)"
           value={values.gardenSize || ""}
+          onChange={(value) => form.setFieldValue("gardenSize", value)}
+          onBlur={(value) => saveCampaignInformationDraft({ gardenSize: value })}
         />
       </div>
 
@@ -369,10 +564,25 @@ export default function ReviewSubmitPage() {
           Most SeedMoney projects set goals between $500 and $5,000
         </p>
 
-        <ValueRow
+        <EditableValueRow
           label="Fundraising Goal (USD)"
           value={values.fundraisingGoal}
           required
+          type="number"
+          error={showFundraisingGoalError}
+          helperText={
+            showFundraisingGoalError
+              ? "Fundraising goal must be greater than $1"
+              : undefined
+          }
+          onChange={(value) =>
+            form.setFieldValue("fundraisingGoal", normalizeNumericInput(value))
+          }
+          onBlur={(value) =>
+            saveCampaignInformationDraft({
+              fundraisingGoal: normalizeNumericInput(value),
+            })
+          }
         />
       </div>
 
@@ -380,7 +590,6 @@ export default function ReviewSubmitPage() {
 
       {!gardenComplete && (
         <ReviewBanner
-          href="/apply/garden"
           message='Please complete "Garden Information"'
         />
       )}
@@ -390,17 +599,61 @@ export default function ReviewSubmitPage() {
           Garden Location <span className="text-red-500">*</span>
         </h3>
 
-        <ValueRow
+        <EditableSelectRow
           label="Country"
-          value={formatCountry(values.gardenCountry)}
+          value={values.gardenCountry}
           required
+          options={COUNTRIES.map((country) => ({
+            value: country,
+            label: formatCountry(country),
+          }))}
+          onChange={async (value) => {
+            const shouldClearState = values.gardenCountry !== value;
+            form.setFieldValue("gardenCountry", value);
+
+            if (shouldClearState) {
+              form.setFieldValue("gardenState", "");
+            }
+
+            await saveGardenInformationDraft({
+              gardenCountry: value,
+              ...(shouldClearState ? { gardenState: "" } : {}),
+            });
+          }}
         />
-        <ValueRow
-          label="State / Province"
-          value={STATE_NAMES[values.gardenState] ?? values.gardenState}
+        {isUsCountry(values.gardenCountry) ? (
+          <EditableSelectRow
+            label="State / Province"
+            value={values.gardenState}
+            required
+            options={STATES.map((state) => ({
+              value: state.code,
+              label: state.name,
+            }))}
+            onChange={async (value) => {
+              form.setFieldValue("gardenState", value);
+              await saveGardenInformationDraft({ gardenState: value });
+            }}
+          />
+        ) : (
+          <EditableValueRow
+            label="State / Province"
+            value={values.gardenState}
+            required
+            helperText="Write N/A if not applicable"
+            onChange={(value) => form.setFieldValue("gardenState", value)}
+            onBlur={(value) =>
+              saveGardenInformationDraft({ gardenState: value })
+            }
+          />
+        )}
+        <EditableValueRow
+          label="City"
+          value={values.gardenCity}
           required
+          onChange={(value) => form.setFieldValue("gardenCity", value)}
+          onBlur={(value) => saveGardenInformationDraft({ gardenCity: value })}
         />
-        <ValueRow label="City" value={values.gardenCity} required />
       </div>
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-2">
@@ -408,7 +661,19 @@ export default function ReviewSubmitPage() {
           Primary Project Category <span className="text-red-500">*</span>
         </h3>
 
-        <ValueRow label="Category" value={values.gardenCategory} required />
+        <EditableSelectRow
+          label="Category"
+          value={values.gardenCategory}
+          required
+          options={applicationGardenCategories.map((category) => ({
+            value: category,
+            label: category,
+          }))}
+          onChange={async (value) => {
+            form.setFieldValue("gardenCategory", value);
+            await saveGardenInformationDraft({ gardenCategory: value });
+          }}
+        />
       </div>
 
       <div className="bg-white border border-black/10 rounded-[16px] p-5 flex flex-col gap-2">
@@ -417,17 +682,28 @@ export default function ReviewSubmitPage() {
           <span className="text-red-500">*</span>
         </h3>
 
-        <p>
-          {values.gardenBeneficiaries.length > 0
-            ? values.gardenBeneficiaries.join(", ")
-            : ""}
-        </p>
-        <div
-          className={`border-b ${
-            values.gardenBeneficiaries.length > 0
-              ? "border-gray-300"
-              : "border-[#D32F2F]"
-          }`}
+        <EditableValueRow
+          label="Beneficiary populations"
+          value={values.gardenBeneficiaries.join(", ")}
+          required
+          helperText="Separate each population with a comma."
+          onChange={(value) =>
+            form.setFieldValue(
+              "gardenBeneficiaries",
+              value
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean),
+            )
+          }
+          onBlur={(value) =>
+            saveGardenInformationDraft({
+              gardenBeneficiaries: value
+                .split(",")
+                .map((item) => item.trim())
+                .filter(Boolean),
+            })
+          }
         />
       </div>
 
@@ -435,7 +711,6 @@ export default function ReviewSubmitPage() {
 
       {!storyComplete && (
         <ReviewBanner
-          href="/apply/story"
           message='Please complete "Garden Story"'
         />
       )}
@@ -447,25 +722,97 @@ export default function ReviewSubmitPage() {
 
         <p className="text-sm">2-3 sentences each</p>
 
-        <ValueRow
+        <EditableValueRow
           label={question1.question}
           value={values.storyLocationAndAudience}
           required
+          multiline
+          error={
+            values.storyLocationAndAudience.trim().length > 0 &&
+            values.storyLocationAndAudience.trim().length < storyAnswerMinChars
+          }
+          helperText={`${values.storyLocationAndAudience.length} / ${storyAnswerMaxChars}`}
+          onChange={(value) =>
+            form.setFieldValue(
+              "storyLocationAndAudience",
+              value.slice(0, storyAnswerMaxChars),
+            )
+          }
+          onBlur={(value) =>
+            saveStoryAnswer(
+              question1.question_id,
+              value.slice(0, storyAnswerMaxChars),
+            )
+          }
         />
-        <ValueRow
+        <EditableValueRow
           label={question2.question}
           value={values.storyChallenge}
           required
+          multiline
+          error={
+            values.storyChallenge.trim().length > 0 &&
+            values.storyChallenge.trim().length < storyAnswerMinChars
+          }
+          helperText={`${values.storyChallenge.length} / ${storyAnswerMaxChars}`}
+          onChange={(value) =>
+            form.setFieldValue(
+              "storyChallenge",
+              value.slice(0, storyAnswerMaxChars),
+            )
+          }
+          onBlur={(value) =>
+            saveStoryAnswer(
+              question2.question_id,
+              value.slice(0, storyAnswerMaxChars),
+            )
+          }
         />
-        <ValueRow
+        <EditableValueRow
           label={question3.question}
           value={values.storySeasonActivity}
           required
+          multiline
+          error={
+            values.storySeasonActivity.trim().length > 0 &&
+            values.storySeasonActivity.trim().length < storyAnswerMinChars
+          }
+          helperText={`${values.storySeasonActivity.length} / ${storyAnswerMaxChars}`}
+          onChange={(value) =>
+            form.setFieldValue(
+              "storySeasonActivity",
+              value.slice(0, storyAnswerMaxChars),
+            )
+          }
+          onBlur={(value) =>
+            saveStoryAnswer(
+              question3.question_id,
+              value.slice(0, storyAnswerMaxChars),
+            )
+          }
         />
-        <ValueRow
+        <EditableValueRow
           label={question4.question}
           value={values.storyCampaignImpact}
           required
+          multiline
+          error={
+            values.storyCampaignImpact.trim().length > 0 &&
+            values.storyCampaignImpact.trim().length < storyAnswerMinChars
+          }
+          helperText={`${values.storyCampaignImpact.length} / ${storyAnswerMaxChars}`}
+          onChange={(value) =>
+            form.setFieldValue(
+              "storyCampaignImpact",
+              value.slice(0, storyAnswerMaxChars),
+            )
+          }
+          onBlur={(value) =>
+            saveStoryAnswer(
+              question4.question_id,
+              value.slice(0, storyAnswerMaxChars),
+            )
+          }
         />
       </div>
 
@@ -572,7 +919,6 @@ export default function ReviewSubmitPage() {
 
       {!contactComplete && (
         <ReviewBanner
-          href="/apply/contact"
           message='Please complete "Contact Information"'
         />
       )}
@@ -582,15 +928,28 @@ export default function ReviewSubmitPage() {
           Organization Information <span className="text-red-500">*</span>
         </h3>
 
-        <ValueRow
+        <EditableValueRow
           label="Legal Name of Beneficiary Organization"
           value={values.organizationName}
           required
+          onChange={(value) => form.setFieldValue("organizationName", value)}
+          onBlur={(value) => saveContactDraft({ organizationName: value })}
         />
-        <ValueRow
+        <EditableValueRow
           label="EIN or Public-Sector Identifier"
           value={values.organizationIdentifier}
           required
+          onChange={(value) =>
+            form.setFieldValue(
+              "organizationIdentifier",
+              formatOrganizationIdentifier(value),
+            )
+          }
+          onBlur={(value) =>
+            saveContactDraft({
+              organizationIdentifier: formatOrganizationIdentifier(value),
+            })
+          }
         />
       </div>
 
@@ -600,30 +959,78 @@ export default function ReviewSubmitPage() {
           <span className="text-red-500">*</span>
         </h3>
 
-        <ValueRow
+        <EditableValueRow
           label="Address Line 1"
           value={values.mailingStreet1}
           required
+          onChange={(value) => form.setFieldValue("mailingStreet1", value)}
+          onBlur={(value) => saveContactDraft({ mailingStreet1: value })}
         />
-        <ValueRow
+        <EditableValueRow
           label="Apartment, suite, etc. (Optional)"
           value={values.mailingStreet2}
+          onChange={(value) => form.setFieldValue("mailingStreet2", value)}
+          onBlur={(value) => saveContactDraft({ mailingStreet2: value })}
         />
-        <ValueRow label="City or Town" value={values.mailingCity} required />
-        <ValueRow
-          label="State or Province"
-          value={STATE_NAMES[values.mailingState] ?? values.mailingState}
+        <EditableValueRow
+          label="City or Town"
+          value={values.mailingCity}
           required
+          onChange={(value) => form.setFieldValue("mailingCity", value)}
+          onBlur={(value) => saveContactDraft({ mailingCity: value })}
         />
-        <ValueRow
+        {isUsCountry(values.mailingCountry) ? (
+          <EditableSelectRow
+            label="State or Province"
+            value={values.mailingState}
+            required
+            options={STATES.map((state) => ({
+              value: state.code,
+              label: state.name,
+            }))}
+            onChange={async (value) => {
+              form.setFieldValue("mailingState", value);
+              await saveContactDraft({ mailingState: value });
+            }}
+          />
+        ) : (
+          <EditableValueRow
+            label="State or Province"
+            value={values.mailingState}
+            required
+            helperText="Write N/A if not applicable"
+            onChange={(value) => form.setFieldValue("mailingState", value)}
+            onBlur={(value) => saveContactDraft({ mailingState: value })}
+          />
+        )}
+        <EditableValueRow
           label="ZIP/Postal Code"
           value={values.mailingZip}
           required
+          onChange={(value) => form.setFieldValue("mailingZip", value)}
+          onBlur={(value) => saveContactDraft({ mailingZip: value })}
         />
-        <ValueRow
+        <EditableSelectRow
           label="Country"
-          value={formatCountry(values.mailingCountry)}
+          value={values.mailingCountry}
           required
+          options={COUNTRIES.map((country) => ({
+            value: country,
+            label: formatCountry(country),
+          }))}
+          onChange={async (value) => {
+            const shouldClearState = values.mailingCountry !== value;
+            form.setFieldValue("mailingCountry", value);
+
+            if (shouldClearState) {
+              form.setFieldValue("mailingState", "");
+            }
+
+            await saveContactDraft({
+              mailingCountry: value,
+              ...(shouldClearState ? { mailingState: "" } : {}),
+            });
+          }}
         />
       </div>
 
@@ -632,10 +1039,33 @@ export default function ReviewSubmitPage() {
           Primary Contact Information <span className="text-red-500">*</span>
         </h3>
 
-        <ValueRow label="First Name" value={values.contactFirstName} required />
-        <ValueRow label="Last Name" value={values.contactLastName} required />
-        <ValueRow label="Email" value={values.contactEmail} required />
-        <ValueRow label="Role or Title (Optional)" value={values.contactRole} />
+        <EditableValueRow
+          label="First Name"
+          value={values.contactFirstName}
+          required
+          onChange={(value) => form.setFieldValue("contactFirstName", value)}
+          onBlur={(value) => saveContactDraft({ contactFirstName: value })}
+        />
+        <EditableValueRow
+          label="Last Name"
+          value={values.contactLastName}
+          required
+          onChange={(value) => form.setFieldValue("contactLastName", value)}
+          onBlur={(value) => saveContactDraft({ contactLastName: value })}
+        />
+        <EditableValueRow
+          label="Email"
+          value={values.contactEmail}
+          required
+          onChange={(value) => form.setFieldValue("contactEmail", value)}
+          onBlur={(value) => saveContactDraft({ contactEmail: value })}
+        />
+        <EditableValueRow
+          label="Role or Title (Optional)"
+          value={values.contactRole}
+          onChange={(value) => form.setFieldValue("contactRole", value)}
+          onBlur={(value) => saveContactDraft({ contactRole: value })}
+        />
       </div>
 
       <div className="flex w-full flex-col-reverse gap-3 md:flex-row md:justify-between md:gap-0">
