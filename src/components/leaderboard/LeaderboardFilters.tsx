@@ -51,7 +51,7 @@ export default function LeaderboardFilters({
 
   return (
     <section className="bg-[#123A1E] px-6 pb-8 md:px-10 lg:px-16">
-      <div className="mx-auto flex max-w-[1728px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="relative mx-auto flex max-w-[1728px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <label className="flex h-12 w-full items-center rounded-full border border-[#D8D7D2] bg-white px-4 text-[#666666] lg:max-w-[495px]">
           <span className="sr-only">Search campaigns</span>
           <input
@@ -92,7 +92,7 @@ export default function LeaderboardFilters({
                 );
               })}
 
-              <div className="relative">
+              <div>
                 <button
                   type="button"
                   onClick={onGrantChipClick}
@@ -106,15 +106,6 @@ export default function LeaderboardFilters({
                 >
                   Grant Stat
                 </button>
-
-                {isGrantPanelOpen && (
-                  <div className="mt-4 w-[min(360px,calc(100vw-3rem))] lg:absolute lg:left-full lg:top-0 lg:z-20 lg:ml-4 lg:mt-0">
-                    <LeaderboardGrantStatPanel
-                      selectedGrantStat={selectedGrantStat}
-                      onGrantSelect={onGrantSelect}
-                    />
-                  </div>
-                )}
               </div>
             </div>
           </div>
@@ -152,6 +143,15 @@ export default function LeaderboardFilters({
             </Select>
           </FormControl>
         </div>
+
+        {isGrantPanelOpen && (
+          <div className="mt-4 w-[min(473px,calc(100vw-3rem))] lg:fixed lg:right-0 lg:top-[222px] lg:z-30 lg:mt-0 lg:w-[473px]">
+            <LeaderboardGrantStatPanel
+              selectedGrantStat={selectedGrantStat}
+              onGrantSelect={onGrantSelect}
+            />
+          </div>
+        )}
       </div>
     </section>
   );

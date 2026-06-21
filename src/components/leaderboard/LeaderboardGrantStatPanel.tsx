@@ -13,7 +13,7 @@ export default function LeaderboardGrantStatPanel({
   onGrantSelect,
 }: LeaderboardGrantStatPanelProps) {
   return (
-    <div className="flex max-h-[70vh] w-full max-w-[360px] flex-col overflow-hidden rounded-[22px] border border-[#D8D7D2] bg-[#FCF9F2] shadow-[0_12px_32px_rgba(18,58,30,0.18)]">
+    <div className="flex max-h-[70vh] w-full max-w-[473px] flex-col overflow-hidden rounded-[22px] border border-[#D8D7D2] bg-[#FCF9F2] shadow-[0_12px_32px_rgba(18,58,30,0.18)] lg:max-h-[calc(100vh-222px)]">
       <div className="bg-[#123A1E] px-8 py-7 text-white">
         <h3
           className={`${leaderboardTypography.openSans} text-[20px] font-bold leading-[1.2]`}
