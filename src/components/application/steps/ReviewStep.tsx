@@ -106,7 +106,13 @@ function EditableValueRow({
       error={error ?? isMissing}
       helperText={helperText}
       onChange={(event) => onChange(event.target.value)}
-      onBlur={(event) => void onBlur?.(event.target.value)}
+      onBlur={async (event) => {
+        try {
+          await onBlur?.(event.target.value);
+        } catch (error) {
+          console.error("Error saving review field:", error);
+        }
+      }}
     />
   );
 }
@@ -134,7 +140,13 @@ function EditableSelectRow({
       label={label}
       value={value}
       error={required && value.trim().length === 0}
-      onChange={(event) => void onChange(event.target.value)}
+      onChange={async (event) => {
+        try {
+          await onChange(event.target.value);
+        } catch (error) {
+          console.error("Error saving review field:", error);
+        }
+      }}
     >
       <MenuItem value="">
         <em>None</em>
