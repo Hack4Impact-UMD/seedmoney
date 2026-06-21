@@ -52,6 +52,8 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
         campaign.projectCategory === selectedGarden;
       const matchesGrantStat =
         selectedGrantOption === undefined ||
+        selectedGrantOption.minRank === undefined ||
+        selectedGrantOption.maxRank === undefined ||
         (campaign.displayRank >= selectedGrantOption.minRank &&
           campaign.displayRank <= selectedGrantOption.maxRank);
 
