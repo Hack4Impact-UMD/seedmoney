@@ -1,4 +1,5 @@
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import type { CSSProperties } from "react";
 import leaderboardTypography from "./leaderboardTypography.module.css";
 import type { LeaderboardGrantStat } from "./grantStatOptions";
 import { grantStatOptions } from "./grantStatOptions";
@@ -37,12 +38,19 @@ export default function LeaderboardGrantStatPanel({
               key={grantOption.id}
               type="button"
               onClick={() => onGrantSelect(grantOption.id)}
+              style={
+                {
+                  "--leaderboard-chip-active": "#55BD61",
+                } as CSSProperties
+              }
               className={[
-                "flex w-full items-center justify-between px-8 py-5 text-left transition-colors",
+                "flex w-full items-center justify-between border-2 border-transparent px-8 py-5 text-left transition-colors",
                 index !== grantStatOptions.length - 1
-                  ? "border-b border-[#E5E2DB]"
+                  ? "border-b-[#E5E2DB]"
                   : "",
-                isSelected ? "bg-[#EEF6EE]" : "hover:bg-[#F4F0E7]",
+                isSelected
+                  ? "border-[var(--leaderboard-chip-active)] bg-[#EEF6EE]"
+                  : "hover:border-[var(--leaderboard-chip-active)] hover:bg-[#F4F0E7]",
               ].join(" ")}
             >
               <div>
