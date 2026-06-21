@@ -208,7 +208,11 @@ export default function ReviewSubmitPage() {
     reviewComplete,
   } = getApplicationCompletionState(values, hasPassedAgreement);
   const goalValue = Number(values.fundraisingGoal);
-  const canSubmit = reviewComplete && !!currentCompetitionData && goalValue > 1;
+  const hasValidFundraisingGoal = goalValue > 1;
+  const showFundraisingGoalError =
+    values.fundraisingGoal !== "" && !hasValidFundraisingGoal;
+  const canSubmit =
+    reviewComplete && !!currentCompetitionData && hasValidFundraisingGoal;
   const isLoadingQuestions =
     isLoadingQuestion1 ||
     isLoadingQuestion2 ||
@@ -451,7 +455,7 @@ export default function ReviewSubmitPage() {
           message='Please complete "Campaign Information"'
         />
       )}
-      {goalValue < 1 && (
+      {showFundraisingGoalError && (
         <ReviewBanner
           message="Fundraising goal must be greater than $1"
         />
@@ -565,10 +569,10 @@ export default function ReviewSubmitPage() {
           value={values.fundraisingGoal}
           required
           type="number"
-          error={values.fundraisingGoal !== "" && goalValue < 1}
+          error={showFundraisingGoalError}
           helperText={
-            values.fundraisingGoal !== "" && goalValue < 1
-              ? "Fundraising goal must be greater than $0"
+            showFundraisingGoalError
+              ? "Fundraising goal must be greater than $1"
               : undefined
           }
           onChange={(value) =>
