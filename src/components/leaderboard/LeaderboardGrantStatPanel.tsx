@@ -1,4 +1,5 @@
 import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
+import type { CSSProperties } from "react";
 import leaderboardTypography from "./leaderboardTypography.module.css";
 import type { LeaderboardGrantStat } from "./grantStatOptions";
 import { grantStatOptions } from "./grantStatOptions";
@@ -13,7 +14,7 @@ export default function LeaderboardGrantStatPanel({
   onGrantSelect,
 }: LeaderboardGrantStatPanelProps) {
   return (
-    <div className="w-full max-w-[360px] overflow-hidden rounded-[22px] border border-[#D8D7D2] bg-[#FCF9F2] shadow-[0_12px_32px_rgba(18,58,30,0.18)]">
+    <div className="flex max-h-[70vh] w-full max-w-[473px] flex-col overflow-hidden rounded-[22px] border border-[#D8D7D2] bg-[#FCF9F2] shadow-[0_12px_32px_rgba(18,58,30,0.18)] lg:max-h-[calc(100vh-222px)]">
       <div className="bg-[#123A1E] px-8 py-7 text-white">
         <h3
           className={`${leaderboardTypography.openSans} text-[20px] font-bold leading-[1.2]`}
@@ -28,7 +29,7 @@ export default function LeaderboardGrantStatPanel({
         </p>
       </div>
 
-      <div className="bg-[#FCF9F2]">
+      <div className="overflow-y-auto bg-[#FCF9F2]">
         {grantStatOptions.map((grantOption, index) => {
           const isSelected = selectedGrantStat === grantOption.id;
 
@@ -37,12 +38,19 @@ export default function LeaderboardGrantStatPanel({
               key={grantOption.id}
               type="button"
               onClick={() => onGrantSelect(grantOption.id)}
+              style={
+                {
+                  "--leaderboard-chip-active": "#55BD61",
+                } as CSSProperties
+              }
               className={[
-                "flex w-full items-center justify-between px-8 py-5 text-left transition-colors",
+                "flex w-full items-center justify-between border-2 border-transparent px-8 py-5 text-left transition-colors",
                 index !== grantStatOptions.length - 1
-                  ? "border-b border-[#E5E2DB]"
+                  ? "border-b-[#E5E2DB]"
                   : "",
-                isSelected ? "bg-[#EEF6EE]" : "hover:bg-[#F4F0E7]",
+                isSelected
+                  ? "border-[var(--leaderboard-chip-active)] bg-[#EEF6EE]"
+                  : "hover:border-[var(--leaderboard-chip-active)] hover:bg-[#F4F0E7]",
               ].join(" ")}
             >
               <div>
@@ -51,11 +59,13 @@ export default function LeaderboardGrantStatPanel({
                 >
                   {grantOption.grantLabel}
                 </p>
-                <p
-                  className={`${leaderboardTypography.openSans} mt-1 text-[15px] leading-[1.35] text-[#4E5A50]`}
-                >
-                  {grantOption.placeLabel}
-                </p>
+                {grantOption.placeLabel && (
+                  <p
+                    className={`${leaderboardTypography.openSans} mt-1 text-[15px] leading-[1.35] text-[#4E5A50]`}
+                  >
+                    {grantOption.placeLabel}
+                  </p>
+                )}
               </div>
 
               <ArrowForwardIcon className="text-[#4E5A50]" />

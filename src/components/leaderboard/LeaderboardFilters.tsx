@@ -51,7 +51,7 @@ export default function LeaderboardFilters({
 
   return (
     <section className="bg-[#123A1E] px-6 pb-8 md:px-10 lg:px-16">
-      <div className="mx-auto flex max-w-[1728px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
+      <div className="relative mx-auto flex max-w-[1728px] flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
         <label className="flex h-12 w-full items-center rounded-full border border-[#D8D7D2] bg-white px-4 text-[#666666] lg:max-w-[495px]">
           <span className="sr-only">Search campaigns</span>
           <input
@@ -65,56 +65,49 @@ export default function LeaderboardFilters({
         </label>
 
         <div className="flex flex-col gap-4 lg:flex-row lg:items-center">
-          <div className="relative">
+          <div>
             <div className="flex flex-wrap gap-3">
-            {Object.entries(sortLabels).map(([sortValue, label]) => {
-              const isSelected = selectedSort === sortValue;
+              {Object.entries(sortLabels).map(([sortValue, label]) => {
+                const isSelected = selectedSort === sortValue;
 
-              return (
+                return (
+                  <button
+                    key={sortValue}
+                    type="button"
+                    onClick={() =>
+                      onSortChange(
+                        sortValue as Exclude<LeaderboardSort, "grantStat">,
+                      )
+                    }
+                    className={[
+                      leaderboardTypography.openSans,
+                      "h-[37px] rounded-full border px-5 text-[16px] font-semibold transition-colors",
+                      isSelected
+                        ? "border-[#55BD61] bg-[#55BD61] text-[#132B18]"
+                        : "border-white/20 bg-transparent text-white hover:border-[#55BD61]/60 hover:text-white",
+                    ].join(" ")}
+                  >
+                    {label}
+                  </button>
+                );
+              })}
+
+              <div>
                 <button
-                  key={sortValue}
                   type="button"
-                  onClick={() =>
-                    onSortChange(
-                      sortValue as Exclude<LeaderboardSort, "grantStat">,
-                    )
-                  }
+                  onClick={onGrantChipClick}
                   className={[
                     leaderboardTypography.openSans,
                     "h-[37px] rounded-full border px-5 text-[16px] font-semibold transition-colors",
-                    isSelected
+                    isGrantStatActive
                       ? "border-[#55BD61] bg-[#55BD61] text-[#132B18]"
                       : "border-white/20 bg-transparent text-white hover:border-[#55BD61]/60 hover:text-white",
                   ].join(" ")}
                 >
-                  {label}
+                  Grant Stat
                 </button>
-              );
-            })}
-
-            <button
-              type="button"
-              onClick={onGrantChipClick}
-              className={[
-                leaderboardTypography.openSans,
-                "h-[37px] rounded-full border px-5 text-[16px] font-semibold transition-colors",
-                isGrantStatActive
-                  ? "border-[#55BD61] bg-[#55BD61] text-[#132B18]"
-                  : "border-white/20 bg-transparent text-white hover:border-[#55BD61]/60 hover:text-white",
-              ].join(" ")}
-            >
-              Grant Stat
-            </button>
-            </div>
-
-            {isGrantPanelOpen && (
-              <div className="mt-4 w-full max-w-[360px] lg:absolute lg:right-0 lg:top-full lg:z-20 lg:mt-4">
-                <LeaderboardGrantStatPanel
-                  selectedGrantStat={selectedGrantStat}
-                  onGrantSelect={onGrantSelect}
-                />
               </div>
-            )}
+            </div>
           </div>
 
           <FormControl className="w-full md:!w-[346px] md:!min-w-[346px] md:shrink-0">
@@ -150,6 +143,15 @@ export default function LeaderboardFilters({
             </Select>
           </FormControl>
         </div>
+
+        {isGrantPanelOpen && (
+          <div className="mt-4 w-[min(473px,calc(100vw-3rem))] lg:fixed lg:right-0 lg:top-[222px] lg:z-30 lg:mt-0 lg:w-[473px]">
+            <LeaderboardGrantStatPanel
+              selectedGrantStat={selectedGrantStat}
+              onGrantSelect={onGrantSelect}
+            />
+          </div>
+        )}
       </div>
     </section>
   );
