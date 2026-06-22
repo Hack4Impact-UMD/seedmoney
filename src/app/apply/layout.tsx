@@ -18,7 +18,9 @@ export default async function ApplyLayout({
   if (competition && !competition?.is_application_open) {
     redirect("/");
   }
+
   const supabase = await createServerClient();
+  
   const {
     data: { user },
   } = await supabase.auth.getUser();
