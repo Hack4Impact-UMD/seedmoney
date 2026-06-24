@@ -5,11 +5,13 @@ import LogoutIcon from "@mui/icons-material/Logout";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { signInWithGoogle } from "@/src/lib/google-auth";
 import { useRouter, useSearchParams } from "next/navigation";
+import { Turnstile } from "@marsidev/react-turnstile"; // 👈 added
 
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null); // 👈 added
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryError = searchParams.get("error");
@@ -28,10 +30,17 @@ const LoginForm = () => {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+
+    if (!captchaToken) {
+      setErrorMsg("Please complete the CAPTCHA.");
+      return;
+    }
+
     const supabase = await createBrowserClient();
     const { error } = await supabase.auth.signInWithPassword({
       email,
       password,
+      options: { captchaToken },
     });
 
     if (error) {
@@ -60,7 +69,6 @@ const LoginForm = () => {
     }
   };
 
-
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
       <TextField
@@ -70,11 +78,7 @@ const LoginForm = () => {
         placeholder="name@email.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        slotProps={{
-          inputLabel: {
-            shrink: true,
-          },
-        }}
+        slotProps={{ inputLabel: { shrink: true } }}
         className="w-full"
       />
       <TextField
@@ -84,13 +88,15 @@ const LoginForm = () => {
         placeholder="Password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        slotProps={{
-          inputLabel: {
-            shrink: true,
-          },
-        }}
+        slotProps={{ inputLabel: { shrink: true } }}
         className="w-full"
       />
+
+      <Turnstile
+        siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+        onSuccess={(token) => setCaptchaToken(token)}
+      />
+
       <Button
         type="submit"
         variant="contained"

@@ -22,7 +22,7 @@ const SignupForm = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null); // 👈 added
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
 
   const router = useRouter();
 
