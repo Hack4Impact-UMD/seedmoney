@@ -1,3 +1,5 @@
+import type { SpecialGrantCampaignIds } from "@/src/lib/leaderboardGrantCalculations";
+
 export type LeaderboardSort =
   | "mostRaised"
   | "leastRaised"
@@ -28,4 +30,5 @@ export type PublicLeaderboardData = {
   totalDonors: number;
   gardenCategories: string[];
   campaigns: PublicLeaderboardCampaign[];
+  specialGrantCampaignIds: SpecialGrantCampaignIds;
 };

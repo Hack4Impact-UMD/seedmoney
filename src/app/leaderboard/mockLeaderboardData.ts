@@ -92,6 +92,11 @@ const mockLeaderboardData: PublicLeaderboardData = {
   totalDonors: campaigns.reduce((sum, campaign) => sum + campaign.donors, 0),
   gardenCategories: [...leaderboardGardenCategories],
   campaigns,
+  specialGrantCampaignIds: {
+    strongStart: null,
+    strongFinish: null,
+    geographicInterest: [],
+  },
 };
 
 export default mockLeaderboardData;

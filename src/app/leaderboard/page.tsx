@@ -1,11 +1,15 @@
 "use client";
 
+import { useMemo } from "react";
 import { Open_Sans } from "next/font/google";
 import LeaderboardPage from "@/src/components/leaderboard/LeaderboardPage";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadCampaignsByCompId from "@/src/hooks/campaigns/useReadCampaignsByCompId";
 import useReadCampaignImageUrlsByCampaignIds from "@/src/hooks/campaign-image-records/useReadCampaignImageUrlsByCampaignIds";
+import useReadTransactionsByCampaignIds from "@/src/hooks/transactions/useReadTransactionsByCampaignIds";
+import { calculateSpecialGrantCampaignIds } from "@/src/lib/leaderboardGrantCalculations";
 import type { Campaign } from "@/src/types/db/campaigns";
+import type { SpecialGrantCampaignIds } from "@/src/lib/leaderboardGrantCalculations";
 import { leaderboardGardenCategories } from "@/src/constants/gardenCategories";
 
 const openSans = Open_Sans({
@@ -18,6 +22,7 @@ function mapCampaignsToLeaderboardData(
   campaigns: Campaign[],
   challengeTitle: string,
   imageUrlsByCampaignId: Record<number, string | null>,
+  specialGrantCampaignIds: SpecialGrantCampaignIds,
 ) {
   const publicCampaigns = campaigns.map((campaign) => {
     const raised =
@@ -58,6 +63,7 @@ function mapCampaignsToLeaderboardData(
     ),
     gardenCategories: [...leaderboardGardenCategories],
     campaigns: publicCampaigns,
+    specialGrantCampaignIds,
   };
 }
 
@@ -82,14 +88,40 @@ export default function PublicLeaderboardPage() {
     data: imageUrlsByCampaignId = {},
     isLoading: isLoadingImages,
   } = useReadCampaignImageUrlsByCampaignIds(campaignIds);
+  const {
+    data: transactionsData = [],
+    isLoading: isLoadingTransactions,
+    error: transactionsError,
+  } = useReadTransactionsByCampaignIds(campaignIds);
+  const specialGrantCampaignIds = useMemo(
+    () =>
+      calculateSpecialGrantCampaignIds({
+        campaigns: campaignsData,
+        transactions: transactionsData,
+        competitionStartDate: currentCompetitionData?.start_date,
+        competitionEndDate: currentCompetitionData?.end_date,
+      }),
+    [
+      campaignsData,
+      currentCompetitionData?.end_date,
+      currentCompetitionData?.start_date,
+      transactionsData,
+    ],
+  );
 
-  if (isLoadingCompetition || isLoadingCampaigns || isLoadingImages) return null;
-  if (error) return null;
+  if (
+    isLoadingCompetition ||
+    isLoadingCampaigns ||
+    isLoadingImages ||
+    isLoadingTransactions
+  ) return null;
+  if (error || transactionsError) return null;
 
   const leaderboardData = mapCampaignsToLeaderboardData(
     campaignsData,
     challengeTitle,
     imageUrlsByCampaignId,
+    specialGrantCampaignIds,
   );
 
   return (

@@ -1,6 +1,7 @@
 import type { Transaction } from "@/src/types/db/transactions";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { updateCampaign, readCampaign } from "@/src/actions/db/campaigns";
+import type { LeaderboardGrantTransaction } from "@/src/lib/leaderboardGrantCalculations";
 
 export async function readTransactionsByCampaign(
   campaignId: number,
@@ -19,6 +20,29 @@ export async function readTransactionsByCampaign(
   }
 
   return data as Transaction[];
+}
+
+export async function readTransactionsByCampaignIds(
+  campaignIds: number[],
+): Promise<LeaderboardGrantTransaction[]> {
+  if (campaignIds.length === 0) {
+    return [];
+  }
+
+  const supabase = createBrowserClient();
+
+  const { data, error } = await supabase
+    .from("leaderboard_transactions")
+    .select("campaign_id, date, transacted_at, amount_donated, status")
+    .in("campaign_id", campaignIds)
+    .order("date", { ascending: true });
+
+  if (error) {
+    console.error("Error reading transactions by campaign ids:", error.message);
+    throw new Error(error.message);
+  }
+
+  return (data ?? []) as LeaderboardGrantTransaction[];
 }
 
 export async function createTransaction(

@@ -17,6 +17,16 @@ type LeaderboardPageProps = {
   data: PublicLeaderboardData;
 };
 
+function isSpecialGrantStat(
+  value: LeaderboardGrantStat | null,
+): value is keyof PublicLeaderboardData["specialGrantCampaignIds"] {
+  return (
+    value === "strongStart" ||
+    value === "strongFinish" ||
+    value === "geographicInterest"
+  );
+}
+
 export default function LeaderboardPage({ data }: LeaderboardPageProps) {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedGarden, setSelectedGarden] = useState("all");
@@ -42,6 +52,11 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
     const selectedGrantOption = grantStatOptions.find(
       (grantOption) => grantOption.id === selectedGrantStat,
     );
+    const selectedSpecialGrantCampaignIds = isSpecialGrantStat(
+      selectedGrantStat,
+    )
+      ? data.specialGrantCampaignIds[selectedGrantStat]
+      : undefined;
 
     const visibleCampaigns = rankedCampaigns.filter((campaign) => {
       const matchesSearch =
@@ -52,10 +67,12 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
         campaign.projectCategory === selectedGarden;
       const matchesGrantStat =
         selectedGrantOption === undefined ||
-        selectedGrantOption.minRank === undefined ||
-        selectedGrantOption.maxRank === undefined ||
-        (campaign.displayRank >= selectedGrantOption.minRank &&
-          campaign.displayRank <= selectedGrantOption.maxRank);
+        (selectedGrantOption.minRank !== undefined &&
+          selectedGrantOption.maxRank !== undefined &&
+          campaign.displayRank >= selectedGrantOption.minRank &&
+          campaign.displayRank <= selectedGrantOption.maxRank) ||
+        (Array.isArray(selectedSpecialGrantCampaignIds) &&
+          selectedSpecialGrantCampaignIds.includes(campaign.campaignId));
 
       return matchesSearch && matchesGarden && matchesGrantStat;
     });
@@ -72,12 +89,25 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
       return right.raised - left.raised;
     });
   }, [
+    data.specialGrantCampaignIds,
     rankedCampaigns,
     searchQuery,
     selectedGarden,
     selectedGrantStat,
     selectedSort,
   ]);
+  const isSelectedGrantPending =
+    isSpecialGrantStat(selectedGrantStat) &&
+    data.specialGrantCampaignIds[selectedGrantStat] === null;
+  const emptyStateTitle = isSelectedGrantPending
+    ? "Grant standings not available yet"
+    : "No campaigns match your filters";
+  const emptyStateDescription =
+    selectedGrantStat === "strongStart"
+      ? "Strong Start standings will appear after the first 7 days of the challenge are complete."
+      : selectedGrantStat === "strongFinish"
+        ? "Strong Finish standings will appear after the final 7 days of the challenge are complete."
+        : "Try a different search term, garden category, or grant filter to see more campaigns.";
 
   const handleSortChange = (value: LeaderboardSort) => {
     setSelectedSort(value);
@@ -132,8 +162,8 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
             />
           ) : filteredCampaigns.length === 0 ? (
             <LeaderboardEmptyState
-              title="No campaigns match your filters"
-              description="Try a different search term, garden category, or grant filter to see more campaigns."
+              title={emptyStateTitle}
+              description={emptyStateDescription}
             />
           ) : (
             <LeaderboardGrid campaigns={filteredCampaigns} />
