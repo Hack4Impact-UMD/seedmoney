@@ -8,6 +8,12 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const BUCKET_NAME = "campaign_images";
 const GIVEBUTTER_MAX_ATTEMPTS = 3;
 const GIVEBUTTER_RETRY_BASE_DELAY_MS = 500;
+const GARDEN_STORY_HEADERS = [
+  "Our Garden & Community",
+  "Our Challenge",
+  "Life in the Garden",
+  "What Your Support Will Do",
+];
 
 const getPublicUrl = (storagePath: string) =>
   `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${storagePath}`;
@@ -54,6 +60,27 @@ function formatLocationSubtitle(
     .map((part) => part.trim())
     .filter((part) => part !== "" && part.toLowerCase() !== "n/a")
     .join(", ");
+}
+
+function buildGardenStoryDescription(answers: string[], imageUrls: string[]) {
+  return GARDEN_STORY_HEADERS.flatMap((header, index) => {
+    const blocks = [`<h3>${header}</h3>`, `<p>${answers[index] ?? ""}</p>`];
+    const imageUrl = imageUrls[index];
+
+    if (imageUrl) {
+      blocks.push(`<img src="${imageUrl}" alt="Campaign image" />`);
+    }
+
+    if (index === GARDEN_STORY_HEADERS.length - 1) {
+      blocks.push(
+        ...imageUrls
+          .slice(GARDEN_STORY_HEADERS.length)
+          .map((url) => `<img src="${url}" alt="Campaign image" />`),
+      );
+    }
+
+    return blocks;
+  }).join("\n\n");
 }
 
 async function fetchGivebutterWithRetry(
@@ -163,28 +190,13 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
       const [q1, q2, q3, q4] = sortedAnswers.map((a) => a.final_answer ?? "");
 
       const supportingImagesArray = campaignImages.filter((r) => r.is_main === false);
-      const image1 = supportingImagesArray[0] ? `<img src="${getPublicUrl(supportingImagesArray[0].storage_path)}" alt="Campaign image" />` : '';
-      const image2 = supportingImagesArray[1] ? `<img src="${getPublicUrl(supportingImagesArray[1].storage_path)}" alt="Campaign image" />` : '';
-      const image3 = supportingImagesArray[2] ? `<img src="${getPublicUrl(supportingImagesArray[2].storage_path)}" alt="Campaign image" />` : '';
-      const restImages = supportingImagesArray.slice(3).map((r) => `<img src="${getPublicUrl(r.storage_path)}" alt="Campaign image" />`).join("\n");
-
-      const description = `
-        <h3>Our Garden & Community</h3>
-        <p>${q1}</p>
-        ${image1}
-
-        <h3>Our Challenge</h3>
-        <p>${q2}</p>
-        ${image2}
-
-        <h3>Life in the Garden</h3>
-        <p>${q3}</p>
-        ${image3}
-
-        <h3>What Your Support Will Do</h3>
-        <p>${q4}</p>
-        ${restImages}
-      `.trim();
+      const supportingImageUrls = supportingImagesArray.map((image) =>
+        getPublicUrl(image.storage_path),
+      );
+      const description = buildGardenStoryDescription(
+        [q1, q2, q3, q4],
+        supportingImageUrls,
+      );
 
       const body = {
         type: "fundraise",
