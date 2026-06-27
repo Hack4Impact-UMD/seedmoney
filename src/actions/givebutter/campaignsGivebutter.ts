@@ -198,6 +198,12 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
               getYearFromDateString(campaign.date_created)),
         ),
         description,
+        settings: [
+          {
+            name: "hide_supporter_feed",
+            value: true,
+          },
+        ],
         ...(campaign.goal !== undefined && { goal: campaign.goal }),
         ...(mainImage && {
           cover: {

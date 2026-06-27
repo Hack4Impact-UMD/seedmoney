@@ -57,7 +57,7 @@ export type GivebutterCampaignPayload = {
   end_at: string;
   settings: {
     name: string;
-    value: string;
+    value: string | boolean;
   }[];
   created_at: string;
   updated_at: string;
