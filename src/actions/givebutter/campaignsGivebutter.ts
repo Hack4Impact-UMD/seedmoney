@@ -47,6 +47,15 @@ function getYearFromDateString(date: string) {
   return Number.isFinite(year) ? year : new Date(date).getFullYear();
 }
 
+function formatLocationSubtitle(
+  campaign: Pick<Campaign, "city" | "state" | "country">,
+) {
+  return [campaign.city, campaign.state, campaign.country]
+    .map((part) => part.trim())
+    .filter((part) => part !== "" && part.toLowerCase() !== "n/a")
+    .join(", ");
+}
+
 async function fetchGivebutterWithRetry(
   url: string,
   init: RequestInit,
@@ -180,9 +189,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
       const body = {
         type: "fundraise",
         title: campaign.name,
-        subtitle: campaign.state === "N/A" 
-          ? `${campaign.city}, ${campaign.country}` 
-          : `${campaign.city}, ${campaign.state} ${campaign.country}`,
+        subtitle: formatLocationSubtitle(campaign),
         slug: generateCampaignSlug(
           campaign.name,
           campaign.competition_id === null
