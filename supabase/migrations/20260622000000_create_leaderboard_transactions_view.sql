@@ -1,4 +1,6 @@
-create or replace view public.leaderboard_transactions as
+create or replace view public.leaderboard_transactions
+with (security_invoker = on)
+as
 select
   t.campaign_id,
   t.date,
