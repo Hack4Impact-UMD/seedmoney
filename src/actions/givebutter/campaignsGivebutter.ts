@@ -31,8 +31,7 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
-function generateCampaignSlug(title: string, dateCreated: string): string {
-  const year = new Date(dateCreated).getFullYear();
+function generateCampaignSlug(title: string, year: number): string {
   const slug = title
     .toLowerCase()
     .trim()
@@ -41,6 +40,11 @@ function generateCampaignSlug(title: string, dateCreated: string): string {
     .replace(/-+/g, '-')
     .replace(/^-+|-+$/g, '');
   return `${slug}-${year}`;
+}
+
+function getYearFromDateString(date: string) {
+  const year = Number(date.slice(0, 4));
+  return Number.isFinite(year) ? year : new Date(date).getFullYear();
 }
 
 async function fetchGivebutterWithRetry(
@@ -109,6 +113,31 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
     throw new Error(`Failed to fetch image records: ${imageError.message}`);
   }
 
+  const competitionIds = [
+    ...new Set(
+      campaigns
+        .map((campaign) => campaign.competition_id)
+        .filter((id): id is number => id !== null),
+    ),
+  ];
+  const { data: competitions, error: competitionError } = competitionIds.length
+    ? await supabase
+        .from("competition_metadata")
+        .select("competition_id, start_date")
+        .in("competition_id", competitionIds)
+    : { data: [], error: null };
+
+  if (competitionError) {
+    throw new Error(`Failed to fetch competition metadata: ${competitionError.message}`);
+  }
+
+  const competitionYearById = new Map(
+    (competitions ?? []).map((competition) => [
+      competition.competition_id,
+      getYearFromDateString(competition.start_date),
+    ]),
+  );
+
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
       const campaignImages = (imageRecords ?? []).filter(
@@ -154,7 +183,13 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         subtitle: campaign.state === "N/A" 
           ? `${campaign.city}, ${campaign.country}` 
           : `${campaign.city}, ${campaign.state} ${campaign.country}`,
-        slug: generateCampaignSlug(campaign.name, campaign.date_created),
+        slug: generateCampaignSlug(
+          campaign.name,
+          campaign.competition_id === null
+            ? getYearFromDateString(campaign.date_created)
+            : (competitionYearById.get(campaign.competition_id) ??
+              getYearFromDateString(campaign.date_created)),
+        ),
         description,
         ...(campaign.goal !== undefined && { goal: campaign.goal }),
         ...(mainImage && {
