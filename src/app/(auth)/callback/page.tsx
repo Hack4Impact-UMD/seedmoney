@@ -49,21 +49,6 @@ export default function AuthCallbackPage() {
       };
     }
 
-    const withTimeout = <T,>(promise: Promise<T>) =>
-      new Promise<T | "timeout">((resolve, reject) => {
-        const timeoutId = setTimeout(() => resolve("timeout"), 5000);
-
-        promise
-          .then((value) => {
-            clearTimeout(timeoutId);
-            resolve(value);
-          })
-          .catch((error) => {
-            clearTimeout(timeoutId);
-            reject(error);
-          });
-      });
-
     const waitForSession = (waitForAuthEvent = false) =>
       new Promise<SessionWaitResult>((resolve) => {
         let settled = false;
@@ -134,15 +119,8 @@ export default function AuthCallbackPage() {
         if (code) {
           setStatusText("Completing authentication...");
 
-          const exchangeResult = await withTimeout(
-            supabase.auth.exchangeCodeForSession(code),
-          );
-
-          if (exchangeResult === "timeout") {
-            console.error("Auth callback timed out exchanging code.");
-            replaceRoute("/?error=callback_timeout");
-            return;
-          }
+          const exchangeResult =
+            await supabase.auth.exchangeCodeForSession(code);
 
           if (exchangeResult.error) {
             console.error(
