@@ -7,8 +7,7 @@ import { Google } from "@mui/icons-material";
 import Link from "next/link";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { signInWithGoogle as startGoogleSignIn } from "@/src/lib/google-auth";
-import { useRouter } from "next/navigation";
-import { Turnstile } from "@marsidev/react-turnstile"; // 👈 added
+import { Turnstile } from "@marsidev/react-turnstile";
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
@@ -23,12 +22,22 @@ const SignupForm = () => {
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
-
-  const router = useRouter();
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState<
+    string | null
+  >(null);
 
   const handleSubmit = async (e: React.SubmitEvent) => {
     e.preventDefault();
     setErrorMsg(null);
+    setPendingConfirmationEmail(null);
+
+    const normalizedEmail = email.trim().toLowerCase();
+
+    if (!EMAIL_REGEX.test(normalizedEmail)) {
+      setErrorMsg("Please enter a valid email address.");
+      return;
+    }
 
     const passwordError = validatePassword(password);
     const confirmPasswordError = validateConfirmPassword(password, confirmPassword);
@@ -43,30 +52,36 @@ const SignupForm = () => {
       return;
     }
 
+    setIsSubmitting(true);
+
     const supabase = await createBrowserClient();
 
-    const { error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        captchaToken,
-        data: {
-          first_name: firstName,
-          middle_name: middleName,
-          last_name: lastName,
-          phone_number: phone,
-          is_admin: false,
+    try {
+      const { error } = await supabase.auth.signUp({
+        email: normalizedEmail,
+        password,
+        options: {
+          captchaToken,
+          emailRedirectTo: `${window.location.origin}/callback`,
+          data: {
+            first_name: firstName,
+            middle_name: middleName,
+            last_name: lastName,
+            phone_number: phone,
+            is_admin: false,
+          },
         },
-      },
-    });
+      });
 
-    if (error) {
-      setErrorMsg(error.message);
-      return;
+      if (error) {
+        setErrorMsg(error.message);
+        return;
+      }
+
+      setPendingConfirmationEmail(normalizedEmail);
+    } finally {
+      setIsSubmitting(false);
     }
-
-    router.push("/dashboard");
-    router.refresh();
   };
 
   const signInWithGoogle = async () => {
@@ -127,6 +142,35 @@ const SignupForm = () => {
 
   const passwordError = validatePassword(password);
   const confirmPasswordError = validateConfirmPassword(password, confirmPassword);
+
+  if (pendingConfirmationEmail) {
+    return (
+      <div className="flex w-full flex-col gap-4 rounded-lg border border-[#d7e5df] bg-white p-5">
+        <div>
+          <h2 className="text-xl font-semibold text-[#214f3d]">
+            Check your email
+          </h2>
+          <p className="mt-2 text-sm text-[rgba(0,0,0,0.7)]">
+            We sent a verification link to {pendingConfirmationEmail}. Click it
+            to finish creating your SeedMoney account.
+          </p>
+        </div>
+
+        <Button component={Link} href="/" variant="contained" size="medium">
+          Back to log in
+        </Button>
+
+        <Button
+          type="button"
+          onClick={() => setPendingConfirmationEmail(null)}
+          variant="outlined"
+          size="medium"
+        >
+          Use a different email
+        </Button>
+      </div>
+    );
+  }
 
   return (
     <form onSubmit={handleSubmit} className="flex flex-col gap-4 w-full">
@@ -226,6 +270,8 @@ const SignupForm = () => {
       <Turnstile
         siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
         onSuccess={(token) => setCaptchaToken(token)}
+        onExpire={() => setCaptchaToken(null)}
+        onError={() => setCaptchaToken(null)}
       />
 
       <Button
@@ -233,8 +279,9 @@ const SignupForm = () => {
         variant="contained"
         size="medium"
         startIcon={<LogoutIcon />}
+        disabled={isSubmitting}
       >
-        Create An Account
+        {isSubmitting ? "Creating account..." : "Create An Account"}
       </Button>
 
       <Button
