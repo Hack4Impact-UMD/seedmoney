@@ -52,9 +52,8 @@ const SignupForm = () => {
 
     setIsSubmitting(true);
 
-    const supabase = await createBrowserClient();
-
     try {
+      const supabase = await createBrowserClient();
       const { error } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
@@ -77,6 +76,9 @@ const SignupForm = () => {
       }
 
       setPendingConfirmationEmail(normalizedEmail);
+    } catch (err) {
+      console.error("Unexpected signup error:", err);
+      setErrorMsg("Unexpected server error");
     } finally {
       setIsSubmitting(false);
     }
