@@ -1,0 +1,63 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>Confirm your SeedMoney account</title>
+  </head>
+  <body style="margin:0;padding:0;background:#f6faf9;color:#1f2933;font-family:Arial,Helvetica,sans-serif;">
+    <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;background:#f6faf9;">
+      <tr>
+        <td align="center" style="padding:32px 16px;">
+          <table role="presentation" width="100%" cellspacing="0" cellpadding="0" style="max-width:560px;border-collapse:collapse;background:#ffffff;border:1px solid #d7e5df;border-radius:8px;">
+            <tr>
+              <td style="padding:32px 32px 8px;">
+                <div style="font-size:24px;line-height:32px;font-weight:700;color:#214f3d;">
+                  SeedMoney
+                </div>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:8px 32px 0;">
+                <h1 style="margin:0;font-size:22px;line-height:30px;color:#1f2933;">
+                  Confirm your email
+                </h1>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:16px 32px 0;">
+                <p style="margin:0;font-size:16px;line-height:24px;color:#3d4a43;">
+                  Thanks for creating a SeedMoney account. Confirm this email address to finish setting up your account and start your campaign application.
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td align="left" style="padding:28px 32px;">
+                <a href="{{ .ConfirmationURL }}" style="display:inline-block;background:#2f7d52;color:#ffffff;text-decoration:none;font-size:16px;line-height:20px;font-weight:700;padding:12px 18px;border-radius:6px;">
+                  Confirm email
+                </a>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px 24px;">
+                <p style="margin:0;font-size:14px;line-height:22px;color:#5f6f66;">
+                  If the button does not work, copy and paste this link into your browser:
+                </p>
+                <p style="margin:8px 0 0;font-size:14px;line-height:22px;color:#2f7d52;word-break:break-all;">
+                  <a href="{{ .ConfirmationURL }}" style="color:#2f7d52;">{{ .ConfirmationURL }}</a>
+                </p>
+              </td>
+            </tr>
+            <tr>
+              <td style="padding:0 32px 32px;">
+                <p style="margin:0;font-size:13px;line-height:20px;color:#728079;">
+                  You can ignore this email if you did not create a SeedMoney account.
+                </p>
+              </td>
+            </tr>
+          </table>
+        </td>
+      </tr>
+    </table>
+  </body>
+</html>
