@@ -13,10 +13,8 @@ const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 const SignupForm = () => {
   const [firstName, setFirstName] = useState("");
-  const [middleName, setMiddleName] = useState("");
   const [lastName, setLastName] = useState("");
   const [email, setEmail] = useState("");
-  const [phone, setPhone] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
@@ -65,9 +63,9 @@ const SignupForm = () => {
           emailRedirectTo: `${window.location.origin}/callback`,
           data: {
             first_name: firstName,
-            middle_name: middleName,
+            middle_name: "",
             last_name: lastName,
-            phone_number: phone,
+            phone_number: "",
             is_admin: false,
           },
         },
