@@ -80,7 +80,13 @@ when (new.email_confirmed_at is not null)
 execute procedure public.handle_new_user();
 
 create trigger on_auth_user_confirmed_after_update
-after update of email_confirmed_at on auth.users
+after update of email_confirmed_at, email on auth.users
 for each row
-when (old.email_confirmed_at is null and new.email_confirmed_at is not null)
+when (
+  new.email_confirmed_at is not null
+  and (
+    old.email_confirmed_at is null
+    or old.email is distinct from new.email
+  )
+)
 execute procedure public.handle_new_user();
