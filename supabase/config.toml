@@ -213,12 +213,12 @@ otp_expiry = 3600
 # Use a production-ready SMTP server
 # [auth.email.smtp]
 # enabled = true
-# host = "smtp.sendgrid.net"
+# host = "smtp-relay.brevo.com"
 # port = 587
-# user = "apikey"
-# pass = "env(SENDGRID_API_KEY)"
-# admin_email = "admin@email.com"
-# sender_name = "Admin"
+# user = "env(BREVO_SMTP_LOGIN)"
+# pass = "env(BREVO_SMTP_KEY)"
+# admin_email = "challenge@seedmoney.org"
+# sender_name = "SeedMoney"
 
 [auth.email.template.confirmation]
 subject = "Confirm your SeedMoney account"
