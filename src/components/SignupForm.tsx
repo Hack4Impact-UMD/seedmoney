@@ -160,7 +160,10 @@ const SignupForm = () => {
 
         <Button
           type="button"
-          onClick={() => setPendingConfirmationEmail(null)}
+          onClick={() => {
+            setPendingConfirmationEmail(null);
+            setCaptchaToken(null);
+          }}
           variant="outlined"
           size="medium"
         >
