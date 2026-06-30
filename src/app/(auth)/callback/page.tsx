@@ -39,7 +39,8 @@ export default function AuthCallbackPage() {
     const providerError =
       searchParams.get("error_description") ||
       hashParams.get("error_description") ||
-      searchParams.get("error");
+      searchParams.get("error") ||
+      hashParams.get("error");
 
     if (providerError) {
       replaceRoute(`/?error=${encodeURIComponent(providerError)}`);

@@ -55,12 +55,8 @@ deploy time:
     "sender_name": "SeedMoney",
     "admin_email": "<verified-sender-email>"
   },
-  "templates": {
-    "confirmation": {
-      "subject": "Confirm your SeedMoney account",
-      "content_path": "supabase/templates/confirmation.html"
-    }
-  }
+  "mailer_subjects_confirmation": "Confirm your SeedMoney account",
+  "mailer_templates_confirmation_content": "<contents of supabase/templates/confirmation.html>"
 }
 ```
 
