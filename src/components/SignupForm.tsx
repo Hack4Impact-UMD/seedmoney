@@ -374,6 +374,14 @@ const SignupForm = () => {
         return;
       }
 
+      if (data.user?.identities?.length === 0) {
+        showExistingSignupState(
+          normalizedEmail,
+          "If this signup is still pending, resend the confirmation email from here. If the account is already confirmed, log in instead.",
+        );
+        return;
+      }
+
       const sentAt = Date.now();
       storePendingSignup({
         email: normalizedEmail,
