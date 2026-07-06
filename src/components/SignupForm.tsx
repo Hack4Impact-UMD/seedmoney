@@ -220,18 +220,83 @@ const SignupForm = () => {
   const [confirmPassword, setConfirmPassword] = useState("");
   const [agreeToTerms, setAgreeToTerms] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [statusMsg, setStatusMsg] = useState<string | null>(null);
   const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [captchaWidgetKey, setCaptchaWidgetKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [pendingConfirmationEmail, setPendingConfirmationEmail] = useState<
-    string | null
-  >(null);
+  const [isResending, setIsResending] = useState(false);
+  const [now, setNow] = useState(() => Date.now());
+  const [pendingSignup, setPendingSignup] =
+    useState<PendingSignupState | null>(null);
 
-  const handleSubmit = async (e: React.SubmitEvent) => {
+  const confirmationState = searchParams.get("confirmation");
+  const resendRemainingSeconds = pendingSignup
+    ? getResendRemainingSeconds(pendingSignup, now)
+    : 0;
+
+  useEffect(() => {
+    const restoredPendingSignup = readPendingSignupState();
+
+    if (restoredPendingSignup) {
+      setPendingSignup(restoredPendingSignup);
+      setEmail(restoredPendingSignup.email);
+    }
+
+    if (confirmationState === "expired") {
+      setErrorMsg(
+        "That confirmation link expired or is invalid. Resend the email to get a fresh link.",
+      );
+    }
+  }, [confirmationState]);
+
+  useEffect(() => {
+    if (!pendingSignup) {
+      return;
+    }
+
+    setNow(Date.now());
+
+    const intervalId = window.setInterval(() => {
+      setNow(Date.now());
+    }, 1000);
+
+    return () => window.clearInterval(intervalId);
+  }, [pendingSignup]);
+
+  const resetCaptcha = () => {
+    setCaptchaToken(null);
+    setCaptchaWidgetKey((currentKey) => currentKey + 1);
+  };
+
+  const storePendingSignup = (nextPendingSignup: PendingSignupState) => {
+    writePendingSignupState(nextPendingSignup);
+    setPendingSignup(nextPendingSignup);
+    setEmail(nextPendingSignup.email);
+    setNow(Date.now());
+  };
+
+  const showExistingSignupState = (normalizedEmail: string, message: string) => {
+    const existingPendingSignup = readPendingSignupState();
+    const nextPendingSignup =
+      existingPendingSignup?.email === normalizedEmail
+        ? existingPendingSignup
+        : {
+            email: normalizedEmail,
+            createdAt: Date.now(),
+            lastSentAt: 0,
+          };
+
+    storePendingSignup(nextPendingSignup);
+    setStatusMsg(message);
+    setErrorMsg(null);
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setErrorMsg(null);
-    setPendingConfirmationEmail(null);
+    setStatusMsg(null);
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedEmail = normalizeEmail(email);
 
     if (!EMAIL_REGEX.test(normalizedEmail)) {
       setErrorMsg("Please enter a valid email address.");
