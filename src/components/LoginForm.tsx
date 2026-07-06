@@ -7,6 +7,16 @@ import { signInWithGoogle } from "@/src/lib/google-auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Turnstile } from "@marsidev/react-turnstile"; // 👈 added
 
+const PENDING_SIGNUP_STORAGE_KEY = "seedmoney:pending-signup";
+
+const clearPendingSignupState = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(PENDING_SIGNUP_STORAGE_KEY);
+};
+
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -53,6 +63,7 @@ const LoginForm = () => {
       return { success: false, error: error.message };
     }
 
+    clearPendingSignupState();
     router.push("/dashboard");
     router.refresh();
   };
