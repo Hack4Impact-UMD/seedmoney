@@ -15,6 +15,7 @@ const LoginForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryError = searchParams.get("error");
+  const queryConfirmed = searchParams.get("confirmed") === "1";
   let decodedQueryError: string | null = null;
 
   if (queryError) {
@@ -26,6 +27,10 @@ const LoginForm = () => {
   }
 
   const displayedError = decodedQueryError || errorMsg;
+  const displayedSuccess =
+    queryConfirmed && !displayedError
+      ? "Email confirmed. You can now log in."
+      : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -118,6 +123,7 @@ const LoginForm = () => {
       </Button>
 
       {displayedError && <p className="text-red-500">{displayedError}</p>}
+      {displayedSuccess && <p className="text-green-700">{displayedSuccess}</p>}
     </form>
   );
 };

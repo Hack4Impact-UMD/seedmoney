@@ -135,6 +135,9 @@ export default function AuthCallbackPage() {
             replaceRoute("/dashboard", true);
             return;
           }
+
+          replaceRoute("/?confirmed=1");
+          return;
         }
 
         if (hasImplicitTokens) {
@@ -157,6 +160,11 @@ export default function AuthCallbackPage() {
 
         if (sessionResult.status === "session") {
           replaceRoute("/dashboard", true);
+          return;
+        }
+
+        if (hasImplicitTokens) {
+          replaceRoute("/?confirmed=1");
           return;
         }
 
