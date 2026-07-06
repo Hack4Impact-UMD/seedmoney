@@ -335,8 +335,8 @@ const SignupForm = () => {
     setIsSubmitting(true);
 
     try {
-      const supabase = await createBrowserClient();
-      const { error } = await supabase.auth.signUp({
+      const supabase = createBrowserClient();
+      const { data, error } = await supabase.auth.signUp({
         email: normalizedEmail,
         password,
         options: {
@@ -353,11 +353,33 @@ const SignupForm = () => {
       });
 
       if (error) {
-        setErrorMsg(error.message);
+        const message = getAuthErrorMessage(error);
+
+        if (classifyAuthError(message) === "alreadyRegistered") {
+          showExistingSignupState(
+            normalizedEmail,
+            "If this signup is still pending, resend the confirmation email from here. If the account is already confirmed, log in instead.",
+          );
+          return;
+        }
+
+        setErrorMsg(getSignupErrorMessage(message));
         return;
       }
 
-      setPendingConfirmationEmail(normalizedEmail);
+      if (data.session?.user) {
+        clearPendingSignupState();
+        router.push("/dashboard");
+        router.refresh();
+        return;
+      }
+
+      const sentAt = Date.now();
+      storePendingSignup({
+        email: normalizedEmail,
+        createdAt: sentAt,
+        lastSentAt: sentAt,
+      });
     } catch (err) {
       console.error("Unexpected signup error:", err);
       setErrorMsg("Unexpected server error");
