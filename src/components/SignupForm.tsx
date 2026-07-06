@@ -311,6 +311,22 @@ const SignupForm = () => {
       return;
     }
 
+    if (!agreeToTerms) {
+      setErrorMsg("Please agree to the Terms of Service and Privacy Statement.");
+      return;
+    }
+
+    const existingPendingSignup = readPendingSignupState();
+
+    if (existingPendingSignup?.email === normalizedEmail) {
+      showExistingSignupState(
+        normalizedEmail,
+        "We already sent a confirmation link. You can resend it from here if you need a fresh one.",
+      );
+      resetCaptcha();
+      return;
+    }
+
     if (!captchaToken) {
       setErrorMsg("Please complete the CAPTCHA.");
       return;
