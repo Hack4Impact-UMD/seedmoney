@@ -470,49 +470,12 @@ const SignupForm = () => {
     }
   };
 
-  const validatePassword = (password: string) => {
-    if (!password) {
-      return null;
-    }
-
-    if (password.length < 8) {
-      return "Password must be at least 8 characters.";
-    }
-
-    if (!/[A-Z]/.test(password)) {
-      return "Password must include at least one capital letter.";
-    }
-
-    if (!/\d/.test(password)) {
-      return "Password must include at least one number.";
-    }
-
-    if (!/[^A-Za-z0-9]/.test(password)) {
-      return "Password must include at least one special character.";
-    }
-
-    return null;
-  };
-
-  const validateConfirmPassword = (
-    password: string,
-    confirmPassword: string,
-  ) => {
-    if (!confirmPassword) {
-      return null;
-    }
-
-    if (password !== confirmPassword) {
-      return "Passwords do not match.";
-    }
-
-    return null;
-  };
-
   const passwordError = validatePassword(password);
   const confirmPasswordError = validateConfirmPassword(password, confirmPassword);
+  const normalizedEmail = normalizeEmail(email);
+  const emailError = !!email && !EMAIL_REGEX.test(normalizedEmail);
 
-  if (pendingConfirmationEmail) {
+  if (pendingSignup) {
     return (
       <div className="flex w-full flex-col gap-4 rounded-lg border border-[#d7e5df] bg-white p-5">
         <div>
@@ -520,26 +483,69 @@ const SignupForm = () => {
             Check your email
           </h2>
           <p className="mt-2 text-sm text-[rgba(0,0,0,0.7)]">
-            We sent a verification link to {pendingConfirmationEmail}. Click it
-            to finish creating your SeedMoney account.
+            We sent a verification link to {pendingSignup.email}. Click it to
+            finish creating your SeedMoney account.
+          </p>
+          <p className="mt-2 text-sm text-[rgba(0,0,0,0.55)]">
+            If the link expired or you cannot find the email, complete the
+            CAPTCHA and resend it from here.
           </p>
         </div>
 
-        <Button component={Link} href="/" variant="contained" size="medium">
+        <Turnstile
+          key={captchaWidgetKey}
+          siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
+          onSuccess={(token) => setCaptchaToken(token)}
+          onExpire={() => setCaptchaToken(null)}
+          onError={() => setCaptchaToken(null)}
+        />
+
+        <Button
+          type="button"
+          onClick={handleResendConfirmation}
+          variant="contained"
+          size="medium"
+          disabled={isResending || resendRemainingSeconds > 0 || !captchaToken}
+        >
+          {isResending
+            ? "Resending..."
+            : resendRemainingSeconds > 0
+              ? `Resend in ${resendRemainingSeconds}s`
+              : "Resend email"}
+        </Button>
+
+        {resendRemainingSeconds === 0 && !captchaToken && (
+          <p className="text-sm text-[rgba(0,0,0,0.55)]">
+            Complete the CAPTCHA to resend the confirmation email.
+          </p>
+        )}
+
+        <Button component={Link} href="/" variant="outlined" size="medium">
           Back to log in
         </Button>
 
         <Button
           type="button"
           onClick={() => {
-            setPendingConfirmationEmail(null);
-            setCaptchaToken(null);
+            clearPendingSignupState();
+            setPendingSignup(null);
+            setEmail("");
+            setErrorMsg(null);
+            setStatusMsg(null);
+            resetCaptcha();
           }}
           variant="outlined"
           size="medium"
         >
           Use a different email
         </Button>
+
+        <p className="text-sm text-[rgba(0,0,0,0.55)]">
+          If this email is already confirmed, log in instead.
+        </p>
+
+        {statusMsg && <p className="text-sm text-green-700">{statusMsg}</p>}
+        {errorMsg && <p className="text-sm text-red-500">{errorMsg}</p>}
       </div>
     );
   }
@@ -578,12 +584,8 @@ const SignupForm = () => {
         placeholder="name@email.com"
         value={email}
         onChange={(e) => setEmail(e.target.value)}
-        error={!!email && !EMAIL_REGEX.test(email)}
-        helperText={
-          !!email && !EMAIL_REGEX.test(email)
-            ? "Please enter a valid email address."
-            : ""
-        }
+        error={emailError}
+        helperText={emailError ? "Please enter a valid email address." : ""}
         slotProps={{ inputLabel: { shrink: true } }}
         className="w-full"
       />
@@ -666,6 +668,7 @@ const SignupForm = () => {
         Sign Up with Google
       </Button>
 
+      {statusMsg && <div className="text-green-700">{statusMsg}</div>}
       {errorMsg && <div className="text-red-500">{errorMsg}</div>}
     </form>
   );
