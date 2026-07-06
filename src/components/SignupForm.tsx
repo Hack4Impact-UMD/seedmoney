@@ -385,11 +385,76 @@ const SignupForm = () => {
       setErrorMsg("Unexpected server error");
     } finally {
       setIsSubmitting(false);
+      resetCaptcha();
+    }
+  };
+
+  const handleResendConfirmation = async () => {
+    if (!pendingSignup) {
+      return;
+    }
+
+    setErrorMsg(null);
+    setStatusMsg(null);
+
+    if (resendRemainingSeconds > 0) {
+      setErrorMsg(
+        `Please wait ${resendRemainingSeconds} seconds before requesting another confirmation email.`,
+      );
+      return;
+    }
+
+    if (!captchaToken) {
+      setErrorMsg("Please complete the CAPTCHA before resending.");
+      return;
+    }
+
+    setIsResending(true);
+
+    try {
+      const supabase = createBrowserClient();
+      const { error } = await supabase.auth.resend({
+        type: "signup",
+        email: pendingSignup.email,
+        options: {
+          captchaToken,
+          emailRedirectTo: `${window.location.origin}/callback`,
+        },
+      });
+
+      if (error) {
+        const message = getAuthErrorMessage(error);
+
+        if (classifyAuthError(message) === "rateLimited") {
+          storePendingSignup({
+            ...pendingSignup,
+            lastSentAt: Date.now(),
+          });
+        }
+
+        setErrorMsg(getSignupErrorMessage(message));
+        return;
+      }
+
+      const resentAt = Date.now();
+      storePendingSignup({
+        ...pendingSignup,
+        lastSentAt: resentAt,
+        lastResentAt: resentAt,
+      });
+      setStatusMsg("We sent a new confirmation link.");
+    } catch (err) {
+      console.error("Unexpected signup resend error:", err);
+      setErrorMsg("Unexpected server error");
+    } finally {
+      setIsResending(false);
+      resetCaptcha();
     }
   };
 
   const signInWithGoogle = async () => {
     setErrorMsg(null);
+    setStatusMsg(null);
 
     try {
       const { error } = await startGoogleSignIn();
