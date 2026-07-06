@@ -7,6 +7,16 @@ import { signInWithGoogle } from "@/src/lib/google-auth";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Turnstile } from "@marsidev/react-turnstile"; // 👈 added
 
+const PENDING_SIGNUP_STORAGE_KEY = "seedmoney:pending-signup";
+
+const clearPendingSignupState = () => {
+  if (typeof window === "undefined") {
+    return;
+  }
+
+  window.localStorage.removeItem(PENDING_SIGNUP_STORAGE_KEY);
+};
+
 const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -15,6 +25,7 @@ const LoginForm = () => {
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryError = searchParams.get("error");
+  const queryConfirmed = searchParams.get("confirmed") === "1";
   let decodedQueryError: string | null = null;
 
   if (queryError) {
@@ -26,6 +37,10 @@ const LoginForm = () => {
   }
 
   const displayedError = decodedQueryError || errorMsg;
+  const displayedSuccess =
+    queryConfirmed && !displayedError
+      ? "Email confirmed. You can now log in."
+      : null;
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +63,7 @@ const LoginForm = () => {
       return { success: false, error: error.message };
     }
 
+    clearPendingSignupState();
     router.push("/dashboard");
     router.refresh();
   };
@@ -118,6 +134,7 @@ const LoginForm = () => {
       </Button>
 
       {displayedError && <p className="text-red-500">{displayedError}</p>}
+      {displayedSuccess && <p className="text-green-700">{displayedSuccess}</p>}
     </form>
   );
 };

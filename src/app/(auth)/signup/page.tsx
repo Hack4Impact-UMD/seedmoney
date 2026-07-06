@@ -1,5 +1,6 @@
 "use client";
 
+import { Suspense } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import SignupForm from "@/src/components/SignupForm";
@@ -37,7 +38,15 @@ export default function SignupPage() {
                 </p>
               </div>
 
-              <SignupForm />
+              <Suspense
+                fallback={
+                  <div className="w-full text-sm text-[rgba(0,0,0,0.6)]">
+                    Loading signup form...
+                  </div>
+                }
+              >
+                <SignupForm />
+              </Suspense>
 
               <p className="text-[rgba(0,0,0,0.6)] text-sm">
                 Already have an account?{" "}
