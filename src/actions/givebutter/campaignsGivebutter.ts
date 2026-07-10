@@ -202,13 +202,6 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         type: "fundraise",
         title: campaign.name,
         subtitle: formatLocationSubtitle(campaign),
-        slug: generateCampaignSlug(
-          campaign.name,
-          campaign.competition_id === null
-            ? getYearFromDateString(campaign.date_created)
-            : (competitionYearById.get(campaign.competition_id) ??
-              getYearFromDateString(campaign.date_created)),
-        ),
         description,
         settings: [
           {
@@ -255,7 +248,13 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
             "Authorization": `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ published: 0 }),
+          body: JSON.stringify({ published: 0,  slug: generateCampaignSlug(
+            campaign.name,
+            campaign.competition_id === null
+              ? getYearFromDateString(campaign.date_created)
+              : (competitionYearById.get(campaign.competition_id) ??
+                getYearFromDateString(campaign.date_created)),
+          )}),
         },
       );
 
