@@ -160,6 +160,20 @@ export default function AuthCallbackPage() {
         if (code) {
           setStatusText("Completing authentication...");
 
+          const sessionResult = await waitForSession(true);
+
+          if (sessionResult.status === "session") {
+            clearPendingSignupState();
+            replaceRoute("/dashboard", true);
+            return;
+          }
+
+          if (sessionResult.status === "error") {
+            console.error("Auth callback session error:", sessionResult.message);
+            replaceRoute("/?error=callback_failed");
+            return;
+          }
+
           const exchangeResult =
             await supabase.auth.exchangeCodeForSession(code);
 
