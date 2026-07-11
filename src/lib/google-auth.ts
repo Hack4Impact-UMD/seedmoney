@@ -7,6 +7,7 @@ export const signInWithGoogle = async () => {
     provider: "google",
     options: {
       redirectTo: `${window.location.origin}/callback`,
+      skipBrowserRedirect: true,
     },
   });
 
