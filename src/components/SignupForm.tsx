@@ -662,7 +662,7 @@ const SignupForm = () => {
         variant="contained"
         size="medium"
         startIcon={<LogoutIcon />}
-        disabled={isSubmitting}
+        disabled={isSubmitting || !captchaToken}
       >
         {isSubmitting ? "Creating account..." : "Create An Account"}
       </Button>
@@ -673,6 +673,7 @@ const SignupForm = () => {
         variant="outlined"
         size="medium"
         startIcon={<Google className="text-[rgba(0,0,0,0.6)]" />}
+        disabled={!captchaToken}
       >
         Sign Up with Google
       </Button>

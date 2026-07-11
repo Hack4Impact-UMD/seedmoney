@@ -111,6 +111,8 @@ const LoginForm = () => {
       <Turnstile
         siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
         onSuccess={(token) => setCaptchaToken(token)}
+        onExpire={() => setCaptchaToken(null)}
+        onError={() => setCaptchaToken(null)}
       />
 
       <Button
@@ -119,6 +121,7 @@ const LoginForm = () => {
         startIcon={<LogoutIcon />}
         color="primary"
         size="medium"
+        disabled={!captchaToken}
       >
         Log in
       </Button>
@@ -129,6 +132,7 @@ const LoginForm = () => {
         variant="outlined"
         color="primary"
         size="medium"
+        disabled={!captchaToken}
       >
         Log in with Google
       </Button>
