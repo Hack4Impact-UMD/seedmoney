@@ -2,6 +2,7 @@
 import { readCampaignServer } from "@/src/actions/db/campaigns";
 import { readAnswersByCampaignId } from "@/src/actions/db/answers";
 import { createServerClient } from "@/src/lib/supabase-client";
+import { createServiceRoleClient } from "@/src/lib/supabase-service";
 import type { Campaign } from "@/src/types";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -274,11 +275,11 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 }
 
 export async function publishDueCampaigns() {
-  const supabase = await createServerClient();
+  const supabase = createServiceRoleClient();
 
   const { data: competition, error: compError } = await supabase
     .from("competition_metadata")
-    .select("competition_id, start_date")
+    .select("competition_id, start_date, end_date")
     .eq("is_current", true)
     .single();
 
@@ -316,10 +317,41 @@ export async function publishDueCampaigns() {
           throw new Error(`Givebutter error (${response.status}): ${JSON.stringify(error)}`);
         }
 
-        await supabase
+        const { error: updateError } = await supabase
           .from("campaigns")
           .update({ status: "published" })
           .eq("campaign_id", campaign.campaign_id);
+
+        if (updateError) {
+          throw new Error(updateError.message);
+        }
+
+        try {
+          const { error: emailError } = await supabase.functions.invoke(
+            "send-campaign-email",
+            {
+              body: {
+                type: "campaign_live",
+                campaign_id: campaign.campaign_id,
+                donation: {
+                  campaign_end_date: competition.end_date ?? "",
+                },
+              },
+            },
+          );
+
+          if (emailError) {
+            console.error(
+              `Error sending campaign live email for campaign ${campaign.campaign_id}:`,
+              emailError.message,
+            );
+          }
+        } catch (emailError) {
+          console.error(
+            `Error sending campaign live email for campaign ${campaign.campaign_id}:`,
+            emailError,
+          );
+        }
       } catch (err) {
         await supabase
           .from("campaigns")

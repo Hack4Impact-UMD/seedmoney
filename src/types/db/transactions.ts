@@ -1,5 +1,6 @@
 export type Transaction = {
   transaction_id: number;
+  givebutter_id?: string | null;
   first_name: string;
   last_name: string;
   campaign_id: number;

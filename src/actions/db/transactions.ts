@@ -1,6 +1,6 @@
 import type { Transaction } from "@/src/types/db/transactions";
+import type { SupabaseClient } from "@supabase/supabase-js";
 import { createBrowserClient } from "@/src/lib/supabase-client";
-import { updateCampaign, readCampaign } from "@/src/actions/db/campaigns";
 import type { LeaderboardGrantTransaction } from "@/src/lib/leaderboardGrantCalculations";
 
 export async function readTransactionsByCampaign(
@@ -47,8 +47,9 @@ export async function readTransactionsByCampaignIds(
 
 export async function createTransaction(
   data: Partial<Transaction>,
+  client?: SupabaseClient,
 ): Promise<Transaction | null> {
-  const supabase = createBrowserClient();
+  const supabase = client ?? createBrowserClient();
 
   const { data: insertedData, error } = await supabase
     .from("transactions")
@@ -63,12 +64,27 @@ export async function createTransaction(
 
   // Only update if succeeded
   if (insertedData.status === "succeeded") {
-    const campaign = await readCampaign(insertedData.campaign_id);
-    if (campaign && !Array.isArray(campaign)) {
-      await updateCampaign(insertedData.campaign_id, {
-        raised: campaign.raised + insertedData.amount_donated,
-        donors: campaign.donors + 1
-      });
+    const { data: campaign, error: campaignError } = await supabase
+      .from("campaigns")
+      .select("raised, donors")
+      .eq("campaign_id", insertedData.campaign_id)
+      .maybeSingle();
+
+    if (campaignError) {
+      console.error("Error reading campaign:", campaignError.message);
+    } else if (campaign) {
+      const { error: updateError } = await supabase
+        .from("campaigns")
+        .update({
+          raised:
+            Number(campaign.raised ?? 0) + insertedData.amount_donated,
+          donors: Number(campaign.donors ?? 0) + 1,
+        })
+        .eq("campaign_id", insertedData.campaign_id);
+
+      if (updateError) {
+        console.error("Error updating campaign:", updateError.message);
+      }
     }
   }
 
