@@ -1,6 +1,8 @@
 import { publishDueCampaigns } from "@/src/actions/givebutter/campaignsGivebutter";
 import { NextResponse } from "next/server";
 
+export const maxDuration = 300;
+
 export async function GET() {
   try {
     const results = await publishDueCampaigns();

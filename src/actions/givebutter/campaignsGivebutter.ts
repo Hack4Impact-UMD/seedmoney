@@ -9,12 +9,18 @@ const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const BUCKET_NAME = "campaign_images";
 const GIVEBUTTER_MAX_ATTEMPTS = 3;
 const GIVEBUTTER_RETRY_BASE_DELAY_MS = 500;
+const GIVEBUTTER_PUBLISH_REQUEST_INTERVAL_MS = 150;
 const GARDEN_STORY_HEADERS = [
   "Our Garden & Community",
   "Our Challenge",
   "Life in the Garden",
   "What Your Support Will Do",
 ];
+
+type GivebutterFetch = (
+  url: string,
+  init: RequestInit,
+) => Promise<Response>;
 
 const getPublicUrl = (storagePath: string) =>
   `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${storagePath}`;
@@ -38,6 +44,27 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+function createPacedGivebutterFetch(intervalMs: number): GivebutterFetch {
+  let nextRequestAt = 0;
+  let schedule = Promise.resolve();
+
+  return async (url, init) => {
+    const turn = schedule.then(async () => {
+      const delay = Math.max(0, nextRequestAt - Date.now());
+
+      if (delay > 0) {
+        await wait(delay);
+      }
+
+      nextRequestAt = Date.now() + intervalMs;
+    });
+
+    schedule = turn;
+    await turn;
+    return fetch(url, init);
+  };
+}
+
 function generateCampaignSlug(title: string, year: number): string {
   const slug = title
     .toLowerCase()
@@ -52,6 +79,14 @@ function generateCampaignSlug(title: string, year: number): string {
 function getYearFromDateString(date: string) {
   const year = Number(date.slice(0, 4));
   return Number.isFinite(year) ? year : new Date(date).getFullYear();
+}
+
+function formatGivebutterEndAt(endDate: string) {
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(endDate)) {
+    throw new Error(`Invalid competition end date: ${endDate}`);
+  }
+
+  return `${endDate}T23:59:59Z`;
 }
 
 function formatLocationSubtitle(
@@ -87,6 +122,7 @@ function buildGardenStoryDescription(answers: string[], imageUrls: string[]) {
 async function fetchGivebutterWithRetry(
   url: string,
   init: RequestInit,
+  request: GivebutterFetch = fetch,
 ): Promise<Response> {
   let lastError: unknown;
 
@@ -94,7 +130,7 @@ async function fetchGivebutterWithRetry(
     let response: Response | null = null;
 
     try {
-      response = await fetch(url, init);
+      response = await request(url, init);
 
       if (
         response.ok ||
@@ -160,7 +196,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
   const { data: competitions, error: competitionError } = competitionIds.length
     ? await supabase
         .from("competition_metadata")
-        .select("competition_id, start_date")
+        .select("competition_id, start_date, end_date")
         .in("competition_id", competitionIds)
     : { data: [], error: null };
 
@@ -168,15 +204,25 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
     throw new Error(`Failed to fetch competition metadata: ${competitionError.message}`);
   }
 
-  const competitionYearById = new Map(
+  const competitionById = new Map(
     (competitions ?? []).map((competition) => [
       competition.competition_id,
-      getYearFromDateString(competition.start_date),
+      competition,
     ]),
   );
 
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
+      const competition = campaign.competition_id === null
+        ? null
+        : competitionById.get(campaign.competition_id);
+
+      if (!competition?.end_date) {
+        throw new Error(
+          `Campaign ${campaign.campaign_id} has no competition end date`,
+        );
+      }
+
       const campaignImages = (imageRecords ?? []).filter(
         (r) => r.campaign_id === campaign.campaign_id,
       );
@@ -204,6 +250,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         title: campaign.name,
         subtitle: formatLocationSubtitle(campaign),
         description,
+        end_at: formatGivebutterEndAt(competition.end_date),
         settings: [
           {
             name: "hide_supporter_feed",
@@ -249,13 +296,13 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
             "Authorization": `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
             "Content-Type": "application/json",
           },
-          body: JSON.stringify({ published: 0,  slug: generateCampaignSlug(
-            campaign.name,
-            campaign.competition_id === null
-              ? getYearFromDateString(campaign.date_created)
-              : (competitionYearById.get(campaign.competition_id) ??
-                getYearFromDateString(campaign.date_created)),
-          )}),
+          body: JSON.stringify({
+            published: false,
+            slug: generateCampaignSlug(
+              campaign.name,
+              getYearFromDateString(competition.start_date),
+            ),
+          }),
         },
       );
 
@@ -297,6 +344,12 @@ export async function publishDueCampaigns() {
   if (error) throw new Error(error.message);
   if (!campaigns?.length) return;
 
+  // 150ms between starts caps this job at 400 requests/minute, leaving
+  // headroom below Givebutter's 500 requests/minute limit.
+  const pacedGivebutterFetch = createPacedGivebutterFetch(
+    GIVEBUTTER_PUBLISH_REQUEST_INTERVAL_MS,
+  );
+
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
       try {
@@ -308,8 +361,9 @@ export async function publishDueCampaigns() {
               Authorization: `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ published: 1 }),
+            body: JSON.stringify({ published: true }),
           },
+          pacedGivebutterFetch,
         );
 
         if (!response.ok) {
