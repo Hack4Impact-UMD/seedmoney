@@ -10,6 +10,7 @@ const BUCKET_NAME = "campaign_images";
 const GIVEBUTTER_MAX_ATTEMPTS = 3;
 const GIVEBUTTER_RETRY_BASE_DELAY_MS = 500;
 const GIVEBUTTER_PUBLISH_REQUEST_INTERVAL_MS = 150;
+const GIVEBUTTER_CAMPAIGN_TIME_ZONE = "America/New_York";
 const GARDEN_STORY_HEADERS = [
   "Our Garden & Community",
   "Our Challenge",
@@ -86,7 +87,19 @@ function formatGivebutterEndAt(endDate: string) {
     throw new Error(`Invalid competition end date: ${endDate}`);
   }
 
-  return `${endDate}T23:59:59Z`;
+  const timeZoneName = new Intl.DateTimeFormat("en-US", {
+    timeZone: GIVEBUTTER_CAMPAIGN_TIME_ZONE,
+    timeZoneName: "longOffset",
+  })
+    .formatToParts(new Date(`${endDate}T12:00:00Z`))
+    .find((part) => part.type === "timeZoneName")?.value;
+  const utcOffset = timeZoneName?.replace("GMT", "");
+
+  if (!utcOffset || !/^[+-]\d{2}:\d{2}$/.test(utcOffset)) {
+    throw new Error(`Unable to resolve Eastern time offset for ${endDate}`);
+  }
+
+  return `${endDate}T12:00:00${utcOffset}`;
 }
 
 function formatLocationSubtitle(
