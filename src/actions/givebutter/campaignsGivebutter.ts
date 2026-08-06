@@ -11,6 +11,20 @@ const GIVEBUTTER_MAX_ATTEMPTS = 3;
 const GIVEBUTTER_RETRY_BASE_DELAY_MS = 500;
 const GIVEBUTTER_PUBLISH_REQUEST_INTERVAL_MS = 150;
 const GIVEBUTTER_CAMPAIGN_TIME_ZONE = "America/New_York";
+const GIVEBUTTER_CAMPAIGN_SETTINGS = [
+  {
+    name: "hide_supporter_feed",
+    value: true,
+  },
+  {
+    name: "enforce_end_at",
+    value: true,
+  },
+  {
+    name: "disable_recurring",
+    value: true,
+  },
+];
 const GARDEN_STORY_HEADERS = [
   "Our Garden & Community",
   "Our Challenge",
@@ -264,12 +278,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         subtitle: formatLocationSubtitle(campaign),
         description,
         end_at: formatGivebutterEndAt(competition.end_date),
-        settings: [
-          {
-            name: "hide_supporter_feed",
-            value: true,
-          },
-        ],
+        settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
         ...(campaign.goal !== undefined && { goal: campaign.goal }),
         ...(mainImage && {
           cover: {
@@ -311,6 +320,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
           },
           body: JSON.stringify({
             published: false,
+            settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
             slug: generateCampaignSlug(
               campaign.name,
               getYearFromDateString(competition.start_date),
@@ -374,7 +384,10 @@ export async function publishDueCampaigns() {
               Authorization: `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
               "Content-Type": "application/json",
             },
-            body: JSON.stringify({ published: true }),
+            body: JSON.stringify({
+              published: true,
+              settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
+            }),
           },
           pacedGivebutterFetch,
         );
