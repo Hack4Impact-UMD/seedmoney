@@ -7,7 +7,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "givebutter:disable-recurring": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/disable-recurring-givebutter.mjs"
+    "givebutter:disable-recurring": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/disable-recurring-givebutter.mjs",
+    "givebutter:space-photos": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/space-givebutter-photos.mjs"
   },
   "dependencies": {
     "@emotion/cache": "^11.14.0",
