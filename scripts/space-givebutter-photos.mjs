@@ -5,8 +5,10 @@ const GIVEBUTTER_MAX_ATTEMPTS = 3;
 const GIVEBUTTER_RETRY_BASE_DELAY_MS = 500;
 const GIVEBUTTER_REQUEST_INTERVAL_MS = 150;
 const GARDEN_STORY_SECTION_COUNT = 4;
-const IMAGE_SPACER = "<p>&nbsp;</p>";
-const ADJACENT_IMAGES_PATTERN = /(<img\b[^>]*\/?>)\s*(?=<img\b)/gi;
+const COLLAPSIBLE_SPACER_PATTERN =
+  /<p\b[^>]*>(?:\s|&nbsp;|<br\s*\/?>)*<\/p>\s*(<img\b[^>]*\/?>)/giu;
+const ADJACENT_IMAGES_PATTERN =
+  /(<img\b[^>]*\/?>)\s*(<img\b[^>]*\/?>)/giu;
 
 function wait(ms) {
   return new Promise((resolve) => setTimeout(resolve, ms));
@@ -113,10 +115,9 @@ async function fetchWithRetry(url, init, pacedFetch) {
 }
 
 function addPhotoSpacing(description) {
-  return description.replace(
-    ADJACENT_IMAGES_PATTERN,
-    `$1\n\n${IMAGE_SPACER}\n\n`,
-  );
+  return description
+    .replace(COLLAPSIBLE_SPACER_PATTERN, "<p>$1</p>")
+    .replace(ADJACENT_IMAGES_PATTERN, "$1\n\n<p>$2</p>");
 }
 
 function printUsage() {

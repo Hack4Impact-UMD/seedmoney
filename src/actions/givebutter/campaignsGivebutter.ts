@@ -138,10 +138,10 @@ function buildGardenStoryDescription(answers: string[], imageUrls: string[]) {
       blocks.push(
         ...imageUrls
           .slice(GARDEN_STORY_HEADERS.length)
-          .flatMap((url) => [
-            "<p>&nbsp;</p>",
-            `<img src="${url}" alt="Campaign image" />`,
-          ]),
+          .map(
+            (url) =>
+              `<p><img src="${url}" alt="Campaign image" /></p>`,
+          ),
       );
     }
 
