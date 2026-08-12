@@ -3,6 +3,8 @@ import { createServerClient } from "@/src/lib/supabase-client";
 import { readCampaignMember } from "@/src/actions/db/campaign-members";
 import { createAIAnswers } from "@/src/actions/db/ai-polish";
 
+export const maxDuration = 60;
+
 type AiPolishRequestBody = {
   campaignId: number;
   overwrite?: boolean;

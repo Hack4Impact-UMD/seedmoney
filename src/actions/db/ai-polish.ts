@@ -60,7 +60,7 @@ async function queryOpenAI(
 
   const client = new OpenAI({
     maxRetries: 0,
-    timeout: 45000,
+    timeout: 40000,
   });
 
   const response = await client.responses.create({
