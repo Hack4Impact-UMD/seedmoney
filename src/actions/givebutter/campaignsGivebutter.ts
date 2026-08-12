@@ -3,6 +3,7 @@ import { readCampaignServer } from "@/src/actions/db/campaigns";
 import { readAnswersByCampaignId } from "@/src/actions/db/answers";
 import { createServerClient } from "@/src/lib/supabase-client";
 import { createServiceRoleClient } from "@/src/lib/supabase-service";
+import { getGardenStoryAnswers } from "@/src/lib/givebutterStoryAnswers";
 import type { Campaign } from "@/src/types";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
@@ -260,11 +261,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
       const mainImage = campaignImages.find((r) => r.is_main === true);
 
       const answers = await readAnswersByCampaignId(campaign.campaign_id);
-      const sortedAnswers = answers.sort(
-        (a, b) => (a.questions?.question_number ?? 0) - (b.questions?.question_number ?? 0),
-      );
-
-      const [q1, q2, q3, q4] = sortedAnswers.map((a) => a.final_answer ?? "");
+      const [q1, q2, q3, q4] = getGardenStoryAnswers(answers);
 
       const supportingImagesArray = campaignImages.filter((r) => r.is_main === false);
       const supportingImageUrls = supportingImagesArray.map((image) =>

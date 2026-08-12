@@ -7,6 +7,22 @@ import type { Question } from "@/src/types/db/questions";
 
 export type AnswerWithQuestion = Answers & { questions: Question | null };
 
+function getLatestAnswersByQuestion<T extends Pick<Answers, "answer_id" | "question_id">>(
+  answers: readonly T[],
+): T[] {
+  const latestByQuestion = new Map<number, T>();
+
+  for (const answer of answers) {
+    const latest = latestByQuestion.get(answer.question_id);
+
+    if (!latest || answer.answer_id > latest.answer_id) {
+      latestByQuestion.set(answer.question_id, answer);
+    }
+  }
+
+  return [...latestByQuestion.values()];
+}
+
 async function createReadClient() {
   if (typeof window === "undefined") {
     return await createServerClient();
@@ -28,7 +44,7 @@ export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
 
   const { data: insertedData, error } = await supabase
     .from("answers")
-    .insert(data)
+    .upsert(data, { onConflict: "campaign_id,question_id" })
     .select()
     .single();
 
@@ -101,6 +117,8 @@ export async function readAnswerByCampaignAndQuestion(
     .select("*")
     .eq("campaign_id", campaignId)
     .eq("question_id", questionId)
+    .order("answer_id", { ascending: false })
+    .limit(1)
     .maybeSingle();
 
   if (error) {
@@ -180,15 +198,15 @@ export async function readAnswersByCampaign(
     .select("*, questions(*)")
     .eq("campaign_id", campaignId);
 
-  const sorted = (data ?? []).sort(
-    (a, b) =>
-      (a.questions?.question_number ?? 0) - (b.questions?.question_number ?? 0),
-  );
-
   if (error) {
     console.error("Error reading answers by campaign:", error.message);
     return [];
   }
+
+  const sorted = getLatestAnswersByQuestion(data ?? []).sort(
+    (a, b) =>
+      (a.questions?.question_number ?? 0) - (b.questions?.question_number ?? 0),
+  );
 
   return sorted as AnswerWithQuestion[];
 }
@@ -216,13 +234,13 @@ export async function readAnswersByCampaignId(
     return [];
   }
 
+  const latestAnswers = getLatestAnswersByQuestion(answersData);
+
   // 2. Gather distinct question IDs to fetch
-  const questionIds = answersData
-    .map((a) => a.question_id)
-    .filter((id) => id !== null && id !== undefined);
+  const questionIds = [...new Set(latestAnswers.map((a) => a.question_id))];
 
   if (questionIds.length === 0) {
-    return answersData as unknown as AnswerWithQuestion[];
+    return latestAnswers as unknown as AnswerWithQuestion[];
   }
 
   // 3. Fetch matched questions using the readQuestion logic
@@ -234,11 +252,11 @@ export async function readAnswersByCampaignId(
 
   if (questionsError) {
     console.error("Error fetching questions: ", questionsError.message);
-    return answersData as unknown as AnswerWithQuestion[];
+    return latestAnswers as unknown as AnswerWithQuestion[];
   }
 
   // 4. Map together consistently
-  const results: AnswerWithQuestion[] = answersData.map((answer) => {
+  const results: AnswerWithQuestion[] = latestAnswers.map((answer) => {
     const matchedQuestion =
       questionsData?.find((q) => q.question_id === answer.question_id) || null;
 
@@ -248,5 +266,8 @@ export async function readAnswersByCampaignId(
     } as AnswerWithQuestion;
   });
 
-  return results;
+  return results.sort(
+    (a, b) =>
+      (a.questions?.question_number ?? 0) - (b.questions?.question_number ?? 0),
+  );
 }
