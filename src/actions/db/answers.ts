@@ -44,7 +44,7 @@ export async function createAnswer(data: NewAnswer): Promise<Answers | null> {
 
   const { data: insertedData, error } = await supabase
     .from("answers")
-    .insert(data)
+    .upsert(data, { onConflict: "campaign_id,question_id" })
     .select()
     .single();
 
