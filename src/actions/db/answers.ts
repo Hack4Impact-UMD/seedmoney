@@ -129,6 +129,37 @@ export async function readAnswerByCampaignAndQuestion(
   return data as Answers;
 }
 
+export async function verifyOriginalAnswersStored(
+  campaignId: number,
+  expectedAnswers: { questionId: number; originalAnswer: string }[],
+): Promise<boolean> {
+  const supabase = await createReadClient();
+  const questionIds = expectedAnswers.map((answer) => answer.questionId);
+
+  const { data, error } = await supabase
+    .from("answers")
+    .select("answer_id, question_id, pre_ai_answer")
+    .eq("campaign_id", campaignId)
+    .in("question_id", questionIds);
+
+  if (error) {
+    console.error("Error verifying stored answers:", error.message);
+    throw new Error("Unable to verify saved Garden Story answers");
+  }
+
+  const storedAnswers = new Map(
+    getLatestAnswersByQuestion(data ?? []).map((answer) => [
+      answer.question_id,
+      answer.pre_ai_answer,
+    ]),
+  );
+
+  return expectedAnswers.every(
+    ({ questionId, originalAnswer }) =>
+      storedAnswers.get(questionId) === originalAnswer,
+  );
+}
+
 export async function createFinalAnswer({
   campaignId,
   questionId,

@@ -24,9 +24,15 @@ import {
   STATES,
 } from "@/src/components/application/addressOptions";
 import { createBrowserClient } from "@/src/lib/supabase-client";
+import { useState } from "react";
+import { verifyOriginalAnswersStored } from "@/src/actions/db/answers";
 
 const storyAnswerMinChars = 200;
 const storyAnswerMaxChars = 1000;
+const storySaveErrorMessage =
+  "We couldn't save your Garden Story. Your application has not been submitted. Please try again.";
+const submitErrorMessage =
+  "We couldn't submit your application. Your information is still on this page. Please try again.";
 
 function normalizeNumericInput(value: string) {
   const trimmedValue = value.trim();
@@ -199,6 +205,9 @@ export default function ReviewSubmitPage() {
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
   const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
   const { data: question4, isLoading: isLoadingQuestion4 } = useReadQuestion(4);
+  const [storySaveError, setStorySaveError] = useState<string | null>(null);
+  const [submitError, setSubmitError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
   const values = form.state.values;
   const {
     campaignComplete,
@@ -287,15 +296,29 @@ export default function ReviewSubmitPage() {
     });
   };
 
-  const saveStoryAnswer = async (questionId: number, originalAnswer: string) => {
-    const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+  const saveStoryAnswer = async (
+    questionId: number,
+    originalAnswer: string,
+    campaignIdOverride?: number,
+  ) => {
+    try {
+      const campaignId =
+        campaignIdOverride ??
+        draftCampaignId ??
+        (await saveDraftCampaign({}));
 
-    await createOriginalAnswerMutation.mutateAsync({
-      campaignId,
-      questionId,
-      originalAnswer,
-    });
-    setLastSaved(getFormattedSaveTime());
+      await createOriginalAnswerMutation.mutateAsync({
+        campaignId,
+        questionId,
+        originalAnswer,
+      });
+      setStorySaveError(null);
+      setLastSaved(getFormattedSaveTime());
+    } catch (error) {
+      console.error("Error saving Garden Story answer:", error);
+      setStorySaveError(storySaveErrorMessage);
+      throw error;
+    }
   };
 
   const handleSubmitApplication = async () => {
@@ -304,6 +327,37 @@ export default function ReviewSubmitPage() {
     }
 
     const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+    const expectedAnswers = [
+      {
+        questionId: question1.question_id,
+        originalAnswer: values.storyLocationAndAudience,
+      },
+      {
+        questionId: question2.question_id,
+        originalAnswer: values.storyChallenge,
+      },
+      {
+        questionId: question3.question_id,
+        originalAnswer: values.storySeasonActivity,
+      },
+      {
+        questionId: question4.question_id,
+        originalAnswer: values.storyCampaignImpact,
+      },
+    ];
+
+    for (const answer of expectedAnswers) {
+      await saveStoryAnswer(
+        answer.questionId,
+        answer.originalAnswer,
+        campaignId,
+      );
+    }
+
+    if (!(await verifyOriginalAnswersStored(campaignId, expectedAnswers))) {
+      setStorySaveError(storySaveErrorMessage);
+      throw new Error("Garden Story verification failed");
+    }
 
     if (pendingMainPhotoCrop && values.mainPhotoStoragePath) {
       const replacedMainPhoto = await replaceCampaignImage.mutateAsync({
@@ -709,6 +763,8 @@ export default function ReviewSubmitPage() {
 
       <h2 className="text-lg font-semibold">Garden Story</h2>
 
+      {storySaveError && <ReviewBanner message={storySaveError} />}
+
       {!storyComplete && (
         <ReviewBanner
           message='Please complete "Garden Story"'
@@ -1068,6 +1124,8 @@ export default function ReviewSubmitPage() {
         />
       </div>
 
+      {submitError && <ReviewBanner message={submitError} />}
+
       <div className="flex w-full flex-col-reverse gap-3 md:flex-row md:justify-between md:gap-0">
         <Button
           component={Link}
@@ -1088,16 +1146,26 @@ export default function ReviewSubmitPage() {
               : "w-full md:w-auto !bg-[#E0E0E0] !px-4"
           }
           size="medium"
-          disabled={!canSubmit}
+          disabled={!canSubmit || isSubmitting}
           onClick={async () => {
             if (!canSubmit) {
               return;
             }
 
-            await handleSubmitApplication();
+            setIsSubmitting(true);
+            setSubmitError(null);
+
+            try {
+              await handleSubmitApplication();
+            } catch (error) {
+              console.error("Error submitting application:", error);
+              setSubmitError(submitErrorMessage);
+            } finally {
+              setIsSubmitting(false);
+            }
           }}
         >
-          Submit Application
+          {isSubmitting ? "Submitting..." : "Submit Application"}
         </Button>
       </div>
     </div>

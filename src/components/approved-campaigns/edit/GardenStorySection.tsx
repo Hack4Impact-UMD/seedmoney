@@ -9,7 +9,6 @@ interface StoryComparisonBlockProps {
   aiValue: string;
   finalValue: string;
   onFinalChange: ReturnType<TextChangeHandler>;
-  finalPlaceholder: string;
 }
 
 function StoryComparisonBlock({
@@ -18,7 +17,6 @@ function StoryComparisonBlock({
   aiValue,
   finalValue,
   onFinalChange,
-  finalPlaceholder,
 }: StoryComparisonBlockProps) {
   return (
     <>
@@ -68,7 +66,7 @@ function StoryComparisonBlock({
       <div className="w-full">
         <TextField
           variant="standard"
-          placeholder={finalPlaceholder}
+          placeholder="No final version available"
           fullWidth
           multiline
           value={finalValue}
@@ -95,6 +93,13 @@ export default function GardenStorySection({
   onTextChange,
   questions,
 }: GardenStorySectionProps) {
+  const hasMissingOriginalAnswer = [
+    formData.storyLocationAndAudience,
+    formData.storyChallengeOriginal,
+    formData.storySeasonActivityOriginal,
+    formData.storyCampaignImpactOriginal,
+  ].some((answer) => answer.trim() === "");
+
   return (
     <>
       <h1 className="text-2xl font-bold">Garden Story</h1>
@@ -104,6 +109,16 @@ export default function GardenStorySection({
         </h2>
         <p className="text-sm">2-3 sentences each</p>
 
+        {hasMissingOriginalAnswer && (
+          <div
+            role="alert"
+            className="rounded-md bg-[#FDECEA] px-4 py-3 text-sm text-[#5F2120]"
+          >
+            One or more applicant Garden Story answers are missing. Empty
+            fields do not contain submitted applicant text.
+          </div>
+        )}
+
           <div className="mt-4 grid grid-cols-1 lg:grid-cols-[max-content_1fr] items-start gap-x-8 gap-y-4">
           {questions?.q1 && (
             <StoryComparisonBlock
@@ -112,7 +127,6 @@ export default function GardenStorySection({
               aiValue={formData.storyLocationAndAudienceAI}
               finalValue={formData.storyLocationAndAudienceFinal}
               onFinalChange={onTextChange("storyLocationAndAudienceFinal")}
-              finalPlaceholder="The Full Belly Community Garden in Scarborough, Maine, provides over 300 pounds of organic produce annually to local food-insecure families and seniors. Beyond its harvest, it serves as an educational hub for at-risk youth and neighbors through nature exploration and hands-on gardening workshops."
             />
           )}
 
@@ -123,7 +137,6 @@ export default function GardenStorySection({
               aiValue={formData.storyChallengeAI}
               finalValue={formData.storyChallengeFinal}
               onFinalChange={onTextChange("storyChallengeFinal")}
-              finalPlaceholder="The Full Belly Community Garden addresses the challenge of food insecurity, specifically the difficulty many local families and seniors face in accessing fresh, affordable organic produce."
             />
           )}
 
@@ -134,7 +147,6 @@ export default function GardenStorySection({
               aiValue={formData.storySeasonActivityAI}
               finalValue={formData.storySeasonActivityFinal}
               onFinalChange={onTextChange("storySeasonActivityFinal")}
-              finalPlaceholder='During the growing season, it serves as a "vibrant oasis" where volunteers host monthly workshops to teach gardening skills and provide a safe space for at-risk youth to explore nature.'
             />
           )}
 
@@ -145,7 +157,6 @@ export default function GardenStorySection({
               aiValue={formData.storyCampaignImpactAI}
               finalValue={formData.storyCampaignImpactFinal}
               onFinalChange={onTextChange("storyCampaignImpactFinal")}
-              finalPlaceholder="These contributions allow the garden to continue its mission of providing over 300 pounds of organic food to local food-insecure families and seniors at the Elm Street Senior Center."
             />
           )}
         </div>

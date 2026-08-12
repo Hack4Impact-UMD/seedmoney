@@ -19,6 +19,7 @@ import useUploadCampaignImage from "@/src/hooks/campaign-image-records/useUpload
 import useDeleteCampaignImage from "@/src/hooks/campaign-image-records/useDeleteCampaignImage";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import CropImageDialogue from "@/src/components/CropImageDialogue";
+import { verifyOriginalAnswersStored } from "@/src/actions/db/answers";
 
 type PreviewFile = {
   name: string;
@@ -42,6 +43,8 @@ type UploadError = {
 const storyAnswerMinChars = 200;
 const storyAnswerMaxChars = 1000;
 const storyAnswerHint = "Write a short paragraph (4-5 sentences).";
+const storySaveErrorMessage =
+  "We couldn't save your Garden Story. Your answers are still on this page. Please try again before continuing.";
 
 function getFileKey(
   file: Pick<PreviewFile, "name" | "size"> | Pick<File, "name" | "size">,
@@ -183,6 +186,8 @@ export default function GardenStoryStep() {
     title: string;
     message: string;
   } | null>(null);
+  const [storySaveError, setStorySaveError] = useState<string | null>(null);
+  const [isSavingStory, setIsSavingStory] = useState(false);
   const [cropTarget, setCropTarget] = useState<
     { type: "main" } | { type: "supporting"; preview: string } | null
   >(null);
@@ -605,29 +610,81 @@ export default function GardenStoryStep() {
   const saveStoryAnswer = async (
     questionId: number,
     originalAnswer: string,
+    campaignIdOverride?: number,
+    force = false,
   ) => {
     if (
+      !force &&
       storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] === originalAnswer
     ) {
       return;
     }
 
-    const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+    try {
+      const campaignId =
+        campaignIdOverride ??
+        draftCampaignId ??
+        (await saveDraftCampaign({}));
 
-    await createOriginalAnswerMutation.mutateAsync({
-      campaignId,
-      questionId,
-      originalAnswer,
-    });
-    storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] = originalAnswer;
-    setLastSaved(getFormattedSaveTime());
+      await createOriginalAnswerMutation.mutateAsync({
+        campaignId,
+        questionId,
+        originalAnswer,
+      });
+      storyAnswersRef.current[questionId as 1 | 2 | 3 | 4] = originalAnswer;
+      setStorySaveError(null);
+      setLastSaved(getFormattedSaveTime());
+    } catch (error) {
+      console.error("Error saving Garden Story answer:", error);
+      setStorySaveError(storySaveErrorMessage);
+      throw error;
+    }
   };
 
   const saveGardenStoryDraft = async () => {
-    await saveStoryAnswer(1, form.state.values.storyLocationAndAudience);
-    await saveStoryAnswer(2, form.state.values.storyChallenge);
-    await saveStoryAnswer(3, form.state.values.storySeasonActivity);
-    await saveStoryAnswer(4, form.state.values.storyCampaignImpact);
+    const campaignId = draftCampaignId ?? (await saveDraftCampaign({}));
+    const expectedAnswers = [
+      {
+        questionId: question1.question_id,
+        originalAnswer: form.state.values.storyLocationAndAudience,
+      },
+      {
+        questionId: question2.question_id,
+        originalAnswer: form.state.values.storyChallenge,
+      },
+      {
+        questionId: question3.question_id,
+        originalAnswer: form.state.values.storySeasonActivity,
+      },
+      {
+        questionId: question4.question_id,
+        originalAnswer: form.state.values.storyCampaignImpact,
+      },
+    ];
+
+    for (const answer of expectedAnswers) {
+      await saveStoryAnswer(
+        answer.questionId,
+        answer.originalAnswer,
+        campaignId,
+        true,
+      );
+    }
+
+    if (!(await verifyOriginalAnswersStored(campaignId, expectedAnswers))) {
+      throw new Error("Garden Story verification failed");
+    }
+  };
+
+  const handleStoryAnswerBlur = async (
+    questionId: number,
+    originalAnswer: string,
+  ) => {
+    try {
+      await saveStoryAnswer(questionId, originalAnswer);
+    } catch {
+      // saveStoryAnswer displays the persistent error message.
+    }
   };
 
   const areStoryAnswersValid =
@@ -638,6 +695,16 @@ export default function GardenStoryStep() {
 
   return (
     <div className="mx-auto my-10 flex w-full max-w-[640px] flex-col gap-5">
+      {storySaveError && (
+        <div
+          role="alert"
+          className="flex items-center gap-2 rounded-md bg-[#FDECEA] px-4 py-3 text-sm text-[#5F2120]"
+        >
+          <Image src="/icons/error.svg" width={18} height={18} alt="error" />
+          <span>{storySaveError}</span>
+        </div>
+      )}
+
       {/* Garden Story */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-8">
         <h2 className="text-[20px] font-medium">
@@ -696,7 +763,7 @@ export default function GardenStoryStep() {
                   }
                   onBlur={async (e) => {
                     field.handleBlur();
-                    await saveStoryAnswer(1, e.target.value);
+                    await handleStoryAnswerBlur(1, e.target.value);
                   }}
                   onChange={(e) =>
                     field.handleChange(
@@ -757,7 +824,7 @@ export default function GardenStoryStep() {
                   }
                   onBlur={async (e) => {
                     field.handleBlur();
-                    await saveStoryAnswer(2, e.target.value);
+                    await handleStoryAnswerBlur(2, e.target.value);
                   }}
                   onChange={(e) =>
                     field.handleChange(
@@ -818,7 +885,7 @@ export default function GardenStoryStep() {
                   }
                   onBlur={async (e) => {
                     field.handleBlur();
-                    await saveStoryAnswer(3, e.target.value);
+                    await handleStoryAnswerBlur(3, e.target.value);
                   }}
                   onChange={(e) =>
                     field.handleChange(
@@ -879,7 +946,7 @@ export default function GardenStoryStep() {
                   }
                   onBlur={async (e) => {
                     field.handleBlur();
-                    await saveStoryAnswer(4, e.target.value);
+                    await handleStoryAnswerBlur(4, e.target.value);
                   }}
                   onChange={(e) =>
                     field.handleChange(
@@ -1187,13 +1254,23 @@ export default function GardenStoryStep() {
           variant="contained"
           size="medium"
           className="w-full md:w-auto"
-          disabled={!areStoryAnswersValid}
+          disabled={!areStoryAnswersValid || isSavingStory}
           onClick={async () => {
-            await saveGardenStoryDraft();
-            router.push("/apply/contact");
+            setIsSavingStory(true);
+            setStorySaveError(null);
+
+            try {
+              await saveGardenStoryDraft();
+              router.push("/apply/contact");
+            } catch (error) {
+              console.error("Error verifying Garden Story answers:", error);
+              setStorySaveError(storySaveErrorMessage);
+            } finally {
+              setIsSavingStory(false);
+            }
           }}
         >
-          Next Step
+          {isSavingStory ? "Saving..." : "Next Step"}
         </Button>
       </div>
 
