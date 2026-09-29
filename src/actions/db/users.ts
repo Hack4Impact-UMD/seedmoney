@@ -12,7 +12,7 @@ type JoinedCampaign = {
 
 type UserWithCampaigns = Pick<
   Users,
-  "id" | "first_name" | "last_name" | "email" | "created_at"
+  "id" | "first_name" | "last_name" | "email" | "created_at" | "is_admin"
 > & {
   campaign_members: {
     role: string;
@@ -24,7 +24,7 @@ export async function readAllUsersWithCampaigns(): Promise<UsersTableRow[]> {
   const supabase = createBrowserClient();
 
   const { data, error } = await supabase.from("users").select(`
-      id, first_name, last_name, email, created_at,
+      id, first_name, last_name, email, created_at, is_admin,
       campaign_members(
         role,
         campaigns(campaign_id, name, status, competition_id)
@@ -38,7 +38,7 @@ export async function readAllUsersWithCampaigns(): Promise<UsersTableRow[]> {
 
   const users = (data ?? []) as unknown as UserWithCampaigns[];
 
-  return users.map((user) => ({
+  return users.filter((user) => !user.is_admin).map((user) => ({
     id: user.id,
     first_name: user.first_name,
     last_name: user.last_name,

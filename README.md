@@ -68,3 +68,10 @@ References:
 - https://supabase.com/docs/guides/auth/auth-smtp
 - https://supabase.com/docs/guides/auth/auth-email-templates
 - https://supabase.com/docs/guides/auth/passwords
+
+## Messaging Audiences
+
+Applicant status and targeted-email recipient rules are documented in
+[`docs/current-competition-audiences.md`](docs/current-competition-audiences.md).
+Use the account email and campaign membership relationship described there for
+all current-competition sends.
