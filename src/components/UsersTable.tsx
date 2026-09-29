@@ -27,6 +27,11 @@ import type {
 import useDeleteUser from "@/src/hooks/users/useDeleteUser";
 import type { Status } from "@/src/types/db/enums";
 import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
+import {
+  getCompetitionAudience,
+  matchesAudienceStatus,
+  type AudienceStatus,
+} from "@/src/lib/competitionAudience";
 
 interface Props {
   initialData: UsersTableRow[];
@@ -36,7 +41,6 @@ interface Props {
 }
 
 type AggregateStatus = Status | "mixed";
-type FilterStatus = Status | "not_started";
 type SortField = "first_name" | "last_name" | "email" | "created_at";
 type SortDirection = "asc" | "desc";
 
@@ -51,7 +55,7 @@ const STATUS_LABELS: Record<AggregateStatus, string> = {
   mixed: "Mixed",
 };
 
-const FILTER_OPTIONS: { value: FilterStatus; label: string }[] = [
+const FILTER_OPTIONS: { value: AudienceStatus; label: string }[] = [
   { value: "published", label: "Published" },
   { value: "publish_failed", label: "Publish Failed" },
   { value: "approved", label: "Approved" },
@@ -257,7 +261,7 @@ export default function UsersTable({
   const [search, setSearch] = useState("");
   const [statusFilter, setStatusFilter] = useState("");
   const [mobileStatusFilters, setMobileStatusFilters] = useState<
-    FilterStatus[]
+    AudienceStatus[]
   >([]);
   const [sortField, setSortField] = useState<SortField>("created_at");
   const [sortDirection, setSortDirection] = useState<SortDirection>("asc");
@@ -365,30 +369,22 @@ export default function UsersTable({
     [hoveredRowId],
   );
 
-  const competitionFilteredData = useMemo(() => {
-    return initialData.map((user) => ({
-      ...user,
-      campaigns: user.campaigns
-        .filter(
-          (campaign) => campaign.competition_id === selectedCompetitionId,
-        )
-        .map((campaign) => ({
-          ...campaign,
-          status:
-            selectedCompetitionId !== currentCompetitionId &&
-            campaign.status === "approved"
-              ? "archived"
-              : campaign.status,
-        })),
-    }));
-  }, [currentCompetitionId, initialData, selectedCompetitionId]);
+  const competitionFilteredData = useMemo(
+    () =>
+      getCompetitionAudience(
+        initialData,
+        selectedCompetitionId,
+        selectedCompetitionId !== currentCompetitionId,
+      ),
+    [currentCompetitionId, initialData, selectedCompetitionId],
+  );
 
-  const activeStatusFilters = useMemo<FilterStatus[]>(() => {
+  const activeStatusFilters = useMemo<AudienceStatus[]>(() => {
     if (mobileStatusFilters.length) {
       return mobileStatusFilters;
     }
 
-    return statusFilter ? [statusFilter as FilterStatus] : [];
+    return statusFilter ? [statusFilter as AudienceStatus] : [];
   }, [mobileStatusFilters, statusFilter]);
 
   const filteredData = useMemo(() => {
@@ -403,13 +399,9 @@ export default function UsersTable({
 
       const matchesStatus =
         activeStatusFilters.length === 0 ||
-        activeStatusFilters.some((filter) => {
-          if (filter === "not_started") {
-            return user.campaigns.length === 0;
-          }
-
-          return user.campaigns.some((campaign) => campaign.status === filter);
-        });
+        activeStatusFilters.some((filter) =>
+          matchesAudienceStatus(user, filter),
+        );
 
       return matchesSearch && matchesStatus;
     });
@@ -488,7 +480,7 @@ export default function UsersTable({
   );
 
   const handleToggleMobileStatusFilter = useCallback(
-    (value: FilterStatus) => {
+    (value: AudienceStatus) => {
       setStatusFilter("");
       setMobileStatusFilters((current) => {
         const next = current.includes(value)
