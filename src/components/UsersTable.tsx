@@ -30,9 +30,9 @@ import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
 
 interface Props {
   initialData: UsersTableRow[];
-  competitionYearMap: Map<number, number>;
+  selectedCompetitionId: number | null;
+  currentCompetitionId: number | null;
   selectedYear: number;
-  currentYear: number;
 }
 
 type AggregateStatus = Status | "mixed";
@@ -249,9 +249,9 @@ const columnHelper = createColumnHelper<UsersTableRow>();
 
 export default function UsersTable({
   initialData,
-  competitionYearMap,
+  selectedCompetitionId,
+  currentCompetitionId,
   selectedYear,
-  currentYear,
 }: Props) {
   const router = useRouter();
   const [search, setSearch] = useState("");
@@ -365,21 +365,23 @@ export default function UsersTable({
     [hoveredRowId],
   );
 
-  const yearFilteredData = useMemo(() => {
+  const competitionFilteredData = useMemo(() => {
     return initialData.map((user) => ({
       ...user,
-      campaigns: user.campaigns.filter((campaign) => {
-        if (!campaign || !campaign.competition_id) return false;
-        return competitionYearMap.get(campaign.competition_id) === selectedYear;
-      }).map((campaign) => ({
-        ...campaign,
-        status:
-          selectedYear !== currentYear && campaign.status === "approved"
-            ? "archived"
-            : campaign.status,
-      })),
+      campaigns: user.campaigns
+        .filter(
+          (campaign) => campaign.competition_id === selectedCompetitionId,
+        )
+        .map((campaign) => ({
+          ...campaign,
+          status:
+            selectedCompetitionId !== currentCompetitionId &&
+            campaign.status === "approved"
+              ? "archived"
+              : campaign.status,
+        })),
     }));
-  }, [currentYear, initialData, competitionYearMap, selectedYear]);
+  }, [currentCompetitionId, initialData, selectedCompetitionId]);
 
   const activeStatusFilters = useMemo<FilterStatus[]>(() => {
     if (mobileStatusFilters.length) {
@@ -392,7 +394,7 @@ export default function UsersTable({
   const filteredData = useMemo(() => {
     const q = search.trim().toLowerCase();
 
-    return yearFilteredData.filter((user) => {
+    return competitionFilteredData.filter((user) => {
       const matchesSearch =
         q.length === 0 ||
         user.first_name.toLowerCase().includes(q) ||
@@ -411,7 +413,7 @@ export default function UsersTable({
 
       return matchesSearch && matchesStatus;
     });
-  }, [activeStatusFilters, search, yearFilteredData]);
+  }, [activeStatusFilters, competitionFilteredData, search]);
 
   const sortedData = useMemo(() => {
     const nextData = [...filteredData];

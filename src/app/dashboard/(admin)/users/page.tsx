@@ -10,26 +10,30 @@ export default function Users() {
   const { data: competitions = [], isLoading: isLoadingCompetitions } = useAllCompetitions();
 
 
-  const competitionYearMap = useMemo(() => {
-    const map = new Map<number, number>();
-    for (const comp of competitions) {
-      map.set(comp.competition_id, new Date(comp.start_date).getFullYear());
-    }
-    return map;
+  const orderedCompetitions = useMemo(() => {
+    return [...competitions].sort(
+      (a, b) =>
+        new Date(b.start_date).getTime() - new Date(a.start_date).getTime(),
+    );
   }, [competitions]);
 
-  const availableYears = useMemo(() => {
-    const years = new Set(competitionYearMap.values());
-    return Array.from(years).sort((a, b) => b - a);
-  }, [competitionYearMap]);
-
   const currentCompetition = competitions.find((c) => c.is_current);
-  const currentYear = currentCompetition
-    ? new Date(currentCompetition.start_date).getFullYear()
-    : new Date().getFullYear();
+  const currentCompetitionId = currentCompetition?.competition_id ?? null;
 
-  const [selectedYear, setSelectedYear] = useState<number | null>(null);
-  const activeYear = selectedYear ?? currentYear;
+  const [selectedCompetitionId, setSelectedCompetitionId] = useState<
+    number | null
+  >(null);
+  const activeCompetitionId =
+    selectedCompetitionId ??
+    currentCompetitionId ??
+    orderedCompetitions[0]?.competition_id ??
+    null;
+  const activeCompetition = competitions.find(
+    (competition) => competition.competition_id === activeCompetitionId,
+  );
+  const activeYear = activeCompetition
+    ? new Date(activeCompetition.start_date).getFullYear()
+    : new Date().getFullYear();
 
   const isLoading = isLoadingUsers || isLoadingCompetitions;
 
@@ -48,13 +52,18 @@ export default function Users() {
                 Year
               </label>
               <select
-                value={activeYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                value={activeCompetitionId ?? ""}
+                onChange={(e) =>
+                  setSelectedCompetitionId(Number(e.target.value))
+                }
                 className="h-14 min-w-[190px] cursor-pointer appearance-none rounded-[10px] border border-[#C8D0C8] bg-white px-4 pr-10 text-[16px] text-[#1f2320] outline-none shadow-[0_4px_10px_rgba(31,60,44,0.08)]"
               >
-                {availableYears.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
+                {orderedCompetitions.map((competition) => (
+                  <option
+                    key={competition.competition_id}
+                    value={competition.competition_id}
+                  >
+                    {new Date(competition.start_date).getFullYear()}
                   </option>
                 ))}
               </select>
@@ -72,13 +81,18 @@ export default function Users() {
                 Year
               </label>
               <select
-                value={activeYear}
-                onChange={(e) => setSelectedYear(Number(e.target.value))}
+                value={activeCompetitionId ?? ""}
+                onChange={(e) =>
+                  setSelectedCompetitionId(Number(e.target.value))
+                }
                 className="cursor-pointer appearance-none rounded-lg border border-gray-300 bg-white px-3 py-2.5 pr-8 text-gray-700 outline-none"
               >
-                {availableYears.map((year) => (
-                  <option key={year} value={year}>
-                    {year}
+                {orderedCompetitions.map((competition) => (
+                  <option
+                    key={competition.competition_id}
+                    value={competition.competition_id}
+                  >
+                    {new Date(competition.start_date).getFullYear()}
                   </option>
                 ))}
               </select>
@@ -93,9 +107,9 @@ export default function Users() {
           ) : (
             <UsersTable
               initialData={usersTableRows}
-              competitionYearMap={competitionYearMap}
+              selectedCompetitionId={activeCompetitionId}
+              currentCompetitionId={currentCompetitionId}
               selectedYear={activeYear}
-              currentYear={currentYear}
             />
           )}
         </div>
