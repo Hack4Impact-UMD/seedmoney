@@ -7,7 +7,7 @@ type JoinedCampaign = {
   campaign_id: number;
   name: string;
   status: string;
-  competition_id: number;
+  competition_id: number | null;
 };
 
 type UserWithCampaigns = Pick<
@@ -15,6 +15,7 @@ type UserWithCampaigns = Pick<
   "id" | "first_name" | "last_name" | "email" | "created_at"
 > & {
   campaign_members: {
+    role: string;
     campaigns: JoinedCampaign;
   }[];
 };
@@ -25,6 +26,7 @@ export async function readAllUsersWithCampaigns(): Promise<UsersTableRow[]> {
   const { data, error } = await supabase.from("users").select(`
       id, first_name, last_name, email, created_at,
       campaign_members(
+        role,
         campaigns(campaign_id, name, status, competition_id)
       )
     `);
@@ -42,12 +44,14 @@ export async function readAllUsersWithCampaigns(): Promise<UsersTableRow[]> {
     last_name: user.last_name,
     email: user.email,
     created_at: user.created_at,
-    campaigns: user.campaign_members.map((m) => ({
-      campaign_id: m.campaigns.campaign_id,
-      name: m.campaigns.name,
-      status: m.campaigns.status as Campaign["status"],
-      competition_id: m.campaigns.competition_id,
-    })),
+    campaigns: user.campaign_members
+      .filter((member) => member.role === "campaign_leader" && member.campaigns)
+      .map((member) => ({
+        campaign_id: member.campaigns.campaign_id,
+        name: member.campaigns.name,
+        status: member.campaigns.status as Campaign["status"],
+        competition_id: member.campaigns.competition_id,
+      })),
   }));
 }
 
