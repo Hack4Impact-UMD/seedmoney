@@ -15,6 +15,7 @@ import { Avatar, Chip, Menu, MenuItem } from "@mui/material";
 import CheckIcon from "@mui/icons-material/Check";
 import CloseIcon from "@mui/icons-material/Close";
 import DeleteIcon from "@mui/icons-material/Delete";
+import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
 import FilterAltOutlinedIcon from "@mui/icons-material/FilterAltOutlined";
 import ImportExportIcon from "@mui/icons-material/ImportExport";
 import SearchIcon from "@mui/icons-material/Search";
@@ -28,6 +29,8 @@ import useDeleteUser from "@/src/hooks/users/useDeleteUser";
 import type { Status } from "@/src/types/db/enums";
 import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
 import {
+  countAudienceByStatus,
+  getAudienceStatuses,
   getCompetitionAudience,
   matchesAudienceStatus,
   type AudienceStatus,
@@ -147,6 +150,11 @@ function getCampaignStatusPath(status: Status, campaignId: number) {
 function formatDateJoined(dateStr?: string) {
   if (!dateStr) return "N/A";
   return dateStr.split("T")[0];
+}
+
+function toCsvCell(value: string) {
+  const escapedValue = /^[=+\-@]/.test(value) ? "'" + value : value;
+  return '"' + escapedValue.replaceAll('"', '""') + '"';
 }
 
 function compareValues(
@@ -379,6 +387,11 @@ export default function UsersTable({
     [currentCompetitionId, initialData, selectedCompetitionId],
   );
 
+  const audienceCounts = useMemo(
+    () => countAudienceByStatus(competitionFilteredData),
+    [competitionFilteredData],
+  );
+
   const activeStatusFilters = useMemo<AudienceStatus[]>(() => {
     if (mobileStatusFilters.length) {
       return mobileStatusFilters;
@@ -426,6 +439,34 @@ export default function UsersTable({
 
     return nextData;
   }, [filteredData, sortDirection, sortField]);
+
+  const handleExportAudience = useCallback(() => {
+    const header = [
+      "account_email",
+      "first_name",
+      "last_name",
+      "statuses",
+      "campaign_ids",
+    ];
+    const rows = sortedData.map((user) => [
+      user.email,
+      user.first_name,
+      user.last_name,
+      getAudienceStatuses(user).join(";"),
+      user.campaigns.map((campaign) => campaign.campaign_id).join(";"),
+    ]);
+    const csv = [header, ...rows]
+      .map((row) => row.map((value) => toCsvCell(String(value))).join(","))
+      .join("\n");
+    const url = URL.createObjectURL(
+      new Blob([csv], { type: "text/csv;charset=utf-8" }),
+    );
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = "seedmoney-" + selectedYear + "-audience.csv";
+    link.click();
+    URL.revokeObjectURL(url);
+  }, [selectedYear, sortedData]);
 
   const mobileResetKey = [
     selectedYear,
@@ -541,7 +582,9 @@ export default function UsersTable({
               className="!px-5 !py-3"
             >
               <div className="flex min-w-[200px] items-center justify-between gap-4">
-                <span>{option.label}</span>
+                <span>
+                  {option.label} ({audienceCounts[option.value]})
+                </span>
                 {isSelected && <CheckIcon className="!text-[#2D7A45]" />}
               </div>
             </MenuItem>
@@ -643,6 +686,16 @@ export default function UsersTable({
             >
               <ImportExportIcon className="!h-7 !w-7" />
             </button>
+
+            <button
+              type="button"
+              onClick={handleExportAudience}
+              className="flex h-12 w-12 shrink-0 items-center justify-center rounded-[10px] border border-[#C8D0C8] bg-white text-[#666666] shadow-[0_4px_10px_rgba(31,60,44,0.08)]"
+              aria-label="Export filtered audience"
+              title="Export filtered audience"
+            >
+              <FileDownloadOutlinedIcon className="!h-7 !w-7" />
+            </button>
           </div>
 
           <div className="mt-6 border-b border-[#CFD8CF]" />
@@ -684,18 +737,24 @@ export default function UsersTable({
                     className="w-full cursor-pointer appearance-none bg-transparent text-md text-gray-500 outline-none"
                   >
                     <option value="">No Filter</option>
-                    <option value="in_progress">In Progress</option>
-                    <option value="pending">Pending</option>
-                    <option value="approved">Approved</option>
-                    <option value="denied">Denied</option>
-                    <option value="published">Published</option>
-                    <option value="publish_failed">Publish Failed</option>
-                    <option value="archived">Archived</option>
-                    <option value="not_started">Not Started</option>
+                    {FILTER_OPTIONS.map((option) => (
+                      <option key={option.value} value={option.value}>
+                        {option.label} ({audienceCounts[option.value]})
+                      </option>
+                    ))}
                   </select>
                 </div>
               </div>
             </div>
+
+            <button
+              type="button"
+              onClick={handleExportAudience}
+              className="flex h-14 items-center gap-2 rounded-lg border border-[#2D7A45] px-4 font-medium text-[#2D7A45]"
+            >
+              <FileDownloadOutlinedIcon />
+              Export CSV
+            </button>
           </div>
         </div>
 

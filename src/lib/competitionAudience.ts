@@ -22,15 +22,21 @@ export function getCompetitionAudience(
   }));
 }
 
+export function getAudienceStatuses(
+  user: UsersTableRow,
+): AudienceStatus[] {
+  if (user.campaigns.length === 0) {
+    return ["not_started"];
+  }
+
+  return Array.from(new Set(user.campaigns.map((campaign) => campaign.status)));
+}
+
 export function matchesAudienceStatus(
   user: UsersTableRow,
   status: AudienceStatus,
 ): boolean {
-  if (status === "not_started") {
-    return user.campaigns.length === 0;
-  }
-
-  return user.campaigns.some((campaign) => campaign.status === status);
+  return getAudienceStatuses(user).includes(status);
 }
 
 export function countAudienceByStatus(
