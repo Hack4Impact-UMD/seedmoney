@@ -441,10 +441,10 @@ export default function ContactInformationStep() {
         </form.Field>
       </div>
 
-      {/* Primary Contact Information */}
+      {/* Your Contact Information */}
       <div className="bg-white rounded-2xl border border-black/10 p-5 flex flex-col gap-4">
         <h2 className="text-[18px] font-medium">
-          Primary Contact Information <span className="text-red-500">*</span>
+          Your Contact Information <span className="text-red-500">*</span>
         </h2>
 
         <form.Field name="contactFirstName">
@@ -480,28 +480,6 @@ export default function ContactInformationStep() {
               onBlur={async (e) => {
                 field.handleBlur();
                 await saveContactDraft({ contactLastName: e.target.value });
-              }}
-              onChange={(e) => field.handleChange(e.target.value)}
-              onInput={(e) =>
-                field.handleChange((e.target as HTMLInputElement).value)
-              }
-            />
-          )}
-        </form.Field>
-
-        <form.Field name="contactEmail">
-          {(field) => (
-            <TextField
-              variant="standard"
-              label="Email (Required)"
-              fullWidth
-              name="contactEmail"
-              autoComplete="email"
-              helperText="This email will be used for your dashboard login and all campaign notifications. Please use an address you check regularly."
-              value={field.state.value}
-              onBlur={async (e) => {
-                field.handleBlur();
-                await saveContactDraft({ contactEmail: e.target.value });
               }}
               onChange={(e) => field.handleChange(e.target.value)}
               onInput={(e) =>
