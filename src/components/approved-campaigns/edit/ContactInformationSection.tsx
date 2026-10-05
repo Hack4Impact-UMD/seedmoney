@@ -125,7 +125,7 @@ export default function ContactInformationSection({
 
       <div className="rounded-2xl border border-black/10 bg-white p-6 flex flex-col gap-4">
         <h2 className="text-[20px] font-bold">
-          Primary Contact Information <span className="text-red-500">*</span>
+          Your Contact Information <span className="text-red-500">*</span>
         </h2>
 
         <TextField
@@ -142,15 +142,6 @@ export default function ContactInformationSection({
           fullWidth
           value={formData.contactLastName}
           onChange={onTextChange("contactLastName")}
-        />
-
-        <TextField
-          variant="standard"
-          label="Email (Required)"
-          fullWidth
-          helperText="This email will be used for your dashboard login and all campaign notifications. Please use an address you check regularly."
-          value={formData.contactEmail}
-          onChange={onTextChange("contactEmail")}
         />
 
         <TextField

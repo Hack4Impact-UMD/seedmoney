@@ -50,13 +50,8 @@ const SECTION_CHANGE_GROUPS: Array<{
     ],
   },
   {
-    label: "Primary Contact Information",
-    fields: [
-      "contactFirstName",
-      "contactLastName",
-      "contactEmail",
-      "contactRole",
-    ],
+    label: "Your Contact Information",
+    fields: ["contactFirstName", "contactLastName", "contactRole"],
   },
   {
     label: "Campaign Photos",
