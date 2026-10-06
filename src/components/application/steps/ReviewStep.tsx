@@ -408,6 +408,7 @@ export default function ReviewSubmitPage() {
         competition_id: currentCompetitionData.competition_id,
         raised: 0,
         donors: 0,
+        contact_email: values.contactEmail,
         givebutter_id: "",
         givebutter_slug: "",
         givebutterlink: "",

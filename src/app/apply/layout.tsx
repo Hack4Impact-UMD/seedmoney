@@ -91,10 +91,10 @@ export default async function ApplyLayout({
         mailingCountry: draftCampaign.mailing_country ?? "",
         contactFirstName: draftCampaign.contact_first_name ?? "",
         contactLastName: draftCampaign.contact_last_name ?? "",
-        contactEmail: draftCampaign.contact_email ?? "",
+        contactEmail: user?.email ?? draftCampaign.contact_email ?? "",
         contactRole: draftCampaign.contact_role ?? "",
       }
-    : {};
+    : { contactEmail: user?.email ?? "" };
 
   return (
     <div className="bg-[#F6FAF9] min-h-screen flex flex-col">
