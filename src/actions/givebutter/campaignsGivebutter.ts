@@ -365,21 +365,25 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
         const isNewGivebutterCampaign = !campaign.givebutter_id;
 
-        if (isNewGivebutterCampaign) {
-          await retryDatabaseUpdate(
-            async () =>
-              await supabase
-                .from("campaigns")
-                .update({
+        // Givebutter creates campaigns live. Record that conservative state
+        // before the remote call so a later failure cannot hide a live page.
+        await retryDatabaseUpdate(
+          async () =>
+            await supabase
+              .from("campaigns")
+              .update({
+                status: "published",
+                ...(isNewGivebutterCampaign && {
                   givebutter_slug: campaignSlug,
                   givebutterlink: `https://givebutter.com/${campaignSlug}`,
-                })
-                .eq("campaign_id", campaign.campaign_id)
-                .select("campaign_id")
-                .maybeSingle(),
-            "Failed to reserve Givebutter slug",
-          );
-        }
+                }),
+              })
+              .eq("campaign_id", campaign.campaign_id)
+              .select("campaign_id")
+              .maybeSingle(),
+          "Failed to reserve Givebutter campaign state",
+        );
+
         let givebutterCampaign = isNewGivebutterCampaign
           ? null
           : {
