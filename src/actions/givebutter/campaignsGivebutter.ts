@@ -39,6 +39,13 @@ type GivebutterFetch = (
   init: RequestInit,
 ) => Promise<Response>;
 
+function getGivebutterHeaders() {
+  return {
+    Authorization: `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+}
+
 const getPublicUrl = (storagePath: string) =>
   `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${storagePath}`;
 
@@ -296,10 +303,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         "https://api.givebutter.com/v1/campaigns",
         {
           method: "POST",
-          headers: {
-            "Authorization": `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
-            "Content-Type": "application/json",
-          },
+          headers: getGivebutterHeaders(),
           body: JSON.stringify(body),
         },
       );
@@ -315,10 +319,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         `https://api.givebutter.com/v1/campaigns/${givebutterCampaign.id}`,
         {
           method: "PUT",
-          headers: {
-            "Authorization": `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
-            "Content-Type": "application/json",
-          },
+          headers: getGivebutterHeaders(),
           body: JSON.stringify({
             published: false,
             settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
@@ -381,10 +382,7 @@ export async function publishDueCampaigns() {
           `https://api.givebutter.com/v1/campaigns/${campaign.givebutter_id}`,
           {
             method: "PUT",
-            headers: {
-              Authorization: `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
-              "Content-Type": "application/json",
-            },
+            headers: getGivebutterHeaders(),
             body: JSON.stringify({
               published: true,
               settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
