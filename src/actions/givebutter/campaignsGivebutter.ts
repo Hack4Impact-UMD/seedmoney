@@ -381,8 +381,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
             );
           }
 
-          givebutterCampaign = await createResponse.json();
-          const givebutterSlug = givebutterCampaign.slug ?? campaignSlug;
+          const createdCampaign = await createResponse.json();
+          givebutterCampaign = createdCampaign;
+          const givebutterSlug = createdCampaign.slug ?? campaignSlug;
 
           try {
             await retryDatabaseUpdate(
@@ -390,10 +391,10 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
                 await supabase
                   .from("campaigns")
                   .update({
-                    givebutter_id: String(givebutterCampaign.id),
+                    givebutter_id: String(createdCampaign.id),
                     givebutter_slug: givebutterSlug,
                     givebutterlink:
-                      givebutterCampaign.url ??
+                      createdCampaign.url ??
                       `https://givebutter.com/${givebutterSlug}`,
                   })
                   .eq("campaign_id", campaign.campaign_id),
@@ -401,12 +402,12 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
             );
           } catch (error) {
             const deleted = await deleteGivebutterCampaign(
-              givebutterCampaign.id,
+              createdCampaign.id,
             );
 
             if (!deleted) {
               console.error(
-                `Givebutter campaign ${givebutterCampaign.id} requires manual cleanup`,
+                `Givebutter campaign ${createdCampaign.id} requires manual cleanup`,
               );
             }
 
@@ -414,10 +415,16 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
           }
         }
 
+        if (!givebutterCampaign) {
+          throw new Error("Givebutter campaign identity is missing");
+        }
+
+        const remoteCampaign = givebutterCampaign;
+
         const handleUnpublishFailure = async () => {
           const deleted =
             isNewGivebutterCampaign &&
-            (await deleteGivebutterCampaign(givebutterCampaign.id));
+            (await deleteGivebutterCampaign(remoteCampaign.id));
 
           if (deleted === true) {
             await retryDatabaseUpdate(
@@ -448,7 +455,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
         try {
           patchResponse = await fetchGivebutterWithRetry(
-            getGivebutterCampaignUrl(givebutterCampaign.id),
+            getGivebutterCampaignUrl(remoteCampaign.id),
             {
               method: "PUT",
               headers: getGivebutterHeaders(),
