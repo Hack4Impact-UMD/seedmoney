@@ -8,6 +8,7 @@ import type { Campaign } from "@/src/types";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const BUCKET_NAME = "campaign_images";
+const GIVEBUTTER_CAMPAIGNS_URL = "https://api.givebutter.com/v1/campaigns";
 const GIVEBUTTER_MAX_ATTEMPTS = 3;
 const GIVEBUTTER_RETRY_BASE_DELAY_MS = 500;
 const GIVEBUTTER_PUBLISH_REQUEST_INTERVAL_MS = 150;
