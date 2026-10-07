@@ -179,13 +179,15 @@ export default function ReviewApplicationsTable({
 
       if (status === "approved") {
         const results = await createGivebutterCampaigns(ids);
-        const failedCampaignIds = results.flatMap((result, index) => {
-          if (result.status === "fulfilled") return [];
+        const failedCampaigns = results.filter(
+          (result) => result.status === "rejected",
+        );
+
+        failedCampaigns.forEach((result) => {
           console.error("Failed to create Givebutter campaign:", result.reason);
-          return [ids[index]];
         });
 
-        if (failedCampaignIds.length > 0) {
+        if (failedCampaigns.length > 0) {
           setNotification({ action: "error", campaignNames: [] });
           setSnackbarOpen(true);
           setSelectedIds([]);
