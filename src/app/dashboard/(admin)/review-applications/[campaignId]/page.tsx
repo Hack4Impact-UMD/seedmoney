@@ -191,6 +191,11 @@ export default function CampaignReviewPage() {
             console.error(message);
             setSaveErrorMessage(message);
             setShowErrorToast(true);
+            const refreshedCampaign = await refetch();
+            if (refreshedCampaign.data) {
+              setInitialData(refreshedCampaign.data.mappedData);
+              setFormData(refreshedCampaign.data.mappedData);
+            }
             setIsStatusTransitioning(false);
             return;
           }
@@ -253,6 +258,7 @@ export default function CampaignReviewPage() {
       formData.campaignTitle,
       isFormDirty,
       parsedCampaignId,
+      refetch,
       router,
       setFieldValue,
       updateCampaignMutation,
