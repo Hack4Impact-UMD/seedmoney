@@ -413,26 +413,12 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         }
       }
 
-      const patchResponse = await fetchGivebutterWithRetry(
-        getGivebutterCampaignUrl(givebutterCampaign.id),
-        {
-          method: "PUT",
-          headers: getGivebutterHeaders(),
-          body: JSON.stringify({
-            published: false,
-            settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
-            slug: campaignSlug,
-          }),
-        },
-      );
-
-      if (!patchResponse.ok) {
-        const error = await readErrorBody(patchResponse);
+      const handleUnpublishFailure = async () => {
         const deleted =
           isNewGivebutterCampaign &&
           (await deleteGivebutterCampaign(givebutterCampaign.id));
 
-        if (deleted) {
+        if (deleted === true) {
           await retryDatabaseUpdate(
             async () =>
               await supabase
@@ -455,6 +441,31 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
             "Failed to flag live Givebutter campaign",
           );
         }
+      };
+
+      let patchResponse: Response;
+
+      try {
+        patchResponse = await fetchGivebutterWithRetry(
+          getGivebutterCampaignUrl(givebutterCampaign.id),
+          {
+            method: "PUT",
+            headers: getGivebutterHeaders(),
+            body: JSON.stringify({
+              published: false,
+              settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
+              slug: campaignSlug,
+            }),
+          },
+        );
+      } catch (error) {
+        await handleUnpublishFailure();
+        throw error;
+      }
+
+      if (!patchResponse.ok) {
+        const error = await readErrorBody(patchResponse);
+        await handleUnpublishFailure();
 
         throw new Error(
           `Failed to unpublish campaign (${patchResponse.status}): ${JSON.stringify(error)}`,
