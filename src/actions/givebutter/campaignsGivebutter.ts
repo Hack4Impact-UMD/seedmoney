@@ -417,14 +417,6 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
           if (!createResponse.ok) {
             const error = await readErrorBody(createResponse);
-            const slugRejected =
-              createResponse.status === 422 &&
-              typeof error === "object" &&
-              error !== null &&
-              "errors" in error &&
-              typeof error.errors === "object" &&
-              error.errors !== null &&
-              "slug" in error.errors;
             // A slug conflict proves the slug is taken, not that this row owns it.
             remoteCampaignMayBeLive = isRetryableGivebutterStatus(
               createResponse.status,
@@ -663,14 +655,7 @@ export async function publishDueCampaigns() {
         );
       }
 
-      await updateCampaignWithRetry(
-        supabase,
-        campaign.campaign_id,
-        { status: "published" },
-        "Failed to reserve published campaign state",
-      );
-
-      let failureStatus: "published" | "publish_failed" = "published";
+      let failureStatus: "approved" | "publish_failed" = "approved";
 
       try {
         const response = await fetchGivebutterWithRetry(
@@ -688,13 +673,20 @@ export async function publishDueCampaigns() {
 
         if (!response.ok) {
           failureStatus = isRetryableGivebutterStatus(response.status)
-            ? "published"
+            ? "approved"
             : "publish_failed";
           const error = await readErrorBody(response);
           throw new Error(
             `Givebutter error (${response.status}): ${JSON.stringify(error)}`,
           );
         }
+
+        await updateCampaignWithRetry(
+          supabase,
+          campaign.campaign_id,
+          { status: "published" },
+          "Failed to record published campaign",
+        );
 
         try {
           const { error: emailError } = await supabase.functions.invoke(
