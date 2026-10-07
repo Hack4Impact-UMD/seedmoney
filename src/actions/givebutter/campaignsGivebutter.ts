@@ -306,6 +306,17 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         }),
       };
 
+      const { error: slugError } = await supabase
+        .from("campaigns")
+        .update({ givebutter_slug: campaignSlug })
+        .eq("campaign_id", campaign.campaign_id);
+
+      if (slugError) {
+        throw new Error(
+          `Failed to reserve Givebutter slug: ${slugError.message}`,
+        );
+      }
+
       // Do not retry this POST without an idempotency key; a lost response
       // after a successful create could duplicate campaigns in Givebutter.
       const createResponse = await fetch(
