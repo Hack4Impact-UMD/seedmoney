@@ -354,6 +354,22 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
       }
 
       const givebutterCampaign = await createResponse.json();
+      const givebutterSlug = givebutterCampaign.slug ?? campaignSlug;
+
+      await retryDatabaseUpdate(
+        async () =>
+          await supabase
+            .from("campaigns")
+            .update({
+              givebutter_id: String(givebutterCampaign.id),
+              givebutter_slug: givebutterSlug,
+              givebutterlink:
+                givebutterCampaign.url ??
+                `https://givebutter.com/${givebutterSlug}`,
+            })
+            .eq("campaign_id", campaign.campaign_id),
+        "Failed to save Givebutter campaign identity",
+      );
 
       const patchResponse = await fetchGivebutterWithRetry(
         getGivebutterCampaignUrl(givebutterCampaign.id),
