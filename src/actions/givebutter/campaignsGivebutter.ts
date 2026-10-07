@@ -319,8 +319,6 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
-      let remotePublishRejected = false;
-
       try {
         const competition =
           campaign.competition_id === null
