@@ -179,69 +179,15 @@ export default function ReviewApplicationsTable({
 
       if (status === "approved") {
         const results = await createGivebutterCampaigns(ids);
-        const failedCampaignIds: number[] = [];
-        const successfulCampaignUpdates: { campaignId: number; update: Promise<unknown> }[] = [];
+        const failedCampaigns = results.filter(
+          (result) => result.status === "rejected",
+        );
 
-        results.forEach((result) => {
-          if (result.status === "rejected") {
-            console.error("Failed to create Givebutter campaign:", result.reason);
-            return;
-          }
-
-          const campaignId = result.value.campaignId;
-          successfulCampaignUpdates.push({
-            campaignId,
-            update: updateCampaignMutation.mutateAsync({
-              campaignId,
-              campaignData: {
-                givebutter_id: result.value.id,
-                givebutter_slug: result.value.slug,
-                givebutterlink: result.value.url,
-              },
-            }),
-          });
+        failedCampaigns.forEach((result) => {
+          console.error("Failed to create Givebutter campaign:", result.reason);
         });
 
-        const successfulCampaignIds = new Set(
-          results
-            .filter((result) => result.status === "fulfilled")
-            .map((result) => result.value.campaignId),
-        );
-
-        failedCampaignIds.push(...ids.filter((id) => !successfulCampaignIds.has(id)));
-
-        if (failedCampaignIds.length > 0) {
-          await Promise.all(
-            failedCampaignIds.map((id) =>
-              updateCampaignMutation.mutateAsync({
-                campaignId: id,
-                campaignData: { status: "publish_failed" },
-              }),
-            ),
-          );
-        }
-
-        const successfulUpdateResults = await Promise.allSettled(
-          successfulCampaignUpdates.map(({ update }) => update),
-        );
-        const failedSuccessfulUpdateIds = successfulUpdateResults.flatMap((result, index) =>
-          result.status === "rejected" ? [successfulCampaignUpdates[index].campaignId] : [],
-        );
-
-        failedCampaignIds.push(...failedSuccessfulUpdateIds);
-
-        if (failedSuccessfulUpdateIds.length > 0) {
-          await Promise.allSettled(
-            failedSuccessfulUpdateIds.map((id) =>
-              updateCampaignMutation.mutateAsync({
-                campaignId: id,
-                campaignData: { status: "publish_failed" },
-              }),
-            ),
-          );
-        }
-
-        if (failedCampaignIds.length > 0) {
+        if (failedCampaigns.length > 0) {
           setNotification({ action: "error", campaignNames: [] });
           setSnackbarOpen(true);
           setSelectedIds([]);

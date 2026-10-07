@@ -1,10 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
-import { campaignHandlers } from "./campaign";
 import { transactionHandlers } from "./transactions";
 import { WebhookPayload } from "./types";
 
 const eventHandlers = {
-  ...campaignHandlers,
   ...transactionHandlers,
 } as Record<string, (payload: WebhookPayload) => Promise<void>>;
 

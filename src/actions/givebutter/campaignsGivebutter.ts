@@ -5,9 +5,11 @@ import { createServerClient } from "@/src/lib/supabase-client";
 import { createServiceRoleClient } from "@/src/lib/supabase-service";
 import { getGardenStoryAnswers } from "@/src/lib/givebutterStoryAnswers";
 import type { Campaign } from "@/src/types";
+import type { SupabaseClient } from "@supabase/supabase-js";
 
 const SUPABASE_URL = process.env.NEXT_PUBLIC_SUPABASE_URL;
 const BUCKET_NAME = "campaign_images";
+const GIVEBUTTER_CAMPAIGNS_URL = "https://api.givebutter.com/v1/campaigns";
 const GIVEBUTTER_MAX_ATTEMPTS = 3;
 const GIVEBUTTER_RETRY_BASE_DELAY_MS = 500;
 const GIVEBUTTER_PUBLISH_REQUEST_INTERVAL_MS = 150;
@@ -33,10 +35,18 @@ const GARDEN_STORY_HEADERS = [
   "What Your Support Will Do",
 ];
 
-type GivebutterFetch = (
-  url: string,
-  init: RequestInit,
-) => Promise<Response>;
+type GivebutterFetch = (url: string, init: RequestInit) => Promise<Response>;
+
+function getGivebutterHeaders() {
+  return {
+    Authorization: `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
+    "Content-Type": "application/json",
+  };
+}
+
+function getGivebutterCampaignUrl(campaignId: string | number) {
+  return `${GIVEBUTTER_CAMPAIGNS_URL}/${campaignId}`;
+}
 
 const getPublicUrl = (storagePath: string) =>
   `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${storagePath}`;
@@ -58,6 +68,40 @@ function getRetryDelayMs(response: Response | null, attempt: number) {
 
 function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function updateCampaignWithRetry(
+  supabase: SupabaseClient,
+  campaignId: number,
+  campaignData: Partial<Campaign>,
+  errorMessage: string,
+) {
+  let lastError = "Campaign row was not updated";
+
+  for (let attempt = 0; attempt < GIVEBUTTER_MAX_ATTEMPTS; attempt += 1) {
+    try {
+      const { data, error } = await supabase
+        .from("campaigns")
+        .update(campaignData)
+        .eq("campaign_id", campaignId)
+        .select("campaign_id")
+        .maybeSingle();
+
+      if (!error && data) {
+        return;
+      }
+
+      lastError = error?.message ?? lastError;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
+    }
+
+    if (attempt < GIVEBUTTER_MAX_ATTEMPTS - 1) {
+      await wait(GIVEBUTTER_RETRY_BASE_DELAY_MS * 2 ** attempt);
+    }
+  }
+
+  throw new Error(`${errorMessage}: ${lastError}`);
 }
 
 function createPacedGivebutterFetch(intervalMs: number): GivebutterFetch {
@@ -85,10 +129,10 @@ function generateCampaignSlug(title: string, year: number): string {
   const slug = title
     .toLowerCase()
     .trim()
-    .replace(/[^\w\s-]/g, '')
-    .replace(/\s+/g, '-')
-    .replace(/-+/g, '-')
-    .replace(/^-+|-+$/g, '');
+    .replace(/[^\w\s-]/g, "")
+    .replace(/\s+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-+|-+$/g, "");
   return `${slug}-${year}`;
 }
 
@@ -139,10 +183,7 @@ function buildGardenStoryDescription(answers: string[], imageUrls: string[]) {
       blocks.push(
         ...imageUrls
           .slice(GARDEN_STORY_HEADERS.length)
-          .map(
-            (url) =>
-              `<p><img src="${url}" alt="Campaign image" /></p>`,
-          ),
+          .map((url) => `<p><img src="${url}" alt="Campaign image" /></p>`),
       );
     }
 
@@ -198,10 +239,35 @@ async function readErrorBody(response: Response) {
   }
 }
 
+async function deleteGivebutterCampaign(campaignId: string | number) {
+  try {
+    const response = await fetchGivebutterWithRetry(
+      getGivebutterCampaignUrl(campaignId),
+      {
+        method: "DELETE",
+        headers: getGivebutterHeaders(),
+      },
+    );
+
+    if (response.ok || response.status === 404) {
+      return true;
+    }
+
+    console.error(
+      `Failed to delete Givebutter campaign ${campaignId} (${response.status}):`,
+      await readErrorBody(response),
+    );
+    return false;
+  } catch (error) {
+    console.error(`Failed to delete Givebutter campaign ${campaignId}:`, error);
+    return false;
+  }
+}
+
 export async function createGivebutterCampaigns(campaignIds: number[]) {
   const supabase = await createServerClient();
 
-  const campaigns = await readCampaignServer(campaignIds) as Campaign[];
+  const campaigns = (await readCampaignServer(campaignIds)) as Campaign[];
   if (!campaigns || campaigns.length === 0) {
     throw new Error("No campaigns found");
   }
@@ -232,7 +298,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
     : { data: [], error: null };
 
   if (competitionError) {
-    throw new Error(`Failed to fetch competition metadata: ${competitionError.message}`);
+    throw new Error(
+      `Failed to fetch competition metadata: ${competitionError.message}`,
+    );
   }
 
   const competitionById = new Map(
@@ -244,100 +312,299 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
-      const competition = campaign.competition_id === null
-        ? null
-        : competitionById.get(campaign.competition_id);
+      let remoteCampaignMayBeLive = false;
 
-      if (!competition?.end_date) {
-        throw new Error(
-          `Campaign ${campaign.campaign_id} has no competition end date`,
+      try {
+        const competition =
+          campaign.competition_id === null
+            ? null
+            : competitionById.get(campaign.competition_id);
+
+        if (!competition?.end_date) {
+          throw new Error(
+            `Campaign ${campaign.campaign_id} has no competition end date`,
+          );
+        }
+
+        const campaignImages = (imageRecords ?? []).filter(
+          (r) => r.campaign_id === campaign.campaign_id,
         );
-      }
 
-      const campaignImages = (imageRecords ?? []).filter(
-        (r) => r.campaign_id === campaign.campaign_id,
-      );
+        const mainImage = campaignImages.find((r) => r.is_main === true);
 
-      const mainImage = campaignImages.find((r) => r.is_main === true);
+        const answers = await readAnswersByCampaignId(campaign.campaign_id);
+        const [q1, q2, q3, q4] = getGardenStoryAnswers(answers);
 
-      const answers = await readAnswersByCampaignId(campaign.campaign_id);
-      const [q1, q2, q3, q4] = getGardenStoryAnswers(answers);
+        const supportingImagesArray = campaignImages.filter(
+          (r) => r.is_main === false,
+        );
+        const supportingImageUrls = supportingImagesArray.map((image) =>
+          getPublicUrl(image.storage_path),
+        );
+        const description = buildGardenStoryDescription(
+          [q1, q2, q3, q4],
+          supportingImageUrls,
+        );
+        const campaignSlug = generateCampaignSlug(
+          campaign.name,
+          getYearFromDateString(competition.start_date),
+        );
 
-      const supportingImagesArray = campaignImages.filter((r) => r.is_main === false);
-      const supportingImageUrls = supportingImagesArray.map((image) =>
-        getPublicUrl(image.storage_path),
-      );
-      const description = buildGardenStoryDescription(
-        [q1, q2, q3, q4],
-        supportingImageUrls,
-      );
-
-      const body = {
-        type: "fundraise",
-        title: campaign.name,
-        subtitle: formatLocationSubtitle(campaign),
-        description,
-        end_at: formatGivebutterEndAt(competition.end_date),
-        settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
-        ...(campaign.goal !== undefined && { goal: campaign.goal }),
-        ...(mainImage && {
-          cover: {
-            source: "upload",
-            type: "image",
-            url: getPublicUrl(mainImage.storage_path),
-          },
-        }),
-      };
-
-      // Do not retry this POST without an idempotency key; a lost response
-      // after a successful create could duplicate campaigns in Givebutter.
-      const createResponse = await fetch(
-        "https://api.givebutter.com/v1/campaigns",
-        {
-          method: "POST",
-          headers: {
-            "Authorization": `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify(body),
-        },
-      );
-
-      if (!createResponse.ok) {
-        const error = await readErrorBody(createResponse);
-        throw new Error(`Failed to create campaign (${createResponse.status}): ${JSON.stringify(error)}`);
-      }
-
-      const givebutterCampaign = await createResponse.json();
-
-      const patchResponse = await fetchGivebutterWithRetry(
-        `https://api.givebutter.com/v1/campaigns/${givebutterCampaign.id}`,
-        {
-          method: "PUT",
-          headers: {
-            "Authorization": `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
-            "Content-Type": "application/json",
-          },
-          body: JSON.stringify({
-            published: false,
-            settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
-            slug: generateCampaignSlug(
-              campaign.name,
-              getYearFromDateString(competition.start_date),
-            ),
+        const body = {
+          type: "fundraise",
+          title: campaign.name,
+          subtitle: formatLocationSubtitle(campaign),
+          description,
+          end_at: formatGivebutterEndAt(competition.end_date),
+          slug: campaignSlug,
+          settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
+          ...(campaign.goal !== undefined && { goal: campaign.goal }),
+          ...(mainImage && {
+            cover: {
+              source: "upload",
+              type: "image",
+              url: getPublicUrl(mainImage.storage_path),
+            },
           }),
-        },
-      );
+        };
 
-      if (!patchResponse.ok) {
-        const error = await readErrorBody(patchResponse);
-        throw new Error(`Failed to unpublish campaign (${patchResponse.status}): ${JSON.stringify(error)}`);
+        const isNewGivebutterCampaign = !campaign.givebutter_id;
+
+        // Givebutter creates campaigns live. Record that conservative state
+        // before the remote call so a later failure cannot hide a live page.
+        await updateCampaignWithRetry(
+          supabase,
+          campaign.campaign_id,
+          {
+            status: "published",
+            ...(isNewGivebutterCampaign && {
+              givebutter_slug: campaignSlug,
+              givebutterlink: `https://givebutter.com/${campaignSlug}`,
+            }),
+          },
+          "Failed to reserve Givebutter campaign state",
+        );
+
+        let givebutterCampaign = isNewGivebutterCampaign
+          ? null
+          : {
+              id: campaign.givebutter_id,
+              slug: campaign.givebutter_slug || campaignSlug,
+              url:
+                campaign.givebutterlink ||
+                `https://givebutter.com/${campaign.givebutter_slug || campaignSlug}`,
+            };
+
+        if (!givebutterCampaign) {
+          // Do not retry this POST without an idempotency key; a lost response
+          // after a successful create could duplicate campaigns in Givebutter.
+          remoteCampaignMayBeLive = true;
+          let createResponse: Response;
+
+          try {
+            createResponse = await fetch(GIVEBUTTER_CAMPAIGNS_URL, {
+              method: "POST",
+              headers: getGivebutterHeaders(),
+              body: JSON.stringify(body),
+            });
+          } catch (error) {
+            const message =
+              error instanceof Error ? error.message : String(error);
+            throw new Error(
+              `Givebutter did not return a create response. The campaign may be live at https://givebutter.com/${campaignSlug}; verify it before retrying. ${message}`,
+            );
+          }
+
+          if (!createResponse.ok) {
+            const error = await readErrorBody(createResponse);
+            // A slug conflict proves the slug is taken, not that this row owns it.
+            remoteCampaignMayBeLive = isRetryableGivebutterStatus(
+              createResponse.status,
+            );
+            const liveWarning = remoteCampaignMayBeLive
+              ? ` The campaign may be live at https://givebutter.com/${campaignSlug}; verify it before retrying.`
+              : "";
+            throw new Error(
+              `Failed to create campaign (${createResponse.status}): ${JSON.stringify(error)}.${liveWarning}`,
+            );
+          }
+
+          const createdCampaign = await createResponse.json();
+          givebutterCampaign = createdCampaign;
+          const givebutterSlug = createdCampaign.slug ?? campaignSlug;
+
+          try {
+            await updateCampaignWithRetry(
+              supabase,
+              campaign.campaign_id,
+              {
+                givebutter_id: String(createdCampaign.id),
+                givebutter_slug: givebutterSlug,
+                givebutterlink:
+                  createdCampaign.url ??
+                  `https://givebutter.com/${givebutterSlug}`,
+              },
+              "Failed to save Givebutter campaign identity",
+            );
+          } catch (error) {
+            const deleted = await deleteGivebutterCampaign(createdCampaign.id);
+
+            if (deleted) {
+              remoteCampaignMayBeLive = false;
+              await updateCampaignWithRetry(
+                supabase,
+                campaign.campaign_id,
+                { givebutter_id: "", givebutterlink: "" },
+                "Failed to clear deleted Givebutter campaign",
+              );
+            } else {
+              await updateCampaignWithRetry(
+                supabase,
+                campaign.campaign_id,
+                {
+                  status: "published",
+                  givebutter_id: String(createdCampaign.id),
+                  givebutter_slug: givebutterSlug,
+                  givebutterlink:
+                    createdCampaign.url ??
+                    `https://givebutter.com/${givebutterSlug}`,
+                },
+                "Failed to record live Givebutter campaign",
+              );
+              console.error(
+                `Givebutter campaign ${createdCampaign.id} requires manual cleanup`,
+              );
+            }
+
+            throw error;
+          }
+        }
+
+        if (!givebutterCampaign) {
+          throw new Error("Givebutter campaign identity is missing");
+        }
+
+        const remoteCampaign = givebutterCampaign;
+        remoteCampaignMayBeLive = true;
+
+        const handleUnpublishFailure = async (remoteMissing = false) => {
+          if (remoteMissing) {
+            remoteCampaignMayBeLive = false;
+            await updateCampaignWithRetry(
+              supabase,
+              campaign.campaign_id,
+              {
+                status: "publish_failed",
+                givebutter_id: "",
+                givebutterlink: "",
+              },
+              "Failed to clear missing Givebutter campaign",
+            );
+            return;
+          }
+
+          const deleted =
+            isNewGivebutterCampaign &&
+            (await deleteGivebutterCampaign(remoteCampaign.id));
+
+          if (deleted === true) {
+            remoteCampaignMayBeLive = false;
+            await updateCampaignWithRetry(
+              supabase,
+              campaign.campaign_id,
+              {
+                status: "publish_failed",
+                givebutter_id: "",
+                givebutterlink: "",
+              },
+              "Failed to clear deleted Givebutter campaign",
+            );
+          } else {
+            await updateCampaignWithRetry(
+              supabase,
+              campaign.campaign_id,
+              { status: "published" },
+              "Failed to flag live Givebutter campaign",
+            );
+          }
+        };
+
+        let patchResponse: Response;
+
+        try {
+          patchResponse = await fetchGivebutterWithRetry(
+            getGivebutterCampaignUrl(remoteCampaign.id),
+            {
+              method: "PUT",
+              headers: getGivebutterHeaders(),
+              body: JSON.stringify({
+                published: false,
+                settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
+                slug: campaignSlug,
+              }),
+            },
+          );
+        } catch (error) {
+          await handleUnpublishFailure();
+          throw error;
+        }
+
+        if (!patchResponse.ok) {
+          const error = await readErrorBody(patchResponse);
+          await handleUnpublishFailure(patchResponse.status === 404);
+
+          throw new Error(
+            `Failed to unpublish campaign (${patchResponse.status}): ${JSON.stringify(error)}`,
+          );
+        }
+
+        remoteCampaignMayBeLive = false;
+        const syncedCampaign = await patchResponse.json();
+
+        await updateCampaignWithRetry(
+          supabase,
+          campaign.campaign_id,
+          {
+            status: "approved",
+            givebutter_id: String(syncedCampaign.id),
+            givebutter_slug: syncedCampaign.slug ?? campaignSlug,
+            givebutterlink:
+              syncedCampaign.url ??
+              `https://givebutter.com/${syncedCampaign.slug ?? campaignSlug}`,
+          },
+          "Failed to finish Givebutter campaign sync",
+        );
+
+        return {
+          ...syncedCampaign,
+          campaignId: campaign.campaign_id,
+        };
+      } catch (error) {
+        const { data: currentCampaign } = await supabase
+          .from("campaigns")
+          .select("status")
+          .eq("campaign_id", campaign.campaign_id)
+          .maybeSingle();
+
+        const failureStatus = remoteCampaignMayBeLive
+          ? "published"
+          : "publish_failed";
+
+        if (currentCampaign?.status !== failureStatus) {
+          try {
+            await updateCampaignWithRetry(
+              supabase,
+              campaign.campaign_id,
+              { status: failureStatus },
+              "Failed to record Givebutter sync failure",
+            );
+          } catch (statusError) {
+            console.error(statusError);
+          }
+        }
+
+        throw error;
       }
-
-      return {
-        ...(await patchResponse.json()),
-        campaignId: campaign.campaign_id,
-      };
     }),
   );
 
@@ -353,7 +620,8 @@ export async function publishDueCampaigns() {
     .eq("is_current", true)
     .single();
 
-  if (compError || !competition) throw new Error("No current competition found");
+  if (compError || !competition)
+    throw new Error("No current competition found");
 
   // Not time yet
   if (new Date(competition.start_date) > new Date()) return;
@@ -375,15 +643,26 @@ export async function publishDueCampaigns() {
 
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
+      if (!campaign.givebutter_id) {
+        await updateCampaignWithRetry(
+          supabase,
+          campaign.campaign_id,
+          { status: "publish_failed" },
+          "Failed to record missing Givebutter campaign",
+        );
+        throw new Error(
+          `Campaign ${campaign.campaign_id} has no Givebutter ID`,
+        );
+      }
+
+      let failureStatus: "approved" | "publish_failed" = "approved";
+
       try {
         const response = await fetchGivebutterWithRetry(
-          `https://api.givebutter.com/v1/campaigns/${campaign.givebutter_id}`,
+          getGivebutterCampaignUrl(campaign.givebutter_id),
           {
             method: "PUT",
-            headers: {
-              Authorization: `Bearer ${process.env.GIVEBUTTER_API_KEY}`,
-              "Content-Type": "application/json",
-            },
+            headers: getGivebutterHeaders(),
             body: JSON.stringify({
               published: true,
               settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
@@ -393,18 +672,21 @@ export async function publishDueCampaigns() {
         );
 
         if (!response.ok) {
+          failureStatus = isRetryableGivebutterStatus(response.status)
+            ? "approved"
+            : "publish_failed";
           const error = await readErrorBody(response);
-          throw new Error(`Givebutter error (${response.status}): ${JSON.stringify(error)}`);
+          throw new Error(
+            `Givebutter error (${response.status}): ${JSON.stringify(error)}`,
+          );
         }
 
-        const { error: updateError } = await supabase
-          .from("campaigns")
-          .update({ status: "published" })
-          .eq("campaign_id", campaign.campaign_id);
-
-        if (updateError) {
-          throw new Error(updateError.message);
-        }
+        await updateCampaignWithRetry(
+          supabase,
+          campaign.campaign_id,
+          { status: "published" },
+          "Failed to record published campaign",
+        );
 
         try {
           const { error: emailError } = await supabase.functions.invoke(
@@ -433,10 +715,12 @@ export async function publishDueCampaigns() {
           );
         }
       } catch (err) {
-        await supabase
-          .from("campaigns")
-          .update({ status: "publish_failed" })
-          .eq("campaign_id", campaign.campaign_id);
+        await updateCampaignWithRetry(
+          supabase,
+          campaign.campaign_id,
+          { status: failureStatus },
+          "Failed to record Givebutter publish result",
+        );
         throw err;
       }
     }),
