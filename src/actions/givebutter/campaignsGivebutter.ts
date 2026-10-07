@@ -602,7 +602,16 @@ export async function publishDueCampaigns() {
 
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
+      let remotePublishRejected = false;
+
       try {
+        if (!campaign.givebutter_id) {
+          remotePublishRejected = true;
+          throw new Error(
+            `Campaign ${campaign.campaign_id} has no Givebutter ID`,
+          );
+        }
+
         const response = await fetchGivebutterWithRetry(
           getGivebutterCampaignUrl(campaign.givebutter_id),
           {
