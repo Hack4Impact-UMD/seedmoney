@@ -232,6 +232,26 @@ async function readErrorBody(response: Response) {
   }
 }
 
+async function deleteGivebutterCampaign(campaignId: string | number) {
+  try {
+    const response = await fetchGivebutterWithRetry(
+      getGivebutterCampaignUrl(campaignId),
+      {
+        method: "DELETE",
+        headers: getGivebutterHeaders(),
+      },
+    );
+
+    return response.ok || response.status === 404;
+  } catch (error) {
+    console.error(
+      `Failed to delete Givebutter campaign ${campaignId}:`,
+      error,
+    );
+    return false;
+  }
+}
+
 export async function createGivebutterCampaigns(campaignIds: number[]) {
   const supabase = await createServerClient();
 
@@ -356,20 +376,32 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
       const givebutterCampaign = await createResponse.json();
       const givebutterSlug = givebutterCampaign.slug ?? campaignSlug;
 
-      await retryDatabaseUpdate(
-        async () =>
-          await supabase
-            .from("campaigns")
-            .update({
-              givebutter_id: String(givebutterCampaign.id),
-              givebutter_slug: givebutterSlug,
-              givebutterlink:
-                givebutterCampaign.url ??
-                `https://givebutter.com/${givebutterSlug}`,
-            })
-            .eq("campaign_id", campaign.campaign_id),
-        "Failed to save Givebutter campaign identity",
-      );
+      try {
+        await retryDatabaseUpdate(
+          async () =>
+            await supabase
+              .from("campaigns")
+              .update({
+                givebutter_id: String(givebutterCampaign.id),
+                givebutter_slug: givebutterSlug,
+                givebutterlink:
+                  givebutterCampaign.url ??
+                  `https://givebutter.com/${givebutterSlug}`,
+              })
+              .eq("campaign_id", campaign.campaign_id),
+          "Failed to save Givebutter campaign identity",
+        );
+      } catch (error) {
+        const deleted = await deleteGivebutterCampaign(givebutterCampaign.id);
+
+        if (!deleted) {
+          console.error(
+            `Givebutter campaign ${givebutterCampaign.id} requires manual cleanup`,
+          );
+        }
+
+        throw error;
+      }
 
       const patchResponse = await fetchGivebutterWithRetry(
         getGivebutterCampaignUrl(givebutterCampaign.id),
