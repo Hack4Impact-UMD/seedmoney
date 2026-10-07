@@ -46,6 +46,10 @@ function getGivebutterHeaders() {
   };
 }
 
+function getGivebutterCampaignUrl(campaignId: string | number) {
+  return `${GIVEBUTTER_CAMPAIGNS_URL}/${campaignId}`;
+}
+
 const getPublicUrl = (storagePath: string) =>
   `${SUPABASE_URL}/storage/v1/object/public/${BUCKET_NAME}/${storagePath}`;
 
@@ -300,7 +304,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
       // Do not retry this POST without an idempotency key; a lost response
       // after a successful create could duplicate campaigns in Givebutter.
       const createResponse = await fetch(
-        "https://api.givebutter.com/v1/campaigns",
+        GIVEBUTTER_CAMPAIGNS_URL,
         {
           method: "POST",
           headers: getGivebutterHeaders(),
@@ -316,7 +320,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
       const givebutterCampaign = await createResponse.json();
 
       const patchResponse = await fetchGivebutterWithRetry(
-        `https://api.givebutter.com/v1/campaigns/${givebutterCampaign.id}`,
+        getGivebutterCampaignUrl(givebutterCampaign.id),
         {
           method: "PUT",
           headers: getGivebutterHeaders(),
@@ -379,7 +383,7 @@ export async function publishDueCampaigns() {
     campaigns.map(async (campaign) => {
       try {
         const response = await fetchGivebutterWithRetry(
-          `https://api.givebutter.com/v1/campaigns/${campaign.givebutter_id}`,
+          getGivebutterCampaignUrl(campaign.givebutter_id),
           {
             method: "PUT",
             headers: getGivebutterHeaders(),
