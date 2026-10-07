@@ -406,8 +406,16 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
           if (!createResponse.ok) {
             const error = await readErrorBody(createResponse);
+            const existingCampaign =
+              createResponse.status === 422
+                ? await findGivebutterCampaignBySlug(campaignSlug)
+                : null;
+            const collisionDetails = existingCampaign
+              ? ` Existing Givebutter campaign: ${existingCampaign.id} (${existingCampaign.url}).`
+              : "";
+
             throw new Error(
-              `Failed to create campaign (${createResponse.status}): ${JSON.stringify(error)}`,
+              `Failed to create campaign (${createResponse.status}): ${JSON.stringify(error)}.${collisionDetails}`,
             );
           }
 
