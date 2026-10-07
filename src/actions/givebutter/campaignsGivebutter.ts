@@ -449,8 +449,26 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         );
       }
 
+      const syncedCampaign = await patchResponse.json();
+
+      await retryDatabaseUpdate(
+        async () =>
+          await supabase
+            .from("campaigns")
+            .update({
+              status: "approved",
+              givebutter_id: String(syncedCampaign.id),
+              givebutter_slug: syncedCampaign.slug ?? campaignSlug,
+              givebutterlink:
+                syncedCampaign.url ??
+                `https://givebutter.com/${syncedCampaign.slug ?? campaignSlug}`,
+            })
+            .eq("campaign_id", campaign.campaign_id),
+        "Failed to finish Givebutter campaign sync",
+      );
+
       return {
-        ...(await patchResponse.json()),
+        ...syncedCampaign,
         campaignId: campaign.campaign_id,
       };
     }),
