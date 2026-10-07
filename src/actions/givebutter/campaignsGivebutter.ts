@@ -72,6 +72,28 @@ function wait(ms: number) {
   return new Promise((resolve) => setTimeout(resolve, ms));
 }
 
+async function retryDatabaseUpdate(
+  operation: () => Promise<{ error: { message: string } | null }>,
+  errorMessage: string,
+) {
+  let lastError = "";
+
+  for (let attempt = 0; attempt < GIVEBUTTER_MAX_ATTEMPTS; attempt += 1) {
+    const { error } = await operation();
+
+    if (!error) {
+      return;
+    }
+
+    lastError = error.message;
+    if (attempt < GIVEBUTTER_MAX_ATTEMPTS - 1) {
+      await wait(GIVEBUTTER_RETRY_BASE_DELAY_MS * 2 ** attempt);
+    }
+  }
+
+  throw new Error(`${errorMessage}: ${lastError}`);
+}
+
 function createPacedGivebutterFetch(intervalMs: number): GivebutterFetch {
   let nextRequestAt = 0;
   let schedule = Promise.resolve();
@@ -306,16 +328,14 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         }),
       };
 
-      const { error: slugError } = await supabase
-        .from("campaigns")
-        .update({ givebutter_slug: campaignSlug })
-        .eq("campaign_id", campaign.campaign_id);
-
-      if (slugError) {
-        throw new Error(
-          `Failed to reserve Givebutter slug: ${slugError.message}`,
-        );
-      }
+      await retryDatabaseUpdate(
+        async () =>
+          await supabase
+            .from("campaigns")
+            .update({ givebutter_slug: campaignSlug })
+            .eq("campaign_id", campaign.campaign_id),
+        "Failed to reserve Givebutter slug",
+      );
 
       // Do not retry this POST without an idempotency key; a lost response
       // after a successful create could duplicate campaigns in Givebutter.
