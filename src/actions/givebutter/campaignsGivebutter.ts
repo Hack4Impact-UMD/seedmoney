@@ -418,7 +418,35 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
       if (!patchResponse.ok) {
         const error = await readErrorBody(patchResponse);
-        throw new Error(`Failed to unpublish campaign (${patchResponse.status}): ${JSON.stringify(error)}`);
+        const deleted = await deleteGivebutterCampaign(givebutterCampaign.id);
+
+        if (deleted) {
+          await retryDatabaseUpdate(
+            async () =>
+              await supabase
+                .from("campaigns")
+                .update({
+                  status: "publish_failed",
+                  givebutter_id: "",
+                  givebutterlink: "",
+                })
+                .eq("campaign_id", campaign.campaign_id),
+            "Failed to clear deleted Givebutter campaign",
+          );
+        } else {
+          await retryDatabaseUpdate(
+            async () =>
+              await supabase
+                .from("campaigns")
+                .update({ status: "published" })
+                .eq("campaign_id", campaign.campaign_id),
+            "Failed to flag live Givebutter campaign",
+          );
+        }
+
+        throw new Error(
+          `Failed to unpublish campaign (${patchResponse.status}): ${JSON.stringify(error)}`,
+        );
       }
 
       return {
