@@ -236,39 +236,19 @@ async function deleteGivebutterCampaign(campaignId: string | number) {
       },
     );
 
-    return response.ok || response.status === 404;
+    if (response.ok || response.status === 404) {
+      return true;
+    }
+
+    console.error(
+      `Failed to delete Givebutter campaign ${campaignId} (${response.status}):`,
+      await readErrorBody(response),
+    );
+    return false;
   } catch (error) {
     console.error(`Failed to delete Givebutter campaign ${campaignId}:`, error);
     return false;
   }
-}
-
-async function findGivebutterCampaignBySlug(slug: string) {
-  let nextUrl: string | null = `${GIVEBUTTER_CAMPAIGNS_URL}?scope=all`;
-
-  while (nextUrl) {
-    const response = await fetchGivebutterWithRetry(nextUrl, {
-      method: "GET",
-      headers: getGivebutterHeaders(),
-    });
-
-    if (!response.ok) {
-      return null;
-    }
-
-    const page = await response.json();
-    const match = page.data?.find(
-      (campaign: { slug?: string }) => campaign.slug === slug,
-    );
-
-    if (match) {
-      return match;
-    }
-
-    nextUrl = page.links?.next ?? null;
-  }
-
-  return null;
 }
 
 export async function createGivebutterCampaigns(campaignIds: number[]) {
@@ -319,6 +299,8 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
+      let remoteCampaignMayBeLive = false;
+
       try {
         const competition =
           campaign.competition_id === null
@@ -373,19 +355,21 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
           }),
         };
 
-        await retryDatabaseUpdate(
-          async () =>
-            await supabase
-              .from("campaigns")
-              .update({
-                givebutter_slug: campaignSlug,
-                givebutterlink: `https://givebutter.com/${campaignSlug}`,
-              })
-              .eq("campaign_id", campaign.campaign_id),
-          "Failed to reserve Givebutter slug",
-        );
-
         const isNewGivebutterCampaign = !campaign.givebutter_id;
+
+        if (isNewGivebutterCampaign) {
+          await retryDatabaseUpdate(
+            async () =>
+              await supabase
+                .from("campaigns")
+                .update({
+                  givebutter_slug: campaignSlug,
+                  givebutterlink: `https://givebutter.com/${campaignSlug}`,
+                })
+                .eq("campaign_id", campaign.campaign_id),
+            "Failed to reserve Givebutter slug",
+          );
+        }
         let givebutterCampaign = isNewGivebutterCampaign
           ? null
           : {
@@ -399,24 +383,39 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         if (!givebutterCampaign) {
           // Do not retry this POST without an idempotency key; a lost response
           // after a successful create could duplicate campaigns in Givebutter.
-          const createResponse = await fetch(GIVEBUTTER_CAMPAIGNS_URL, {
-            method: "POST",
-            headers: getGivebutterHeaders(),
-            body: JSON.stringify(body),
-          });
+          remoteCampaignMayBeLive = true;
+          let createResponse: Response;
+
+          try {
+            createResponse = await fetch(GIVEBUTTER_CAMPAIGNS_URL, {
+              method: "POST",
+              headers: getGivebutterHeaders(),
+              body: JSON.stringify(body),
+            });
+          } catch (error) {
+            const message = error instanceof Error ? error.message : String(error);
+            throw new Error(
+              `Givebutter did not return a create response. The campaign may be live at https://givebutter.com/${campaignSlug}; verify it before retrying. ${message}`,
+            );
+          }
 
           if (!createResponse.ok) {
             const error = await readErrorBody(createResponse);
-            const existingCampaign =
-              createResponse.status === 422
-                ? await findGivebutterCampaignBySlug(campaignSlug)
-                : null;
-            const collisionDetails = existingCampaign
-              ? ` Existing Givebutter campaign: ${existingCampaign.id} (${existingCampaign.url}).`
+            const slugRejected =
+              createResponse.status === 422 &&
+              typeof error === "object" &&
+              error !== null &&
+              "errors" in error &&
+              typeof error.errors === "object" &&
+              error.errors !== null &&
+              "slug" in error.errors;
+            remoteCampaignMayBeLive =
+              isRetryableGivebutterStatus(createResponse.status) || slugRejected;
+            const liveWarning = remoteCampaignMayBeLive
+              ? ` The campaign may be live at https://givebutter.com/${campaignSlug}; verify it before retrying.`
               : "";
-
             throw new Error(
-              `Failed to create campaign (${createResponse.status}): ${JSON.stringify(error)}.${collisionDetails}`,
+              `Failed to create campaign (${createResponse.status}): ${JSON.stringify(error)}.${liveWarning}`,
             );
           }
 
@@ -444,7 +443,32 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
               createdCampaign.id,
             );
 
-            if (!deleted) {
+            if (deleted) {
+              remoteCampaignMayBeLive = false;
+              await retryDatabaseUpdate(
+                async () =>
+                  await supabase
+                    .from("campaigns")
+                    .update({ givebutter_id: "", givebutterlink: "" })
+                    .eq("campaign_id", campaign.campaign_id),
+                "Failed to clear deleted Givebutter campaign",
+              );
+            } else {
+              await retryDatabaseUpdate(
+                async () =>
+                  await supabase
+                    .from("campaigns")
+                    .update({
+                      status: "published",
+                      givebutter_id: String(createdCampaign.id),
+                      givebutter_slug: givebutterSlug,
+                      givebutterlink:
+                        createdCampaign.url ??
+                        `https://givebutter.com/${givebutterSlug}`,
+                    })
+                    .eq("campaign_id", campaign.campaign_id),
+                "Failed to record live Givebutter campaign",
+              );
               console.error(
                 `Givebutter campaign ${createdCampaign.id} requires manual cleanup`,
               );
@@ -459,9 +483,11 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         }
 
         const remoteCampaign = givebutterCampaign;
+        remoteCampaignMayBeLive = true;
 
         const handleUnpublishFailure = async (remoteMissing = false) => {
           if (remoteMissing) {
+            remoteCampaignMayBeLive = false;
             await retryDatabaseUpdate(
               async () =>
                 await supabase
@@ -482,6 +508,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
             (await deleteGivebutterCampaign(remoteCampaign.id));
 
           if (deleted === true) {
+            remoteCampaignMayBeLive = false;
             await retryDatabaseUpdate(
               async () =>
                 await supabase
@@ -535,6 +562,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
           );
         }
 
+        remoteCampaignMayBeLive = false;
         const syncedCampaign = await patchResponse.json();
 
         await retryDatabaseUpdate(
@@ -564,13 +592,17 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
           .eq("campaign_id", campaign.campaign_id)
           .maybeSingle();
 
-        if (currentCampaign?.status !== "published") {
+        const failureStatus = remoteCampaignMayBeLive
+          ? "published"
+          : "publish_failed";
+
+        if (currentCampaign?.status !== failureStatus) {
           try {
             await retryDatabaseUpdate(
               async () =>
                 await supabase
                   .from("campaigns")
-                  .update({ status: "publish_failed" })
+                  .update({ status: failureStatus })
                   .eq("campaign_id", campaign.campaign_id),
               "Failed to record Givebutter sync failure",
             );
@@ -619,16 +651,16 @@ export async function publishDueCampaigns() {
 
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
-      let remotePublishRejected = false;
+      let failureStatus: "published" | "publish_failed" = "publish_failed";
 
       try {
         if (!campaign.givebutter_id) {
-          remotePublishRejected = true;
           throw new Error(
             `Campaign ${campaign.campaign_id} has no Givebutter ID`,
           );
         }
 
+        failureStatus = "published";
         const response = await fetchGivebutterWithRetry(
           getGivebutterCampaignUrl(campaign.givebutter_id),
           {
@@ -643,7 +675,9 @@ export async function publishDueCampaigns() {
         );
 
         if (!response.ok) {
-          remotePublishRejected = true;
+          failureStatus = isRetryableGivebutterStatus(response.status)
+            ? "published"
+            : "publish_failed";
           const error = await readErrorBody(response);
           throw new Error(
             `Givebutter error (${response.status}): ${JSON.stringify(error)}`,
@@ -686,16 +720,14 @@ export async function publishDueCampaigns() {
           );
         }
       } catch (err) {
-        if (remotePublishRejected) {
-          await retryDatabaseUpdate(
-            async () =>
-              await supabase
-                .from("campaigns")
-                .update({ status: "publish_failed" })
-                .eq("campaign_id", campaign.campaign_id),
-            "Failed to record rejected publish",
-          );
-        }
+        await retryDatabaseUpdate(
+          async () =>
+            await supabase
+              .from("campaigns")
+              .update({ status: failureStatus })
+              .eq("campaign_id", campaign.campaign_id),
+          "Failed to record Givebutter publish result",
+        );
         throw err;
       }
     }),
