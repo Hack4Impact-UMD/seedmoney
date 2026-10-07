@@ -291,6 +291,8 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
+      let remotePublishRejected = false;
+
       try {
         const competition =
           campaign.competition_id === null
@@ -579,20 +581,21 @@ export async function publishDueCampaigns() {
         );
 
         if (!response.ok) {
+          remotePublishRejected = true;
           const error = await readErrorBody(response);
           throw new Error(
             `Givebutter error (${response.status}): ${JSON.stringify(error)}`,
           );
         }
 
-        const { error: updateError } = await supabase
-          .from("campaigns")
-          .update({ status: "published" })
-          .eq("campaign_id", campaign.campaign_id);
-
-        if (updateError) {
-          throw new Error(updateError.message);
-        }
+        await retryDatabaseUpdate(
+          async () =>
+            await supabase
+              .from("campaigns")
+              .update({ status: "published" })
+              .eq("campaign_id", campaign.campaign_id),
+          "Failed to record published campaign",
+        );
 
         try {
           const { error: emailError } = await supabase.functions.invoke(
@@ -621,10 +624,16 @@ export async function publishDueCampaigns() {
           );
         }
       } catch (err) {
-        await supabase
-          .from("campaigns")
-          .update({ status: "publish_failed" })
-          .eq("campaign_id", campaign.campaign_id);
+        if (remotePublishRejected) {
+          await retryDatabaseUpdate(
+            async () =>
+              await supabase
+                .from("campaigns")
+                .update({ status: "publish_failed" })
+                .eq("campaign_id", campaign.campaign_id),
+            "Failed to record rejected publish",
+          );
+        }
         throw err;
       }
     }),
