@@ -425,9 +425,10 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
               typeof error.errors === "object" &&
               error.errors !== null &&
               "slug" in error.errors;
-            remoteCampaignMayBeLive =
-              isRetryableGivebutterStatus(createResponse.status) ||
-              slugRejected;
+            // A slug conflict proves the slug is taken, not that this row owns it.
+            remoteCampaignMayBeLive = isRetryableGivebutterStatus(
+              createResponse.status,
+            );
             const liveWarning = remoteCampaignMayBeLive
               ? ` The campaign may be live at https://givebutter.com/${campaignSlug}; verify it before retrying.`
               : "";
