@@ -357,50 +357,60 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         "Failed to reserve Givebutter slug",
       );
 
-      // Do not retry this POST without an idempotency key; a lost response
-      // after a successful create could duplicate campaigns in Givebutter.
-      const createResponse = await fetch(
-        GIVEBUTTER_CAMPAIGNS_URL,
-        {
+      const isNewGivebutterCampaign = !campaign.givebutter_id;
+      let givebutterCampaign = isNewGivebutterCampaign
+        ? null
+        : {
+            id: campaign.givebutter_id,
+            slug: campaign.givebutter_slug || campaignSlug,
+            url:
+              campaign.givebutterlink ||
+              `https://givebutter.com/${campaign.givebutter_slug || campaignSlug}`,
+          };
+
+      if (!givebutterCampaign) {
+        // Do not retry this POST without an idempotency key; a lost response
+        // after a successful create could duplicate campaigns in Givebutter.
+        const createResponse = await fetch(GIVEBUTTER_CAMPAIGNS_URL, {
           method: "POST",
           headers: getGivebutterHeaders(),
           body: JSON.stringify(body),
-        },
-      );
+        });
 
-      if (!createResponse.ok) {
-        const error = await readErrorBody(createResponse);
-        throw new Error(`Failed to create campaign (${createResponse.status}): ${JSON.stringify(error)}`);
-      }
-
-      const givebutterCampaign = await createResponse.json();
-      const givebutterSlug = givebutterCampaign.slug ?? campaignSlug;
-
-      try {
-        await retryDatabaseUpdate(
-          async () =>
-            await supabase
-              .from("campaigns")
-              .update({
-                givebutter_id: String(givebutterCampaign.id),
-                givebutter_slug: givebutterSlug,
-                givebutterlink:
-                  givebutterCampaign.url ??
-                  `https://givebutter.com/${givebutterSlug}`,
-              })
-              .eq("campaign_id", campaign.campaign_id),
-          "Failed to save Givebutter campaign identity",
-        );
-      } catch (error) {
-        const deleted = await deleteGivebutterCampaign(givebutterCampaign.id);
-
-        if (!deleted) {
-          console.error(
-            `Givebutter campaign ${givebutterCampaign.id} requires manual cleanup`,
-          );
+        if (!createResponse.ok) {
+          const error = await readErrorBody(createResponse);
+          throw new Error(`Failed to create campaign (${createResponse.status}): ${JSON.stringify(error)}`);
         }
 
-        throw error;
+        givebutterCampaign = await createResponse.json();
+        const givebutterSlug = givebutterCampaign.slug ?? campaignSlug;
+
+        try {
+          await retryDatabaseUpdate(
+            async () =>
+              await supabase
+                .from("campaigns")
+                .update({
+                  givebutter_id: String(givebutterCampaign.id),
+                  givebutter_slug: givebutterSlug,
+                  givebutterlink:
+                    givebutterCampaign.url ??
+                    `https://givebutter.com/${givebutterSlug}`,
+                })
+                .eq("campaign_id", campaign.campaign_id),
+            "Failed to save Givebutter campaign identity",
+          );
+        } catch (error) {
+          const deleted = await deleteGivebutterCampaign(givebutterCampaign.id);
+
+          if (!deleted) {
+            console.error(
+              `Givebutter campaign ${givebutterCampaign.id} requires manual cleanup`,
+            );
+          }
+
+          throw error;
+        }
       }
 
       const patchResponse = await fetchGivebutterWithRetry(
@@ -418,7 +428,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
       if (!patchResponse.ok) {
         const error = await readErrorBody(patchResponse);
-        const deleted = await deleteGivebutterCampaign(givebutterCampaign.id);
+        const deleted =
+          isNewGivebutterCampaign &&
+          (await deleteGivebutterCampaign(givebutterCampaign.id));
 
         if (deleted) {
           await retryDatabaseUpdate(
