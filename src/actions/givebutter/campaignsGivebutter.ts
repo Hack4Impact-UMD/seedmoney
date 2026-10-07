@@ -70,19 +70,27 @@ function wait(ms: number) {
 }
 
 async function retryDatabaseUpdate(
-  operation: () => Promise<{ error: { message: string } | null }>,
+  operation: () => Promise<{
+    data: unknown;
+    error: { message: string } | null;
+  }>,
   errorMessage: string,
 ) {
-  let lastError = "";
+  let lastError = "Campaign row was not updated";
 
   for (let attempt = 0; attempt < GIVEBUTTER_MAX_ATTEMPTS; attempt += 1) {
-    const { error } = await operation();
+    try {
+      const { data, error } = await operation();
 
-    if (!error) {
-      return;
+      if (!error && data) {
+        return;
+      }
+
+      lastError = error?.message ?? lastError;
+    } catch (error) {
+      lastError = error instanceof Error ? error.message : String(error);
     }
 
-    lastError = error.message;
     if (attempt < GIVEBUTTER_MAX_ATTEMPTS - 1) {
       await wait(GIVEBUTTER_RETRY_BASE_DELAY_MS * 2 ** attempt);
     }
@@ -366,7 +374,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
                   givebutter_slug: campaignSlug,
                   givebutterlink: `https://givebutter.com/${campaignSlug}`,
                 })
-                .eq("campaign_id", campaign.campaign_id),
+                .eq("campaign_id", campaign.campaign_id)
+                .select("campaign_id")
+                .maybeSingle(),
             "Failed to reserve Givebutter slug",
           );
         }
@@ -435,7 +445,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
                       createdCampaign.url ??
                       `https://givebutter.com/${givebutterSlug}`,
                   })
-                  .eq("campaign_id", campaign.campaign_id),
+                  .eq("campaign_id", campaign.campaign_id)
+                  .select("campaign_id")
+                  .maybeSingle(),
               "Failed to save Givebutter campaign identity",
             );
           } catch (error) {
@@ -450,7 +462,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
                   await supabase
                     .from("campaigns")
                     .update({ givebutter_id: "", givebutterlink: "" })
-                    .eq("campaign_id", campaign.campaign_id),
+                    .eq("campaign_id", campaign.campaign_id)
+                    .select("campaign_id")
+                    .maybeSingle(),
                 "Failed to clear deleted Givebutter campaign",
               );
             } else {
@@ -466,7 +480,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
                         createdCampaign.url ??
                         `https://givebutter.com/${givebutterSlug}`,
                     })
-                    .eq("campaign_id", campaign.campaign_id),
+                    .eq("campaign_id", campaign.campaign_id)
+                    .select("campaign_id")
+                    .maybeSingle(),
                 "Failed to record live Givebutter campaign",
               );
               console.error(
@@ -497,7 +513,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
                     givebutter_id: "",
                     givebutterlink: "",
                   })
-                  .eq("campaign_id", campaign.campaign_id),
+                  .eq("campaign_id", campaign.campaign_id)
+                  .select("campaign_id")
+                  .maybeSingle(),
               "Failed to clear missing Givebutter campaign",
             );
             return;
@@ -518,7 +536,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
                     givebutter_id: "",
                     givebutterlink: "",
                   })
-                  .eq("campaign_id", campaign.campaign_id),
+                  .eq("campaign_id", campaign.campaign_id)
+                  .select("campaign_id")
+                  .maybeSingle(),
               "Failed to clear deleted Givebutter campaign",
             );
           } else {
@@ -527,7 +547,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
                 await supabase
                   .from("campaigns")
                   .update({ status: "published" })
-                  .eq("campaign_id", campaign.campaign_id),
+                  .eq("campaign_id", campaign.campaign_id)
+                  .select("campaign_id")
+                  .maybeSingle(),
               "Failed to flag live Givebutter campaign",
             );
           }
@@ -577,7 +599,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
                   syncedCampaign.url ??
                   `https://givebutter.com/${syncedCampaign.slug ?? campaignSlug}`,
               })
-              .eq("campaign_id", campaign.campaign_id),
+              .eq("campaign_id", campaign.campaign_id)
+              .select("campaign_id")
+              .maybeSingle(),
           "Failed to finish Givebutter campaign sync",
         );
 
@@ -603,7 +627,9 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
                 await supabase
                   .from("campaigns")
                   .update({ status: failureStatus })
-                  .eq("campaign_id", campaign.campaign_id),
+                  .eq("campaign_id", campaign.campaign_id)
+                  .select("campaign_id")
+                  .maybeSingle(),
               "Failed to record Givebutter sync failure",
             );
           } catch (statusError) {
@@ -689,7 +715,9 @@ export async function publishDueCampaigns() {
             await supabase
               .from("campaigns")
               .update({ status: "published" })
-              .eq("campaign_id", campaign.campaign_id),
+              .eq("campaign_id", campaign.campaign_id)
+              .select("campaign_id")
+              .maybeSingle(),
           "Failed to record published campaign",
         );
 
@@ -725,7 +753,9 @@ export async function publishDueCampaigns() {
             await supabase
               .from("campaigns")
               .update({ status: failureStatus })
-              .eq("campaign_id", campaign.campaign_id),
+              .eq("campaign_id", campaign.campaign_id)
+              .select("campaign_id")
+              .maybeSingle(),
           "Failed to record Givebutter publish result",
         );
         throw err;
