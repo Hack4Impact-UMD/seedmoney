@@ -457,7 +457,23 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
         const remoteCampaign = givebutterCampaign;
 
-        const handleUnpublishFailure = async () => {
+        const handleUnpublishFailure = async (remoteMissing = false) => {
+          if (remoteMissing) {
+            await retryDatabaseUpdate(
+              async () =>
+                await supabase
+                  .from("campaigns")
+                  .update({
+                    status: "publish_failed",
+                    givebutter_id: "",
+                    givebutterlink: "",
+                  })
+                  .eq("campaign_id", campaign.campaign_id),
+              "Failed to clear missing Givebutter campaign",
+            );
+            return;
+          }
+
           const deleted =
             isNewGivebutterCampaign &&
             (await deleteGivebutterCampaign(remoteCampaign.id));
@@ -509,7 +525,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 
         if (!patchResponse.ok) {
           const error = await readErrorBody(patchResponse);
-          await handleUnpublishFailure();
+          await handleUnpublishFailure(patchResponse.status === 404);
 
           throw new Error(
             `Failed to unpublish campaign (${patchResponse.status}): ${JSON.stringify(error)}`,
