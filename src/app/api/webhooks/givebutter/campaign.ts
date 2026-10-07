@@ -17,7 +17,6 @@ export const campaignHandlers = {
       raised: payload.data.raised,
       donors: payload.data.donors,
       goal: payload.data.goal ?? 0,
-      status: "approved",
     });
   },
   "campaign.created": async (payload: GivebuttercampaignPayload) => {
