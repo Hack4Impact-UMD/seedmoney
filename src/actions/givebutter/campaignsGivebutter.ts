@@ -243,6 +243,34 @@ async function deleteGivebutterCampaign(campaignId: string | number) {
   }
 }
 
+async function findGivebutterCampaignBySlug(slug: string) {
+  let nextUrl: string | null = `${GIVEBUTTER_CAMPAIGNS_URL}?scope=all`;
+
+  while (nextUrl) {
+    const response = await fetchGivebutterWithRetry(nextUrl, {
+      method: "GET",
+      headers: getGivebutterHeaders(),
+    });
+
+    if (!response.ok) {
+      return null;
+    }
+
+    const page = await response.json();
+    const match = page.data?.find(
+      (campaign: { slug?: string }) => campaign.slug === slug,
+    );
+
+    if (match) {
+      return match;
+    }
+
+    nextUrl = page.links?.next ?? null;
+  }
+
+  return null;
+}
+
 export async function createGivebutterCampaigns(campaignIds: number[]) {
   const supabase = await createServerClient();
 
