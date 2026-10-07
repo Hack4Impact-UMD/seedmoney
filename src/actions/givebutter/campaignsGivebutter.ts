@@ -681,16 +681,36 @@ export async function publishDueCampaigns() {
 
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
-      let failureStatus: "published" | "publish_failed" = "publish_failed";
+      if (!campaign.givebutter_id) {
+        await retryDatabaseUpdate(
+          async () =>
+            await supabase
+              .from("campaigns")
+              .update({ status: "publish_failed" })
+              .eq("campaign_id", campaign.campaign_id)
+              .select("campaign_id")
+              .maybeSingle(),
+          "Failed to record missing Givebutter campaign",
+        );
+        throw new Error(
+          `Campaign ${campaign.campaign_id} has no Givebutter ID`,
+        );
+      }
+
+      await retryDatabaseUpdate(
+        async () =>
+          await supabase
+            .from("campaigns")
+            .update({ status: "published" })
+            .eq("campaign_id", campaign.campaign_id)
+            .select("campaign_id")
+            .maybeSingle(),
+        "Failed to reserve published campaign state",
+      );
+
+      let failureStatus: "published" | "publish_failed" = "published";
 
       try {
-        if (!campaign.givebutter_id) {
-          throw new Error(
-            `Campaign ${campaign.campaign_id} has no Givebutter ID`,
-          );
-        }
-
-        failureStatus = "published";
         const response = await fetchGivebutterWithRetry(
           getGivebutterCampaignUrl(campaign.givebutter_id),
           {
@@ -713,17 +733,6 @@ export async function publishDueCampaigns() {
             `Givebutter error (${response.status}): ${JSON.stringify(error)}`,
           );
         }
-
-        await retryDatabaseUpdate(
-          async () =>
-            await supabase
-              .from("campaigns")
-              .update({ status: "published" })
-              .eq("campaign_id", campaign.campaign_id)
-              .select("campaign_id")
-              .maybeSingle(),
-          "Failed to record published campaign",
-        );
 
         try {
           const { error: emailError } = await supabase.functions.invoke(
