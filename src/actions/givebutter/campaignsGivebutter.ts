@@ -283,6 +283,10 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         [q1, q2, q3, q4],
         supportingImageUrls,
       );
+      const campaignSlug = generateCampaignSlug(
+        campaign.name,
+        getYearFromDateString(competition.start_date),
+      );
 
       const body = {
         type: "fundraise",
@@ -290,6 +294,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
         subtitle: formatLocationSubtitle(campaign),
         description,
         end_at: formatGivebutterEndAt(competition.end_date),
+        slug: campaignSlug,
         settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
         ...(campaign.goal !== undefined && { goal: campaign.goal }),
         ...(mainImage && {
@@ -327,10 +332,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
           body: JSON.stringify({
             published: false,
             settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
-            slug: generateCampaignSlug(
-              campaign.name,
-              getYearFromDateString(competition.start_date),
-            ),
+            slug: campaignSlug,
           }),
         },
       );
