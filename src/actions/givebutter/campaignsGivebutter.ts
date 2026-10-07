@@ -377,7 +377,10 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
           async () =>
             await supabase
               .from("campaigns")
-              .update({ givebutter_slug: campaignSlug })
+              .update({
+                givebutter_slug: campaignSlug,
+                givebutterlink: `https://givebutter.com/${campaignSlug}`,
+              })
               .eq("campaign_id", campaign.campaign_id),
           "Failed to reserve Givebutter slug",
         );
