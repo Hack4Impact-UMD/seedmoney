@@ -194,7 +194,7 @@ export default function ContactInformationStep() {
               fullWidth
               name="organizationIdentifier"
               placeholder="e.g., 52-3456789"
-              helperText='For US nonprofits, your 9-digit IRS EIN. For schools or government entities, your institutional identifier. For Non US nonprofits, use "00-0000000"'
+              helperText='For US nonprofits, your 9-digit IRS EIN. For schools or government entities, your institutional identifier. For non-U.S. organizations, enter your official registration number (e.g., charity registration number, company registration number, or tax ID), if available, or use "00-0000000", if unknown.'
               inputProps={{
                 inputMode: "numeric",
                 maxLength: 10,
