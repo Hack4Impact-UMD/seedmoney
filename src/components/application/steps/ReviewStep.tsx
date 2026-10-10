@@ -10,7 +10,8 @@ import {
   useLastSaved,
   usePendingImageCrops,
 } from "@/src/components/application/ApplicationFormProvider";
-import { getApplicationCompletionState } from "@/src/components/application/applicationStepState";
+import ReviewBanner from "@/src/components/application/ReviewBanner";
+import { getApplicationCompletionState, getIncompleteCards, formatIncompleteMessage } from "@/src/components/application/applicationStepState";
 import { notFound, useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
@@ -169,17 +170,6 @@ function EditableSelectRow({
   );
 }
 
-function ReviewBanner({ message }: { message: string }) {
-  return (
-    <div className="flex items-center bg-[#FDECEA] text-[#5F2120] px-4 py-3 rounded-md text-sm">
-      <div className="flex items-center gap-2">
-        <Image src="/icons/error.svg" width={18} height={18} alt="error" />
-        <span>{message}</span>
-      </div>
-    </div>
-  );
-}
-
 function formatCountry(value: string) {
   return value === "US" ? "United States" : value;
 }
@@ -216,6 +206,7 @@ export default function ReviewSubmitPage() {
     contactComplete,
     reviewComplete,
   } = getApplicationCompletionState(values, hasPassedAgreement);
+  const incompleteCards = getIncompleteCards(values);
   const goalValue = Number(values.fundraisingGoal);
   const hasValidFundraisingGoal = goalValue > 1;
   const showFundraisingGoalError =
@@ -507,7 +498,7 @@ export default function ReviewSubmitPage() {
 
       {!campaignComplete && (
         <ReviewBanner
-          message='Please complete "Campaign Information"'
+          message={formatIncompleteMessage(incompleteCards.campaign)}
         />
       )}
       {showFundraisingGoalError && (
@@ -645,7 +636,7 @@ export default function ReviewSubmitPage() {
 
       {!gardenComplete && (
         <ReviewBanner
-          message='Please complete "Garden Information"'
+          message={formatIncompleteMessage(incompleteCards.garden)}
         />
       )}
 
@@ -768,7 +759,7 @@ export default function ReviewSubmitPage() {
 
       {!storyComplete && (
         <ReviewBanner
-          message='Please complete "Garden Story"'
+          message={formatIncompleteMessage(incompleteCards.story)}
         />
       )}
 
@@ -976,7 +967,7 @@ export default function ReviewSubmitPage() {
 
       {!contactComplete && (
         <ReviewBanner
-          message='Please complete "Contact Information"'
+          message={formatIncompleteMessage(incompleteCards.contact)}
         />
       )}
 

@@ -50,43 +50,106 @@ function hasValidStoryAnswer(value: string): boolean {
   return trimmedLength >= 200 && value.length <= 1000;
 }
 
+export interface IncompleteCards {
+  campaign: string[];
+  garden: string[];
+  story: string[];
+  contact: string[];
+}
+
+export function getIncompleteCards(
+  values: ApplicationProgressValues,
+): IncompleteCards {
+  const isFilled = (value: string) => value.trim().length > 0;
+  const missing = (cards: { title: string; complete: boolean }[]) =>
+    cards.filter((card) => !card.complete).map((card) => card.title);
+
+  return {
+    campaign: missing([
+      { title: "Campaign Title", complete: isFilled(values.campaignTitle) },
+      {
+        title: "Project Details & Impact",
+        complete:
+          isFilled(values.beneficiaryCount) && isFilled(values.gardenStatus),
+      },
+      { title: "Fundraising Goal", complete: isFilled(values.fundraisingGoal) },
+    ]),
+    garden: missing([
+      {
+        title: "Garden Location",
+        complete:
+          isFilled(values.gardenCity) &&
+          isFilled(values.gardenState) &&
+          isFilled(values.gardenCountry),
+      },
+      {
+        title: "Primary Project Category",
+        complete: isFilled(values.gardenCategory),
+      },
+      {
+        title: "Beneficiary Populations Served",
+        complete: values.gardenBeneficiaries.length > 0,
+      },
+    ]),
+    story: missing([
+      {
+        title: "Garden Story",
+        complete:
+          hasValidStoryAnswer(values.storyLocationAndAudience) &&
+          hasValidStoryAnswer(values.storyChallenge) &&
+          hasValidStoryAnswer(values.storySeasonActivity) &&
+          hasValidStoryAnswer(values.storyCampaignImpact),
+      },
+      { title: "Main Photo", complete: isFilled(values.mainPhoto) },
+    ]),
+    contact: missing([
+      {
+        title: "Organization Information",
+        complete:
+          isFilled(values.organizationName) &&
+          isFilled(values.organizationIdentifier),
+      },
+      {
+        title: "Beneficiary Organization Mailing Address",
+        complete:
+          isFilled(values.mailingStreet1) &&
+          isFilled(values.mailingCity) &&
+          isFilled(values.mailingState) &&
+          isFilled(values.mailingZip) &&
+          isFilled(values.mailingCountry),
+      },
+      {
+        title: "Primary Contact Information",
+        complete:
+          isFilled(values.contactFirstName) &&
+          isFilled(values.contactLastName) &&
+          validateEmail(values.contactEmail.trim()),
+      },
+    ]),
+  };
+}
+
+export function formatIncompleteMessage(titles: string[]): string {
+  const quoted = titles.map((title) => `"${title}"`);
+
+  if (quoted.length <= 2) {
+    return `Please complete ${quoted.join(" and ")}`;
+  }
+
+  return `Please complete ${quoted.slice(0, -1).join(", ")}, and ${quoted.at(-1)}`;
+}
+
 export function getApplicationCompletionState(
   values: ApplicationProgressValues,
   hasPassedAgreement: boolean,
 ) {
   const agreementComplete = hasPassedAgreement;
+  const incompleteCards = getIncompleteCards(values);
 
-  const campaignComplete =
-    values.campaignTitle.trim().length > 0 &&
-    values.fundraisingGoal.trim().length > 0 &&
-    values.beneficiaryCount.trim().length > 0 &&
-    values.gardenStatus.trim().length > 0;
-
-  const gardenComplete =
-    values.gardenCity.trim().length > 0 &&
-    values.gardenState.trim().length > 0 &&
-    values.gardenCountry.trim().length > 0 &&
-    values.gardenCategory.trim().length > 0 &&
-    values.gardenBeneficiaries.length > 0;
-
-  const storyComplete =
-    hasValidStoryAnswer(values.storyLocationAndAudience) &&
-    hasValidStoryAnswer(values.storyChallenge) &&
-    hasValidStoryAnswer(values.storySeasonActivity) &&
-    hasValidStoryAnswer(values.storyCampaignImpact) &&
-    values.mainPhoto.trim().length > 0;
-
-  const contactComplete =
-    values.organizationName.trim().length > 0 &&
-    values.organizationIdentifier.trim().length > 0 &&
-    values.mailingStreet1.trim().length > 0 &&
-    values.mailingCity.trim().length > 0 &&
-    values.mailingState.trim().length > 0 &&
-    values.mailingZip.trim().length > 0 &&
-    values.mailingCountry.trim().length > 0 &&
-    values.contactFirstName.trim().length > 0 &&
-    values.contactLastName.trim().length > 0 &&
-    validateEmail(values.contactEmail.trim());
+  const campaignComplete = incompleteCards.campaign.length === 0;
+  const gardenComplete = incompleteCards.garden.length === 0;
+  const storyComplete = incompleteCards.story.length === 0;
+  const contactComplete = incompleteCards.contact.length === 0;
 
   const reviewComplete =
     agreementComplete &&
