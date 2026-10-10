@@ -10,16 +10,6 @@ import { useRouter } from "next/navigation";
 import useSaveDraftCampaign from "@/src/hooks/campaigns/useSaveDraftCampaign";
 import { STATES, COUNTRIES } from "@/src/components/application/addressOptions";
 
-function formatOrganizationIdentifier(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 9);
-
-  if (digits.length <= 2) {
-    return digits;
-  }
-
-  return `${digits.slice(0, 2)}-${digits.slice(2)}`;
-}
-
 export default function ContactInformationStep() {
   const form = useApplicationForm();
   const router = useRouter();
@@ -195,27 +185,15 @@ export default function ContactInformationStep() {
               name="organizationIdentifier"
               placeholder="e.g., 52-3456789"
               helperText='For US nonprofits, enter your 9-digit IRS EIN. For schools or government entities, your institutional identifier. For non-U.S. organizations, enter your official registration number (e.g., charity registration number, company registration number, or tax ID), if available, or use "00-0000000", if unknown.'
-              inputProps={{
-                inputMode: "numeric"
-              }}
               value={field.state.value}
               onBlur={async (e) => {
                 field.handleBlur();
                 await saveContactDraft({
-                  organizationIdentifier: formatOrganizationIdentifier(
-                    e.target.value,
-                  ),
+                  organizationIdentifier: e.target.value
                 });
               }}
               onChange={(e) =>
-                field.handleChange(formatOrganizationIdentifier(e.target.value))
-              }
-              onInput={(e) =>
-                field.handleChange(
-                  formatOrganizationIdentifier(
-                    (e.target as HTMLInputElement).value,
-                  ),
-                )
+                field.handleChange(e.target.value)
               }
             />
           )}
