@@ -406,9 +406,9 @@ export default function UsersTable({
     return competitionFilteredData.filter((user) => {
       const matchesSearch =
         q.length === 0 ||
-        user.first_name.toLowerCase().includes(q) ||
-        user.last_name.toLowerCase().includes(q) ||
-        user.email.toLowerCase().includes(q);
+        (user.first_name ?? "").toLowerCase().includes(q) ||
+        (user.last_name ?? "").toLowerCase().includes(q) ||
+        (user.email ?? "").toLowerCase().includes(q);
 
       const matchesStatus =
         activeStatusFilters.length === 0 ||
