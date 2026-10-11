@@ -54,16 +54,6 @@ function normalizeNumericInput(value: string) {
   return digitsOnly.replace(/^0+(?=\d)/, "");
 }
 
-function formatOrganizationIdentifier(value: string) {
-  const digits = value.replace(/\D/g, "").slice(0, 9);
-
-  if (digits.length <= 2) {
-    return digits;
-  }
-
-  return `${digits.slice(0, 2)}-${digits.slice(2)}`;
-}
-
 function isUsCountry(value: string) {
   const normalizedValue = value.trim().toLowerCase();
   return normalizedValue === "us" || normalizedValue === "united states";
@@ -999,12 +989,12 @@ export default function ReviewSubmitPage() {
           onChange={(value) =>
             form.setFieldValue(
               "organizationIdentifier",
-              formatOrganizationIdentifier(value),
+              value
             )
           }
           onBlur={(value) =>
             saveContactDraft({
-              organizationIdentifier: formatOrganizationIdentifier(value),
+              organizationIdentifier: value,
             })
           }
         />
