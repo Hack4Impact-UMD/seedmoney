@@ -167,7 +167,7 @@ export default function EditCampaignPage() {
         mailing_zipcode: formData.mailingZip,
         contact_first_name: formData.contactFirstName,
         contact_last_name: formData.contactLastName,
-        contact_email: formData.contactEmail,
+        contact_email: formData.contactEmail.trim(),
         contact_role: formData.contactRole,
       };
 

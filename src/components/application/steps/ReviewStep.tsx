@@ -282,7 +282,7 @@ export default function ReviewSubmitPage() {
       mailing_country: nextValues.mailingCountry,
       contact_first_name: nextValues.contactFirstName,
       contact_last_name: nextValues.contactLastName,
-      contact_email: nextValues.contactEmail,
+      contact_email: nextValues.contactEmail.trim(),
       contact_role: nextValues.contactRole,
     });
   };
@@ -399,7 +399,7 @@ export default function ReviewSubmitPage() {
         competition_id: currentCompetitionData.competition_id,
         raised: 0,
         donors: 0,
-        contact_email: values.contactEmail,
+        contact_email: values.contactEmail.trim(),
         givebutter_id: "",
         givebutter_slug: "",
         givebutterlink: "",
