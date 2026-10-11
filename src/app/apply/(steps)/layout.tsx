@@ -1,11 +1,28 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 import Navbar from "@/src/components/Navbar";
 import ApplicationSidebar from "@/src/components/application/ApplicationSidebar";
 import ApplicationFooter from "@/src/components/application/ApplicationFooter";
-import { useAgreementGate } from "@/src/components/application/ApplicationFormProvider";
+import {
+  useAgreementGate,
+  useApplicationForm,
+} from "@/src/components/application/ApplicationFormProvider";
+import ReviewBanner from "@/src/components/application/ReviewBanner";
+import {
+  APPLICATION_STEPS,
+  IncompleteCards,
+  formatIncompleteMessage,
+  getIncompleteCards,
+} from "@/src/components/application/applicationStepState";
+
+const SECTION_BY_HREF: Record<string, keyof IncompleteCards> = {
+  "/apply/campaign": "campaign",
+  "/apply/garden": "garden",
+  "/apply/story": "story",
+  "/apply/contact": "contact",
+};
 
 export default function StepsLayout({
   children,
@@ -24,6 +41,19 @@ export default function StepsLayout({
     router.replace("/apply/terms");
   }, [hasPassedAgreement, pathname, router]);
 
+  const form = useApplicationForm();
+  const currentIndex = APPLICATION_STEPS.findIndex(
+    (step) => step.href === pathname,
+  );
+  const [furthestIndex, setFurthestIndex] = useState(currentIndex);
+
+  if (currentIndex > furthestIndex) {
+    setFurthestIndex(currentIndex);
+  }
+
+  const section = SECTION_BY_HREF[pathname];
+  const hasLeftThisStep = currentIndex < furthestIndex;
+
   if (pathname !== "/apply/terms" && !hasPassedAgreement) {
     return null;
   }
@@ -40,6 +70,23 @@ export default function StepsLayout({
           </div>
           <div className="flex min-w-0 flex-1 justify-start">
             <div className="w-full max-w-[760px] min-w-0">
+              {section && hasLeftThisStep && (
+                <form.Subscribe
+                  selector={(state) =>
+                    getIncompleteCards(state.values)[section]
+                  }
+                >
+                  {(titles) =>
+                    titles.length > 0 && (
+                      <div className="mx-auto mt-10 w-full max-w-[640px]">
+                        <ReviewBanner
+                          message={formatIncompleteMessage(titles)}
+                        />
+                      </div>
+                    )
+                  }
+                </form.Subscribe>
+              )}
               {children}
             </div>
           </div>
