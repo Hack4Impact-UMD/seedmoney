@@ -186,9 +186,9 @@ function getStatusSummaryText(status: Status, count: number, fullName: string) {
 }
 
 const STATUS_CHIP_STYLES: Record<AggregateStatus, {
-    avatarClassName: string;
-    chipClassName: string;
-  }> = {
+  avatarClassName: string;
+  chipClassName: string;
+}> = {
   publish_failed: {
     avatarClassName: "bg-[#C62828]!",
     chipClassName: "border-[#D32F2F]! text-[#D32F2F]!",
