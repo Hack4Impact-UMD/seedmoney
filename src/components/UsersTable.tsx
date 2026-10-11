@@ -185,10 +185,13 @@ function getStatusSummaryText(status: Status, count: number, fullName: string) {
   }
 }
 
-const STATUS_CHIP_STYLES: Record<AggregateStatus, {
-  avatarClassName: string;
-  chipClassName: string;
-}> = {
+const STATUS_CHIP_STYLES: Record<
+  AggregateStatus,
+  {
+    avatarClassName: string;
+    chipClassName: string;
+  }
+> = {
   publish_failed: {
     avatarClassName: "bg-[#C62828]!",
     chipClassName: "border-[#D32F2F]! text-[#D32F2F]!",
@@ -406,9 +409,9 @@ export default function UsersTable({
     return competitionFilteredData.filter((user) => {
       const matchesSearch =
         q.length === 0 ||
-        user.first_name.toLowerCase().includes(q) ||
-        user.last_name.toLowerCase().includes(q) ||
-        user.email.toLowerCase().includes(q);
+        (user.first_name ?? "").toLowerCase().includes(q) ||
+        (user.last_name ?? "").toLowerCase().includes(q) ||
+        (user.email ?? "").toLowerCase().includes(q);
 
       const matchesStatus =
         activeStatusFilters.length === 0 ||
