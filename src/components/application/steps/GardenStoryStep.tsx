@@ -116,10 +116,10 @@ function getTrimmedStoryAnswerLength(value: string) {
 
 function isStoryAnswerValid(value: string) {
   const trimmedLength = getTrimmedStoryAnswerLength(value);
+  const storyLength = getStoryAnswerLength(value);
 
   return (
-    trimmedLength >= storyAnswerMinChars &&
-    getStoryAnswerLength(value) <= storyAnswerMaxChars
+    trimmedLength >= storyAnswerMinChars && storyLength <= storyAnswerMaxChars
   );
 }
 
@@ -719,12 +719,16 @@ export default function GardenStoryStep() {
           {(field) =>
             (() => {
               const valueLength = getStoryAnswerLength(field.state.value);
-              const trimmedLength = getTrimmedStoryAnswerLength(
-                field.state.value,
-              );
-              const showError =
+              const isTooLong = valueLength > storyAnswerMaxChars;
+              const isTooShort =
                 field.state.meta.isTouched &&
-                trimmedLength < storyAnswerMinChars;
+                getTrimmedStoryAnswerLength(field.state.value) <
+                  storyAnswerMinChars;
+              const showError = isTooLong || isTooShort;
+
+              const errorMessage = isTooLong
+                ? `Please shorten your answer to ${storyAnswerMaxChars.toLocaleString()} characters.`
+                : `Please write at least ${storyAnswerMinChars} characters.`;
 
               return (
                 <TextField
@@ -754,22 +758,16 @@ export default function GardenStoryStep() {
                   helperText={
                     <span className="flex items-center justify-between gap-4">
                       <span>
-                        {showError
-                          ? `Please write at least ${storyAnswerMinChars} characters.`
-                          : storyAnswerHint}
+                        {showError ? errorMessage : storyAnswerHint}
                       </span>
-                      <span>{valueLength} / 1,000</span>
+                      <span>{valueLength.toLocaleString()} / 1,000</span>
                     </span>
                   }
                   onBlur={async (e) => {
                     field.handleBlur();
                     await handleStoryAnswerBlur(1, e.target.value);
                   }}
-                  onChange={(e) =>
-                    field.handleChange(
-                      e.target.value.slice(0, storyAnswerMaxChars),
-                    )
-                  }
+                  onChange={(e) => field.handleChange(e.target.value)}
                 />
               );
             })()
@@ -780,12 +778,16 @@ export default function GardenStoryStep() {
           {(field) =>
             (() => {
               const valueLength = getStoryAnswerLength(field.state.value);
-              const trimmedLength = getTrimmedStoryAnswerLength(
-                field.state.value,
-              );
-              const showError =
+              const isTooLong = valueLength > storyAnswerMaxChars;
+              const isTooShort =
                 field.state.meta.isTouched &&
-                trimmedLength < storyAnswerMinChars;
+                getTrimmedStoryAnswerLength(field.state.value) <
+                  storyAnswerMinChars;
+              const showError = isTooLong || isTooShort;
+
+              const errorMessage = isTooLong
+                ? `Please shorten your answer to ${storyAnswerMaxChars.toLocaleString()} characters.`
+                : `Please write at least ${storyAnswerMinChars} characters.`;
 
               return (
                 <TextField
@@ -815,22 +817,16 @@ export default function GardenStoryStep() {
                   helperText={
                     <span className="flex items-center justify-between gap-4">
                       <span>
-                        {showError
-                          ? `Please write at least ${storyAnswerMinChars} characters.`
-                          : storyAnswerHint}
+                        {showError ? errorMessage : storyAnswerHint}
                       </span>
-                      <span>{valueLength} / 1,000</span>
+                      <span>{valueLength.toLocaleString()} / 1,000</span>
                     </span>
                   }
                   onBlur={async (e) => {
                     field.handleBlur();
                     await handleStoryAnswerBlur(2, e.target.value);
                   }}
-                  onChange={(e) =>
-                    field.handleChange(
-                      e.target.value.slice(0, storyAnswerMaxChars),
-                    )
-                  }
+                  onChange={(e) => field.handleChange(e.target.value)}
                 />
               );
             })()
@@ -841,12 +837,16 @@ export default function GardenStoryStep() {
           {(field) =>
             (() => {
               const valueLength = getStoryAnswerLength(field.state.value);
-              const trimmedLength = getTrimmedStoryAnswerLength(
-                field.state.value,
-              );
-              const showError =
+              const isTooLong = valueLength > storyAnswerMaxChars;
+              const isTooShort =
                 field.state.meta.isTouched &&
-                trimmedLength < storyAnswerMinChars;
+                getTrimmedStoryAnswerLength(field.state.value) <
+                  storyAnswerMinChars;
+              const showError = isTooLong || isTooShort;
+
+              const errorMessage = isTooLong
+                ? `Please shorten your answer to ${storyAnswerMaxChars.toLocaleString()} characters.`
+                : `Please write at least ${storyAnswerMinChars} characters.`;
 
               return (
                 <TextField
@@ -876,22 +876,16 @@ export default function GardenStoryStep() {
                   helperText={
                     <span className="flex items-center justify-between gap-4">
                       <span>
-                        {showError
-                          ? `Please write at least ${storyAnswerMinChars} characters.`
-                          : storyAnswerHint}
+                        {showError ? errorMessage : storyAnswerHint}
                       </span>
-                      <span>{valueLength} / 1,000</span>
+                      <span>{valueLength.toLocaleString()} / 1,000</span>
                     </span>
                   }
                   onBlur={async (e) => {
                     field.handleBlur();
                     await handleStoryAnswerBlur(3, e.target.value);
                   }}
-                  onChange={(e) =>
-                    field.handleChange(
-                      e.target.value.slice(0, storyAnswerMaxChars),
-                    )
-                  }
+                  onChange={(e) => field.handleChange(e.target.value)}
                 />
               );
             })()
@@ -902,12 +896,16 @@ export default function GardenStoryStep() {
           {(field) =>
             (() => {
               const valueLength = getStoryAnswerLength(field.state.value);
-              const trimmedLength = getTrimmedStoryAnswerLength(
-                field.state.value,
-              );
-              const showError =
+              const isTooLong = valueLength > storyAnswerMaxChars;
+              const isTooShort =
                 field.state.meta.isTouched &&
-                trimmedLength < storyAnswerMinChars;
+                getTrimmedStoryAnswerLength(field.state.value) <
+                  storyAnswerMinChars;
+              const showError = isTooLong || isTooShort;
+
+              const errorMessage = isTooLong
+                ? `Please shorten your answer to ${storyAnswerMaxChars.toLocaleString()} characters.`
+                : `Please write at least ${storyAnswerMinChars} characters.`;
 
               return (
                 <TextField
@@ -937,22 +935,16 @@ export default function GardenStoryStep() {
                   helperText={
                     <span className="flex items-center justify-between gap-4">
                       <span>
-                        {showError
-                          ? `Please write at least ${storyAnswerMinChars} characters.`
-                          : storyAnswerHint}
+                        {showError ? errorMessage : storyAnswerHint}
                       </span>
-                      <span>{valueLength} / 1,000</span>
+                      <span>{valueLength.toLocaleString()} / 1,000</span>
                     </span>
                   }
                   onBlur={async (e) => {
                     field.handleBlur();
                     await handleStoryAnswerBlur(4, e.target.value);
                   }}
-                  onChange={(e) =>
-                    field.handleChange(
-                      e.target.value.slice(0, storyAnswerMaxChars),
-                    )
-                  }
+                  onChange={(e) => field.handleChange(e.target.value)}
                 />
               );
             })()

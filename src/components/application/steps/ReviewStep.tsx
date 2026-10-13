@@ -35,6 +35,23 @@ const storySaveErrorMessage =
 const submitErrorMessage =
   "We couldn't submit your application. Your information is still on this page. Please try again.";
 
+function hasStoryAnswerError(value: string) {
+  const trimmedLength = value.trim().length;
+
+  return (
+    value.length > storyAnswerMaxChars ||
+    (trimmedLength > 0 && trimmedLength < storyAnswerMinChars)
+  );
+}
+
+function getStoryAnswerHelperText(value: string) {
+  const characterCount = `${value.length.toLocaleString()} / ${storyAnswerMaxChars.toLocaleString()}`;
+
+  return value.length > storyAnswerMaxChars
+    ? `Please shorten your answer to ${storyAnswerMaxChars.toLocaleString()} characters. ${characterCount}`
+    : characterCount;
+}
+
 function normalizeNumericInput(value: string) {
   const trimmedValue = value.trim();
 
@@ -765,22 +782,15 @@ export default function ReviewSubmitPage() {
           value={values.storyLocationAndAudience}
           required
           multiline
-          error={
-            values.storyLocationAndAudience.trim().length > 0 &&
-            values.storyLocationAndAudience.trim().length < storyAnswerMinChars
-          }
-          helperText={`${values.storyLocationAndAudience.length} / ${storyAnswerMaxChars}`}
+          error={hasStoryAnswerError(values.storyLocationAndAudience)}
+          helperText={getStoryAnswerHelperText(
+            values.storyLocationAndAudience,
+          )}
           onChange={(value) =>
-            form.setFieldValue(
-              "storyLocationAndAudience",
-              value.slice(0, storyAnswerMaxChars),
-            )
+            form.setFieldValue("storyLocationAndAudience", value)
           }
           onBlur={(value) =>
-            saveStoryAnswer(
-              question1.question_id,
-              value.slice(0, storyAnswerMaxChars),
-            )
+            saveStoryAnswer(question1.question_id, value)
           }
         />
         <EditableValueRow
@@ -788,22 +798,13 @@ export default function ReviewSubmitPage() {
           value={values.storyChallenge}
           required
           multiline
-          error={
-            values.storyChallenge.trim().length > 0 &&
-            values.storyChallenge.trim().length < storyAnswerMinChars
-          }
-          helperText={`${values.storyChallenge.length} / ${storyAnswerMaxChars}`}
+          error={hasStoryAnswerError(values.storyChallenge)}
+          helperText={getStoryAnswerHelperText(values.storyChallenge)}
           onChange={(value) =>
-            form.setFieldValue(
-              "storyChallenge",
-              value.slice(0, storyAnswerMaxChars),
-            )
+            form.setFieldValue("storyChallenge", value)
           }
           onBlur={(value) =>
-            saveStoryAnswer(
-              question2.question_id,
-              value.slice(0, storyAnswerMaxChars),
-            )
+            saveStoryAnswer(question2.question_id, value)
           }
         />
         <EditableValueRow
@@ -811,22 +812,13 @@ export default function ReviewSubmitPage() {
           value={values.storySeasonActivity}
           required
           multiline
-          error={
-            values.storySeasonActivity.trim().length > 0 &&
-            values.storySeasonActivity.trim().length < storyAnswerMinChars
-          }
-          helperText={`${values.storySeasonActivity.length} / ${storyAnswerMaxChars}`}
+          error={hasStoryAnswerError(values.storySeasonActivity)}
+          helperText={getStoryAnswerHelperText(values.storySeasonActivity)}
           onChange={(value) =>
-            form.setFieldValue(
-              "storySeasonActivity",
-              value.slice(0, storyAnswerMaxChars),
-            )
+            form.setFieldValue("storySeasonActivity", value)
           }
           onBlur={(value) =>
-            saveStoryAnswer(
-              question3.question_id,
-              value.slice(0, storyAnswerMaxChars),
-            )
+            saveStoryAnswer(question3.question_id, value)
           }
         />
         <EditableValueRow
@@ -834,22 +826,13 @@ export default function ReviewSubmitPage() {
           value={values.storyCampaignImpact}
           required
           multiline
-          error={
-            values.storyCampaignImpact.trim().length > 0 &&
-            values.storyCampaignImpact.trim().length < storyAnswerMinChars
-          }
-          helperText={`${values.storyCampaignImpact.length} / ${storyAnswerMaxChars}`}
+          error={hasStoryAnswerError(values.storyCampaignImpact)}
+          helperText={getStoryAnswerHelperText(values.storyCampaignImpact)}
           onChange={(value) =>
-            form.setFieldValue(
-              "storyCampaignImpact",
-              value.slice(0, storyAnswerMaxChars),
-            )
+            form.setFieldValue("storyCampaignImpact", value)
           }
           onBlur={(value) =>
-            saveStoryAnswer(
-              question4.question_id,
-              value.slice(0, storyAnswerMaxChars),
-            )
+            saveStoryAnswer(question4.question_id, value)
           }
         />
       </div>
