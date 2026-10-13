@@ -115,9 +115,10 @@ function getTrimmedStoryAnswerLength(value: string) {
 }
 
 function isStoryAnswerValid(value: string) {
+  const trimmedLength = getTrimmedStoryAnswerLength(value)
   const storyLength = getStoryAnswerLength(value);
   return (
-    storyLength >= storyAnswerMinChars && storyLength <= storyAnswerMaxChars
+    trimmedLength >= storyAnswerMinChars && storyLength <= storyAnswerMaxChars
   );
 }
 
