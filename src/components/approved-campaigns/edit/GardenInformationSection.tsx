@@ -18,6 +18,7 @@ interface GardenInformationSectionProps {
 }
 
 const MAX_BENEFICIARY_SELECTIONS = 3;
+const OTHER_CATEGORY = "Other (please specify)";
 
 export default function GardenInformationSection({
   formData,
@@ -27,6 +28,13 @@ export default function GardenInformationSection({
   setFieldValue,
   onToggleBeneficiary,
 }: GardenInformationSectionProps) {
+  const isOtherCategorySelected =
+    formData.gardenCategory === OTHER_CATEGORY ||
+    (formData.gardenCategory !== "" &&
+      !categoryOptions
+        .filter((option) => option !== OTHER_CATEGORY)
+        .includes(formData.gardenCategory));
+
   return (
     <>
       <h1 className="text-2xl font-bold">Garden Information</h1>
@@ -82,8 +90,17 @@ export default function GardenInformationSection({
               <input
                 type="radio"
                 name="gardenCategory"
-                checked={formData.gardenCategory === option}
-                onChange={() => setFieldValue("gardenCategory", option)}
+                checked={
+                  option === OTHER_CATEGORY
+                    ? isOtherCategorySelected
+                    : formData.gardenCategory === option
+                }
+                onChange={() =>
+                  setFieldValue(
+                    "gardenCategory",
+                    option === OTHER_CATEGORY ? OTHER_CATEGORY : option,
+                  )
+                }
                 className="w-5 h-5 cursor-pointer"
               />
               <span className="text-sm group-hover:text-gray-900">
@@ -91,6 +108,21 @@ export default function GardenInformationSection({
               </span>
             </label>
           ))}
+          {isOtherCategorySelected && (
+            <TextField
+              label="Please specify (Required)"
+              variant="standard"
+              fullWidth
+              required
+              value={ formData.gardenCategory === OTHER_CATEGORY ? "" : formData.gardenCategory}
+              onChange={(event) =>
+                setFieldValue(
+                  "gardenCategory",
+                  event.target.value || OTHER_CATEGORY,
+                )
+              }
+            />
+          )}
         </div>
       </div>
 
