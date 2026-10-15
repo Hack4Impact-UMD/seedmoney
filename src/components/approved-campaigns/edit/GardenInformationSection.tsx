@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { TextField } from "@mui/material";
 
 import {
@@ -28,12 +29,13 @@ export default function GardenInformationSection({
   setFieldValue,
   onToggleBeneficiary,
 }: GardenInformationSectionProps) {
-  const isOtherCategorySelected =
+  const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(() =>
     formData.gardenCategory === OTHER_CATEGORY ||
     (formData.gardenCategory !== "" &&
       !categoryOptions
         .filter((option) => option !== OTHER_CATEGORY)
-        .includes(formData.gardenCategory));
+        .includes(formData.gardenCategory)),
+  );
 
   return (
     <>
@@ -93,14 +95,16 @@ export default function GardenInformationSection({
                 checked={
                   option === OTHER_CATEGORY
                     ? isOtherCategorySelected
-                    : formData.gardenCategory === option
+                    : !isOtherCategorySelected &&
+                      formData.gardenCategory === option
                 }
-                onChange={() =>
+                onChange={() => {
+                  setIsOtherCategorySelected(option === OTHER_CATEGORY);
                   setFieldValue(
                     "gardenCategory",
                     option === OTHER_CATEGORY ? OTHER_CATEGORY : option,
-                  )
-                }
+                  );
+                }}
                 className="w-5 h-5 cursor-pointer"
               />
               <span className="text-sm group-hover:text-gray-900">
@@ -114,7 +118,11 @@ export default function GardenInformationSection({
               variant="standard"
               fullWidth
               required
-              value={ formData.gardenCategory === OTHER_CATEGORY ? "" : formData.gardenCategory}
+              value={
+                formData.gardenCategory === OTHER_CATEGORY
+                  ? ""
+                  : formData.gardenCategory
+              }
               onChange={(event) =>
                 setFieldValue(
                   "gardenCategory",
