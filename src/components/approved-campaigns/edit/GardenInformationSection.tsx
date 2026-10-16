@@ -19,7 +19,7 @@ interface GardenInformationSectionProps {
 }
 
 const MAX_BENEFICIARY_SELECTIONS = 3;
-const OTHER_CATEGORY = "Other (please specify)";
+export const OTHER_CATEGORY = "Other (please specify)";
 
 export default function GardenInformationSection({
   formData,
@@ -29,13 +29,21 @@ export default function GardenInformationSection({
   setFieldValue,
   onToggleBeneficiary,
 }: GardenInformationSectionProps) {
-  const [isOtherCategorySelected, setIsOtherCategorySelected] = useState(() =>
+  const isOtherCategory =
     formData.gardenCategory === OTHER_CATEGORY ||
     (formData.gardenCategory !== "" &&
       !categoryOptions
         .filter((option) => option !== OTHER_CATEGORY)
-        .includes(formData.gardenCategory)),
-  );
+        .includes(formData.gardenCategory));
+  const [isOtherCategorySelected, setIsOtherCategorySelected] =
+    useState(isOtherCategory);
+  const [lastCategoryValue, setLastCategoryValue] = useState(formData.gardenCategory);
+
+  // Local edits keep the chosen mode, even when custom text matches a preset.
+  if (lastCategoryValue !== formData.gardenCategory) {
+    setLastCategoryValue(formData.gardenCategory);
+    setIsOtherCategorySelected(isOtherCategory);
+  }
 
   return (
     <>
@@ -100,10 +108,8 @@ export default function GardenInformationSection({
                 }
                 onChange={() => {
                   setIsOtherCategorySelected(option === OTHER_CATEGORY);
-                  setFieldValue(
-                    "gardenCategory",
-                    option === OTHER_CATEGORY ? OTHER_CATEGORY : option,
-                  );
+                  setLastCategoryValue(option);
+                  setFieldValue("gardenCategory", option);
                 }}
                 className="w-5 h-5 cursor-pointer"
               />
@@ -123,12 +129,11 @@ export default function GardenInformationSection({
                   ? ""
                   : formData.gardenCategory
               }
-              onChange={(event) =>
-                setFieldValue(
-                  "gardenCategory",
-                  event.target.value || OTHER_CATEGORY,
-                )
-              }
+              onChange={(event) => {
+                const value = event.target.value || OTHER_CATEGORY;
+                setLastCategoryValue(value);
+                setFieldValue("gardenCategory", value);
+              }}
             />
           )}
         </div>

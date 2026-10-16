@@ -17,7 +17,7 @@ import ContactInformationSection from "@/src/components/approved-campaigns/edit/
 import EditCampaignActions from "@/src/components/approved-campaigns/edit/EditCampaignActions";
 import EditCampaignDialogs from "@/src/components/approved-campaigns/edit/EditCampaignDialogs";
 import EditCampaignHeader from "@/src/components/approved-campaigns/edit/EditCampaignHeader";
-import GardenInformationSection from "@/src/components/approved-campaigns/edit/GardenInformationSection";
+import GardenInformationSection, { OTHER_CATEGORY } from "@/src/components/approved-campaigns/edit/GardenInformationSection";
 import GardenStorySection from "@/src/components/approved-campaigns/edit/GardenStorySection";
 import {
   type EditCampaignFormData,
@@ -144,6 +144,13 @@ export default function EditCampaignPage() {
 
   const handleConfirmSave = useCallback(async () => {
     if (!parsedCampaignId) return;
+
+    if (formData.gardenCategory === OTHER_CATEGORY) {
+      setSaveErrorMessage("Please specify your project's category before saving.");
+      setIsSaveModalOpen(false);
+      setShowErrorToast(true);
+      return;
+    }
 
     try {
       const campaignPayload: Partial<Campaign> = {
