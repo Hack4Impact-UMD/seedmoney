@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import { TextField } from "@mui/material";
 
 import {
@@ -18,6 +19,7 @@ interface GardenInformationSectionProps {
 }
 
 const MAX_BENEFICIARY_SELECTIONS = 3;
+export const OTHER_CATEGORY = "Other (please specify)";
 
 export default function GardenInformationSection({
   formData,
@@ -27,6 +29,22 @@ export default function GardenInformationSection({
   setFieldValue,
   onToggleBeneficiary,
 }: GardenInformationSectionProps) {
+  const isOtherCategory =
+    formData.gardenCategory === OTHER_CATEGORY ||
+    (formData.gardenCategory !== "" &&
+      !categoryOptions
+        .filter((option) => option !== OTHER_CATEGORY)
+        .includes(formData.gardenCategory));
+  const [isOtherCategorySelected, setIsOtherCategorySelected] =
+    useState(isOtherCategory);
+  const [lastCategoryValue, setLastCategoryValue] = useState(formData.gardenCategory);
+
+  // Local edits keep the chosen mode, even when custom text matches a preset.
+  if (lastCategoryValue !== formData.gardenCategory) {
+    setLastCategoryValue(formData.gardenCategory);
+    setIsOtherCategorySelected(isOtherCategory);
+  }
+
   return (
     <>
       <h1 className="text-2xl font-bold">Garden Information</h1>
@@ -82,8 +100,17 @@ export default function GardenInformationSection({
               <input
                 type="radio"
                 name="gardenCategory"
-                checked={formData.gardenCategory === option}
-                onChange={() => setFieldValue("gardenCategory", option)}
+                checked={
+                  option === OTHER_CATEGORY
+                    ? isOtherCategorySelected
+                    : !isOtherCategorySelected &&
+                      formData.gardenCategory === option
+                }
+                onChange={() => {
+                  setIsOtherCategorySelected(option === OTHER_CATEGORY);
+                  setLastCategoryValue(option);
+                  setFieldValue("gardenCategory", option);
+                }}
                 className="w-5 h-5 cursor-pointer"
               />
               <span className="text-sm group-hover:text-gray-900">
@@ -91,6 +118,24 @@ export default function GardenInformationSection({
               </span>
             </label>
           ))}
+          {isOtherCategorySelected && (
+            <TextField
+              label="Please specify (Required)"
+              variant="standard"
+              fullWidth
+              required
+              value={
+                formData.gardenCategory === OTHER_CATEGORY
+                  ? ""
+                  : formData.gardenCategory
+              }
+              onChange={(event) => {
+                const value = event.target.value || OTHER_CATEGORY;
+                setLastCategoryValue(value);
+                setFieldValue("gardenCategory", value);
+              }}
+            />
+          )}
         </div>
       </div>
 
