@@ -268,7 +268,10 @@ export default function CampaignReviewPage() {
   const handleConfirmSave = useCallback(async () => {
     if (!parsedCampaignId) return;
 
-    if (formData.gardenCategory === OTHER_CATEGORY) {
+    if (
+      formData.gardenCategory === OTHER_CATEGORY ||
+      formData.gardenCategory.trim() === ""
+    ) {
       setSaveErrorMessage("Please specify your project's category before saving.");
       setIsSaveModalOpen(false);
       setShowErrorToast(true);
