@@ -4,11 +4,17 @@ import Navbar from "@/src/components/Navbar";
 import UsersTable from "@/src/components/UsersTable";
 import useAllUsersWithCampaigns from "@/src/hooks/users/useAllUsersWithCampaigns";
 import useAllCompetitions from "@/src/hooks/competition-metadata/useAllCompetitions";
+import useExportUsers from "@/src/hooks/exports/useExportUsers";
 
 export default function Users() {
   const { data: usersTableRows = [], isLoading: isLoadingUsers } = useAllUsersWithCampaigns();
   const { data: competitions = [], isLoading: isLoadingCompetitions } = useAllCompetitions();
 
+  const {
+  mutate: exportUsers,
+  isPending: isExporting,
+  isError: exportFailed,
+} = useExportUsers();
 
   const orderedCompetitions = useMemo(() => {
     return [...competitions].sort(
@@ -72,7 +78,25 @@ export default function Users() {
         </div>
 
         <div className="hidden items-center gap-4 md:flex">
-          <h3 className="text-4xl font-bold text-[#096B2E]">List of Users</h3>
+          <div className="flex items-center gap-4">
+            <h3 className="text-4xl font-bold text-[#096B2E]">
+              List of Users
+            </h3>
+
+            <button
+              type="button"
+              onClick={() => exportUsers()}
+              disabled={isExporting}
+              className="rounded-lg bg-[#096B2E] px-4 py-2 text-sm font-semibold text-white hover:bg-[#075623] disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              {isExporting ? "Exporting..." : "Export CSV"}
+            </button>
+          </div>
+          {exportFailed && (
+          <p role="alert" className="text-sm text-red-600">
+            Failed to export users. Please try again.
+          </p>
+          )}
           <div className="mx-6 h-10 w-px border border-[#1A4A28]" />
           <div className="flex items-center gap-3">
             <span className="text-gray-500">Select year to view:</span>
