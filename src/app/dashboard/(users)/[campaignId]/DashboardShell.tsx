@@ -27,7 +27,9 @@ import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadC
 import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
 import BaseModal from "@/src/components/bases/BaseModal";
 import OpenInNew from "@mui/icons-material/OpenInNew";
+import QrCode2 from "@mui/icons-material/QrCode2";
 import BaseAlert from "@/src/components/bases/BaseAlert";
+import CampaignQrCodeModal from "@/src/components/dashboard/CampaignQrCodeModal";
 import DashboardFooter from "@/src/components/DashboardFooter";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import { Chip } from "@mui/material";
@@ -71,6 +73,8 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     raisedLoading || raisedError ? null : raisedPercent;
   const [toast, setToast] = useState(false);
   const [viewCampaignModal, setViewCampaignModal] = useState(false);
+  const [qrCodeModal, setQrCodeModal] = useState(false);
+  const [qrDownloadToast, setQrDownloadToast] = useState(false);
   const submissionToastOpen = searchParams.get("submitted") === "1";
 
   const handleCloseSubmissionToast = useCallback(() => {
@@ -293,6 +297,17 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
               <span className="md:hidden">Share campaign</span>
               <span className="hidden md:inline">Copy campaign link</span>
             </Button>
+            {campaignData.givebutterlink && (
+              <Button
+                size="small"
+                variant={qrCodeModal ? "contained" : "outlined"}
+                className="shrink-0!"
+                startIcon={<QrCode2 fontSize="small" />}
+                onClick={() => setQrCodeModal(true)}
+              >
+                QR Code
+              </Button>
+            )}
             <Button
               size="small"
               variant="outlined"
@@ -374,6 +389,26 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
       >
         <p>Campaign link has been copied to clipboard</p>
       </BaseAlert>
+
+      {campaignData.givebutterlink && (
+        <CampaignQrCodeModal
+          open={qrCodeModal}
+          onClose={() => setQrCodeModal(false)}
+          onDownloaded={() => {
+            setQrCodeModal(false);
+            setQrDownloadToast(true);
+          }}
+          campaignName={campaignData.name}
+          campaignUrl={campaignData.givebutterlink}
+        />
+      )}
+
+      <BaseAlert
+        open={qrDownloadToast}
+        onClose={() => setQrDownloadToast(false)}
+        title="QR Code downloaded successfully!"
+        copySuccess
+      />
       {currentCompetitionData != null &&
         campaignData.competition_id !==
           currentCompetitionData.competition_id && (
