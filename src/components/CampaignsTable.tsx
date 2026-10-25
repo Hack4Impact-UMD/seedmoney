@@ -19,6 +19,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ImportExportOutlinedIcon from "@mui/icons-material/ImportExportOutlined";
 import { useRouter } from "next/navigation";
+import BaseModal from "@/src/components/bases/BaseModal";
 import type { Status } from "@/src/types/db/enums";
 import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
 import { useAuth } from "@/src/context/AuthProvider";
@@ -138,6 +139,13 @@ export default function CampaignsTable({
     useState(false);
   const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
   const [suspendCampaignId, setSuspendCampaignId] = useState<number | null>(null);
+  const suspendCampaign = initialData.find(
+    (campaign) => campaign.campaign_id === suspendCampaignId,
+  );
+  const closeSuspendModal = () => {
+    setIsSuspendModalOpen(false);
+    setSuspendCampaignId(null);
+  };
 
   const { user } = useAuth();
   const {
@@ -865,15 +873,16 @@ export default function CampaignsTable({
                           <StatusChip status={campaign.status} />
                         </td>
                         <td className="px-4 py-4">
-                          <Button 
-                          variant="outlined"
-                          size="small"
-                          color="warning"
-                          onClick={(e) => {
-                          e.stopPropagation();
-                          setSuspendCampaignId(campaign.campaign_id);
-                          setIsSuspendModalOpen(true);
-                        }}> Suspend
+                          <Button
+                            variant="outlined"
+                            size="small"
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              setSuspendCampaignId(campaign.campaign_id);
+                              setIsSuspendModalOpen(true);
+                            }}
+                          >
+                            Suspend
                           </Button>
                         </td>
                         <td className="px-2 py-2">
@@ -939,6 +948,30 @@ export default function CampaignsTable({
           </>
         )}
       </div>
+
+      <BaseModal
+        open={isSuspendModalOpen}
+        onClose={closeSuspendModal}
+        title="Confirm Suspension"
+      >
+        <div className="px-4 pb-4 text-[16px] text-[#727873]">
+          <p>
+            You are about to suspend{" "}
+            <span className="font-medium text-[#222622]">
+              {suspendCampaign?.name || "this campaign"}
+            </span>
+            . Are you sure you would like to proceed?
+          </p>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-4 pb-4">
+          <Button onClick={closeSuspendModal} variant="text">
+            CANCEL
+          </Button>
+          <Button onClick={closeSuspendModal} variant="contained" size="small">
+            SUSPEND
+          </Button>
+        </div>
+      </BaseModal>
     </div>
   );
 }
