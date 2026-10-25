@@ -136,6 +136,8 @@ export default function CampaignsTable({
     useState<MobileFilterCategory | null>(null);
   const [mobileFilterOpenedFromChip, setMobileFilterOpenedFromChip] =
     useState(false);
+  const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
+  const [suspendCampaignId, setSuspendCampaignId] = useState<number | null>(null);
 
   const { user } = useAuth();
   const {
@@ -797,6 +799,7 @@ export default function CampaignsTable({
                       "Goal",
                       "Goal Progress",
                       statusColumnLabel,
+                      "Suspend",
                       "",
                     ]
                       .filter((header) => header !== null)
@@ -860,6 +863,18 @@ export default function CampaignsTable({
                         </td>
                         <td className="px-4 py-4">
                           <StatusChip status={campaign.status} />
+                        </td>
+                        <td className="px-4 py-4">
+                          <Button 
+                          variant="outlined"
+                          size="small"
+                          color="warning"
+                          onClick={(e) => {
+                          e.stopPropagation();
+                          setSuspendCampaignId(campaign.campaign_id);
+                          setIsSuspendModalOpen(true);
+                        }}> Suspend
+                          </Button>
                         </td>
                         <td className="px-2 py-2">
                           <IconButton
