@@ -15,12 +15,24 @@ import InputLabel from "@mui/material/InputLabel";
 import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
+import BaseModal from "@/src/components/bases/BaseModal";
+import Link from "next/link"
+import { useRouter } from "next/navigation";
 
 export default function EmailUsersPage() {
+  const router = useRouter();
   const [recipientGroups, setRecipientGroups] = useState<string[]>([]);
   const [subject, setSubject] = useState("");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadError, setUploadError] = useState("");
+  const [previewOpen, setPreviewOpen] = useState(false);
+  const [testSendOpen, setTestSendOpen] = useState(false);
+  const [testEmail, setTestEmail] = useState("");
+  const [testSendNotice, setTestSendNotice] = useState(false);
+  const [sendConfirmOpen, setSendConfirmOpen] = useState(false);
+  const [sendNotice, setSendNotice] = useState(false);
+
+  const isValidTestEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail.trim());
 
   
   const { getRootProps, getInputProps } = useDropzone({
@@ -60,8 +72,47 @@ export default function EmailUsersPage() {
       <Navbar />
       <div className="flex-1 bg-[#F6FAF9] px-4 py-8 pb-24 md:px-10 md:py-[60px] md:pb-[60px]">
         <div className="flex w-full flex-col gap-6">
-          <div className="hidden w-full md:block">
-            <h1 className="text-4xl font-bold text-[#123A1E]">Email Users</h1>
+          <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+            <div>
+              <h1 className="text-4xl font-bold text-[#123A1E]">
+                Email Users
+              </h1>
+              <p className="mt-2 text-gray-600">
+                Send an update to a group of Seedmoney users.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-3">
+              <Button
+                component={Link}
+                href="/dashboard/email-users"
+                variant="contained"
+                size="small"
+                sx={{
+                  borderRadius: "20px",
+                  textTransform: "none",
+                  px: 2,
+                  py: 0.75,
+                }}
+              >
+                Compose
+              </Button>
+
+              <Button
+                component={Link}
+                href="/dashboard/email-users/sent-history"
+                variant="outlined"
+                size="small"
+                sx={{
+                  borderRadius: "20px",
+                  textTransform: "none",
+                  px: 2,
+                  py: 0.75,
+                }}
+              >
+                Sent history (12)
+              </Button>
+            </div>
           </div>
 
           <section className="rounded-xl border border-gray-200 bg-white p-6">
@@ -230,24 +281,209 @@ export default function EmailUsersPage() {
 
           {/* Email actions */}
           <div className="flex flex-wrap items-center justify-end gap-3 rounded-xl border border-gray-200 bg-white p-4">
-            <Button variant="text" sx={{ color: "#123A1E", display: "flex", gap: 1}}>
+            <Button 
+              type="button" 
+              variant="text"
+              onClick={() => setPreviewOpen(true)} 
+              sx={{ color: "#123A1E", display: "flex", gap: 1}}>
               <RemoveRedEyeOutlinedIcon/>
               Preview
             </Button>
 
             <Button
+              type="button"
               variant="text"
+              onClick={() => {
+                setTestSendNotice(false)
+                setTestSendOpen(true)
+              }}
               sx={{ color: "#123A1E", display: "flex", gap: 1}}>
                 <EmailOutlinedIcon />
               Test send
             </Button>
 
-            <Button variant="contained" sx={{display: "flex", gap: 1}}>
+            <Button 
+              type="button" 
+              variant="contained" 
+              disabled={recipientGroups.length === 0 || !subject.trim()}
+              onClick={() => {
+                setSendNotice(false);
+                setSendConfirmOpen(true);
+              }}
+              sx={{display: "flex", gap: 1}}>
               <SendOutlinedIcon fontSize="small" sx={{transform: "rotate(-45deg)", marginTop: "-5px"}}/>
               Send Email
             </Button>
           </div>
 
+          {/* Email preview modal */}
+          <BaseModal
+            open={previewOpen}
+            onClose={() => setPreviewOpen(false)}
+            title="Email Preview"
+            containerClassName="md:!w-[760px]"
+          >
+            <div className="space-y-4">
+              <p className="text-sm text-gray-500">
+                {/* TODO: show a display of the email */}
+                Preview of your email before sending.
+              </p>
+
+              <div className="rounded-md border border-gray-200 p-4">
+                <p className="text-sm text-gray-600">
+                  To: {recipientGroups.length > 0
+                    ? recipientGroups.join(", ")
+                    : "No recipients selected"}
+                </p>
+
+                <p className="mt-2 font-semibold text-[#123A1E]">
+                  {subject || "No subject"}
+                </p>
+
+                <div className="mt-4 border-t border-gray-200 pt-4">
+                  <p className="text-gray-400">
+                    Email editor placeholder
+                  </p>
+                </div>
+
+                {selectedImages.length > 0 && (
+                  <div className="mt-4 border-t border-gray-200 pt-4">
+                    <p className="mb-2 font-medium">Attachments</p>
+
+                    {selectedImages.map((file, index) => (
+                      <p key={`${file.name}-${index}`} className="text-sm text-gray-600">
+                        {file.name}
+                      </p>
+                    ))}
+                  </div>
+                )}
+              </div>
+
+              <div className="flex justify-end">
+                <Button
+                  variant="contained"
+                  onClick={() => setPreviewOpen(false)}
+                >
+                  Close Preview
+                </Button>
+              </div>
+            </div>
+          </BaseModal>
+
+          {/* Test Send modal */}
+          <BaseModal
+            open={testSendOpen}
+            onClose={() => setTestSendOpen(false)}
+            title="Send Test Email"
+          >
+            <div className="flex flex-col gap-5">
+              <p className="text-sm text-gray-600">
+                Enter an email address to test your message before
+                sending it to recipients.
+              </p>
+
+              <TextField
+                fullWidth
+                required
+                type="email"
+                label="Email address"
+                placeholder="example@email.com"
+                value={testEmail}
+                onChange={(event) => {
+                  setTestEmail(event.target.value);
+                  setTestSendNotice(false);
+                }}
+              />
+
+              {testSendNotice && (
+                <p role="status" className="rounded-md bg-[#F1F8F3] p-3 text-sm text-[#2F7D43]">
+                  Test send simulated for {testEmail}. No email was actually sent.
+                </p>
+              )}
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="text"
+                  sx={{ color: "#123A1E" }}
+                  onClick={() => setTestSendOpen(false)}
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="contained"
+                  disabled={!isValidTestEmail}
+                  onClick={() => setTestSendNotice(true)}
+                  sx={{
+                    backgroundColor: "#2F7D43",
+                    "&:hover": {
+                      backgroundColor: "#246635",
+                    },
+                  }}
+                >
+                  Send Test Email
+                </Button>
+              </div>
+            </div>
+          </BaseModal>
+
+          {/* Send Email confirmation */}
+          <BaseModal
+            open={sendConfirmOpen}
+            onClose={() => setSendConfirmOpen(false)}
+            title="Send this email?"
+          >
+            <div className="flex flex-col gap-5">
+              <p className="text-sm text-gray-600">
+                You&apos;re about to send an email to the following groups:
+              </p>
+
+              <div className="rounded-md bg-[#F1F8F3] p-4">
+                <p className="font-semibold text-[#123A1E]">
+                  {recipientGroups.map((group) => groupLabels[group] ?? group).join(", ")}
+                </p>
+
+                <p className="mt-2 text-sm text-gray-600">
+                  Subject: {subject}
+                </p>
+              </div>
+
+              <p className="text-sm text-gray-500">
+                Please review your recipients and message before confirming.
+                This is a frontend demonstration; no email will be sent.
+              </p>
+
+              <div className="flex justify-end gap-3">
+                <Button
+                  type="button"
+                  variant="text"
+                  onClick={() => setSendConfirmOpen(false)}
+                  sx={{ color: "#123A1E" }}
+                >
+                  Cancel
+                </Button>
+
+                <Button
+                  type="button"
+                  variant="contained"
+                  onClick={() => {
+                    setSendConfirmOpen(false);
+                    router.push("/dashboard/email-users/sent-history")
+                  }}
+                  sx={{
+                    backgroundColor: "#2F7D43",
+                    "&:hover": {
+                      backgroundColor: "#246635",
+                    },
+                  }}
+                >
+                  Confirm (Demo)
+                </Button>
+              </div>
+            </div>
+          </BaseModal>
         </div>
       </div>
     </div>
