@@ -246,53 +246,60 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
         <section id="dashboard-overview" className="scroll-mt-20">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
-            <Button
-              size="small"
-              variant="contained"
-              className="!shrink-0"
-              onClick={() => setViewCampaignModal(true)}
-            >
-              View Campaign
-              <OpenInNew fontSize="small" className="text-[#FFFFFF] ml-[5px]" />
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              className="!shrink-0"
-              onClick={async () => {
-                const campaignUrl = campaignData.givebutterlink;
-                const isMobile =
-                  typeof window !== "undefined" &&
-                  window.matchMedia("(max-width: 767px)").matches;
+            {campaignData.status !== "suspended" && (
+              <>
+                <Button
+                  size="small"
+                  variant="contained"
+                  className="!shrink-0"
+                  onClick={() => setViewCampaignModal(true)}
+                >
+                  View Campaign
+                  <OpenInNew
+                    fontSize="small"
+                    className="text-[#FFFFFF] ml-[5px]"
+                  />
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  className="!shrink-0"
+                  onClick={async () => {
+                    const campaignUrl = campaignData.givebutterlink;
+                    const isMobile =
+                      typeof window !== "undefined" &&
+                      window.matchMedia("(max-width: 767px)").matches;
 
-                if (isMobile && navigator.share) {
-                  try {
-                    await navigator.share({
-                      title: campaignData.name,
-                      url: campaignUrl,
-                    });
-                    return;
-                  } catch (error) {
-                    if (
-                      error instanceof DOMException &&
-                      error.name === "AbortError"
-                    ) {
+                    if (isMobile && navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: campaignData.name,
+                          url: campaignUrl,
+                        });
+                        return;
+                      } catch (error) {
+                        if (
+                          error instanceof DOMException &&
+                          error.name === "AbortError"
+                        ) {
+                          return;
+                        }
+                      }
+                    }
+
+                    try {
+                      await navigator.clipboard.writeText(campaignUrl);
+                      setToast(true);
+                    } catch {
                       return;
                     }
-                  }
-                }
-
-                try {
-                  await navigator.clipboard.writeText(campaignUrl);
-                  setToast(true);
-                } catch {
-                  return;
-                }
-              }}
-            >
-              <span className="md:hidden">Share campaign</span>
-              <span className="hidden md:inline">Copy campaign link</span>
-            </Button>
+                  }}
+                >
+                  <span className="md:hidden">Share campaign</span>
+                  <span className="hidden md:inline">Copy campaign link</span>
+                </Button>
+              </>
+            )}
             <Button
               size="small"
               variant="outlined"
