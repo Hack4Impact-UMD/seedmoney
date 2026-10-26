@@ -8,5 +8,6 @@ export type Status =
   | "approved"
   | "denied"
   | "published"
+  | "suspended"
   | "publish_failed"
   | "archived";

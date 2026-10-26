@@ -9,6 +9,7 @@ const statusLabels: Partial<Record<Status, string>> = {
   approved: "Approved",
   denied: "Denied",
   published: "Published",
+  suspended: "Suspended",
   archived: "Archived",
 };
 

@@ -38,6 +38,7 @@ registration record for an account that has not started a campaign.
 | `approved` | An admin approved the application and its unpublished Givebutter campaign was created successfully. |
 | `denied` | An admin denied the application. An admin may return it to `pending`. |
 | `published` | The Givebutter campaign was published and the local launch update succeeded. |
+| `suspended` | An admin requested suspension and the campaign is excluded from the public leaderboard. The Givebutter unpublish request can be retried safely from the admin campaign table. |
 | `publish_failed` | Givebutter campaign creation or publication failed and requires retry or review. |
 | `archived` | Historical display state. The current UI presents approved campaigns from a previous competition as archived; no production write currently assigns this status. |
 
