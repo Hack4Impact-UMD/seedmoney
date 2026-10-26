@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Button,
   Chip,
@@ -19,6 +19,7 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ImportExportOutlinedIcon from "@mui/icons-material/ImportExportOutlined";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import BaseModal from "@/src/components/bases/BaseModal";
 import type { Status } from "@/src/types/db/enums";
 import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
@@ -53,6 +54,7 @@ const statusLabels: Partial<Record<Status, string>> = {
   approved: "Approved",
   denied: "Denied",
   published: "Published",
+  suspended: "Suspended",
   archived: "Archived",
 };
 
@@ -91,6 +93,8 @@ function getStatusChipClasses(status: string) {
     case "approved":
     case "published":
       return "border-[#2D7A45] text-[#2D7A45]";
+    case "suspended":
+      return "border-[#667085] text-[#667085]";
     case "pending":
       return "border-[#F79009] text-[#B54708]";
     case "denied":
@@ -122,6 +126,7 @@ export default function CampaignsTable({
   adminRouteResolver,
 }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [campaignSearch, setCampaignSearch] = useState("");
   const [yearFilter, setYearFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -140,12 +145,18 @@ export default function CampaignsTable({
     useState(false);
   const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
   const [suspendCampaignId, setSuspendCampaignId] = useState<number | null>(null);
+  const [isSuspending, setIsSuspending] = useState(false);
+  const [suspendError, setSuspendError] = useState<string | null>(null);
+  const suspendInFlightRef = useRef(false);
   const suspendCampaign = initialData.find(
     (campaign) => campaign.campaign_id === suspendCampaignId,
   );
   const closeSuspendModal = () => {
+    if (suspendInFlightRef.current) return;
+
     setIsSuspendModalOpen(false);
     setSuspendCampaignId(null);
+    setSuspendError(null);
   };
 
   const { user } = useAuth();
@@ -404,13 +415,33 @@ export default function CampaignsTable({
   };
 
   const handleConfirmSuspend = async () => {
-    if (suspendCampaignId === null) return;
+    if (suspendCampaignId === null || suspendInFlightRef.current) return;
+
+    suspendInFlightRef.current = true;
+    setIsSuspending(true);
+    setSuspendError(null);
+    let succeeded = false;
 
     try {
       await unpublishGivebutterCampaign(suspendCampaignId);
-      closeSuspendModal();
+      await queryClient.invalidateQueries({
+        queryKey: ["campaigns", "approved-campaigns"],
+      });
+      succeeded = true;
     } catch (error) {
       console.error("Failed to suspend campaign:", error);
+      setSuspendError(
+        error instanceof Error
+          ? error.message
+          : "Failed to suspend campaign. Please try again.",
+      );
+    } finally {
+      suspendInFlightRef.current = false;
+      setIsSuspending(false);
+
+      if (succeeded) {
+        closeSuspendModal();
+      }
     }
   };
 
@@ -885,17 +916,19 @@ export default function CampaignsTable({
                           <StatusChip status={campaign.status} />
                         </td>
                         <td className="px-4 py-4">
-                          <Button
-                            variant="outlined"
-                            size="small"
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              setSuspendCampaignId(campaign.campaign_id);
-                              setIsSuspendModalOpen(true);
-                            }}
-                          >
-                            Suspend
-                          </Button>
+                          {campaign.status === "published" && (
+                            <Button
+                              variant="outlined"
+                              size="small"
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                setSuspendCampaignId(campaign.campaign_id);
+                                setIsSuspendModalOpen(true);
+                              }}
+                            >
+                              Suspend
+                            </Button>
+                          )}
                         </td>
                         <td className="px-2 py-2">
                           <IconButton
@@ -974,17 +1007,27 @@ export default function CampaignsTable({
             </span>
             . Are you sure you would like to proceed?
           </p>
+          {suspendError && (
+            <p className="mt-3 text-sm text-red-600" role="alert">
+              {suspendError}
+            </p>
+          )}
         </div>
         <div className="flex items-center justify-end gap-3 px-4 pb-4">
-          <Button onClick={closeSuspendModal} variant="text">
+          <Button
+            onClick={closeSuspendModal}
+            variant="text"
+            disabled={isSuspending}
+          >
             CANCEL
           </Button>
           <Button
             onClick={handleConfirmSuspend}
             variant="contained"
             size="small"
+            disabled={isSuspending}
           >
-            SUSPEND
+            {isSuspending ? "SUSPENDING..." : "SUSPEND"}
           </Button>
         </div>
       </BaseModal>

@@ -297,7 +297,7 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
 
   const { data: campaign, error: campaignError } = await supabase
     .from("campaigns")
-    .select("campaign_id, givebutter_id")
+    .select("campaign_id, givebutter_id, status")
     .eq("campaign_id", campaignId)
     .maybeSingle();
 
@@ -309,6 +309,9 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
   }
   if (!campaign.givebutter_id) {
     throw new Error(`Campaign ${campaignId} has no Givebutter ID`);
+  }
+  if (campaign.status !== "published") {
+    throw new Error(`Campaign ${campaignId} is not published`);
   }
 
   const response = await fetchGivebutterWithRetry(
@@ -328,6 +331,13 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
       `Failed to unpublish campaign (${response.status}): ${JSON.stringify(error)}`,
     );
   }
+
+  await updateCampaignWithRetry(
+    supabase,
+    campaignId,
+    { status: "suspended" },
+    "Failed to record suspended campaign",
+  );
 
   return { success: true };
 }
