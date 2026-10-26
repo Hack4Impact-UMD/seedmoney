@@ -20,6 +20,7 @@ import Denied from "@/src/components/dashboard/Denied";
 import { TotalRaisedCard } from "@/src/components/dashboard/TotalRaisedCard";
 import { TotalDonorsCard } from "@/src/components/dashboard/TotalDonorsCard";
 import { DaysRemainingCard } from "@/src/components/dashboard/DaysRemainingCard";
+import { ChallengeStandingCard } from "@/src/components/dashboard/ChallengeStandingCard";
 import { useAuth } from "@/src/context/AuthProvider";
 import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import Button from "@mui/material/Button";
@@ -204,9 +205,9 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
   const isChallengeActive = Boolean(
     competitionStartDate &&
-      competitionEndDate &&
-      moment().isAfter(competitionStartDate) &&
-      moment().isBefore(competitionEndDate),
+    competitionEndDate &&
+    moment().isAfter(competitionStartDate) &&
+    moment().isBefore(competitionEndDate),
   );
   const challengeStatusChip = (
     <Chip
@@ -312,9 +313,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             />
 
             <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-6">
-              <TotalDonorsCard
-                totalDonors={campaignData.donors}
-              />
+              <TotalDonorsCard totalDonors={campaignData.donors} />
 
               <DaysRemainingCard
                 startDate={currentCompetitionData?.start_date ?? null}
@@ -325,6 +324,15 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                 }
               />
             </div>
+          </div>
+          <div className="mt-6">
+            <ChallengeStandingCard
+              rank={27} //placeholder values from figma
+              totalProjects={412}
+              projectedGrant={400}
+              grantTierMinRank={19}
+              grantTierMaxRank={36}
+            />
           </div>
         </section>
 
