@@ -19,6 +19,7 @@ import TaskAltOutlinedIcon from "@mui/icons-material/TaskAltOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import Image from "next/image";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { usePathname, useRouter, useParams } from "next/navigation";
@@ -54,6 +55,7 @@ const ADMIN_NAV_ITEMS = [
     Icon: HistoryIcon,
   },
   { label: "List of Users", path: "/dashboard/users", Icon: PersonOutlineIcon },
+  { label: "Email Users", path: "/dashboard/email-users", Icon: EmailOutlinedIcon }
 ] as const;
 
 export default function Navbar({ compact = false }: { compact?: boolean }) {
