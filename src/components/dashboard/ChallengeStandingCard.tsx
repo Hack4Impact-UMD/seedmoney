@@ -39,7 +39,7 @@ export function ChallengeStandingCard({
 
         <div className="flex-1 pt-4 md:pt-0 md:pl-8">
           <p className="text-sm text-gray-500">
-            Grant you'd get if the Challenge ended today
+            Grant you&apos;d get if the Challenge ended today
           </p>
           <p className="mt-2 text-3xl font-bold text-gray-900">
             ${projectedGrant.toLocaleString()}
