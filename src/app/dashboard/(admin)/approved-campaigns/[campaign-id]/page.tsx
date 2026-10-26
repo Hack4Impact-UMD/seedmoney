@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
 import moment from "moment";
+import clsx from "clsx";
 
 import Navbar from "@/src/components/Navbar";
 import DonorsTable from "@/src/components/DonorsTable";
@@ -23,8 +24,9 @@ import useReadCompetitionById from "@/src/hooks/competition-metadata/useReadComp
 import useReadCampaignTransactions from "@/src/hooks/transactions/useReadCampaignTransactions";
 import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
 import useDonorsChangePercent from "@/src/hooks/transactions/useDonorsChangePercent";
+import useDeleteCampaign from "@/src/hooks/campaigns/useDeleteCampaign";
 
-import { ArrowBack, OpenInNew } from "@mui/icons-material";
+import { ArrowBack, Close, OpenInNew } from "@mui/icons-material";
 import Button from "@mui/material/Button";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
@@ -45,6 +47,14 @@ export default function AdminCampaignPage() {
 
   const [toast, setToast] = useState(false);
   const [viewCampaignModal, setViewCampaignModal] = useState(false);
+  const [deleteModalOpen, setDeleteModalOpen] = useState(false);
+  const [deleteUnlockIn, setDeleteUnlockIn] = useState(0);
+  const [deleteError, setDeleteError] = useState<string | null>(null);
+
+  const {
+    mutate: deleteCampaign,
+    isPending: isDeleting,
+  } = useDeleteCampaign();
 
   const {
     data: campaignsData,
@@ -107,6 +117,36 @@ export default function AdminCampaignPage() {
   const handleBack = () => {
     router.push("/dashboard/approved-campaigns");
   };
+
+  const handleOpenDeleteModal = () => {
+    setDeleteUnlockIn(3);
+    setDeleteError(null);
+    setDeleteModalOpen(true);
+  };
+
+  const handleConfirmDelete = () => {
+    deleteCampaign(campaignId, {
+      onSuccess: () => router.push("/dashboard/approved-campaigns"),
+      onError: (error) => setDeleteError(error.message),
+    });
+  };
+
+  useEffect(() => {
+    if (!deleteModalOpen) return;
+
+    const timer = window.setInterval(() => {
+      setDeleteUnlockIn((current) => {
+        if (current <= 1) {
+          window.clearInterval(timer);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
+
+    return () => window.clearInterval(timer);
+  }, [deleteModalOpen]);
 
   if (!Number.isFinite(campaignId)) {
     notFound();
@@ -199,6 +239,16 @@ export default function AdminCampaignPage() {
             >
               Edit
             </Button>
+
+            <Button
+              size="small"
+              color="error"
+              variant="outlined"
+              className="!border-[#F04438] !text-[#F04438] hover:!bg-[#FEF3F2]"
+              onClick={handleOpenDeleteModal}
+            >
+              Delete
+            </Button>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
@@ -279,6 +329,57 @@ export default function AdminCampaignPage() {
           >
             Proceed
           </Button>
+        </div>
+      </BaseModal>
+
+      <BaseModal
+        open={deleteModalOpen}
+        onClose={() => setDeleteModalOpen(false)}
+      >
+        <div className="mb-6 flex items-start justify-between gap-4">
+          <h2 className="text-[20px] font-semibold text-[#123A1E]">
+            Confirm Deletion
+          </h2>
+          <button
+            type="button"
+            onClick={() => setDeleteModalOpen(false)}
+            className="text-[#666666] transition-colors hover:text-[#1f2320]"
+            aria-label="Close delete dialog"
+          >
+            <Close />
+          </button>
+        </div>
+        <p className="mb-8 text-gray-700">
+          You are about to delete {campaignData.name} including all of its 
+          donation records. This action is irreversible. Are you sure you 
+          would like to delete this campaign?
+        </p>
+        {deleteError && (
+          <p className="mb-4 text-sm text-red-600">{deleteError}</p>
+        )}
+        <div className="flex justify-end gap-4">
+          <button
+            onClick={() => setDeleteModalOpen(false)}
+            className="cursor-pointer px-4 py-2 font-medium text-gray-600 transition-colors hover:text-gray-800"
+          >
+            CANCEL
+          </button>
+          <button
+            onClick={handleConfirmDelete}
+            disabled={deleteUnlockIn > 0 || isDeleting}
+            className={clsx(
+              "rounded px-5 py-2 font-medium transition-colors",
+              deleteUnlockIn > 0 || isDeleting
+                ? "cursor-not-allowed bg-gray-200 text-gray-400"
+                : "cursor-pointer bg-red-600 text-white hover:bg-red-700",
+            )}
+          >
+            {isDeleting
+              ? "DELETING..."
+              : deleteUnlockIn > 0
+                ? `DELETE (${deleteUnlockIn})`
+                : "DELETE"}
+          </button>
         </div>
       </BaseModal>
 

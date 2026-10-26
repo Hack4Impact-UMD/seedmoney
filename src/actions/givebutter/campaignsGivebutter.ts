@@ -689,6 +689,40 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
   return results;
 }
 
+export async function deleteCampaignAndGivebutter(campaignId: number) {
+  const supabase = await createServerClient();
+
+  const { data: isAdmin, error: adminError } =
+    await supabase.rpc("is_in_app_admin");
+
+  if (adminError || !isAdmin)
+    throw new Error("Not authorized");
+
+  const { data: campaign, error: campaignError } = await supabase
+    .from("campaigns")
+    .select("campaign_id, givebutter_id")
+    .eq("campaign_id", campaignId)
+    .single();
+
+  if (!campaign || campaignError)
+    throw new Error("Campaign not found");
+
+  if (campaign.givebutter_id) {
+    const deleted = await deleteGivebutterCampaign(campaign.givebutter_id);
+    if (!deleted)
+      throw new Error("Failed to delete campaign on Givebutter");
+  }
+
+  const { data: deletedRows, error: deleteError } = await supabase
+    .from("campaigns")
+    .delete()
+    .eq("campaign_id", campaignId)
+    .select("campaign_id");
+
+  if (deleteError || !deletedRows || deletedRows.length === 0)
+    throw new Error("Failed to delete campaign");
+}
+
 export async function publishDueCampaigns() {
   const supabase = createServiceRoleClient();
 
