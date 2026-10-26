@@ -204,9 +204,9 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
   const isChallengeActive = Boolean(
     competitionStartDate &&
-    competitionEndDate &&
-    moment().isAfter(competitionStartDate) &&
-    moment().isBefore(competitionEndDate),
+      competitionEndDate &&
+      moment().isAfter(competitionStartDate) &&
+      moment().isBefore(competitionEndDate),
   );
   const challengeStatusChip = (
     <Chip
@@ -312,7 +312,9 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             />
 
             <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-6">
-              <TotalDonorsCard totalDonors={campaignData.donors} />
+              <TotalDonorsCard
+                totalDonors={campaignData.donors}
+              />
 
               <DaysRemainingCard
                 startDate={currentCompetitionData?.start_date ?? null}
