@@ -25,6 +25,7 @@ import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "../hooks/users/useUserByAuthId";
 import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
+import { unpublishGivebutterCampaign } from "@/src/actions/givebutter/campaignsGivebutter";
 
 interface Props {
   initialData: CampaignWithLeader[];
@@ -400,6 +401,17 @@ export default function CampaignsTable({
     return `Status: ${values
       .map((value) => getFilterStatusLabel(value, filterStatusLabelMap))
       .join(", ")}`;
+  };
+
+  const handleConfirmSuspend = async () => {
+    if (suspendCampaignId === null) return;
+
+    try {
+      await unpublishGivebutterCampaign(suspendCampaignId);
+      closeSuspendModal();
+    } catch (error) {
+      console.error("Failed to suspend campaign:", error);
+    }
   };
 
   return (
@@ -967,7 +979,11 @@ export default function CampaignsTable({
           <Button onClick={closeSuspendModal} variant="text">
             CANCEL
           </Button>
-          <Button onClick={closeSuspendModal} variant="contained" size="small">
+          <Button
+            onClick={handleConfirmSuspend}
+            variant="contained"
+            size="small"
+          >
             SUSPEND
           </Button>
         </div>
