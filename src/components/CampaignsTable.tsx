@@ -427,6 +427,9 @@ export default function CampaignsTable({
       await queryClient.invalidateQueries({
         queryKey: ["campaigns", "approved-campaigns"],
       });
+      await queryClient.invalidateQueries({
+        queryKey: ["campaigns", "previous-campaigns"],
+      });
       succeeded = true;
     } catch (error) {
       console.error("Failed to suspend campaign:", error);
@@ -547,13 +550,31 @@ export default function CampaignsTable({
                         {campaign.name || "Untitled Campaign"}
                       </p>
                     </div>
-                    <Button
-                      variant="outlined"
-                      onClick={() => handleCampaignClick(campaign.campaign_id)}
-                      className="!min-w-0 !shrink-0 !rounded-[8px] !border-[#123A1E] !px-4 !py-1.5 !text-[14px] !font-bold !text-[#123A1E]"
-                    >
-                      View
-                    </Button>
+                    <div className="flex shrink-0 gap-2">
+                      {userData.is_admin &&
+                        (campaign.status === "published" ||
+                          campaign.status === "suspended") && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => {
+                            setSuspendCampaignId(campaign.campaign_id);
+                            setIsSuspendModalOpen(true);
+                          }}
+                          className="!min-w-0 !rounded-[8px] !px-3 !py-1.5 !text-[14px] !font-bold"
+                        >
+                          {campaign.status === "suspended"
+                            ? "Retry Suspension"
+                            : "Suspend"}
+                        </Button>
+                      )}
+                      <Button
+                        variant="outlined"
+                        onClick={() => handleCampaignClick(campaign.campaign_id)}
+                        className="!min-w-0 !rounded-[8px] !border-[#123A1E] !px-4 !py-1.5 !text-[14px] !font-bold !text-[#123A1E]"
+                      >
+                        View
+                      </Button>
+                    </div>
                   </div>
 
                   {[
@@ -917,7 +938,8 @@ export default function CampaignsTable({
                         </td>
                         {userData.is_admin && (
                           <td className="px-4 py-4">
-                            {campaign.status === "published" && (
+                            {(campaign.status === "published" ||
+                              campaign.status === "suspended") && (
                               <Button
                                 variant="outlined"
                                 size="small"
@@ -927,7 +949,9 @@ export default function CampaignsTable({
                                   setIsSuspendModalOpen(true);
                                 }}
                               >
-                                Suspend
+                                {campaign.status === "suspended"
+                                  ? "Retry Suspension"
+                                  : "Suspend"}
                               </Button>
                             )}
                           </td>
@@ -999,15 +1023,23 @@ export default function CampaignsTable({
       <BaseModal
         open={isSuspendModalOpen}
         onClose={closeSuspendModal}
-        title="Confirm Suspension"
+        title={
+          suspendCampaign?.status === "suspended"
+            ? "Retry Suspension"
+            : "Confirm Suspension"
+        }
       >
         <div className="px-4 pb-4 text-[16px] text-[#727873]">
           <p>
-            You are about to suspend{" "}
+            {suspendCampaign?.status === "suspended"
+              ? "Retry unpublishing "
+              : "You are about to suspend "}
             <span className="font-medium text-[#222622]">
               {suspendCampaign?.name || "this campaign"}
             </span>
-            . Are you sure you would like to proceed?
+            {suspendCampaign?.status === "suspended"
+              ? " on Givebutter?"
+              : ". Are you sure you would like to proceed?"}
           </p>
           {suspendError && (
             <p className="mt-3 text-sm text-red-600" role="alert">
@@ -1029,7 +1061,11 @@ export default function CampaignsTable({
             size="small"
             disabled={isSuspending}
           >
-            {isSuspending ? "SUSPENDING..." : "SUSPEND"}
+            {isSuspending
+              ? "SUSPENDING..."
+              : suspendCampaign?.status === "suspended"
+                ? "RETRY"
+                : "SUSPEND"}
           </Button>
         </div>
       </BaseModal>

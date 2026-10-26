@@ -310,9 +310,16 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
   if (!campaign.givebutter_id) {
     throw new Error(`Campaign ${campaignId} has no Givebutter ID`);
   }
-  if (campaign.status !== "published") {
-    throw new Error(`Campaign ${campaignId} is not published`);
+  if (campaign.status !== "published" && campaign.status !== "suspended") {
+    throw new Error(`Campaign ${campaignId} cannot be suspended`);
   }
+
+  await updateCampaignWithRetry(
+    supabase,
+    campaignId,
+    { status: "suspended" },
+    "Failed to record suspended campaign",
+  );
 
   const response = await fetchGivebutterWithRetry(
     getGivebutterCampaignUrl(campaign.givebutter_id),
@@ -331,13 +338,6 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
       `Failed to unpublish campaign (${response.status}): ${JSON.stringify(error)}`,
     );
   }
-
-  await updateCampaignWithRetry(
-    supabase,
-    campaignId,
-    { status: "suspended" },
-    "Failed to record suspended campaign",
-  );
 
   return { success: true };
 }
