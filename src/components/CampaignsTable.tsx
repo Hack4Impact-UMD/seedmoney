@@ -850,7 +850,7 @@ export default function CampaignsTable({
                       "Goal",
                       "Goal Progress",
                       statusColumnLabel,
-                      "Suspend",
+                      userData.is_admin ? "Suspend" : null,
                       "",
                     ]
                       .filter((header) => header !== null)
@@ -915,21 +915,23 @@ export default function CampaignsTable({
                         <td className="px-4 py-4">
                           <StatusChip status={campaign.status} />
                         </td>
-                        <td className="px-4 py-4">
-                          {campaign.status === "published" && (
-                            <Button
-                              variant="outlined"
-                              size="small"
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                setSuspendCampaignId(campaign.campaign_id);
-                                setIsSuspendModalOpen(true);
-                              }}
-                            >
-                              Suspend
-                            </Button>
-                          )}
-                        </td>
+                        {userData.is_admin && (
+                          <td className="px-4 py-4">
+                            {campaign.status === "published" && (
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSuspendCampaignId(campaign.campaign_id);
+                                  setIsSuspendModalOpen(true);
+                                }}
+                              >
+                                Suspend
+                              </Button>
+                            )}
+                          </td>
+                        )}
                         <td className="px-2 py-2">
                           <IconButton
                             aria-label={`Open ${campaign.name || "campaign"}`}
