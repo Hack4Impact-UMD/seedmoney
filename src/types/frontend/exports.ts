@@ -12,4 +12,5 @@ export type ExportLeader = Pick<Users, "first_name" | "last_name" | "email">;
 export type ApplicationExportRow = Campaign & {
   leader: ExportLeader | null;
   competition_year: number | null;
+  story_answers: [string, string, string, string];
 };

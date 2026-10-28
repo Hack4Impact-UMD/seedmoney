@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@/src/lib/supabase-client";
+import { getGardenStoryAnswers } from "@/src/lib/givebutterStoryAnswers";
 import moment from "moment";
 import type { Campaign } from "@/src/types/db/campaigns";
 import type { Users } from "@/src/types/db/users";
@@ -86,6 +87,7 @@ type CampaignWithRelations = Campaign & {
     users: ExportLeader | null;
   }[];
   competition_metadata: { start_date: string } | null;
+  answers: Parameters<typeof getGardenStoryAnswers>[0];
 };
 
 export async function readAllApplicationsForExport(): Promise<
@@ -103,7 +105,11 @@ export async function readAllApplicationsForExport(): Promise<
             role,
             users(first_name, last_name, email)
           ),
-          competition_metadata(start_date)
+          competition_metadata(start_date),
+          answers(
+            answer_id, question_id, final_answer,
+            questions(question_number)
+          )
         `,
         { count: "exact" },
       )
@@ -112,7 +118,7 @@ export async function readAllApplicationsForExport(): Promise<
   );
 
   return campaigns.map(
-    ({ campaign_members, competition_metadata, ...campaign }) => ({
+    ({ campaign_members, competition_metadata, answers, ...campaign }) => ({
       ...campaign,
       leader:
         campaign_members.find(
@@ -121,6 +127,7 @@ export async function readAllApplicationsForExport(): Promise<
       competition_year: competition_metadata
         ? moment(competition_metadata.start_date).year()
         : null,
+      story_answers: getGardenStoryAnswers(answers),
     }),
   );
 }
