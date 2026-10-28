@@ -2,6 +2,7 @@
 import { readCampaignServer } from "@/src/actions/db/campaigns";
 import { readAnswersByCampaignId } from "@/src/actions/db/answers";
 import { createServerClient } from "@/src/lib/supabase-client";
+import { requireAdmin } from "@/src/lib/requireAdmin";
 import { createServiceRoleClient } from "@/src/lib/supabase-service";
 import { getGardenStoryAnswers } from "@/src/lib/givebutterStoryAnswers";
 import type { Campaign } from "@/src/types";
@@ -269,31 +270,7 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
     throw new Error("Invalid campaign ID");
   }
 
-  const supabase = await createServerClient();
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
-
-  if (userError) {
-    throw new Error(`Failed to verify authenticated user: ${userError.message}`);
-  }
-  if (!user) {
-    throw new Error("Unauthorized");
-  }
-
-  const { data: profile, error: profileError } = await supabase
-    .from("users")
-    .select("is_admin")
-    .eq("id", user.id)
-    .maybeSingle();
-
-  if (profileError) {
-    throw new Error(`Failed to verify admin permission: ${profileError.message}`);
-  }
-  if (!profile?.is_admin) {
-    throw new Error("Forbidden");
-  }
+  const supabase = await requireAdmin();
 
   const { data: campaign, error: campaignError } = await supabase
     .from("campaigns")
@@ -690,13 +667,7 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
 }
 
 export async function deleteCampaignAndGivebutter(campaignId: number) {
-  const supabase = await createServerClient();
-
-  const { data: isAdmin, error: adminError } =
-    await supabase.rpc("is_in_app_admin");
-
-  if (adminError || !isAdmin)
-    throw new Error("Not authorized");
+  const supabase = await requireAdmin();
 
   const { data: campaign, error: campaignError } = await supabase
     .from("campaigns")
