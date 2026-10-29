@@ -1,5 +1,7 @@
 "use client";
 
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import {
@@ -13,6 +15,7 @@ import {
 export type DashboardTabItem = {
   label: string;
   sectionId: string;
+  href?: string;
 };
 
 type DashboardTabsProps = {
@@ -29,6 +32,9 @@ export default function DashboardTabs({
   tabs,
   showMobileScrollControls = false,
 }: DashboardTabsProps) {
+  const pathname = usePathname();
+  const routeTab = tabs.find((tab) => tab.href?.split("#")[0] === pathname && !tab.href.includes("#"));
+
   const [selectedSectionId, setSelectedSectionId] = useState(
     tabs[0]?.sectionId ?? "",
   );
@@ -283,14 +289,21 @@ export default function DashboardTabs({
           }`}
         >
           {tabs.map((tab) => {
-            const isCurrent = selectedSectionId === tab.sectionId;
+            const isCurrent = routeTab
+              ? routeTab.sectionId === tab.sectionId
+              : selectedSectionId === tab.sectionId;
+
 
             return (
-              <a
+              <Link
                 key={tab.sectionId}
-                href={`#${tab.sectionId}`}
+                href={tab.href ?? `#${tab.sectionId}`}
                 aria-current={isCurrent ? "location" : undefined}
-                onClick={(event) => handleChange(event, tab.sectionId)}
+                onClick={(event) => {
+                  if (!tab.href || (tab.href.includes("#") && tab.href.split("#")[0] === pathname)) {
+                    handleChange(event, tab.sectionId);
+                  }
+                }}
                 className={`inline-flex min-h-[38px] min-w-0 items-center justify-center border-b-[3px] text-sm font-semibold leading-[1.25] no-underline md:flex-none md:px-5 ${
                   showMobileScrollControls ? "shrink-0 px-4" : "flex-1 px-0"
                 } ${
@@ -300,7 +313,7 @@ export default function DashboardTabs({
                 }`}
               >
                 {tab.label}
-              </a>
+              </Link>
             );
           })}
         </div>

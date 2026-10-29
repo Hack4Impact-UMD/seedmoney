@@ -123,6 +123,16 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     router.push("/apply/campaign");
   };
 
+  const isOutreachPage = pathname.endsWith("/outreach");
+  const dashboardTabs: readonly DashboardTabItem[] = [
+    ...USER_DASHBOARD_TABS.map((tab) => ({
+      ...tab,
+      href: `/dashboard/${campaignId}#${tab.sectionId}`,
+    })),
+    { label: "Campaign Outreach", sectionId: "dashboard-outreach", href: `/dashboard/${campaignId}/outreach` },
+  ];
+
+
   const isViewingPendingApplication = pathname.endsWith("/application");
 
   const handleNewCampaign = () => {
@@ -246,8 +256,10 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           )}
         </div>
 
-        <DashboardTabs tabs={USER_DASHBOARD_TABS} showMobileScrollControls />
+        
+        <DashboardTabs tabs={dashboardTabs} showMobileScrollControls />
 
+        {!isOutreachPage && (
         <section id="dashboard-overview" className="scroll-mt-20">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
             {campaignData.status !== "suspended" && (
@@ -349,6 +361,8 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </section>
+
+        )}
 
         <div className="mt-8">{children}</div>
         <DashboardFooter />
