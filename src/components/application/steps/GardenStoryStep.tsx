@@ -43,7 +43,8 @@ type UploadError = {
 
 const storyAnswerMinChars = 200;
 const storyAnswerMaxChars = 1000;
-const storyAnswerHint = "Write a short paragraph (4-5 sentences).";
+const storyAnswerHint =
+  "Write a short paragraph (4-5 sentences, 200-1,000 characters).";
 const storySaveErrorMessage =
   "We couldn't save your Garden Story. Your answers are still on this page. Please try again before continuing.";
 
@@ -722,7 +723,7 @@ export default function GardenStoryStep() {
               const valueLength = getStoryAnswerLength(field.state.value);
               const isTooLong = valueLength > storyAnswerMaxChars;
               const isTooShort =
-                field.state.meta.isTouched &&
+                (field.state.meta.isTouched || field.state.value.length > 0) &&
                 getTrimmedStoryAnswerLength(field.state.value) <
                   storyAnswerMinChars;
               const showError = isTooLong || isTooShort;
@@ -781,7 +782,7 @@ export default function GardenStoryStep() {
               const valueLength = getStoryAnswerLength(field.state.value);
               const isTooLong = valueLength > storyAnswerMaxChars;
               const isTooShort =
-                field.state.meta.isTouched &&
+                (field.state.meta.isTouched || field.state.value.length > 0) &&
                 getTrimmedStoryAnswerLength(field.state.value) <
                   storyAnswerMinChars;
               const showError = isTooLong || isTooShort;
@@ -840,7 +841,7 @@ export default function GardenStoryStep() {
               const valueLength = getStoryAnswerLength(field.state.value);
               const isTooLong = valueLength > storyAnswerMaxChars;
               const isTooShort =
-                field.state.meta.isTouched &&
+                (field.state.meta.isTouched || field.state.value.length > 0) &&
                 getTrimmedStoryAnswerLength(field.state.value) <
                   storyAnswerMinChars;
               const showError = isTooLong || isTooShort;
@@ -899,7 +900,7 @@ export default function GardenStoryStep() {
               const valueLength = getStoryAnswerLength(field.state.value);
               const isTooLong = valueLength > storyAnswerMaxChars;
               const isTooShort =
-                field.state.meta.isTouched &&
+                (field.state.meta.isTouched || field.state.value.length > 0) &&
                 getTrimmedStoryAnswerLength(field.state.value) <
                   storyAnswerMinChars;
               const showError = isTooLong || isTooShort;
