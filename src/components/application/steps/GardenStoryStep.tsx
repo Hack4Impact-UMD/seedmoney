@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { Button, IconButton } from "@mui/material";
+import { useStore } from "@tanstack/react-form";
 import TextField from "@mui/material/TextField";
 import { CheckCircle, Delete } from "@mui/icons-material";
 import Link from "next/link";
@@ -135,7 +136,7 @@ export default function GardenStoryStep() {
   const createOriginalAnswerMutation = useCreateOriginalAnswer();
   const uploadCampaignImage = useUploadCampaignImage();
   const deleteCampaignImage = useDeleteCampaignImage();
-  const values = form.state.values;
+  const values = useStore(form.store, (state) => state.values);
   const { data: question1, isLoading: isLoadingQuestion1 } = useReadQuestion(1);
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
   const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
