@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button, MenuItem, TextField } from "@mui/material";
+import { useStore } from "@tanstack/react-form";
 import {
   useAgreementGate,
   useApplicationForm,
@@ -205,7 +206,7 @@ export default function ReviewSubmitPage() {
   const [storySaveError, setStorySaveError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const values = form.state.values;
+  const values = useStore(form.store, (state) => state.values);
   const {
     campaignComplete,
     gardenComplete,
