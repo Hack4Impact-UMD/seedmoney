@@ -5,14 +5,11 @@ import { headers } from "next/headers";
 import { createServerClient } from "@/src/lib/supabase-client";
 import { createServiceRoleClient } from "@/src/lib/supabase-service";
 import { requireCampaignLeader } from "@/src/lib/requireCampaignLeader";
+import type { ActionResult } from "@/src/lib/utils/actionResult";
 import type {
   CampaignTransfer,
   TransferStatus,
 } from "@/src/types/accountDeletion";
-
-// Server action errors are redacted in production, so actions return a result
-// object instead of throwing.
-type ActionResult<T> = ({ ok: true } & T) | { ok: false; error: string };
 
 export type AcceptTransferResult =
   | "accepted"
