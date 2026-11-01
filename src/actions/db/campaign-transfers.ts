@@ -1,33 +1,30 @@
 "use server";
 
-import { createHash, randomBytes } from "node:crypto";
+import { randomBytes } from "node:crypto";
 import { headers } from "next/headers";
 import { createServerClient } from "@/src/lib/supabase-client";
 import { createServiceRoleClient } from "@/src/lib/supabase-service";
 import { requireCampaignLeader } from "@/src/lib/requireCampaignLeader";
+import {
+  getAcceptUrl,
+  hashToken,
+  sendTransferEmail,
+} from "@/src/lib/campaignTransfers";
 import type { ActionResult } from "@/src/lib/utils/actionResult";
 import type {
   CampaignTransfer,
   TransferStatus,
 } from "@/src/types/accountDeletion";
 
-export type AcceptTransferResult =
-  | "accepted"
-  | "not_found"
-  | "expired"
-  | "cancelled"
-  | "already_accepted"
-  | "email_mismatch"
-  | "invalid"
-  | "profile_missing";
+export type CampaignTransferSummary = CampaignTransfer & {
+  campaignName: string;
+  recipientName: string | null;
+};
 
-export type TransferInvitation = {
-  status: TransferStatus;
+export type AcceptedTransfer = {
   campaignName: string;
   inviterName: string;
-  maskedRecipientEmail: string;
-  isSignedIn: boolean;
-  isRecipient: boolean;
+  acceptedAt: string;
 };
 
 type TransferRow = {
@@ -39,10 +36,14 @@ type TransferRow = {
   expires_at: string;
 };
 
+type UserName = { first_name: string | null; last_name: string | null };
+
 const TRANSFER_COLUMNS =
   "transfer_id, campaign_id, recipient_email, status, sent_at, expires_at";
 const TRANSFER_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+// Statuses the inviter can still resend or cancel.
+const OPEN_STATUSES: TransferStatus[] = ["pending", "expired"];
 
 // Wrapper to minimize repeated error handling
 async function runAction<T>(
@@ -64,9 +65,8 @@ function normalizeEmail(email: string) {
   return email.trim().toLowerCase();
 }
 
-// Must match encode(sha256(convert_to(token, 'UTF8')), 'hex') in accept_campaign_transfer.
-function hashToken(token: string) {
-  return createHash("sha256").update(token, "utf8").digest("hex");
+function formatName(user: UserName | null | undefined) {
+  return [user?.first_name, user?.last_name].filter(Boolean).join(" ");
 }
 
 // Returns the fields shared by a new or resent invitation.
@@ -80,6 +80,16 @@ function newInvitationFields() {
       expires_at: new Date(Date.now() + TRANSFER_EXPIRY_MS).toISOString(),
     },
   };
+}
+
+async function getRequestAcceptUrl(token: string) {
+  const origin = (await headers()).get("origin");
+
+  if (!origin) {
+    throw new Error("Unable to determine site origin");
+  }
+
+  return getAcceptUrl(origin, token);
 }
 
 // Pending rows past expires_at count as expired before their status is updated.
@@ -114,38 +124,7 @@ async function requireUser() {
   return user;
 }
 
-async function sendTransferEmail(
-  type: "transfer_invitation" | "transfer_completed",
-  campaignId: number,
-  transferId: string,
-  token?: string,
-) {
-  try {
-    let acceptUrl: string | undefined;
-    if (token) {
-      const origin = (await headers()).get("origin");
-      acceptUrl = `${origin}/transfer/accept?token=${encodeURIComponent(token)}`;
-    }
-
-    const { error } = await createServiceRoleClient().functions.invoke(
-      "send-campaign-email",
-      {
-        body: {
-          type,
-          campaign_id: campaignId,
-          transfer: { transfer_id: transferId, accept_url: acceptUrl },
-        },
-      },
-    );
-
-    if (error) throw error;
-    return true;
-  } catch (error) {
-    console.error(`Error sending ${type} email:`, error);
-    return false;
-  }
-}
-
+// Returns the campaign's latest transfer if it is still pending or expired.
 export async function readActiveCampaignTransfer(campaignId: number) {
   return runAction<{ transfer: CampaignTransfer | null }>(
     "reading campaign transfer",
@@ -156,14 +135,134 @@ export async function readActiveCampaignTransfer(campaignId: number) {
         .from("campaign_transfers")
         .select(TRANSFER_COLUMNS)
         .eq("campaign_id", campaignId)
-        .eq("status", "pending")
+        .order("created_at", { ascending: false })
+        .limit(1)
         .maybeSingle();
 
       if (error) throw new Error(`Failed to load transfer: ${error.message}`);
 
+      const transfer = data ? toCampaignTransfer(data as TransferRow) : null;
+
       return {
         ok: true,
-        transfer: data ? toCampaignTransfer(data as TransferRow) : null,
+        transfer:
+          transfer && OPEN_STATUSES.includes(transfer.status) ? transfer : null,
+      };
+    },
+  );
+}
+
+// The signed-in user's latest transfer per campaign they invited for, with
+// names they can't read through RLS (they may no longer be a member).
+export async function readMyCampaignTransfers() {
+  return runAction<{ transfers: CampaignTransferSummary[] }>(
+    "reading campaign transfers",
+    async () => {
+      const user = await requireUser();
+      const supabase = createServiceRoleClient();
+
+      const { data, error } = await supabase
+        .from("campaign_transfers")
+        .select(
+          `${TRANSFER_COLUMNS},
+          campaigns(name),
+          users!campaign_transfers_accepted_by_fkey(first_name, last_name)`,
+        )
+        .eq("inviter_id", user.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw new Error(`Failed to load transfers: ${error.message}`);
+
+      const rows = data as unknown as (TransferRow & {
+        campaigns: { name: string } | null;
+        users: UserName | null;
+      })[];
+
+      const latestPerCampaign = new Map<number, (typeof rows)[number]>();
+      for (const row of rows) {
+        if (!latestPerCampaign.has(row.campaign_id)) {
+          latestPerCampaign.set(row.campaign_id, row);
+        }
+      }
+      const latest = [...latestPerCampaign.values()].filter(
+        (row) => row.status !== "cancelled",
+      );
+
+      // Recipients who haven't accepted yet may already have an account.
+      const { data: recipients, error: recipientsError } = await supabase
+        .from("users")
+        .select("email, first_name, last_name")
+        .in(
+          "email",
+          latest.map((row) => row.recipient_email),
+        );
+
+      if (recipientsError) {
+        throw new Error(
+          `Failed to load recipients: ${recipientsError.message}`,
+        );
+      }
+
+      const namesByEmail = new Map(
+        (recipients ?? []).map((recipient) => [
+          normalizeEmail(recipient.email ?? ""),
+          formatName(recipient),
+        ]),
+      );
+
+      return {
+        ok: true,
+        transfers: latest.map((row) => ({
+          ...toCampaignTransfer(row),
+          campaignName: row.campaigns?.name ?? "",
+          recipientName:
+            formatName(row.users) ||
+            namesByEmail.get(row.recipient_email) ||
+            null,
+        })),
+      };
+    },
+  );
+}
+
+// For the new owner's welcome modal after accepting a transfer.
+export async function readAcceptedTransfer(campaignId: number) {
+  return runAction<{ transfer: AcceptedTransfer | null }>(
+    "reading accepted transfer",
+    async () => {
+      const user = await requireUser();
+
+      const { data, error } = await createServiceRoleClient()
+        .from("campaign_transfers")
+        .select(
+          `accepted_at,
+          campaigns(name),
+          users!campaign_transfers_inviter_id_fkey(first_name, last_name)`,
+        )
+        .eq("campaign_id", campaignId)
+        .eq("accepted_by", user.id)
+        .eq("status", "accepted")
+        .order("accepted_at", { ascending: false })
+        .limit(1)
+        .maybeSingle();
+
+      if (error) throw new Error(`Failed to load transfer: ${error.message}`);
+
+      if (!data) return { ok: true, transfer: null };
+
+      const row = data as unknown as {
+        accepted_at: string;
+        campaigns: { name: string } | null;
+        users: UserName | null;
+      };
+
+      return {
+        ok: true,
+        transfer: {
+          campaignName: row.campaigns?.name ?? "",
+          inviterName: formatName(row.users),
+          acceptedAt: row.accepted_at,
+        },
       };
     },
   );
@@ -231,7 +330,7 @@ export async function sendTransferInvitation(
         "transfer_invitation",
         campaignId,
         row.transfer_id,
-        token,
+        await getRequestAcceptUrl(token),
       );
 
       return { ok: true, transfer: toCampaignTransfer(row), emailSent };
@@ -240,6 +339,7 @@ export async function sendTransferInvitation(
 }
 
 // Issues a new link (invalidating the old one) and restarts the expiry window.
+// Works on pending and expired invitations.
 export async function resendTransferInvitation(transferId: string) {
   return runAction<{ transfer: CampaignTransfer; emailSent: boolean }>(
     "resending transfer invitation",
@@ -249,17 +349,24 @@ export async function resendTransferInvitation(transferId: string) {
 
       const { data, error } = await createServiceRoleClient()
         .from("campaign_transfers")
-        .update(fields)
+        .update({ ...fields, status: "pending" })
         .eq("transfer_id", transferId)
         .eq("inviter_id", user.id)
-        .eq("status", "pending")
+        .in("status", OPEN_STATUSES)
         .select(TRANSFER_COLUMNS)
         .maybeSingle();
+
+      if (error?.code === "23505") {
+        return {
+          ok: false,
+          error: "This campaign already has a pending transfer.",
+        };
+      }
 
       if (error) throw new Error(`Failed to resend transfer: ${error.message}`);
 
       if (!data) {
-        return { ok: false, error: "This transfer is no longer pending." };
+        return { ok: false, error: "This transfer can no longer be resent." };
       }
 
       const row = data as TransferRow;
@@ -267,7 +374,7 @@ export async function resendTransferInvitation(transferId: string) {
         "transfer_invitation",
         row.campaign_id,
         row.transfer_id,
-        token,
+        await getRequestAcceptUrl(token),
       );
 
       return { ok: true, transfer: toCampaignTransfer(row), emailSent };
@@ -284,106 +391,16 @@ export async function cancelTransfer(transferId: string) {
       .update({ status: "cancelled", cancelled_at: new Date().toISOString() })
       .eq("transfer_id", transferId)
       .eq("inviter_id", user.id)
-      .eq("status", "pending")
+      .in("status", OPEN_STATUSES)
       .select("transfer_id")
       .maybeSingle();
 
     if (error) throw new Error(`Failed to cancel transfer: ${error.message}`);
 
     if (!data) {
-      return { ok: false, error: "This transfer is no longer pending." };
+      return { ok: false, error: "This transfer can no longer be cancelled." };
     }
 
     return { ok: true };
   });
-}
-
-export async function getTransferInvitation(token: string) {
-  return runAction<{ invitation: TransferInvitation }>(
-    "reading transfer invitation",
-    async () => {
-      // Recipients can't read transfers through RLS, so look the token up with
-      // the service role and return only what the accept page displays.
-      const { data, error } = await createServiceRoleClient()
-        .from("campaign_transfers")
-        .select(
-          `${TRANSFER_COLUMNS},
-          campaigns(name),
-          users!campaign_transfers_inviter_id_fkey(first_name, last_name)`,
-        )
-        .eq("token_hash", hashToken(token))
-        .maybeSingle();
-
-      if (error) throw new Error(`Failed to load invitation: ${error.message}`);
-
-      if (!data) {
-        return { ok: false, error: "This invitation link is invalid." };
-      }
-
-      const row = data as unknown as TransferRow & {
-        campaigns: { name: string } | null;
-        users: { first_name: string; last_name: string } | null;
-      };
-
-      const supabase = await createServerClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      const [name, domain] = row.recipient_email.split("@");
-
-      return {
-        ok: true,
-        invitation: {
-          status: getEffectiveStatus(row),
-          campaignName: row.campaigns?.name ?? "",
-          inviterName: [row.users?.first_name, row.users?.last_name]
-            .filter(Boolean)
-            .join(" "),
-          maskedRecipientEmail: `${name.slice(0, 1)}•••@${domain}`,
-          isSignedIn: !!user,
-          isRecipient:
-            !!user?.email_confirmed_at &&
-            normalizeEmail(user.email ?? "") === row.recipient_email,
-        },
-      };
-    },
-  );
-}
-
-export async function acceptTransfer(token: string) {
-  return runAction<{ result: AcceptTransferResult; campaignId: number | null }>(
-    "accepting transfer",
-    async () => {
-      const supabase = await createServerClient();
-      const { data, error } = await supabase
-        .rpc("accept_campaign_transfer", { p_token: token })
-        .single();
-
-      if (error) throw new Error(`Failed to accept transfer: ${error.message}`);
-
-      const { result, campaign_id: campaignId } = data as {
-        result: AcceptTransferResult;
-        campaign_id: number | null;
-      };
-
-      if (result === "accepted" && campaignId !== null) {
-        const { data: transfer } = await createServiceRoleClient()
-          .from("campaign_transfers")
-          .select("transfer_id")
-          .eq("token_hash", hashToken(token))
-          .maybeSingle();
-
-        if (transfer) {
-          await sendTransferEmail(
-            "transfer_completed",
-            campaignId,
-            transfer.transfer_id,
-          );
-        }
-      }
-
-      return { ok: true, result, campaignId };
-    },
-  );
 }
