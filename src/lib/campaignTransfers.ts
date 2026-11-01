@@ -32,7 +32,7 @@ export async function sendTransferEmail(
 ) {
   try {
     const { error } = await createServiceRoleClient().functions.invoke(
-      "send-campaign-email",
+      "send-transfer-email",
       {
         body: {
           type,
