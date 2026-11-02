@@ -30,6 +30,7 @@ import { unpublishGivebutterCampaign } from "@/src/actions/givebutter/campaignsG
 
 import { ArrowBack, Close, OpenInNew } from "@mui/icons-material";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 
@@ -232,6 +233,9 @@ export default function AdminCampaignPage() {
           {(campaignData.status === "published" ||
             campaignData.status === "suspended") && (
             <div className="flex items-center gap-3">
+              {campaignData.status === "suspended" && (
+                <Chip variant="suspended" label="Suspended" />
+              )}
               <span className="text-sm text-[#666666]">
                 Created in{" "}
                 {Number.isNaN(new Date(campaignData.date_created).getFullYear())
