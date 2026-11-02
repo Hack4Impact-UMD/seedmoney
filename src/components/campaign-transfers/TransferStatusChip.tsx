@@ -12,10 +12,15 @@ const CHIPS: Partial<
   accepted: { label: "Transferred", variant: "transferred" },
 };
 
-export default function TransferStatusChip({ status }: { status: TransferStatus }) {
+type TransferStatusChipProps = {
+  status: TransferStatus;
+  onClick?: () => void;
+};
+
+export default function TransferStatusChip({ status, onClick }: TransferStatusChipProps) {
   const chip = CHIPS[status];
 
   if (!chip) return null;
 
-  return <Chip variant={chip.variant} label={chip.label} />;
+  return <Chip variant={chip.variant} label={chip.label} onClick={onClick} />;
 }

@@ -29,6 +29,8 @@ import BaseModal from "@/src/components/bases/BaseModal";
 import OpenInNew from "@mui/icons-material/OpenInNew";
 import QrCode2 from "@mui/icons-material/QrCode2";
 import BaseAlert from "@/src/components/bases/BaseAlert";
+import CampaignTransferStatus from "@/src/components/campaign-transfers/CampaignTransferStatus";
+import TransferWelcomeModal from "@/src/components/campaign-transfers/TransferWelcomeModal";
 import CampaignQrCodeModal from "@/src/components/dashboard/CampaignQrCodeModal";
 import DashboardFooter from "@/src/components/DashboardFooter";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
@@ -225,11 +227,14 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
       <div className="flex-1 min-w-0 overflow-x-clip bg-[#F6FAF9] p-4 pb-24 md:p-10 md:pb-10">
         <div className="mb-1 flex flex-col gap-2 md:flex-row md:items-center md:justify-between">
           <div className="flex flex-col gap-2 md:flex-row md:items-center">
-            <div className="flex flex-wrap items-center gap-2 md:gap-5">
+            <div className="flex flex-wrap items-center gap-3">
               <h3 className="text-2xl md:text-4xl font-bold text-[#096B2E]">
                 {campaignData.name}
               </h3>
-              {challengeStatusChip}
+              <CampaignTransferStatus
+                campaignId={selectedCampaignId}
+                campaignName={campaignData.name}
+              />
             </div>
             {createdYear && (
               <p className="text-sm text-[#A6A6A6] md:ml-5 md:mt-[5px]">
@@ -238,12 +243,15 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             )}
           </div>
 
-          {isChallengeActive && (
-            <Chip
-              variant={campaignData.status}
-              label={getStatusLabel(campaignData.status)}
-            />
-          )}
+          <div className="flex flex-wrap items-center gap-2">
+            {isChallengeActive && (
+              <Chip
+                variant={campaignData.status}
+                label={getStatusLabel(campaignData.status)}
+              />
+            )}
+            {challengeStatusChip}
+          </div>
         </div>
 
         <DashboardTabs tabs={USER_DASHBOARD_TABS} showMobileScrollControls />
@@ -387,6 +395,8 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           </Button>
         </div>
       </BaseModal>
+
+      <TransferWelcomeModal campaignId={selectedCampaignId} />
 
       <BaseAlert
         open={toast}

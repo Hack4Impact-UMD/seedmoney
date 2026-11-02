@@ -6,6 +6,7 @@ import { Button } from "@mui/material";
 import { getOwnedCampaigns } from "@/src/actions/db/account-deletion";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import CampaignTransferFlow from "@/src/components/campaign-transfers/CampaignTransferFlow";
+import ManageTransferModal from "@/src/components/campaign-transfers/ManageTransferModal";
 import TransferStatusChip from "@/src/components/campaign-transfers/TransferStatusChip";
 import ConfirmEditModalShell from "@/src/components/settings-modals/ConfirmEditModalShell";
 import useReadMyCampaignTransfers from "@/src/hooks/campaign-transfers/useReadMyCampaignTransfers";
@@ -54,7 +55,8 @@ export default function DeleteAccountFlow({ open, onClose }: DeleteAccountFlowPr
   const [step, setStep] = useState<"overview" | "confirmation">("overview");
   const [transferCampaign, setTransferCampaign] =
     useState<OwnedCampaign | null>(null);
-  const [toast, setToast] = useState<{ title: string; message: string } | null>(
+  const [managedRow, setManagedRow] = useState<CampaignRow | null>(null);
+  const [toast, setToast] = useState<{ title: string; message?: string } | null>(
     null,
   );
 
@@ -144,10 +146,7 @@ export default function DeleteAccountFlow({ open, onClose }: DeleteAccountFlowPr
           variant="contained"
           size="small"
           disabled
-          sx={{
-            backgroundColor: "#D32F2F",
-            "&:hover": { backgroundColor: "#B71C1C" },
-          }}
+          className="enabled:bg-[#D32F2F]! enabled:hover:bg-[#B71C1C]!"
         >
           Delete my account
         </Button>
@@ -189,7 +188,14 @@ export default function DeleteAccountFlow({ open, onClose }: DeleteAccountFlowPr
                 <p className="text-[14px] text-[#666]">{getRowSubtitle(row)}</p>
               </div>
               {row.transfer ? (
-                <TransferStatusChip status={row.transfer.status} />
+                <TransferStatusChip
+                  status={row.transfer.status}
+                  onClick={
+                    row.transfer.status === "accepted"
+                      ? undefined
+                      : () => setManagedRow(row)
+                  }
+                />
               ) : (
                 row.campaign && (
                   <Button
@@ -252,6 +258,15 @@ export default function DeleteAccountFlow({ open, onClose }: DeleteAccountFlowPr
                   },
             );
           }}
+        />
+      )}
+
+      {managedRow?.transfer && (
+        <ManageTransferModal
+          transfer={managedRow.transfer}
+          campaignName={managedRow.name}
+          onClose={() => setManagedRow(null)}
+          onDone={setToast}
         />
       )}
 
