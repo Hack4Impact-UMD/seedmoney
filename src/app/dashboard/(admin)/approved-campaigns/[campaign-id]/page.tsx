@@ -518,15 +518,18 @@ export default function AdminCampaignPage() {
       <BaseModal
         open={isSuspendModalOpen}
         onClose={closeSuspendModal}
-        title="Confirm Suspension"
+        title="Suspend Campaign?"
+        containerClassName="!min-h-0 !p-4"
+        titleClassName="!mb-2"
       >
-        <div className="px-4 pb-4 text-[16px] text-[#727873]">
+        <div className="px-2 pb-2 text-[16px] text-[#727873]">
           <p>
-            You are about to suspend{" "}
+            This will take{" "}
             <span className="font-medium text-[#222622]">
-              {campaignData.name || "this campaign"}
-            </span>
-            . Are you sure you would like to proceed?
+              &ldquo;{campaignData.name || "this campaign"}&rdquo;
+            </span>{" "}
+            offline while you look into it. Nothing is deleted. You can
+            unsuspend it at any time from this page.
           </p>
           {suspendError && (
             <p className="mt-3 text-sm text-red-600" role="alert">
@@ -534,7 +537,7 @@ export default function AdminCampaignPage() {
             </p>
           )}
         </div>
-        <div className="flex items-center justify-end gap-3 px-4 pb-4">
+        <div className="flex items-center justify-end gap-3 px-2 pb-1">
           <Button
             onClick={closeSuspendModal}
             variant="text"
@@ -547,10 +550,9 @@ export default function AdminCampaignPage() {
             variant="contained"
             size="small"
             disabled={isSuspending}
+            className="!bg-[#D92D20] hover:!bg-[#B42318]"
           >
-            {isSuspending
-              ? "SUSPENDING..."
-              : "SUSPEND"}
+            {isSuspending ? "SUSPENDING..." : "YES, SUSPEND CAMPAIGN"}
           </Button>
         </div>
       </BaseModal>
