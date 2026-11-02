@@ -10,8 +10,9 @@ import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import useUpdateUser from "@/src/hooks/users/useUpdateUser";
+import DeleteAccountFlow from "@/src/components/account-deletion/DeleteAccountFlow";
 
-type ActiveModal = "name" | "email" | "password" | null;
+type ActiveModal = "name" | "email" | "password" | "delete" | null;
 
 function SettingsRow({
   label,
@@ -134,6 +135,21 @@ export default function SettingsPage() {
                   onEdit={() => setActiveModal("password")}
                 />
               )}
+
+              <div className="py-4">
+                <p className="text-[18px] font-semibold text-[#1f2320]">Delete account</p>
+                <div className="mt-2 flex items-center justify-between gap-6">
+                  <p className="min-w-0 flex-1 break-words text-[18px] text-[#7b827d]">Permanently delete your account and personal details.</p>
+                  <button
+                    type="button"
+                    onClick={() => setActiveModal("delete")}
+                    className="shrink-0 rounded-[10px] px-4 py-2 text-[14px] font-semibold tracking-[0.03em] text-[#FFFFFF] bg-red-500"
+                  >
+                    DELETE
+                  </button>
+                </div>
+              </div>
+
             </div>
           </div>
         </div>
@@ -171,6 +187,13 @@ export default function SettingsPage() {
           onClose={() => setActiveModal(null)}
           userEmail={email}
           onLogin={handleReauthenticate}
+        />
+      )}
+
+      {activeModal === "delete" && (
+        <DeleteAccountFlow
+          open
+          onClose={() => setActiveModal(null)}
         />
       )}
     </div>
