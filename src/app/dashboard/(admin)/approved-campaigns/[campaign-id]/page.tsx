@@ -233,11 +233,10 @@ export default function AdminCampaignPage() {
             campaignData.status === "suspended") && (
             <div className="flex items-center gap-3">
               <span className="text-sm text-[#666666]">
-                Created (
+                Created in{" "}
                 {Number.isNaN(new Date(campaignData.date_created).getFullYear())
                   ? "N/A"
                   : new Date(campaignData.date_created).getFullYear()}
-                )
               </span>
               <Button
                 size="small"
