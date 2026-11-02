@@ -1,7 +1,9 @@
+import { Suspense } from "react";
 import { redirect } from "next/navigation";
 import { createServerClient } from "@/src/lib/supabase-client";
 import AuthProvider from "@/src/context/AuthProvider";
 import QueryProvider from "@/src/providers/QueryProvider";
+import TransferErrorAlert from "@/src/components/campaign-transfers/TransferErrorAlert";
 
 export default async function DashboardLayout({
   children,
@@ -17,7 +19,12 @@ export default async function DashboardLayout({
 
   return (
     <QueryProvider>
-      <AuthProvider initialUser={data.user}>{children}</AuthProvider>
+      <AuthProvider initialUser={data.user}>
+        {children}
+        <Suspense>
+          <TransferErrorAlert />
+        </Suspense>
+      </AuthProvider>
     </QueryProvider>
   );
 }
