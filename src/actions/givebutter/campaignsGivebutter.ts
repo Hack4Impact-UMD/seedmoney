@@ -342,6 +342,85 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
   return { success: true };
 }
 
+export async function republishSuspendedGivebutterCampaign(campaignId: number) {
+  if (!Number.isInteger(campaignId) || campaignId <= 0) {
+    throw new Error("Invalid campaign ID");
+  }
+
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+    error: userError,
+  } = await supabase.auth.getUser();
+
+  if (userError) {
+    throw new Error(`Failed to verify authenticated user: ${userError.message}`);
+  }
+  if (!user) {
+    throw new Error("Unauthorized");
+  }
+
+  const { data: profile, error: profileError } = await supabase
+    .from("users")
+    .select("is_admin")
+    .eq("id", user.id)
+    .maybeSingle();
+
+  if (profileError) {
+    throw new Error(`Failed to verify admin permission: ${profileError.message}`);
+  }
+  if (!profile?.is_admin) {
+    throw new Error("Forbidden");
+  }
+
+  const { data: campaign, error: campaignError } = await supabase
+    .from("campaigns")
+    .select("campaign_id, givebutter_id, status")
+    .eq("campaign_id", campaignId)
+    .maybeSingle();
+
+  if (campaignError) {
+    throw new Error(`Failed to load campaign: ${campaignError.message}`);
+  }
+  if (!campaign) {
+    throw new Error(`Campaign ${campaignId} was not found`);
+  }
+  if (!campaign.givebutter_id) {
+    throw new Error(`Campaign ${campaignId} has no Givebutter ID`);
+  }
+  if (campaign.status !== "suspended") {
+    throw new Error(`Campaign ${campaignId} is not suspended`);
+  }
+
+  const response = await fetchGivebutterWithRetry(
+    getGivebutterCampaignUrl(campaign.givebutter_id),
+    {
+      method: "PUT",
+      headers: getGivebutterHeaders(),
+      body: JSON.stringify({
+        published: true,
+        settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const error = await readErrorBody(response);
+    throw new Error(
+      `Failed to republish campaign (${response.status}): ${JSON.stringify(error)}`,
+    );
+  }
+
+  await updateCampaignWithRetry(
+    supabase,
+    campaignId,
+    { status: "published" },
+    "Givebutter campaign was republished, but failed to update campaign status",
+  );
+
+  return { success: true };
+}
+
 export async function createGivebutterCampaigns(campaignIds: number[]) {
   const supabase = await createServerClient();
 
