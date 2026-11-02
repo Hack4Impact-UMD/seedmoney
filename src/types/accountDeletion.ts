@@ -34,6 +34,8 @@ export type AccountDeletionOverview = {
 // Props used to connect the transfer component to the account deletion component
 export type CampaignTransferFlowProps = {
   campaignId: number;
-  onInvitationSent: () => void | Promise<void>;
+  campaignName: string;
+  // emailSent is false if the invitation was saved but its email failed.
+  onInvitationSent: (emailSent: boolean) => void | Promise<void>;
   onCancel: () => void;
 };

@@ -16,6 +16,7 @@ type ConfirmEditModalShellProps = {
   actions?: React.ReactNode;
   title?: string;
   maxWidth?: DialogProps["maxWidth"];
+  titleColor?: string;
 };
 
 export default function ConfirmEditModalShell({
@@ -25,6 +26,7 @@ export default function ConfirmEditModalShell({
   actions,
   title = "Confirm Edit",
   maxWidth = "sm",
+  titleColor,
 }: ConfirmEditModalShellProps) {
   return (
     <Dialog
@@ -36,7 +38,12 @@ export default function ConfirmEditModalShell({
       PaperProps={{ sx: { borderRadius: "12px" } }}
     >
       <DialogTitle id="confirm-edit-dialog-title" sx={{ m: 0, p: 2, pr: 6 }}>
-        <Typography component="span" fontWeight={700} fontSize="1.25rem">
+        <Typography
+          component="span"
+          fontWeight={700}
+          fontSize="1.25rem"
+          color={titleColor}
+        >
           {title}
         </Typography>
         <IconButton

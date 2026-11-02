@@ -278,7 +278,7 @@ export async function sendTransferInvitation(
       const email = normalizeEmail(recipientEmail);
 
       if (!EMAIL_PATTERN.test(email)) {
-        return { ok: false, error: "Enter a valid email address." };
+        return { ok: false, error: "Enter a valid email address" };
       }
 
       const { user } = await requireCampaignLeader(campaignId);
@@ -286,7 +286,7 @@ export async function sendTransferInvitation(
       if (email === normalizeEmail(user.email ?? "")) {
         return {
           ok: false,
-          error: "You can't transfer a campaign to yourself.",
+          error: "That's your own email. Enter the new owner's email.",
         };
       }
 
