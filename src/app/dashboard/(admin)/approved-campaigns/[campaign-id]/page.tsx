@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import clsx from "clsx";
 
@@ -25,6 +26,7 @@ import useReadCampaignTransactions from "@/src/hooks/transactions/useReadCampaig
 import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
 import useDonorsChangePercent from "@/src/hooks/transactions/useDonorsChangePercent";
 import useDeleteCampaign from "@/src/hooks/campaigns/useDeleteCampaign";
+import { unpublishGivebutterCampaign } from "@/src/actions/givebutter/campaignsGivebutter";
 
 import { ArrowBack, Close, OpenInNew } from "@mui/icons-material";
 import Button from "@mui/material/Button";
@@ -40,6 +42,7 @@ const ADMIN_DASHBOARD_TABS: readonly DashboardTabItem[] = [
 export default function AdminCampaignPage() {
   const params = useParams();
   const router = useRouter();
+  const queryClient = useQueryClient();
 
   const campaignIdParam = params["campaign-id"];
   const campaignId =
@@ -50,6 +53,10 @@ export default function AdminCampaignPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteUnlockIn, setDeleteUnlockIn] = useState(0);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
+  const [isSuspending, setIsSuspending] = useState(false);
+  const [suspendError, setSuspendError] = useState<string | null>(null);
+  const suspendInFlightRef = useRef(false);
 
   const {
     mutate: deleteCampaign,
@@ -131,6 +138,45 @@ export default function AdminCampaignPage() {
     });
   };
 
+  const closeSuspendModal = () => {
+    if (suspendInFlightRef.current) return;
+    setIsSuspendModalOpen(false);
+    setSuspendError(null);
+  };
+
+  const handleConfirmSuspend = async () => {
+    if (suspendInFlightRef.current) return;
+
+    suspendInFlightRef.current = true;
+    setIsSuspending(true);
+    setSuspendError(null);
+    try {
+      await unpublishGivebutterCampaign(campaignId);
+      await Promise.all([
+        queryClient.invalidateQueries({
+          queryKey: [{ campaignId }, "campaigns", "read"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["campaigns", "approved-campaigns"],
+        }),
+        queryClient.invalidateQueries({
+          queryKey: ["campaigns", "previous-campaigns"],
+        }),
+      ]);
+      setIsSuspendModalOpen(false);
+    } catch (error) {
+      console.error("Failed to suspend campaign:", error);
+      setSuspendError(
+        error instanceof Error
+          ? error.message
+          : "Failed to suspend campaign. Please try again.",
+      );
+    } finally {
+      suspendInFlightRef.current = false;
+      setIsSuspending(false);
+    }
+  };
+
   useEffect(() => {
     if (!deleteModalOpen) return;
 
@@ -179,9 +225,35 @@ export default function AdminCampaignPage() {
       <Navbar />
 
       <div className="flex-1 flex-col bg-gray-50 p-10 space-y-3">
-        <h3 className="text-4xl font-bold text-[#096B2E] mb-5">
-          {campaignData.name}
-        </h3>
+        <div className="mb-5 flex items-start justify-between gap-4">
+          <h3 className="text-4xl font-bold text-[#096B2E]">
+            {campaignData.name}
+          </h3>
+          {(campaignData.status === "published" ||
+            campaignData.status === "suspended") && (
+            <div className="flex items-center gap-3">
+              <span className="text-sm text-[#666666]">
+                Created (
+                {Number.isNaN(new Date(campaignData.date_created).getFullYear())
+                  ? "N/A"
+                  : new Date(campaignData.date_created).getFullYear()}
+                )
+              </span>
+              <Button
+                size="small"
+                variant="outlined"
+                onClick={() => {
+                  setSuspendError(null);
+                  setIsSuspendModalOpen(true);
+                }}
+              >
+                {campaignData.status === "suspended"
+                  ? "Retry Suspension"
+                  : "Suspend"}
+              </Button>
+            </div>
+          )}
+        </div>
 
         <p
           onClick={handleBack}
@@ -380,6 +452,56 @@ export default function AdminCampaignPage() {
                 ? `DELETE (${deleteUnlockIn})`
                 : "DELETE"}
           </button>
+        </div>
+      </BaseModal>
+
+      <BaseModal
+        open={isSuspendModalOpen}
+        onClose={closeSuspendModal}
+        title={
+          campaignData.status === "suspended"
+            ? "Retry Suspension"
+            : "Confirm Suspension"
+        }
+      >
+        <div className="px-4 pb-4 text-[16px] text-[#727873]">
+          <p>
+            {campaignData.status === "suspended"
+              ? "Retry unpublishing "
+              : "You are about to suspend "}
+            <span className="font-medium text-[#222622]">
+              {campaignData.name || "this campaign"}
+            </span>
+            {campaignData.status === "suspended"
+              ? " on Givebutter?"
+              : ". Are you sure you would like to proceed?"}
+          </p>
+          {suspendError && (
+            <p className="mt-3 text-sm text-red-600" role="alert">
+              {suspendError}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-3 px-4 pb-4">
+          <Button
+            onClick={closeSuspendModal}
+            variant="text"
+            disabled={isSuspending}
+          >
+            CANCEL
+          </Button>
+          <Button
+            onClick={handleConfirmSuspend}
+            variant="contained"
+            size="small"
+            disabled={isSuspending}
+          >
+            {isSuspending
+              ? "SUSPENDING..."
+              : campaignData.status === "suspended"
+                ? "RETRY"
+                : "SUSPEND"}
+          </Button>
         </div>
       </BaseModal>
 
