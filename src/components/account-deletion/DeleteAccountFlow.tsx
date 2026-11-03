@@ -201,7 +201,7 @@ export default function DeleteAccountFlow({
           }}
         >
           <Typography
-            component="h2"
+            component="span"
             sx={{
               fontSize: 20,
               fontWeight: 700,
