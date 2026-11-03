@@ -7,6 +7,7 @@ export type Status =
   | "pending"
   | "approved"
   | "denied"
+  | "on_hold"
   | "published"
   | "suspended"
   | "publish_failed"

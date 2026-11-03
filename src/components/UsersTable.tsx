@@ -50,6 +50,7 @@ type SortDirection = "asc" | "desc";
 const STATUS_LABELS: Record<AggregateStatus, string> = {
   in_progress: "In Progress",
   pending: "Pending",
+  on_hold: "On Hold",
   approved: "Approved",
   denied: "Denied",
   published: "Published",
@@ -65,6 +66,7 @@ const FILTER_OPTIONS: { value: AudienceStatus; label: string }[] = [
   { value: "publish_failed", label: "Publish Failed" },
   { value: "approved", label: "Approved" },
   { value: "denied", label: "Denied" },
+  { value: "on_hold", label: "On Hold" },
   { value: "pending", label: "Pending" },
   { value: "in_progress", label: "In Progress" },
   { value: "not_started", label: "Not Started" },
@@ -89,6 +91,7 @@ const STATUS_PRIORITY: Status[] = [
   "suspended",
   "published",
   "approved",
+  "on_hold",
   "pending",
   "in_progress",
   "archived",
@@ -105,6 +108,7 @@ const APP_STATUS_CONFIG: Record<
 > = {
   in_progress: { label: "in-progress", buttonLabel: "VIEW APPLICATION" },
   pending: { label: "pending", buttonLabel: "VIEW APPLICATION" },
+  on_hold: { label: "on hold", buttonLabel: "VIEW APPLICATION" },
   approved: { label: "approved", buttonLabel: "VIEW CAMPAIGN" },
   denied: { label: "denied", buttonLabel: "VIEW APPLICATION" },
   published: { label: "published", buttonLabel: "VIEW CAMPAIGN" },
@@ -115,6 +119,7 @@ const APP_STATUS_CONFIG: Record<
 
 const APP_STATUS_ORDER: Status[] = [
   "pending",
+  "on_hold",
   "approved",
   "in_progress",
   "denied",
@@ -140,6 +145,7 @@ function groupByStatus(campaigns: UserCampaign[]) {
 function getCampaignStatusPath(status: Status, campaignId: number) {
   switch (status) {
     case "pending":
+    case "on_hold":
     case "denied":
       return `/dashboard/review-applications/${campaignId}`;
     case "approved":
@@ -176,6 +182,8 @@ function getStatusSummaryText(status: Status, count: number, fullName: string) {
   switch (status) {
     case "pending":
       return `${fullName} has ${count} pending application${count === 1 ? "" : "s"}:`;
+    case "on_hold":
+      return `${fullName} has ${count} application${count === 1 ? "" : "s"} on hold:`;
     case "approved":
       return `${fullName} has ${count} approved campaign${count === 1 ? "" : "s"}:`;
     case "denied":
@@ -216,6 +224,10 @@ const STATUS_CHIP_STYLES: Record<AggregateStatus, {
   pending: {
     avatarClassName: "bg-[#7B1FA2]!",
     chipClassName: "border-[#9C27B0]! text-[#9C27B0]!",
+  },
+  on_hold: {
+    avatarClassName: "bg-[#B7791F]!",
+    chipClassName: "border-[#F2C14E]! text-[#B7791F]!",
   },
   in_progress: {
     avatarClassName: "bg-[#E65100]!",

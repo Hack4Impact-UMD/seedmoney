@@ -33,7 +33,11 @@ import CampaignQrCodeModal from "@/src/components/dashboard/CampaignQrCodeModal"
 import DashboardFooter from "@/src/components/DashboardFooter";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import { Chip } from "@mui/material";
-import { getStatusLabel } from "@/src/lib/utils/statusConversions";
+import {
+  getStatusLabel,
+  isUnderReview,
+  toApplicantStatus,
+} from "@/src/lib/utils/statusConversions";
 import moment from "moment";
 import InformationSection from "@/src/components/dashboard/InformationSection";
 
@@ -95,7 +99,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
       return;
     }
 
-    if (campaignsData[0].status !== "pending") {
+    if (!isUnderReview(campaignsData[0].status)) {
       handleCloseSubmissionToast();
     }
   }, [campaignsData, handleCloseSubmissionToast, submissionToastOpen]);
@@ -110,7 +114,11 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     return <div className="flex min-h-screen">Unable to load campaign.</div>;
   if (campaignsData.length === 0) notFound();
 
-  const campaignData = campaignsData[0];
+  // Applicants see an on-hold campaign exactly like a pending one.
+  const campaignData = {
+    ...campaignsData[0],
+    status: toApplicantStatus(campaignsData[0].status),
+  };
   const competitionStartDate = currentCompetitionData?.start_date;
   const competitionEndDate = currentCompetitionData?.end_date;
   const createdYear = competitionStartDate

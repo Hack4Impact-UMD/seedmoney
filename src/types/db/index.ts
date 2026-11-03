@@ -2,6 +2,7 @@ export * from './enums';
 export * from './users';
 export * from './campaigns';
 export * from './campaignMembers';
+export * from './campaignNotes';
 export * from './questions';
 export * from './answers';
 export * from './transactions';
