@@ -2,7 +2,6 @@
 
 import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
 import moment from "moment";
 import clsx from "clsx";
 
@@ -26,10 +25,7 @@ import useReadCampaignTransactions from "@/src/hooks/transactions/useReadCampaig
 import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
 import useDonorsChangePercent from "@/src/hooks/transactions/useDonorsChangePercent";
 import useDeleteCampaign from "@/src/hooks/campaigns/useDeleteCampaign";
-import {
-  republishSuspendedGivebutterCampaign,
-  unpublishGivebutterCampaign,
-} from "@/src/actions/givebutter/campaignsGivebutter";
+import useGivebutterCampaignSuspension from "@/src/hooks/givebutter/useGivebutterCampaignSuspension";
 
 import { ArrowBack, Close, OpenInNew } from "@mui/icons-material";
 import Button from "@mui/material/Button";
@@ -46,7 +42,6 @@ const ADMIN_DASHBOARD_TABS: readonly DashboardTabItem[] = [
 export default function AdminCampaignPage() {
   const params = useParams();
   const router = useRouter();
-  const queryClient = useQueryClient();
 
   const campaignIdParam = params["campaign-id"];
   const campaignId =
@@ -58,13 +53,13 @@ export default function AdminCampaignPage() {
   const [deleteUnlockIn, setDeleteUnlockIn] = useState(0);
   const [deleteError, setDeleteError] = useState<string | null>(null);
   const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
-  const [isSuspending, setIsSuspending] = useState(false);
   const [suspendError, setSuspendError] = useState<string | null>(null);
   const suspendInFlightRef = useRef(false);
   const [isUnsuspendModalOpen, setIsUnsuspendModalOpen] = useState(false);
-  const [isUnsuspending, setIsUnsuspending] = useState(false);
   const [unsuspendError, setUnsuspendError] = useState<string | null>(null);
   const unsuspendInFlightRef = useRef(false);
+
+  const { suspend, unsuspend } = useGivebutterCampaignSuspension();
 
   const {
     mutate: deleteCampaign,
@@ -156,21 +151,9 @@ export default function AdminCampaignPage() {
     if (suspendInFlightRef.current) return;
 
     suspendInFlightRef.current = true;
-    setIsSuspending(true);
     setSuspendError(null);
     try {
-      await unpublishGivebutterCampaign(campaignId);
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: [{ campaignId }, "campaigns", "read"],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["campaigns", "approved-campaigns"],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["campaigns", "previous-campaigns"],
-        }),
-      ]);
+      await suspend.mutateAsync(campaignId);
       setIsSuspendModalOpen(false);
     } catch (error) {
       console.error("Failed to suspend campaign:", error);
@@ -181,7 +164,6 @@ export default function AdminCampaignPage() {
       );
     } finally {
       suspendInFlightRef.current = false;
-      setIsSuspending(false);
     }
   };
 
@@ -195,21 +177,9 @@ export default function AdminCampaignPage() {
     if (unsuspendInFlightRef.current) return;
 
     unsuspendInFlightRef.current = true;
-    setIsUnsuspending(true);
     setUnsuspendError(null);
     try {
-      await republishSuspendedGivebutterCampaign(campaignId);
-      await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: [{ campaignId }, "campaigns", "read"],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["campaigns", "approved-campaigns"],
-        }),
-        queryClient.invalidateQueries({
-          queryKey: ["campaigns", "previous-campaigns"],
-        }),
-      ]);
+      await unsuspend.mutateAsync(campaignId);
       setIsUnsuspendModalOpen(false);
     } catch (error) {
       console.error("Failed to unsuspend campaign:", error);
@@ -220,7 +190,6 @@ export default function AdminCampaignPage() {
       );
     } finally {
       unsuspendInFlightRef.current = false;
-      setIsUnsuspending(false);
     }
   };
 
@@ -541,7 +510,7 @@ export default function AdminCampaignPage() {
           <Button
             onClick={closeSuspendModal}
             variant="text"
-            disabled={isSuspending}
+            disabled={suspend.isPending}
           >
             CANCEL
           </Button>
@@ -549,10 +518,12 @@ export default function AdminCampaignPage() {
             onClick={handleConfirmSuspend}
             variant="contained"
             size="small"
-            disabled={isSuspending}
+            disabled={suspend.isPending}
             className="!bg-[#D92D20] hover:!bg-[#B42318]"
           >
-            {isSuspending ? "SUSPENDING..." : "YES, SUSPEND CAMPAIGN"}
+            {suspend.isPending
+              ? "SUSPENDING..."
+              : "YES, SUSPEND CAMPAIGN"}
           </Button>
         </div>
       </BaseModal>
@@ -582,7 +553,7 @@ export default function AdminCampaignPage() {
           <Button
             onClick={closeUnsuspendModal}
             variant="text"
-            disabled={isUnsuspending}
+            disabled={unsuspend.isPending}
           >
             CANCEL
           </Button>
@@ -590,9 +561,11 @@ export default function AdminCampaignPage() {
             onClick={handleConfirmUnsuspend}
             variant="contained"
             size="small"
-            disabled={isUnsuspending}
+            disabled={unsuspend.isPending}
           >
-            {isUnsuspending ? "UNSUSPENDING..." : "YES, UNSUSPEND"}
+            {unsuspend.isPending
+              ? "UNSUSPENDING..."
+              : "YES, UNSUSPEND"}
           </Button>
         </div>
       </BaseModal>
