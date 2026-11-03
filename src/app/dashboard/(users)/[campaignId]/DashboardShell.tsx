@@ -36,6 +36,9 @@ import { Chip } from "@mui/material";
 import { getStatusLabel } from "@/src/lib/utils/statusConversions";
 import moment from "moment";
 import InformationSection from "@/src/components/dashboard/InformationSection";
+import { ChallengeStandingCard } from "@/src/components/dashboard/ChallengeStandingCard";
+import useCampaignStanding from "@/src/hooks/campaigns/useCampaignStanding";
+import { getRankGrantTier } from "@/src/components/leaderboard/grantStatOptions";
 
 const USER_DASHBOARD_TABS: readonly DashboardTabItem[] = [
   { label: "Overview", sectionId: "dashboard-overview" },
@@ -60,6 +63,16 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     isLoading,
     error,
   } = useReadCampaign({ campaignId: Number(campaignId) });
+
+  const {
+    data: standing,
+    isPending: standingPending,
+    error: standingError,
+  } = useCampaignStanding(
+    Number(campaignId),
+    campaignsData?.[0]?.competition_id ?? undefined,
+  );
+
   const { data: currentCompetitionData } = useReadCurrentCompetition();
   const {
     percent: raisedPercent,
@@ -206,12 +219,19 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     );
   }
 
+  const hasCompetition = campaignData.competition_id != null;
+
+  if (hasCompetition && standingPending) return <div>Loading...</div>;
+  if (standingError) throw standingError;
+
   const isChallengeActive = Boolean(
     competitionStartDate &&
-      competitionEndDate &&
-      moment().isAfter(competitionStartDate) &&
-      moment().isBefore(competitionEndDate),
+    competitionEndDate &&
+    moment().isAfter(competitionStartDate) &&
+    moment().isBefore(competitionEndDate),
   );
+
+  const grantTier = getRankGrantTier(standing?.rank);
   const challengeStatusChip = (
     <Chip
       variant={isChallengeActive ? "published" : "archived"}
@@ -334,9 +354,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             />
 
             <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-6">
-              <TotalDonorsCard
-                totalDonors={campaignData.donors}
-              />
+              <TotalDonorsCard totalDonors={campaignData.donors} />
 
               <DaysRemainingCard
                 startDate={currentCompetitionData?.start_date ?? null}
@@ -347,6 +365,15 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                 }
               />
             </div>
+          </div>
+          <div className="mt-6">
+            <ChallengeStandingCard
+              rank={standing?.rank ?? null}
+              totalProjects={standing?.totalProjects ?? 0}
+              projectedGrant={grantTier?.amount ?? null}
+              grantTierMinRank={grantTier?.minRank ?? null}
+              grantTierMaxRank={grantTier?.maxRank ?? null}
+            />
           </div>
         </section>
 
