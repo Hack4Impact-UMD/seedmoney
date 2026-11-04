@@ -57,7 +57,6 @@ export default function ReviewApplicationsTable({
   isTogglingApplication,
   onToggleApplication,
 }: Props) {
-  const [tab, setTab] = useState<TabStatus>("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("submissionDate");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -78,6 +77,12 @@ export default function ReviewApplicationsTable({
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+
+  // The tab lives in the URL (?tab=on_hold|denied) so returning from an
+  // application lands on the same tab.
+  const tabParam = searchParams.get("tab");
+  const tab: TabStatus =
+    TABS.find((t) => t.dbStatus === tabParam)?.status ?? "PENDING";
   const updateCampaignMutation = useUpdateCampaign();
 
   const clearActionSearchParams = useCallback(() => {
@@ -111,8 +116,17 @@ export default function ReviewApplicationsTable({
     };
   }, [searchParams]);
 
-  const activeNotification = notification ?? queryNotification;
+  const currentNotification = notification ?? queryNotification;
   const isAlertOpen = snackbarOpen || queryNotification !== null;
+
+  // Keep rendering the last notification while the snackbar animates closed;
+  // otherwise its content is cleared mid-transition and falls back to the
+  // error text for a moment.
+  const [activeNotification, setActiveNotification] =
+    useState(currentNotification);
+  if (currentNotification && currentNotification !== activeNotification) {
+    setActiveNotification(currentNotification);
+  }
 
   useEffect(() => {
     if (!isAlertOpen) return;
@@ -268,7 +282,17 @@ export default function ReviewApplicationsTable({
   };
 
   const handleTabChange = (status: TabStatus) => {
-    setTab(status);
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    const dbStatus = TABS.find((t) => t.status === status)?.dbStatus ?? "pending";
+    if (dbStatus === "pending") {
+      nextSearchParams.delete("tab");
+    } else {
+      nextSearchParams.set("tab", dbStatus);
+    }
+    const nextQuery = nextSearchParams.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+      scroll: false,
+    });
     setSelectedIds([]);
     setPageIndex(0);
   };
@@ -476,7 +500,9 @@ export default function ReviewApplicationsTable({
                 ? "Campaign Restored!"
                 : activeNotification?.action === "held"
                   ? "Campaign On Hold!"
-                  : "Something went wrong."
+                  : activeNotification?.action === "error"
+                    ? "Something went wrong."
+                    : ""
         }
       >
         <div>
@@ -509,9 +535,10 @@ export default function ReviewApplicationsTable({
               )}
             </>
           )}
-          {notification?.action === "error" && (
+          {activeNotification?.action === "error" && (
             <p className="text-sm">
-              {notification.message ?? "An error occurred. Please try again."}
+              {("message" in activeNotification && activeNotification.message) ||
+                "An error occurred. Please try again."}
             </p>
           )}
         </div>

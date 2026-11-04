@@ -164,6 +164,19 @@ export default function CampaignReviewPage() {
     });
   }, []);
 
+  // Back to the list, on the tab this application was on when it was opened.
+  const reviewListPath = useCallback(
+    (params?: Record<string, string>) => {
+      const search = new URLSearchParams(params);
+      if (initialData.status === "on_hold" || initialData.status === "denied") {
+        search.set("tab", initialData.status);
+      }
+      const query = search.toString();
+      return `/dashboard/review-applications${query ? `?${query}` : ""}`;
+    },
+    [initialData.status],
+  );
+
   const handleStatusUpdate = useCallback(
     async (newStatus: Status) => {
       if (isFormDirty) {
@@ -244,10 +257,11 @@ export default function CampaignReviewPage() {
               : newStatus === "pending"
                 ? "reverted"
                 : null;
-        const nextPath = action
-          ? `/dashboard/review-applications?action=${action}&campaign=${encodeURIComponent(formData.campaignTitle)}`
-          : "/dashboard/review-applications";
-        router.push(nextPath);
+        router.push(
+          reviewListPath(
+            action ? { action, campaign: formData.campaignTitle } : undefined,
+          ),
+        );
       } catch (err) {
         const message =
           err instanceof Error
@@ -265,6 +279,7 @@ export default function CampaignReviewPage() {
       isFormDirty,
       parsedCampaignId,
       refetch,
+      reviewListPath,
       router,
       setFieldValue,
       updateCampaignMutation,
@@ -283,9 +298,9 @@ export default function CampaignReviewPage() {
     setIsHoldDialogOpen(false);
     setIsStatusTransitioning(true);
     router.push(
-      `/dashboard/review-applications?action=held&campaign=${encodeURIComponent(formData.campaignTitle)}`,
+      reviewListPath({ action: "held", campaign: formData.campaignTitle }),
     );
-  }, [formData.campaignTitle, router]);
+  }, [formData.campaignTitle, reviewListPath, router]);
 
   const handleShowError = useCallback((message: string) => {
     setIsHoldDialogOpen(false);
@@ -422,12 +437,8 @@ export default function CampaignReviewPage() {
   ]);
 
   const navigateToCampaignPage = useCallback(() => {
-    if (!parsedCampaignId) {
-      router.push("/dashboard/review-applications");
-      return;
-    }
-    router.push(`/dashboard/review-applications`);
-  }, [parsedCampaignId, router]);
+    router.push(reviewListPath());
+  }, [reviewListPath, router]);
 
   const handleAttemptLeave = useCallback(() => {
     if (isFormDirty) {
