@@ -16,6 +16,8 @@ import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import BaseModal from "@/src/components/bases/BaseModal";
+import EmailEditor from "@/src/components/email/EmailEditor";
+import EmailPreviewBody from "@/src/components/email/EmailPreviewBody";
 import Link from "next/link"
 import { useRouter } from "next/navigation";
 
@@ -23,6 +25,7 @@ export default function EmailUsersPage() {
   const router = useRouter();
   const [recipientGroups, setRecipientGroups] = useState<string[]>([]);
   const [subject, setSubject] = useState("");
+  const [bodyHtml, setBodyHtml] = useState("");
   const [selectedImages, setSelectedImages] = useState<File[]>([]);
   const [uploadError, setUploadError] = useState("");
   const [previewOpen, setPreviewOpen] = useState(false);
@@ -63,6 +66,7 @@ export default function EmailUsersPage() {
   const handleDiscard = () => {
     setRecipientGroups([]);
     setSubject("");
+    setBodyHtml("");
     setSelectedImages([]);
     setUploadError("");
   };
@@ -213,17 +217,7 @@ export default function EmailUsersPage() {
               onChange={(event) => setSubject(event.target.value)}
             />
 
-            {/* TODO: Import email editor component or expand here */}
-            <div className="mt-6 overflow-hidden rounded-xl border border-gray-300">
-              <div className="flex gap-6 border-b border-gray-300 bg-[#F6FAF9] px-4 py-3">
-                <span className="font-semibold text-[#123A1E]">Text</span>
-                <span className="text-gray-500">HTML</span>
-              </div>
-
-              <div className="flex min-h-[400px] items-center justify-center p-6 text-center text-gray-400">
-                Email editor placeholder
-              </div>
-            </div>
+            <EmailEditor value={bodyHtml} onChange={setBodyHtml} />
 
             {/* Image upload*/}
             {/* TODO: Connect to backend to store images and attached the images to the email */}
@@ -325,7 +319,6 @@ export default function EmailUsersPage() {
           >
             <div className="space-y-4">
               <p className="text-sm text-gray-500">
-                {/* TODO: show a display of the email */}
                 Preview of your email before sending.
               </p>
 
@@ -341,9 +334,7 @@ export default function EmailUsersPage() {
                 </p>
 
                 <div className="mt-4 border-t border-gray-200 pt-4">
-                  <p className="text-gray-400">
-                    Email editor placeholder
-                  </p>
+                  <EmailPreviewBody html={bodyHtml} />
                 </div>
 
                 {selectedImages.length > 0 && (

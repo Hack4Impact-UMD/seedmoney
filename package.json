@@ -11,6 +11,7 @@
     "givebutter:space-photos": "node --env-file-if-exists=.env --env-file-if-exists=.env.local scripts/space-givebutter-photos.mjs"
   },
   "dependencies": {
+    "@codemirror/lang-html": "^6.4.12",
     "@emotion/cache": "^11.14.0",
     "@emotion/react": "^11.14.0",
     "@emotion/styled": "^11.14.1",
@@ -24,7 +25,14 @@
     "@tanstack/react-form": "^1.29.1",
     "@tanstack/react-query": "^5.90.21",
     "@tanstack/react-table": "^8.21.3",
+    "@tiptap/extension-image": "^3.32.2",
+    "@tiptap/extension-text-align": "^3.32.2",
+    "@tiptap/pm": "^3.32.2",
+    "@tiptap/react": "^3.32.2",
+    "@tiptap/starter-kit": "^3.32.2",
+    "@uiw/react-codemirror": "^4.25.12",
     "@upstash/redis": "^1.36.3",
+    "dompurify": "^3.4.17",
     "export-to-csv": "^1.4.0",
     "moment": "^2.30.1",
     "next": "16.1.6",
