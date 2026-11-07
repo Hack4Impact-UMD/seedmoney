@@ -196,7 +196,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           <h3 className="text-4xl font-bold text-[#096B2E]">
             {campaignData.name} (Not Approved)
           </h3>
-          <div className="mt-10 flex flex-col gap-6">
+          <div className="mt-10">
             <Denied onNewCampaign={handleNewCampaign} />
             <InformationSection />
           </div>
