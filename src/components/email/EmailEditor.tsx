@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type Ref } from "react";
 import Button from "@mui/material/Button";
 import BaseModal from "@/src/components/bases/BaseModal";
 import EmailFormatTabs, {
@@ -13,12 +13,22 @@ import {
   normalizeEmailHtml,
 } from "@/src/components/email/emailHtml";
 
+// Lets the page insert content at the cursor of whichever tab is open
+export interface EmailEditorHandle {
+  insertImage: (src: string, alt: string) => void;
+}
+
 interface EmailEditorProps {
   value: string;
   onChange: (html: string) => void;
+  ref?: Ref<EmailEditorHandle>;
 }
 
-export default function EmailEditor({ value, onChange }: EmailEditorProps) {
+export default function EmailEditor({
+  value,
+  onChange,
+  ref,
+}: EmailEditorProps) {
   const [activeTab, setActiveTab] = useState<EmailFormatTab>("text");
   // Formatting that would be lost; non-null while the warning is open
   const [pendingRemovals, setPendingRemovals] = useState<string[] | null>(
@@ -53,9 +63,9 @@ export default function EmailEditor({ value, onChange }: EmailEditorProps) {
       <EmailFormatTabs activeTab={activeTab} onChange={handleTabChange} />
 
       {activeTab === "html" ? (
-        <EmailHtmlEditor value={value} onChange={onChange} />
+        <EmailHtmlEditor ref={ref} value={value} onChange={onChange} />
       ) : (
-        <EmailTextEditor value={value} onChange={onChange} />
+        <EmailTextEditor ref={ref} value={value} onChange={onChange} />
       )}
 
       <BaseModal

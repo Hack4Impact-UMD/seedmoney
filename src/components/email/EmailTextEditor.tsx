@@ -1,7 +1,8 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useImperativeHandle, type Ref } from "react";
 import { EditorContent, useEditor } from "@tiptap/react";
+import type { EmailEditorHandle } from "@/src/components/email/EmailEditor";
 import EmailToolbar from "@/src/components/email/EmailToolbar";
 import { EMAIL_EXTENSIONS } from "@/src/components/email/emailHtml";
 import styles from "./EmailContent.module.css";
@@ -9,11 +10,13 @@ import styles from "./EmailContent.module.css";
 interface EmailTextEditorProps {
   value: string;
   onChange: (html: string) => void;
+  ref?: Ref<EmailEditorHandle>;
 }
 
 export default function EmailTextEditor({
   value,
   onChange,
+  ref,
 }: EmailTextEditorProps) {
   const editor = useEditor({
     extensions: EMAIL_EXTENSIONS,
@@ -40,6 +43,17 @@ export default function EmailTextEditor({
       editor.commands.setContent(value, { emitUpdate: false });
     }
   }, [editor, value]);
+
+  useImperativeHandle(
+    ref,
+    () => ({
+      // focus() restores the cursor from before the admin clicked away
+      insertImage: (src, alt) => {
+        editor?.chain().focus().setImage({ src, alt }).run();
+      },
+    }),
+    [editor],
+  );
 
   return (
     <>
