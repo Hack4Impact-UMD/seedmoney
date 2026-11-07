@@ -154,6 +154,7 @@ Deno.serve(async (req) => {
 
     if (!brevoApiKey) {
       console.log("BREVO_API_KEY not set; email not sent:", JSON.stringify(email));
+      if (acceptUrl) console.log("Accept link:", acceptUrl);
       return json({ ok: true, sent: false });
     }
 
