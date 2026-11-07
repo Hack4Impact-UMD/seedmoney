@@ -18,7 +18,7 @@ export async function readCampaignsUnderReview(
         )
       )`
     ,)
-    .in("status", ["pending", "denied"])
+    .in("status", ["pending", "on_hold", "denied"])
     .eq("competition_id", competitionId)
     .eq("campaign_members.role", "campaign_leader");
 
@@ -54,7 +54,7 @@ export async function readCampaignsUnderReview(
       raised: c.raised ?? 0,
       goal: c.goal ?? 0,
       goalProgress: c.goal > 0 ? Math.round((c.raised / c.goal) * 100) : 0,
-      status: c.status as "pending" | "denied",
+      status: c.status as ReviewApplicationRow["status"],
       submissionDate: c.date_created ?? "",
     };
   });

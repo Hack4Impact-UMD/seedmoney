@@ -97,6 +97,8 @@ function getStatusChipClasses(status: string) {
       return "border-[#667085] text-[#667085]";
     case "pending":
       return "border-[#F79009] text-[#B54708]";
+    case "on_hold":
+      return "border-[#F2C14E] text-[#B7791F]";
     case "denied":
       return "border-[#F04438] text-[#F04438]";
     case "in_progress":

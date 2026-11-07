@@ -14,6 +14,7 @@ import {
   categoryOptions,
 } from "@/src/components/approved-campaigns/options";
 import { useCampaignEditData } from "@/src/hooks/campaigns/useCampaignEditData";
+import { isUnderReview } from "@/src/lib/utils/statusConversions";
 import type {
   SetFieldValue,
   TextChangeHandler,
@@ -38,7 +39,7 @@ export default function ViewPendingApplicationPage() {
   if (isLoading) return <Loading />;
   if (error) return <AppError error={error as Error} reset={() => refetch()} />;
   if (!campaignEditData) notFound();
-  if (campaignEditData.mappedData.status !== "pending") notFound();
+  if (!isUnderReview(campaignEditData.mappedData.status)) notFound();
 
   const formData = campaignEditData.mappedData;
 

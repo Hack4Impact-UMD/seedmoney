@@ -13,6 +13,7 @@ import { useQueryClient } from "@tanstack/react-query";
 import { Button, FormControlLabel, Menu, MenuItem, Switch } from "@mui/material";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 import BaseModal from "@/src/components/bases/BaseModal";
+import HoldCampaignDialogs from "@/src/components/review/HoldCampaignDialogs";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import type { Status } from "@/src/types/db/enums";
 import { ReviewApplicationRow } from "@/src/types/frontend/campaignsTable";
@@ -22,8 +23,19 @@ import { createBrowserClient } from "@/src/lib/supabase-client";
 
 const pageSizeOptions = [5, 10, 20];
 
-type TabStatus = "PENDING" | "DENIED";
+type TabStatus = "PENDING" | "ON_HOLD" | "DENIED";
 type ReviewAction = "APPROVE" | "DENY" | "REVERT";
+type NotificationAction = "approved" | "denied" | "reverted" | "held" | "error";
+
+const TABS: {
+  status: TabStatus;
+  label: string;
+  dbStatus: ReviewApplicationRow["status"];
+}[] = [
+  { status: "PENDING", label: "Pending", dbStatus: "pending" },
+  { status: "ON_HOLD", label: "On Hold", dbStatus: "on_hold" },
+  { status: "DENIED", label: "Denied", dbStatus: "denied" },
+];
 type SortKey = "submissionDate" | "campaignTitle" | "campaignLeader";
 
 const formatDate = (dateStr: string) => {
@@ -45,7 +57,6 @@ export default function ReviewApplicationsTable({
   isTogglingApplication,
   onToggleApplication,
 }: Props) {
-  const [tab, setTab] = useState<TabStatus>("PENDING");
   const [searchQuery, setSearchQuery] = useState("");
   const [sortBy, setSortBy] = useState<SortKey>("submissionDate");
   const [selectedIds, setSelectedIds] = useState<number[]>([]);
@@ -55,14 +66,23 @@ export default function ReviewApplicationsTable({
   const [pendingToggle, setPendingToggle] = useState(false);
   const [sortMenuAnchorEl, setSortMenuAnchorEl] = useState<null | HTMLElement>(null);
   const [notification, setNotification] = useState<{
-    action: "approved" | "denied" | "reverted" | "error";
+    action: NotificationAction;
     campaignNames: string[];
+    message?: string;
   } | null>(null);
   const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [isHoldDialogOpen, setIsHoldDialogOpen] = useState(false);
+  const [isSingleHoldWarningOpen, setIsSingleHoldWarningOpen] = useState(false);
   const router = useRouter();
   const pathname = usePathname();
   const searchParams = useSearchParams();
   const queryClient = useQueryClient();
+
+  // The tab lives in the URL (?tab=on_hold|denied) so returning from an
+  // application lands on the same tab.
+  const tabParam = searchParams.get("tab");
+  const tab: TabStatus =
+    TABS.find((t) => t.dbStatus === tabParam)?.status ?? "PENDING";
   const updateCampaignMutation = useUpdateCampaign();
 
   const clearActionSearchParams = useCallback(() => {
@@ -78,19 +98,35 @@ export default function ReviewApplicationsTable({
     const campaignName = searchParams.get("campaign");
 
     if (!action || !campaignName) return null;
-    if (action !== "approved" && action !== "denied" && action !== "reverted") return null;
+    if (
+      action !== "approved" &&
+      action !== "denied" &&
+      action !== "reverted" &&
+      action !== "held"
+    ) {
+      return null;
+    }
 
     return {
       action,
       campaignNames: [campaignName],
     } satisfies {
-      action: "approved" | "denied" | "reverted";
+      action: Exclude<NotificationAction, "error">;
       campaignNames: string[];
     };
   }, [searchParams]);
 
-  const activeNotification = notification ?? queryNotification;
+  const currentNotification = notification ?? queryNotification;
   const isAlertOpen = snackbarOpen || queryNotification !== null;
+
+  // Keep rendering the last notification while the snackbar animates closed;
+  // otherwise its content is cleared mid-transition and falls back to the
+  // error text for a moment.
+  const [activeNotification, setActiveNotification] =
+    useState(currentNotification);
+  if (currentNotification && currentNotification !== activeNotification) {
+    setActiveNotification(currentNotification);
+  }
 
   useEffect(() => {
     if (!isAlertOpen) return;
@@ -108,7 +144,7 @@ export default function ReviewApplicationsTable({
   );
 
   const filteredApplications = useMemo(() => {
-    const dbStatus = tab === "PENDING" ? "pending" : "denied";
+    const dbStatus = TABS.find((t) => t.status === tab)?.dbStatus ?? "pending";
     const normalizedQuery = searchQuery.trim().toLowerCase();
 
     return applications.filter((application) => {
@@ -246,7 +282,17 @@ export default function ReviewApplicationsTable({
   };
 
   const handleTabChange = (status: TabStatus) => {
-    setTab(status);
+    const nextSearchParams = new URLSearchParams(searchParams.toString());
+    const dbStatus = TABS.find((t) => t.status === status)?.dbStatus ?? "pending";
+    if (dbStatus === "pending") {
+      nextSearchParams.delete("tab");
+    } else {
+      nextSearchParams.set("tab", dbStatus);
+    }
+    const nextQuery = nextSearchParams.toString();
+    router.replace(nextQuery ? `${pathname}?${nextQuery}` : pathname, {
+      scroll: false,
+    });
     setSelectedIds([]);
     setPageIndex(0);
   };
@@ -301,6 +347,30 @@ export default function ReviewApplicationsTable({
     setPendingAction(null);
   };
 
+  // Hold takes exactly one campaign; the server rejects anything else too.
+  const handleHoldClick = () => {
+    if (selectedIds.length === 0) return;
+    if (selectedIds.length > 1) {
+      setIsSingleHoldWarningOpen(true);
+      return;
+    }
+    setIsHoldDialogOpen(true);
+  };
+
+  const handleHeld = () => {
+    const names = selectedApplications.map((a) => a.campaignTitle);
+    setIsHoldDialogOpen(false);
+    setSelectedIds([]);
+    setNotification({ action: "held", campaignNames: names });
+    setSnackbarOpen(true);
+  };
+
+  const handleHoldError = (message: string) => {
+    setIsHoldDialogOpen(false);
+    setNotification({ action: "error", campaignNames: [], message });
+    setSnackbarOpen(true);
+  };
+
   const handleConfirmAction = async () => {
     if (!pendingAction || selectedIds.length === 0) return;
 
@@ -319,7 +389,65 @@ export default function ReviewApplicationsTable({
   };
 
   const hasSelectedRows = selectedIds.length > 0;
-  const isDeniedTab = tab === "DENIED";
+  const holdCandidate = selectedIds.length === 1 ? selectedApplications[0] : null;
+
+  // Pending: APPROVE, HOLD, DENY. On Hold: APPROVE, DENY, RESTORE.
+  // Denied: APPROVE, RESTORE, HOLD.
+  const renderActionButtons = (size: "small" | "large", fullWidth: boolean) => {
+    const approve = (
+      <Button
+        key="approve"
+        disabled={!hasSelectedRows}
+        onClick={() => handleOpenActionModal("APPROVE")}
+        variant="contained"
+        size={size}
+        fullWidth={fullWidth}
+      >
+        APPROVE
+      </Button>
+    );
+    const hold = (
+      <Button
+        key="hold"
+        disabled={!hasSelectedRows}
+        onClick={handleHoldClick}
+        variant="contained"
+        color="warning"
+        size={size}
+        fullWidth={fullWidth}
+      >
+        HOLD
+      </Button>
+    );
+    const deny = (
+      <Button
+        key="deny"
+        disabled={!hasSelectedRows}
+        onClick={() => handleOpenActionModal("DENY")}
+        variant="outlined"
+        size={size}
+        fullWidth={fullWidth}
+      >
+        DENY
+      </Button>
+    );
+    const restore = (
+      <Button
+        key="restore"
+        disabled={!hasSelectedRows}
+        onClick={() => handleOpenActionModal("REVERT")}
+        variant="outlined"
+        size={size}
+        fullWidth={fullWidth}
+      >
+        RESTORE
+      </Button>
+    );
+
+    if (tab === "ON_HOLD") return [approve, deny, restore];
+    if (tab === "DENIED") return [approve, restore, hold];
+    return [approve, hold, deny];
+  };
   const isActionModalOpen = pendingAction !== null;
   const isConfirming = updateCampaignMutation.isPending;
   const isSortMenuOpen = Boolean(sortMenuAnchorEl);
@@ -331,7 +459,6 @@ export default function ReviewApplicationsTable({
         : "Confirm Revert";
   const modalVerb =
     pendingAction === "APPROVE" ? "approve" : pendingAction === "DENY" ? "deny" : "revert";
-  const currentActionLabel = isDeniedTab ? "RESTORE" : "DENY";
 
   const toggleModalTitle = isApplicationOpen
     ? "Close Application Submissions"
@@ -371,11 +498,23 @@ export default function ReviewApplicationsTable({
               ? "Campaign Denied!"
               : activeNotification?.action === "reverted"
                 ? "Campaign Restored!"
-                : "Something went wrong."
+                : activeNotification?.action === "held"
+                  ? "Campaign On Hold!"
+                  : activeNotification?.action === "error"
+                    ? "Something went wrong."
+                    : ""
         }
       >
         <div>
-          {activeNotification?.action !== "error" && activeNotification?.campaignNames && (
+          {activeNotification?.action === "held" && (
+            <p className="text-sm">
+              You have successfully placed the campaign on hold. You can view it
+              using the &ldquo;ON HOLD&rdquo; tab.
+            </p>
+          )}
+          {activeNotification?.action !== "error" &&
+            activeNotification?.action !== "held" &&
+            activeNotification?.campaignNames && (
             <>
               <p className="text-sm">
                 {activeNotification.action === "approved"
@@ -396,8 +535,11 @@ export default function ReviewApplicationsTable({
               )}
             </>
           )}
-          {notification?.action === "error" && (
-            <p className="text-sm">An error occurred. Please try again.</p>
+          {activeNotification?.action === "error" && (
+            <p className="text-sm">
+              {("message" in activeNotification && activeNotification.message) ||
+                "An error occurred. Please try again."}
+            </p>
           )}
         </div>
       </BaseAlert>
@@ -453,9 +595,8 @@ export default function ReviewApplicationsTable({
 
         <div className="border-b border-[#d6e0d7]">
           <div className="flex items-end gap-7">
-            {(["PENDING", "DENIED"] as TabStatus[]).map((status) => {
+            {TABS.map(({ status, label }) => {
               const isActive = status === tab;
-              const label = status === "PENDING" ? "Pending" : "Denied";
 
               return (
                 <button
@@ -511,25 +652,8 @@ export default function ReviewApplicationsTable({
           </button>
         </div>
 
-        <div className="mt-4 grid grid-cols-2 gap-3">
-          <Button
-            disabled={!hasSelectedRows}
-            onClick={() => handleOpenActionModal("APPROVE")}
-            variant="contained"
-            size="large"
-            fullWidth
-          >
-            APPROVE
-          </Button>
-          <Button
-            disabled={!hasSelectedRows}
-            onClick={() => handleOpenActionModal(isDeniedTab ? "REVERT" : "DENY")}
-            variant="outlined"
-            size="large"
-            fullWidth
-          >
-            {currentActionLabel}
-          </Button>
+        <div className="mt-4 grid grid-cols-3 gap-2">
+          {renderActionButtons("small", true)}
         </div>
 
         <div className="mt-5 flex flex-col gap-4">
@@ -616,9 +740,8 @@ export default function ReviewApplicationsTable({
 
           <div className="mt-4 flex items-center justify-between border-b border-[#d6e0d7]">
             <div className="flex items-end gap-7">
-              {(["PENDING", "DENIED"] as TabStatus[]).map((status) => {
+              {TABS.map(({ status, label }) => {
                 const isActive = status === tab;
-                const label = status === "PENDING" ? "Pending" : "Denied";
 
                 return (
                   <button
@@ -683,33 +806,7 @@ export default function ReviewApplicationsTable({
                 </label>
 
                 <div className="flex items-center gap-3">
-                  <Button
-                    disabled={!hasSelectedRows}
-                    onClick={() => handleOpenActionModal("APPROVE")}
-                    variant="contained"
-                    size="small"
-                  >
-                    APPROVE
-                  </Button>
-                  {isDeniedTab ? (
-                    <Button
-                      disabled={!hasSelectedRows}
-                      onClick={() => handleOpenActionModal("REVERT")}
-                      variant="outlined"
-                      size="small"
-                    >
-                      RESTORE
-                    </Button>
-                  ) : (
-                    <Button
-                      disabled={!hasSelectedRows}
-                      onClick={() => handleOpenActionModal("DENY")}
-                      variant="outlined"
-                      size="small"
-                    >
-                      DENY
-                    </Button>
-                  )}
+                  {renderActionButtons("small", false)}
                 </div>
               </div>
             </div>
@@ -865,6 +962,39 @@ export default function ReviewApplicationsTable({
           </div>
         </BaseModal>
       )}
+
+      {/* Hold flow (single campaign) */}
+      <HoldCampaignDialogs
+        open={isHoldDialogOpen}
+        campaignId={holdCandidate?.campaignId ?? null}
+        campaignTitle={holdCandidate?.campaignTitle ?? ""}
+        onClose={() => setIsHoldDialogOpen(false)}
+        onHeld={handleHeld}
+        onError={handleHoldError}
+      />
+
+      {/* Shown when HOLD is clicked with more than one campaign selected */}
+      <BaseModal
+        open={isSingleHoldWarningOpen}
+        onClose={() => setIsSingleHoldWarningOpen(false)}
+        title="Only one campaign can be held"
+      >
+        <div className="px-4 pb-4 text-[16px] text-[#727873]">
+          <p>
+            You have {selectedIds.length} applications selected. Please select a
+            single application to place on hold.
+          </p>
+        </div>
+        <div className="flex items-center justify-end gap-3 px-4 pb-4">
+          <Button
+            onClick={() => setIsSingleHoldWarningOpen(false)}
+            variant="contained"
+            size="small"
+          >
+            OK
+          </Button>
+        </div>
+      </BaseModal>
 
       {/* Toggle Application Modal */}
       <BaseModal

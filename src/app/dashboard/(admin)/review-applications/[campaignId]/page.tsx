@@ -12,7 +12,9 @@ import NotFound from "@/src/app/not-found";
 import useUpdateCampaign from "@/src/hooks/campaigns/useUpdateCampaign";
 import useCreateFinalAnswer from "@/src/hooks/answers/useCreateFinalAnswer";
 import { Button, Fab } from "@mui/material";
-import { Check, Close, Replay } from "@mui/icons-material";
+import { Check, Close, PauseCircle, Replay } from "@mui/icons-material";
+import AdminNotesCard from "@/src/components/review/AdminNotesCard";
+import HoldCampaignDialogs from "@/src/components/review/HoldCampaignDialogs";
 import CampaignInformationSection from "@/src/components/approved-campaigns/edit/CampaignInformationSection";
 import CampaignMediaSection from "@/src/components/approved-campaigns/edit/CampaignMediaSection";
 import ContactInformationSection from "@/src/components/approved-campaigns/edit/ContactInformationSection";
@@ -65,6 +67,8 @@ export default function CampaignReviewPage() {
   const [isApprovedModalOpen, setIsApprovedModalOpen] = useState(false);
   const [isDeniedModalOpen, setIsDeniedModalOpen] = useState(false);
   const [isRestoredModalOpen, setIsRestoredModalOpen] = useState(false);
+  const [isHoldDialogOpen, setIsHoldDialogOpen] = useState(false);
+  const [isNoteSavedAlertOpen, setIsNoteSavedAlertOpen] = useState(false);
 
   const [isSaveAlertOpen, setIsSaveAlertOpen] = useState(false);
   const [isStatusTransitioning, setIsStatusTransitioning] = useState(false);
@@ -84,6 +88,8 @@ export default function CampaignReviewPage() {
   if (isPreviousCampaign) {
     if (status === "pending") {
       tag = { label: "Pending", color: "#6B21A8", borderColor: "#6B21A8" };
+    } else if (status === "on_hold") {
+      tag = { label: "On Hold", color: "#B7791F", borderColor: "#F2C14E" };
     } else if (status === "denied") {
       tag = { label: "Denied", color: "#DC2626", borderColor: "#DC2626" };
     } else if (status === "approved" || status === "published") {
@@ -157,6 +163,19 @@ export default function CampaignReviewPage() {
       return { ...prev, gardenBeneficiaries: next };
     });
   }, []);
+
+  // Back to the list, on the tab this application was on when it was opened.
+  const reviewListPath = useCallback(
+    (params?: Record<string, string>) => {
+      const search = new URLSearchParams(params);
+      if (initialData.status === "on_hold" || initialData.status === "denied") {
+        search.set("tab", initialData.status);
+      }
+      const query = search.toString();
+      return `/dashboard/review-applications${query ? `?${query}` : ""}`;
+    },
+    [initialData.status],
+  );
 
   const handleStatusUpdate = useCallback(
     async (newStatus: Status) => {
@@ -238,10 +257,11 @@ export default function CampaignReviewPage() {
               : newStatus === "pending"
                 ? "reverted"
                 : null;
-        const nextPath = action
-          ? `/dashboard/review-applications?action=${action}&campaign=${encodeURIComponent(formData.campaignTitle)}`
-          : "/dashboard/review-applications";
-        router.push(nextPath);
+        router.push(
+          reviewListPath(
+            action ? { action, campaign: formData.campaignTitle } : undefined,
+          ),
+        );
       } catch (err) {
         const message =
           err instanceof Error
@@ -259,11 +279,34 @@ export default function CampaignReviewPage() {
       isFormDirty,
       parsedCampaignId,
       refetch,
+      reviewListPath,
       router,
       setFieldValue,
       updateCampaignMutation,
     ],
   );
+
+  const handleHoldClick = useCallback(() => {
+    if (isFormDirty) {
+      setIsSaveAlertOpen(true);
+      return;
+    }
+    setIsHoldDialogOpen(true);
+  }, [isFormDirty]);
+
+  const handleHeld = useCallback(() => {
+    setIsHoldDialogOpen(false);
+    setIsStatusTransitioning(true);
+    router.push(
+      reviewListPath({ action: "held", campaign: formData.campaignTitle }),
+    );
+  }, [formData.campaignTitle, reviewListPath, router]);
+
+  const handleShowError = useCallback((message: string) => {
+    setIsHoldDialogOpen(false);
+    setSaveErrorMessage(message);
+    setShowErrorToast(true);
+  }, []);
 
   const handleConfirmSave = useCallback(async () => {
     if (!parsedCampaignId) return;
@@ -394,12 +437,8 @@ export default function CampaignReviewPage() {
   ]);
 
   const navigateToCampaignPage = useCallback(() => {
-    if (!parsedCampaignId) {
-      router.push("/dashboard/review-applications");
-      return;
-    }
-    router.push(`/dashboard/review-applications`);
-  }, [parsedCampaignId, router]);
+    router.push(reviewListPath());
+  }, [reviewListPath, router]);
 
   const handleAttemptLeave = useCallback(() => {
     if (isFormDirty) {
@@ -431,14 +470,101 @@ export default function CampaignReviewPage() {
   if (!campaignEditData) return <NotFound />;
   if (
     campaignEditData.mappedData.status !== "pending" &&
+    campaignEditData.mappedData.status !== "on_hold" &&
     campaignEditData.mappedData.status !== "denied"
   ) {
     return <NotFound />;
   }
 
+  const isBusy = updateCampaignMutation.isPending;
+  const outlinedFabSx = {
+    bgcolor: "white",
+    border: "1px solid #123A1E",
+    color: "#123A1E",
+    "&:hover": { bgcolor: "#f5f5f5" },
+  };
+
+  // Pending: APPROVE, HOLD, DENY. On Hold: APPROVE, DENY, RESTORE.
+  // Denied: APPROVE, RESTORE, HOLD.
+  const sidebarActions = (() => {
+    const approve = (
+      <Button key="approve" variant="contained" disabled={isBusy} onClick={() => setIsApprovedModalOpen(true)}>
+        APPROVE
+      </Button>
+    );
+    const hold = (
+      <Button key="hold" variant="contained" color="warning" disabled={isBusy} onClick={handleHoldClick}>
+        HOLD
+      </Button>
+    );
+    const deny = (
+      <Button key="deny" variant="outlined" disabled={isBusy} onClick={() => setIsDeniedModalOpen(true)}>
+        DENY
+      </Button>
+    );
+    const restore = (
+      <Button key="restore" variant="outlined" disabled={isBusy} onClick={() => setIsRestoredModalOpen(true)}>
+        RESTORE
+      </Button>
+    );
+    if (status === "on_hold") return [approve, deny, restore];
+    if (status === "denied") return [approve, restore, hold];
+    return [approve, hold, deny];
+  })();
+
+  const mobileActions = (() => {
+    const approve = (
+      <Fab key="approve" size="medium" color="success" aria-label="Approve" onClick={() => setIsApprovedModalOpen(true)} disabled={isBusy}>
+        <Check />
+      </Fab>
+    );
+    const hold = (
+      <Fab
+        key="hold"
+        size="medium"
+        aria-label="Hold"
+        onClick={handleHoldClick}
+        disabled={isBusy}
+        sx={{ bgcolor: "#F2C14E", color: "white", "&:hover": { bgcolor: "#DDA92F" } }}
+      >
+        <PauseCircle />
+      </Fab>
+    );
+    const deny = (
+      <Fab key="deny" size="medium" aria-label="Deny" onClick={() => setIsDeniedModalOpen(true)} disabled={isBusy} sx={outlinedFabSx}>
+        <Close sx={{ color: "#123A1E" }} />
+      </Fab>
+    );
+    const restore = (
+      <Fab key="restore" size="medium" aria-label="Restore" onClick={() => setIsRestoredModalOpen(true)} disabled={isBusy} sx={outlinedFabSx}>
+        <Replay sx={{ color: "#123A1E" }} />
+      </Fab>
+    );
+    if (status === "on_hold") return [approve, deny, restore];
+    if (status === "denied") return [approve, restore, hold];
+    return [approve, hold, deny];
+  })();
+
   return (
     <div className="flex min-h-screen">
       <Navbar />
+
+      <HoldCampaignDialogs
+        open={isHoldDialogOpen}
+        campaignId={parsedCampaignId}
+        campaignTitle={campaignEditData.mappedData.campaignTitle}
+        onClose={() => setIsHoldDialogOpen(false)}
+        onHeld={handleHeld}
+        onError={handleShowError}
+      />
+
+      <BaseAlert
+        open={isNoteSavedAlertOpen}
+        onClose={() => setIsNoteSavedAlertOpen(false)}
+        title="Note Saved!"
+      >
+        Your admin note has been saved.
+      </BaseAlert>
 
       <BaseModal
         open={!!isApprovedModalOpen}
@@ -558,6 +684,15 @@ export default function CampaignReviewPage() {
               </div>
             )}
 
+            {/* Notes belong to the hold: shown only once the campaign is on hold. */}
+            {status === "on_hold" && (
+              <AdminNotesCard
+                campaignId={parsedCampaignId}
+                onSaved={() => setIsNoteSavedAlertOpen(true)}
+                onError={handleShowError}
+              />
+            )}
+
             <div
               className={
                 isPreviousCampaign
@@ -602,44 +737,7 @@ export default function CampaignReviewPage() {
 
           {/* Desktop Sidebar */}
           <div className="hidden md:flex flex-col gap-2 sticky top-10">
-            {status === "pending" && (
-              <>
-                <Button
-                  variant="contained"
-                  disabled={updateCampaignMutation.isPending}
-                  onClick={() => setIsApprovedModalOpen(true)}
-                >
-                  APPROVE
-                </Button>
-                <Button
-                  variant="outlined"
-                  disabled={updateCampaignMutation.isPending}
-                  onClick={() => setIsDeniedModalOpen(true)}
-                >
-                  DENY
-                </Button>
-              </>
-            )}
-
-            {status === "denied" && (
-              <>
-                <Button
-                  variant="contained"
-                  color="success"
-                  disabled={updateCampaignMutation.isPending}
-                  onClick={() => setIsApprovedModalOpen(true)}
-                >
-                  APPROVE
-                </Button>
-                <Button
-                  variant="outlined"
-                  disabled={updateCampaignMutation.isPending}
-                  onClick={() => setIsRestoredModalOpen(true)}
-                >
-                  RESTORE
-                </Button>
-              </>
-            )}
+            {sidebarActions}
 
             <EditCampaignActions
               isFormDirty={isFormDirty}
@@ -652,57 +750,7 @@ export default function CampaignReviewPage() {
         {/* Mobile Floating Action Buttons */}
         {!isPreviousCampaign && (
           <div className="md:hidden fixed bottom-40 right-4 flex flex-col gap-4 z-50">
-            {status === "pending" && (
-              <>
-                <Fab
-                  size="medium"
-                  color="success"
-                  onClick={() => setIsApprovedModalOpen(true)}
-                  disabled={updateCampaignMutation.isPending}
-                >
-                  <Check />
-                </Fab>
-                <Fab
-                  size="medium"
-                  onClick={() => setIsDeniedModalOpen(true)}
-                  disabled={updateCampaignMutation.isPending}
-                  sx={{
-                    bgcolor: "white",
-                    border: "1px solid #123A1E",
-                    color: "#123A1E",
-                    "&:hover": { bgcolor: "#f5f5f5" },
-                  }}
-                >
-                  <Close sx={{ color: "#123A1E" }} />
-                </Fab>
-              </>
-            )}
-
-            {status === "denied" && (
-              <>
-                <Fab
-                  size="medium"
-                  color="success"
-                  onClick={() => setIsApprovedModalOpen(true)}
-                  disabled={updateCampaignMutation.isPending}
-                >
-                  <Check />
-                </Fab>
-                <Fab
-                  size="medium"
-                  onClick={() => setIsRestoredModalOpen(true)}
-                  disabled={updateCampaignMutation.isPending}
-                  sx={{
-                    bgcolor: "white",
-                    border: "1px solid #123A1E",
-                    color: "#123A1E",
-                    "&:hover": { bgcolor: "#f5f5f5" },
-                  }}
-                >
-                  <Replay sx={{ color: "#123A1E" }} />
-                </Fab>
-              </>
-            )}
+            {mobileActions}
           </div>
         )}
 

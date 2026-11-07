@@ -11,6 +11,7 @@ import type { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
 function getPreviousCampaignPath(campaign: CampaignWithLeader) {
   switch (campaign.status) {
     case "pending":
+    case "on_hold":
     case "denied":
       return `/dashboard/review-applications/${campaign.campaign_id}`;
     case "approved":

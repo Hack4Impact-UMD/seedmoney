@@ -46,6 +46,7 @@ export function countAudienceByStatus(
     "not_started",
     "in_progress",
     "pending",
+    "on_hold",
     "approved",
     "denied",
     "published",

@@ -6,6 +6,7 @@ declare module "@mui/material/Chip" {
     approved: true;
     denied: true;
     pending: true;
+    on_hold: true;
     published: true;
     in_progress: true;
     publish_failed: true;
@@ -113,6 +114,16 @@ const theme = createTheme({
           },
         },
 
+        // Yellow HOLD button. Listed after the green contained variants so it wins.
+        {
+          props: { variant: "contained", color: "warning" },
+          style: {
+            backgroundColor: "#F2C14E",
+            color: "#fff",
+            "&:hover": { backgroundColor: "#DDA92F" },
+            "&.Mui-disabled": { backgroundColor: "#E0E0E0", color: "#A6A6A6" },
+          },
+        },
         {
           props: { variant: "text", size: "large" },
           style: {
@@ -173,6 +184,7 @@ const theme = createTheme({
         { props: { variant: "denied" },         style: { border: "1px solid #FF8C29", color: "#FF8C29", backgroundColor: "#FFFFFF" } },
         { props: { variant: "in_progress" },    style: { border: "1px solid #6A7282", color: "#6A7282", backgroundColor: "#FFFFFF" } },
         { props: { variant: "pending" },        style: { border: "1px solid #883280", color: "#883280", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "on_hold" },        style: { border: "1px solid #F2C14E", color: "#B7791F", backgroundColor: "#FFFFFF" } },
         { props: { variant: "publish_failed" }, style: { border: "1px solid #D32F2F", color: "#D32F2F", backgroundColor: "#FFFFFF" } },
         { props: { variant: "published" },      style: { border: "1px solid #2D7A45", color: "#2D7A45", backgroundColor: "#FFFFFF" } },
         { props: { variant: "suspended" },      style: { border: "1px solid #667085", color: "#667085", backgroundColor: "#FFFFFF" } },

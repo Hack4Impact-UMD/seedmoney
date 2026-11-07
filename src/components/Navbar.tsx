@@ -219,7 +219,8 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
       return hasName ? `${campaign.name} (Draft)` : "Untitled Draft";
     }
 
-    if (campaign.status === "pending") {
+    // On hold is admin-internal; applicants see it as pending.
+    if (campaign.status === "pending" || campaign.status === "on_hold") {
       return hasName
         ? `${campaign.name} (Pending)`
         : "Untitled Campaign (Pending)";
