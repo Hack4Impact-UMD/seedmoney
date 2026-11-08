@@ -36,6 +36,7 @@ import ChangePasswordModal from "@/src/components/settings-modals/ChangePassword
 import useUpdateUser from "@/src/hooks/users/useUpdateUser";
 import StartApplicationModal from "@/src/components/StartApplicationModal";
 import Tooltip from "@mui/material/Tooltip";
+import DeleteAccountFlow from "@/src/components/account-deletion/DeleteAccountFlow";
 
 const ADMIN_NAV_ITEMS = [
   { label: "Home", path: "/dashboard", Icon: HomeOutlinedIcon },
@@ -63,6 +64,7 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
   const [isCampaignSheetOpen, setIsCampaignSheetOpen] = useState(false);
   const [openApplyModal, setOpenApplyModal] = useState(false);
   const [isSettingsModalOpen, setIsSettingsModalOpen] = useState(false);
+  const [isDeleteAccountOpen, setIsDeleteAccountOpen] = useState(false);
   const [activeSettingsModal, setActiveSettingsModal] = useState<
     "name" | "email" | "password" | null
   >(null);
@@ -798,6 +800,27 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
               )}
             </div>
           ))}
+
+          <div className="flex items-center justify-between gap-3 py-3">
+            <div>
+              <p className="text-sm font-semibold text-[#1f2320]">
+                Delete account
+              </p>
+              <p className="text-sm text-[#7b827d]">
+                Permanently delete your account.
+              </p>
+            </div>
+            <button
+              type="button"
+              onClick={() => {
+                setIsSettingsModalOpen(false);
+                setIsDeleteAccountOpen(true);
+              }}
+              className="shrink-0 rounded-lg bg-red-500 px-3 py-1 text-xs font-semibold text-white hover:bg-red-600"
+            >
+              DELETE
+            </button>
+          </div>
         </div>
       </BaseModal>
 
@@ -833,6 +856,10 @@ export default function Navbar({ compact = false }: { compact?: boolean }) {
           onLogin={handleReauthenticate}
         />
       )}
+      <DeleteAccountFlow
+        open={isDeleteAccountOpen}
+        onClose={() => setIsDeleteAccountOpen(false)}
+      />
     </>
   );
 }

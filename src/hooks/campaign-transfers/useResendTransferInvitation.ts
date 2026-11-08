@@ -10,6 +10,7 @@ export default function useResendTransferInvitation() {
       unwrapActionResult(await resendTransferInvitation(transferId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign-transfers"] });
+      queryClient.invalidateQueries({ queryKey: ["account-deletion"] });
     },
   });
 }

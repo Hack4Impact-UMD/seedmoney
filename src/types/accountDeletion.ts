@@ -1,4 +1,3 @@
-
 import type { Campaign } from "./db/campaigns";
 
 // Status of a campaign ownership transfer
@@ -18,7 +17,10 @@ export type OwnedCampaign = Pick<
 export type CampaignTransfer = {
   id: string;
   campaignId: number;
+  campaignName: string;
   recipientEmail: string;
+  // Set once the recipient has an account (always after acceptance).
+  recipientName?: string | null;
   status: TransferStatus;
   sentAt: string;
   expiresAt: string;
@@ -30,6 +32,10 @@ export type AccountDeletionOverview = {
   transfers: CampaignTransfer[];
   canDelete: boolean;
 };
+
+export type DeleteOwnAccountResult =
+  | { success: true }
+  | { success: false; error: string };
 
 // Props used to connect the transfer component to the account deletion component
 export type CampaignTransferFlowProps = {

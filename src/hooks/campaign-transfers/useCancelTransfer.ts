@@ -10,6 +10,7 @@ export default function useCancelTransfer() {
       unwrapActionResult(await cancelTransfer(transferId)),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign-transfers"] });
+      queryClient.invalidateQueries({ queryKey: ["account-deletion"] });
     },
   });
 }

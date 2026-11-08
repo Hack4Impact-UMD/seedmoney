@@ -12,6 +12,7 @@ export default function useSendTransferInvitation(campaignId: number) {
       ),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ["campaign-transfers"] });
+      queryClient.invalidateQueries({ queryKey: ["account-deletion"] });
     },
   });
 }

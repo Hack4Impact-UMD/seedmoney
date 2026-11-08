@@ -16,11 +16,6 @@ import type {
   TransferStatus,
 } from "@/src/types/accountDeletion";
 
-export type CampaignTransferSummary = CampaignTransfer & {
-  campaignName: string;
-  recipientName: string | null;
-};
-
 export type AcceptedTransfer = {
   campaignName: string;
   inviterName: string;
@@ -34,12 +29,13 @@ type TransferRow = {
   status: TransferStatus;
   sent_at: string;
   expires_at: string;
+  campaigns: { name: string | null } | null;
 };
 
 type UserName = { first_name: string | null; last_name: string | null };
 
 const TRANSFER_COLUMNS =
-  "transfer_id, campaign_id, recipient_email, status, sent_at, expires_at";
+  "transfer_id, campaign_id, recipient_email, status, sent_at, expires_at, campaigns(name)";
 const TRANSFER_EXPIRY_MS = 7 * 24 * 60 * 60 * 1000;
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 // Statuses the inviter can still resend or cancel.
@@ -103,6 +99,7 @@ function toCampaignTransfer(row: TransferRow): CampaignTransfer {
   return {
     id: row.transfer_id,
     campaignId: row.campaign_id,
+    campaignName: row.campaigns?.name ?? "",
     recipientEmail: row.recipient_email,
     status: getEffectiveStatus(row),
     sentAt: row.sent_at,
@@ -141,85 +138,12 @@ export async function readActiveCampaignTransfer(campaignId: number) {
 
       if (error) throw new Error(`Failed to load transfer: ${error.message}`);
 
-      const transfer = data ? toCampaignTransfer(data as TransferRow) : null;
+      const transfer = data ? toCampaignTransfer(data as unknown as TransferRow) : null;
 
       return {
         ok: true,
         transfer:
           transfer && OPEN_STATUSES.includes(transfer.status) ? transfer : null,
-      };
-    },
-  );
-}
-
-// The signed-in user's latest transfer per campaign they invited for, with
-// names they can't read through RLS (they may no longer be a member).
-export async function readMyCampaignTransfers() {
-  return runAction<{ transfers: CampaignTransferSummary[] }>(
-    "reading campaign transfers",
-    async () => {
-      const user = await requireUser();
-      const supabase = createServiceRoleClient();
-
-      const { data, error } = await supabase
-        .from("campaign_transfers")
-        .select(
-          `${TRANSFER_COLUMNS},
-          campaigns(name),
-          users!campaign_transfers_accepted_by_fkey(first_name, last_name)`,
-        )
-        .eq("inviter_id", user.id)
-        .order("created_at", { ascending: false });
-
-      if (error) throw new Error(`Failed to load transfers: ${error.message}`);
-
-      const rows = data as unknown as (TransferRow & {
-        campaigns: { name: string } | null;
-        users: UserName | null;
-      })[];
-
-      const latestPerCampaign = new Map<number, (typeof rows)[number]>();
-      for (const row of rows) {
-        if (!latestPerCampaign.has(row.campaign_id)) {
-          latestPerCampaign.set(row.campaign_id, row);
-        }
-      }
-      const latest = [...latestPerCampaign.values()].filter(
-        (row) => row.status !== "cancelled",
-      );
-
-      // Recipients who haven't accepted yet may already have an account.
-      const { data: recipients, error: recipientsError } = await supabase
-        .from("users")
-        .select("email, first_name, last_name")
-        .in(
-          "email",
-          latest.map((row) => row.recipient_email),
-        );
-
-      if (recipientsError) {
-        throw new Error(
-          `Failed to load recipients: ${recipientsError.message}`,
-        );
-      }
-
-      const namesByEmail = new Map(
-        (recipients ?? []).map((recipient) => [
-          normalizeEmail(recipient.email ?? ""),
-          formatName(recipient),
-        ]),
-      );
-
-      return {
-        ok: true,
-        transfers: latest.map((row) => ({
-          ...toCampaignTransfer(row),
-          campaignName: row.campaigns?.name ?? "",
-          recipientName:
-            formatName(row.users) ||
-            namesByEmail.get(row.recipient_email) ||
-            null,
-        })),
       };
     },
   );
@@ -325,7 +249,7 @@ export async function sendTransferInvitation(
 
       if (error) throw new Error(`Failed to create transfer: ${error.message}`);
 
-      const row = data as TransferRow;
+      const row = data as unknown as TransferRow;
       const emailSent = await sendTransferEmail(
         "transfer_invitation",
         campaignId,
@@ -369,7 +293,7 @@ export async function resendTransferInvitation(transferId: string) {
         return { ok: false, error: "This transfer can no longer be resent." };
       }
 
-      const row = data as TransferRow;
+      const row = data as unknown as TransferRow;
       const emailSent = await sendTransferEmail(
         "transfer_invitation",
         row.campaign_id,
