@@ -746,16 +746,18 @@ export async function publishDueCampaigns() {
 
   const { data: competition, error: compError } = await supabase
     .from("competition_metadata")
-    .select("competition_id, start_date, end_date")
+    .select("competition_id, start_date, end_date, publish_at")
     .eq("is_current", true)
     .single();
 
   if (compError || !competition)
     throw new Error("No current competition found");
 
-  // Not time yet
-  if (new Date(competition.start_date) > new Date()) return;
-
+  // Not time yet. publish_at holds an exact time; start_date is date-only, so
+  // without publish_at this falls back to midnight UTC on the start date.
+  const publishTime = new Date(competition.publish_at ?? competition.start_date);
+  if (publishTime > new Date()) return;
+                 
   const { data: campaigns, error } = await supabase
     .from("campaigns")
     .select("campaign_id, givebutter_id, campaign_members!inner(role)")
