@@ -56,7 +56,19 @@ function formatDate(value: string) {
   });
 }
 
-function buildEmail(type: EmailType, transfer: TransferRow, acceptUrl: string) {
+type Email = {
+  to: { email: string; name?: string };
+  subject: string;
+  htmlContent: string;
+};
+
+// An invitation goes to the recipient; a completed transfer notifies both the
+// previous owner and the new owner.
+function buildEmails(
+  type: EmailType,
+  transfer: TransferRow,
+  acceptUrl: string,
+): Email[] {
   const campaignName = escapeHtml(transfer.campaigns?.name ?? "a campaign");
   const inviterName = escapeHtml(
     formatName(transfer.inviter) || "A SeedMoney campaign leader",
@@ -66,7 +78,7 @@ function buildEmail(type: EmailType, transfer: TransferRow, acceptUrl: string) {
     const safeUrl = escapeHtml(acceptUrl);
     const recipientEmail = escapeHtml(transfer.recipient_email);
 
-    return {
+    return [{
       to: { email: transfer.recipient_email },
       subject: `You've been invited to lead "${transfer.campaigns?.name ?? "a campaign"}" on SeedMoney`,
       htmlContent: `
@@ -77,14 +89,14 @@ function buildEmail(type: EmailType, transfer: TransferRow, acceptUrl: string) {
         <p>This invitation expires on ${formatDate(transfer.expires_at)}.</p>
         <p>If you weren't expecting this, you can ignore this email.</p>
       `,
-    };
+    }];
   }
 
   const recipientName = escapeHtml(
     formatName(transfer.recipient) || transfer.recipient_email,
   );
 
-  return {
+  const previousOwnerEmail: Email = {
     to: {
       email: transfer.inviter?.email ?? "",
       name: formatName(transfer.inviter) || undefined,
@@ -96,6 +108,22 @@ function buildEmail(type: EmailType, transfer: TransferRow, acceptUrl: string) {
       <p>You no longer have access to this campaign. If this looks wrong, contact roger@seedmoney.org.</p>
     `,
   };
+
+  const newOwnerEmail: Email = {
+    to: {
+      email: transfer.recipient?.email ?? transfer.recipient_email,
+      name: formatName(transfer.recipient) || undefined,
+    },
+    subject: `You're now leading "${transfer.campaigns?.name ?? "a campaign"}" on SeedMoney`,
+    htmlContent: `
+      <p>Hi ${escapeHtml(transfer.recipient?.first_name ?? "there")},</p>
+      <p>${inviterName} transferred <strong>${campaignName}</strong> to you, and you're now its campaign leader. Everything stays as it was: the campaign page, its donations so far, and its standing in the challenge.</p>
+      <p>You can now see donations and analytics, get an email for every new donation, and share the campaign link and QR code from your SeedMoney dashboard.</p>
+      <p>Something look wrong? Contact roger@seedmoney.org.</p>
+    `,
+  };
+
+  return [previousOwnerEmail, newOwnerEmail];
 }
 
 Deno.serve(async (req) => {
@@ -144,41 +172,47 @@ Deno.serve(async (req) => {
       return json({ error: "Transfer not found" }, 404);
     }
 
-    const email = buildEmail(type, transfer, acceptUrl);
+    const emails = buildEmails(type, transfer, acceptUrl).filter(
+      (email) => email.to.email,
+    );
 
-    if (!email.to.email) {
+    if (emails.length === 0) {
       return json({ error: "Recipient email not found" }, 404);
     }
 
     const brevoApiKey = Deno.env.get("BREVO_API_KEY");
 
     if (!brevoApiKey) {
-      console.log("BREVO_API_KEY not set; email not sent:", JSON.stringify(email));
+      for (const email of emails) {
+        console.log("BREVO_API_KEY not set; email not sent:", JSON.stringify(email));
+      }
       if (acceptUrl) console.log("Accept link:", acceptUrl);
       return json({ ok: true, sent: false });
     }
 
-    const response = await fetch("https://api.brevo.com/v3/smtp/email", {
-      method: "POST",
-      headers: {
-        "api-key": brevoApiKey,
-        "Content-Type": "application/json",
-        Accept: "application/json",
-      },
-      body: JSON.stringify({
-        sender: {
-          email: Deno.env.get("EMAIL_FROM") ?? "challenge@seedmoney.org",
-          name: Deno.env.get("EMAIL_FROM_NAME") ?? "SeedMoney",
+    for (const email of emails) {
+      const response = await fetch("https://api.brevo.com/v3/smtp/email", {
+        method: "POST",
+        headers: {
+          "api-key": brevoApiKey,
+          "Content-Type": "application/json",
+          Accept: "application/json",
         },
-        to: [email.to],
-        subject: email.subject,
-        htmlContent: email.htmlContent,
-      }),
-    });
+        body: JSON.stringify({
+          sender: {
+            email: Deno.env.get("EMAIL_FROM") ?? "challenge@seedmoney.org",
+            name: Deno.env.get("EMAIL_FROM_NAME") ?? "SeedMoney",
+          },
+          to: [email.to],
+          subject: email.subject,
+          htmlContent: email.htmlContent,
+        }),
+      });
 
-    if (!response.ok) {
-      console.error("Brevo email error:", await response.text());
-      return json({ error: "Failed to send email" }, 502);
+      if (!response.ok) {
+        console.error("Brevo email error:", await response.text());
+        return json({ error: "Failed to send email" }, 502);
+      }
     }
 
     return json({ ok: true, sent: true });
