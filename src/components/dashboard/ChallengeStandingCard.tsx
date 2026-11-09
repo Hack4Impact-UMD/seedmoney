@@ -51,7 +51,8 @@ export function ChallengeStandingCard({
               <p className="mt-2 flex items-baseline gap-2">
                 <span className="text-3xl font-bold text-gray-900">-</span>
                 <span className="text-sm text-gray-500">
-                  Your campaign will appear in standings once it is published.
+                  Your campaign is not ranked. Only published campaigns in the
+                  Challenge appear in standings.
                 </span>
               </p>
             </>

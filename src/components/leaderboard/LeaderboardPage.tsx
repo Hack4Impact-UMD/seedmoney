@@ -79,14 +79,14 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
 
     return [...visibleCampaigns].sort((left, right) => {
       if (selectedSort === "leastRaised") {
-        return left.displayRank - right.displayRank;
+        return right.displayRank - left.displayRank;
       }
 
       if (selectedSort === "mostDonors") {
         return right.donors - left.donors;
       }
 
-      return right.displayRank - left.displayRank;
+      return left.displayRank - right.displayRank;
     });
   }, [
     data.specialGrantCampaignIds,
