@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useDropzone } from "react-dropzone";
 import Image from "next/image";
 import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
@@ -16,6 +16,17 @@ import Chip from "@mui/material/Chip";
 import TextField from "@mui/material/TextField";
 import Button from "@mui/material/Button";
 import BaseModal from "@/src/components/bases/BaseModal";
+import EmailEditor, {
+  type EmailEditorHandle,
+} from "@/src/components/email/EmailEditor";
+import EmailPreviewBody from "@/src/components/email/EmailPreviewBody";
+import useUploadEmailImage from "@/src/hooks/email/useUploadEmailImage";
+import { MAX_EMAIL_IMAGE_BYTES } from "@/src/actions/db/email-images";
+import {
+  EXAMPLE_TOKEN_VALUES,
+  fillEmailTokens,
+  fillTextTokens,
+} from "@/src/components/email/emailTokens";
 import Link from "next/link"
 import { useRouter } from "next/navigation";
 
@@ -23,8 +34,11 @@ export default function EmailUsersPage() {
   const router = useRouter();
   const [recipientGroups, setRecipientGroups] = useState<string[]>([]);
   const [subject, setSubject] = useState("");
-  const [selectedImages, setSelectedImages] = useState<File[]>([]);
+  const [bodyHtml, setBodyHtml] = useState("");
   const [uploadError, setUploadError] = useState("");
+  const editorRef = useRef<EmailEditorHandle>(null);
+  const { mutateAsync: uploadImage, isPending: isUploadingImage } =
+    useUploadEmailImage();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [testSendOpen, setTestSendOpen] = useState(false);
   const [testEmail, setTestEmail] = useState("");
@@ -42,11 +56,22 @@ export default function EmailUsersPage() {
       "image/gif": [".gif"],
     },
     multiple: true,
-    maxSize: 3 * 1024 * 1024,
-  
-    onDropAccepted: (files) => {
-      setSelectedImages((prev) => [...prev, ...files]);
+    maxSize: MAX_EMAIL_IMAGE_BYTES,
+    disabled: isUploadingImage,
+
+    // Upload each image to storage, then insert it where the cursor is
+    onDropAccepted: async (files) => {
       setUploadError("");
+
+      for (const file of files) {
+        try {
+          const url = await uploadImage(file);
+          editorRef.current?.insertImage(url, file.name);
+        } catch (error) {
+          console.error(error);
+          setUploadError(`Couldn't upload ${file.name}. Please try again.`);
+        }
+      }
     },
   
     onDropRejected: () => {
@@ -63,7 +88,7 @@ export default function EmailUsersPage() {
   const handleDiscard = () => {
     setRecipientGroups([]);
     setSubject("");
-    setSelectedImages([]);
+    setBodyHtml("");
     setUploadError("");
   };
 
@@ -88,12 +113,6 @@ export default function EmailUsersPage() {
                 href="/dashboard/email-users"
                 variant="contained"
                 size="small"
-                sx={{
-                  borderRadius: "20px",
-                  textTransform: "none",
-                  px: 2,
-                  py: 0.75,
-                }}
               >
                 Compose
               </Button>
@@ -103,14 +122,8 @@ export default function EmailUsersPage() {
                 href="/dashboard/email-users/sent-history"
                 variant="outlined"
                 size="small"
-                sx={{
-                  borderRadius: "20px",
-                  textTransform: "none",
-                  px: 2,
-                  py: 0.75,
-                }}
               >
-                Sent history (12)
+                Sent history
               </Button>
             </div>
           </div>
@@ -213,20 +226,13 @@ export default function EmailUsersPage() {
               onChange={(event) => setSubject(event.target.value)}
             />
 
-            {/* TODO: Import email editor component or expand here */}
-            <div className="mt-6 overflow-hidden rounded-xl border border-gray-300">
-              <div className="flex gap-6 border-b border-gray-300 bg-[#F6FAF9] px-4 py-3">
-                <span className="font-semibold text-[#123A1E]">Text</span>
-                <span className="text-gray-500">HTML</span>
-              </div>
+            <EmailEditor
+              ref={editorRef}
+              value={bodyHtml}
+              onChange={setBodyHtml}
+            />
 
-              <div className="flex min-h-[400px] items-center justify-center p-6 text-center text-gray-400">
-                Email editor placeholder
-              </div>
-            </div>
-
-            {/* Image upload*/}
-            {/* TODO: Connect to backend to store images and attached the images to the email */}
+            {/* Image upload: inserted into the message at the cursor */}
             <div {...getRootProps({ className: "dropzone" })}>
               <input {...getInputProps()} />
 
@@ -238,38 +244,22 @@ export default function EmailUsersPage() {
                   height={20}
                 />
 
-                <p className="text-base">
-                  <span className="text-blue-600 underline">
-                    Upload
-                  </span>{" "}
-                  or drag and drop
-                </p>
+                {isUploadingImage ? (
+                  <p className="text-base">Uploading...</p>
+                ) : (
+                  <p className="text-base">
+                    <span className="text-blue-600 underline">
+                      Upload
+                    </span>{" "}
+                    or drag and drop
+                  </p>
+                )}
 
                 <p className="text-sm text-gray-500">
                   Add images to your email · PNG, JPG or GIF (max. 3MB)
                 </p>
               </div>
             </div>
-
-            {selectedImages.map((file, index) => (
-              <div key={`${file.name}-${index}`} className="mt-2 flex items-center gap-3">
-                <p className="text-sm text-gray-600">
-                  {file.name} · {(file.size / 1024).toFixed(0)} KB
-                </p>
-
-                <button
-                  type="button"
-                  className="text-sm text-green-700"
-                  onClick={() =>
-                    setSelectedImages((prev) =>
-                      prev.filter((_, i) => i !== index)
-                    )
-                  }
-                >
-                  Remove
-                </button>
-              </div>
-            ))}
 
             {uploadError && (
               <p className="mt-2 text-sm text-red-600">
@@ -320,43 +310,26 @@ export default function EmailUsersPage() {
           <BaseModal
             open={previewOpen}
             onClose={() => setPreviewOpen(false)}
-            title="Email Preview"
+            title="Preview email"
             containerClassName="md:!w-[760px]"
           >
             <div className="space-y-4">
               <p className="text-sm text-gray-500">
-                {/* TODO: show a display of the email */}
-                Preview of your email before sending.
+                Previewing as an example recipient
               </p>
 
-              <div className="rounded-md border border-gray-200 p-4">
-                <p className="text-sm text-gray-600">
-                  To: {recipientGroups.length > 0
-                    ? recipientGroups.join(", ")
-                    : "No recipients selected"}
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <p className="border-b border-gray-200 bg-[#F6FAF9] px-4 py-3 text-sm font-semibold text-[#1f2320]">
+                  {fillTextTokens(subject, EXAMPLE_TOKEN_VALUES) || "No subject"}
                 </p>
 
-                <p className="mt-2 font-semibold text-[#123A1E]">
-                  {subject || "No subject"}
-                </p>
-
-                <div className="mt-4 border-t border-gray-200 pt-4">
-                  <p className="text-gray-400">
-                    Email editor placeholder
-                  </p>
+                <div className="px-4 py-4">
+                  <EmailPreviewBody
+                    html={fillEmailTokens(bodyHtml, EXAMPLE_TOKEN_VALUES, {
+                      wrapValue: (value) => `<mark>${value}</mark>`,
+                    })}
+                  />
                 </div>
-
-                {selectedImages.length > 0 && (
-                  <div className="mt-4 border-t border-gray-200 pt-4">
-                    <p className="mb-2 font-medium">Attachments</p>
-
-                    {selectedImages.map((file, index) => (
-                      <p key={`${file.name}-${index}`} className="text-sm text-gray-600">
-                        {file.name}
-                      </p>
-                    ))}
-                  </div>
-                )}
               </div>
 
               <div className="flex justify-end">

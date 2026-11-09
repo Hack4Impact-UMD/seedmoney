@@ -34,102 +34,31 @@ const groupLabels: Record<RecipientGroup, string> = {
   approved: "Approved Campaigns",
 };
 
-// Placeholder records for the frontend only
-const sampleEmails: SentEmail[] = [
-  {
-    id: 1,
-    sentAt: "Oct 25, 2026",
-    month: "2026-10",
-    subject: "Your Seedmoney campaign is live!",
-    recipients: ["approved"],
-  },
-  {
-    id: 2,
-    sentAt: "Oct 24, 2026",
-    month: "2026-10",
-    subject: "Seedmoney community update",
-    recipients: ["all"],
-  },
-  {
-    id: 3,
-    sentAt: "Oct 23, 2026",
-    month: "2026-10",
-    subject: "Complete your campaign application",
-    recipients: ["applicants"],
-  },
-  {
-    id: 4,
-    sentAt: "Oct 22, 2026",
-    month: "2026-10",
-    subject: "Campaign fundraising tips",
-    recipients: ["approved"],
-  },
-  {
-    id: 5,
-    sentAt: "Oct 18, 2026",
-    month: "2026-10",
-    subject: "Important Seedmoney announcement",
-    recipients: ["all"],
-  },
-  {
-    id: 6,
-    sentAt: "Oct 15, 2026",
-    month: "2026-10",
-    subject: "Application deadline reminder",
-    recipients: ["applicants"],
-  },
-  {
-    id: 7,
-    sentAt: "Oct 11, 2026",
-    month: "2026-10",
-    subject: "Share your garden campaign",
-    recipients: ["approved"],
-  },
-  {
-    id: 8,
-    sentAt: "Oct 7, 2026",
-    month: "2026-10",
-    subject: "Seedmoney program updates",
-    recipients: ["all"],
-  },
-  {
-    id: 9,
-    sentAt: "Oct 2, 2026",
-    month: "2026-10",
-    subject: "Campaign launch checklist",
-    recipients: ["approved"],
-  },
-  {
-    id: 10,
-    sentAt: "Sep 28, 2026",
-    month: "2026-09",
-    subject: "Thank you for joining Seedmoney",
-    recipients: ["all"],
-  },
-  {
-    id: 11,
-    sentAt: "Sep 22, 2026",
-    month: "2026-09",
-    subject: "Application review update",
-    recipients: ["applicants"],
-  },
-  {
-    id: 12,
-    sentAt: "Sep 14, 2026",
-    month: "2026-09",
-    subject: "September community newsletter",
-    recipients: ["all", "approved"],
-  },
-];
+// "2026-10" -> "October 2026"
+function formatMonth(month: string) {
+  const [year, monthNumber] = month.split("-").map(Number);
+  return new Date(year, monthNumber - 1).toLocaleString("en-US", {
+    month: "long",
+    year: "numeric",
+  });
+}
 
 export default function SentHistoryPage() {
+  // TODO: load sent emails once sending is connected to the backend
+  const sentEmails: SentEmail[] = [];
+
   const [dateFilter, setDateFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("any");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
 
-  // Filter sample records by month and recipient group
-  const filteredEmails = sampleEmails.filter((email) => {
+  // Months that have at least one sent email, newest first
+  const months = [...new Set(sentEmails.map((email) => email.month))]
+    .sort()
+    .reverse();
+
+  // Filter records by month and recipient group
+  const filteredEmails = sentEmails.filter((email) => {
     const matchesDate =
       dateFilter === "all" || email.month === dateFilter;
 
@@ -171,14 +100,6 @@ export default function SentHistoryPage() {
                 href="/dashboard/email-users"
                 variant="outlined"
                 size="small"
-                sx={{
-                  borderRadius: "20px",
-                  textTransform: "none",
-                  px: 2,
-                  py: 0.75,
-                  color: "#2F7D43",
-                  borderColor: "#2F7D43",
-                }}
               >
                 Compose
               </Button>
@@ -188,15 +109,8 @@ export default function SentHistoryPage() {
                 href="/dashboard/email-users/sent-history"
                 variant="contained"
                 size="small"
-                sx={{
-                  borderRadius: "20px",
-                  textTransform: "none",
-                  px: 2,
-                  py: 0.75,
-                  backgroundColor: "#2F7D43",
-                }}
               >
-                Sent history ({sampleEmails.length})
+                Sent history ({sentEmails.length})
               </Button>
             </div>
           </div>
@@ -210,7 +124,8 @@ export default function SentHistoryPage() {
               </h2>
 
               <p className="text-sm text-[#8E938E]">
-                {filteredEmails.length} sample emails
+                {filteredEmails.length}{" "}
+                {filteredEmails.length === 1 ? "email" : "emails"}
               </p>
             </div>
 
@@ -228,8 +143,11 @@ export default function SentHistoryPage() {
                 }}
               >
                 <MenuItem value="all">All dates</MenuItem>
-                <MenuItem value="2026-10">October 2026</MenuItem>
-                <MenuItem value="2026-09">September 2026</MenuItem>
+                {months.map((month) => (
+                  <MenuItem key={month} value={month}>
+                    {formatMonth(month)}
+                  </MenuItem>
+                ))}
               </TextField>
 
               <TextField
@@ -310,7 +228,9 @@ export default function SentHistoryPage() {
                         align="center"
                         sx={{ py: 6, color: "#8E938E" }}
                       >
-                        No emails match the selected filters.
+                        {sentEmails.length === 0
+                          ? "No emails have been sent yet."
+                          : "No emails match the selected filters."}
                       </TableCell>
                     </TableRow>
                   )}
