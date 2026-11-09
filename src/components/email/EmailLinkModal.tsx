@@ -12,11 +12,12 @@ interface EmailLinkModalProps {
   onClose: () => void;
 }
 
-// Adds https:// when the admin types a bare domain like "seedmoney.org"
+// Adds https:// when the admin types a bare domain like "seedmoney.org".
+// A token like {{campaign_url}} is left as is; it's filled in per recipient.
 function normalizeUrl(input: string) {
   const url = input.trim();
   if (!url) return "";
-  return /^(https?:|mailto:)/i.test(url) ? url : `https://${url}`;
+  return /^(https?:|mailto:|\{\{)/i.test(url) ? url : `https://${url}`;
 }
 
 export default function EmailLinkModal({
@@ -77,7 +78,7 @@ function LinkForm({ editor, onClose }: { editor: Editor; onClose: () => void }) 
         fullWidth
         size="small"
         label="URL"
-        placeholder="https://seedmoney.org"
+        placeholder="https://seedmoney.org or {{campaign_url}}"
         value={url}
         onChange={(event) => setUrl(event.target.value)}
       />

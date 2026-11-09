@@ -1,11 +1,21 @@
 "use client";
 
 import { useEffect, useImperativeHandle, type Ref } from "react";
-import { EditorContent, useEditor } from "@tiptap/react";
+import { EditorContent, useEditor, type Editor } from "@tiptap/react";
 import type { EmailEditorHandle } from "@/src/components/email/EmailEditor";
 import EmailToolbar from "@/src/components/email/EmailToolbar";
-import { EMAIL_EXTENSIONS } from "@/src/components/email/emailHtml";
+import {
+  EMAIL_EXTENSIONS,
+  fromTextEditorHtml,
+  toTextEditorHtml,
+} from "@/src/components/email/emailHtml";
 import styles from "./EmailContent.module.css";
+
+// The stored HTML: token chips become {{key}} text, and blank lines and
+// repeated spaces are kept so the email looks like the editor
+function getEmailHtml(editor: Editor) {
+  return editor.isEmpty ? "" : fromTextEditorHtml(editor.getHTML());
+}
 
 interface EmailTextEditorProps {
   value: string;
@@ -20,7 +30,7 @@ export default function EmailTextEditor({
 }: EmailTextEditorProps) {
   const editor = useEditor({
     extensions: EMAIL_EXTENSIONS,
-    content: value,
+    content: toTextEditorHtml(value),
     // Next.js renders on the server first; let Tiptap wait for the browser
     immediatelyRender: false,
     editorProps: {
@@ -30,7 +40,7 @@ export default function EmailTextEditor({
       },
     },
     onUpdate: ({ editor }) => {
-      onChange(editor.isEmpty ? "" : editor.getHTML());
+      onChange(getEmailHtml(editor));
     },
   });
 
@@ -38,9 +48,10 @@ export default function EmailTextEditor({
   useEffect(() => {
     if (!editor) return;
 
-    const current = editor.isEmpty ? "" : editor.getHTML();
-    if (value !== current) {
-      editor.commands.setContent(value, { emitUpdate: false });
+    if (value !== getEmailHtml(editor)) {
+      editor.commands.setContent(toTextEditorHtml(value), {
+        emitUpdate: false,
+      });
     }
   }, [editor, value]);
 

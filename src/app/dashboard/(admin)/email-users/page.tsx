@@ -22,6 +22,11 @@ import EmailEditor, {
 import EmailPreviewBody from "@/src/components/email/EmailPreviewBody";
 import useUploadEmailImage from "@/src/hooks/email/useUploadEmailImage";
 import { MAX_EMAIL_IMAGE_BYTES } from "@/src/actions/db/email-images";
+import {
+  EXAMPLE_TOKEN_VALUES,
+  fillEmailTokens,
+  fillTextTokens,
+} from "@/src/components/email/emailTokens";
 import Link from "next/link"
 import { useRouter } from "next/navigation";
 
@@ -108,12 +113,6 @@ export default function EmailUsersPage() {
                 href="/dashboard/email-users"
                 variant="contained"
                 size="small"
-                sx={{
-                  borderRadius: "20px",
-                  textTransform: "none",
-                  px: 2,
-                  py: 0.75,
-                }}
               >
                 Compose
               </Button>
@@ -123,14 +122,8 @@ export default function EmailUsersPage() {
                 href="/dashboard/email-users/sent-history"
                 variant="outlined"
                 size="small"
-                sx={{
-                  borderRadius: "20px",
-                  textTransform: "none",
-                  px: 2,
-                  py: 0.75,
-                }}
               >
-                Sent history (12)
+                Sent history
               </Button>
             </div>
           </div>
@@ -317,29 +310,26 @@ export default function EmailUsersPage() {
           <BaseModal
             open={previewOpen}
             onClose={() => setPreviewOpen(false)}
-            title="Email Preview"
+            title="Preview email"
             containerClassName="md:!w-[760px]"
           >
             <div className="space-y-4">
               <p className="text-sm text-gray-500">
-                Preview of your email before sending.
+                Previewing as an example recipient
               </p>
 
-              <div className="rounded-md border border-gray-200 p-4">
-                <p className="text-sm text-gray-600">
-                  To: {recipientGroups.length > 0
-                    ? recipientGroups.join(", ")
-                    : "No recipients selected"}
+              <div className="overflow-hidden rounded-lg border border-gray-200">
+                <p className="border-b border-gray-200 bg-[#F6FAF9] px-4 py-3 text-sm font-semibold text-[#1f2320]">
+                  {fillTextTokens(subject, EXAMPLE_TOKEN_VALUES) || "No subject"}
                 </p>
 
-                <p className="mt-2 font-semibold text-[#123A1E]">
-                  {subject || "No subject"}
-                </p>
-
-                <div className="mt-4 border-t border-gray-200 pt-4">
-                  <EmailPreviewBody html={bodyHtml} />
+                <div className="px-4 py-4">
+                  <EmailPreviewBody
+                    html={fillEmailTokens(bodyHtml, EXAMPLE_TOKEN_VALUES, {
+                      wrapValue: (value) => `<mark>${value}</mark>`,
+                    })}
+                  />
                 </div>
-
               </div>
 
               <div className="flex justify-end">

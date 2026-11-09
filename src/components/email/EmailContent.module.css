@@ -50,7 +50,38 @@
   border-radius: 4px;
 }
 
+/* Filled-in token values in the preview */
+.content mark {
+  background-color: #fdf0c4;
+  color: inherit;
+  border-radius: 3px;
+  padding: 1px 3px;
+}
+
+/* A filled-in link keeps the link color on the highlight */
+.content mark a,
+.content a mark {
+  color: #2d7a45;
+}
+
 /* Text tab only */
+.editor :global(.email-token) {
+  display: inline-block;
+  padding: 0 6px;
+  border: 1px solid #b9dcc3;
+  border-radius: 4px;
+  background-color: #eaf5ed;
+  color: #2d7a45;
+  font-weight: 600;
+  line-height: 1.5;
+  cursor: default;
+  user-select: none;
+}
+
+.editor :global(.email-token.ProseMirror-selectednode) {
+  outline: 2px solid #2d7a45;
+}
+
 .editor {
   min-height: 400px;
   padding: 16px 24px;

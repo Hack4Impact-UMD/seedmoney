@@ -7,7 +7,10 @@ import { useEditorState } from "@tiptap/react";
 import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import Select from "@mui/material/Select";
+import Button from "@mui/material/Button";
 import {
+  DataObject,
+  ExpandMore,
   FormatAlignCenter,
   FormatAlignLeft,
   FormatAlignRight,
@@ -19,6 +22,11 @@ import {
   InsertLink,
 } from "@mui/icons-material";
 import EmailLinkModal from "@/src/components/email/EmailLinkModal";
+import { EMAIL_TOKEN_NODE } from "@/src/components/email/emailTokenNode";
+import {
+  EMAIL_TOKENS,
+  type EmailTokenKey,
+} from "@/src/components/email/emailTokens";
 
 type BlockStyle = "paragraph" | "h1" | "h2" | "h3";
 type Alignment = "left" | "center" | "right";
@@ -70,6 +78,16 @@ function Divider() {
 export default function EmailToolbar({ editor }: { editor: Editor }) {
   const [alignAnchorEl, setAlignAnchorEl] = useState<HTMLElement | null>(null);
   const [linkModalOpen, setLinkModalOpen] = useState(false);
+  const [tokenAnchorEl, setTokenAnchorEl] = useState<HTMLElement | null>(null);
+
+  const insertToken = (key: EmailTokenKey) => {
+    editor
+      .chain()
+      .focus()
+      .insertContent({ type: EMAIL_TOKEN_NODE, attrs: { key } })
+      .run();
+    setTokenAnchorEl(null);
+  };
 
   // Re-render the toolbar whenever the cursor moves or formatting changes
   const state = useEditorState({
@@ -191,6 +209,37 @@ export default function EmailToolbar({ editor }: { editor: Editor }) {
       >
         <InsertLink sx={{ fontSize: 18 }} />
       </ToolbarButton>
+
+      {/* Personalization: replaced with each recipient's own value on send */}
+      <Button
+        variant="outlined"
+        size="small"
+        startIcon={<DataObject sx={{ fontSize: 16 }} />}
+        endIcon={<ExpandMore sx={{ fontSize: 18 }} />}
+        onClick={(event) => setTokenAnchorEl(event.currentTarget)}
+        aria-haspopup="menu"
+        sx={{ ml: "auto" }}
+      >
+        Insert token
+      </Button>
+
+      <Menu
+        anchorEl={tokenAnchorEl}
+        open={Boolean(tokenAnchorEl)}
+        onClose={() => setTokenAnchorEl(null)}
+        anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+        transformOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        {EMAIL_TOKENS.map(({ key, label }) => (
+          <MenuItem
+            key={key}
+            onClick={() => insertToken(key)}
+            sx={{ fontSize: 13 }}
+          >
+            {label}
+          </MenuItem>
+        ))}
+      </Menu>
 
       <Menu
         anchorEl={alignAnchorEl}
