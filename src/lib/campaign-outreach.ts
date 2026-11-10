@@ -8,6 +8,16 @@ export type OutreachTemplate = {
   coaching: string;
 };
 
+export function fillOutreachPlaceholders(
+  text: string,
+  values: Record<string, string>,
+): string {
+  return text.replace(/\[([^\]]+)\]/g, (placeholder, token: string) => {
+    const value = values[token]?.trim();
+    return value || placeholder;
+  });
+}
+
 export const outreachTemplates: readonly OutreachTemplate[] = [
   {
     "id": "warmup",
