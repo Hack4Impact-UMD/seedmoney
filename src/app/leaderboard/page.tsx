@@ -30,7 +30,7 @@ function mapCampaignsToLeaderboardData(
     const goal = typeof campaign.goal === "number" ? campaign.goal : 0;
     const donors =
       typeof campaign.donors === "number" ? campaign.donors : 0;
-    const locationParts = [campaign.city, campaign.state].filter(
+    const locationParts = [campaign.city, campaign.state, campaign.country].filter(
       (value): value is string => typeof value === "string" && value.trim() !== "",
     );
     const location =
