@@ -88,6 +88,12 @@ type CampaignWithRelations = Campaign & {
   }[];
   competition_metadata: { start_date: string } | null;
   answers: Parameters<typeof getGardenStoryAnswers>[0];
+  campaign_image_records: {
+    id: number;
+    storage_path: string;
+    display_order: number;
+    is_main: boolean;
+  }[];
 };
 
 export async function readAllApplicationsForExport(): Promise<
@@ -109,7 +115,8 @@ export async function readAllApplicationsForExport(): Promise<
           answers(
             answer_id, question_id, final_answer,
             questions(question_number)
-          )
+          ),
+          campaign_image_records(id, storage_path, display_order, is_main)
         `,
         { count: "exact" },
       )
@@ -117,9 +124,31 @@ export async function readAllApplicationsForExport(): Promise<
       .range(from, to),
   );
 
+  // Permanent links (the app's own signed URLs expire after an hour, which
+  // would break links in a saved spreadsheet). Requires the campaign_images
+  // bucket to be public.
+  const photoBucket = supabase.storage.from("campaign_images");
+
   return campaigns.map(
-    ({ campaign_members, competition_metadata, answers, ...campaign }) => ({
+    ({
+      campaign_members,
+      competition_metadata,
+      answers,
+      campaign_image_records,
+      ...campaign
+    }) => ({
       ...campaign,
+      photos: [...campaign_image_records]
+        .sort(
+          (a, b) =>
+            Number(b.is_main) - Number(a.is_main) ||
+            a.display_order - b.display_order,
+        )
+        .map((photo) => ({
+          id: photo.id,
+          url: photoBucket.getPublicUrl(photo.storage_path).data.publicUrl,
+          is_main: photo.is_main,
+        })),
       leader:
         campaign_members.find(
           (member) => member.role === "campaign_leader" && member.users,

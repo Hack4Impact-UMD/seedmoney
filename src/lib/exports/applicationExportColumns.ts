@@ -51,6 +51,13 @@ export const APPLICATION_EXPORT_COLUMNS: CsvColumn<ApplicationExportRow>[] = [
   { header: "raised", value: (c) => c.raised },
   { header: "donors", value: (c) => c.donors },
   { header: "givebutter_link", value: (c) => c.givebutterlink },
+  {
+    header: "main_photo_url",
+    value: (c) => c.photos.find((photo) => photo.is_main)?.url,
+  },
+  // All photos, main first, separated by "; "
+  { header: "photo_ids", value: (c) => formatCsvList(c.photos.map((p) => p.id)) },
+  { header: "photo_urls", value: (c) => formatCsvList(c.photos.map((p) => p.url)) },
   { header: "opt_in_ai", value: (c) => formatCsvBoolean(c.opt_in_ai) },
   { header: "story_answer_1", value: (c) => c.story_answers[0] },
   { header: "story_answer_2", value: (c) => c.story_answers[1] },
