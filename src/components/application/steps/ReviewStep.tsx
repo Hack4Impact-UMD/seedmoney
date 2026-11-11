@@ -28,6 +28,7 @@ import {
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { useState } from "react";
 import { verifyOriginalAnswersStored } from "@/src/actions/db/answers";
+import { useAuth } from "@/src/context/AuthProvider";
 
 const storyAnswerMinChars = 200;
 const storyAnswerMaxChars = 1000;
@@ -189,6 +190,7 @@ function formatCountry(value: string) {
 }
 
 export default function ReviewSubmitPage() {
+  const { user } = useAuth();
   const form = useApplicationForm();
   const router = useRouter();
   const { hasPassedAgreement } = useAgreementGate();
@@ -406,6 +408,19 @@ export default function ReviewSubmitPage() {
 
     await form.handleSubmit();
 
+    const supabase = createBrowserClient();
+    const {
+      data: { user: authenticatedUser },
+      error: authError,
+    } = await supabase.auth.getUser();
+    const accountEmail = authenticatedUser?.email?.trim();
+    if (authError || !accountEmail) {
+      setSubmitError(
+        "We couldn't verify your account email. Please sign in again and retry.",
+      );
+      return;
+    }
+
     await updateCampaign.mutateAsync({
       campaignId,
       campaignData: {
@@ -413,7 +428,7 @@ export default function ReviewSubmitPage() {
         competition_id: currentCompetitionData.competition_id,
         raised: 0,
         donors: 0,
-        contact_email: values.contactEmail.trim(),
+        contact_email: accountEmail,
         givebutter_id: "",
         givebutter_slug: "",
         givebutterlink: "",
@@ -421,7 +436,6 @@ export default function ReviewSubmitPage() {
     });
 
     try {
-      const supabase = createBrowserClient();
       const { error: emailError } = await supabase.functions.invoke(
         "send-campaign-email",
         {
@@ -1081,12 +1095,12 @@ export default function ReviewSubmitPage() {
           onChange={(value) => form.setFieldValue("contactLastName", value)}
           onBlur={(value) => saveContactDraft({ contactLastName: value })}
         />
-        <EditableValueRow
-          label="Email"
-          value={values.contactEmail}
-          required
-          onChange={(value) => form.setFieldValue("contactEmail", value)}
-          onBlur={(value) => saveContactDraft({ contactEmail: value })}
+        <TextField
+          variant="standard"
+          fullWidth
+          label="Account Email"
+          value={user?.email ?? ""}
+          disabled
         />
         <EditableValueRow
           label="Role or Title (Optional)"

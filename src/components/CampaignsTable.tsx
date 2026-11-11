@@ -17,7 +17,7 @@ import KeyboardArrowRightIcon from "@mui/icons-material/KeyboardArrowRight";
 import CheckIcon from "@mui/icons-material/Check";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
-import ImportExportOutlinedIcon from "@mui/icons-material/ImportExportOutlined";
+import ImportExportOutlinedIcon from "@mui/icons-material/ImportExport";
 import { useRouter } from "next/navigation";
 import { useQueryClient } from "@tanstack/react-query";
 import BaseModal from "@/src/components/bases/BaseModal";
@@ -165,6 +165,7 @@ export default function CampaignsTable({
     isLoading: isLoadingUser,
     error: userError,
   } = useUserByAuthId(user?.id || "");
+  const showLeaderEmail = userData?.is_admin ?? false;
 
   const years = useMemo(
     () =>
@@ -182,7 +183,8 @@ export default function CampaignsTable({
       const campaignYear = getCampaignYear(campaign.date_created);
       const matchesDesktopYear =
         desktopFilterMode !== "year" ||
-        yearFilter === "all" || campaignYear === yearFilter;
+        yearFilter === "all" ||
+        campaignYear === yearFilter;
       if (!matchesDesktopYear) return false;
 
       const matchesDesktopStatus =
@@ -196,13 +198,18 @@ export default function CampaignsTable({
       if (!matchesSelectedYears) return false;
 
       const matchesSelectedStatuses =
-        selectedStatuses.length === 0 || selectedStatuses.includes(campaign.status);
+        selectedStatuses.length === 0 ||
+        selectedStatuses.includes(campaign.status);
       if (!matchesSelectedStatuses) return false;
 
       if (!normalizedSearch) return true;
       return (
         campaign.name.toLowerCase().includes(normalizedSearch) ||
         campaign.campaign_leader.toLowerCase().includes(normalizedSearch) ||
+        (showLeaderEmail &&
+          (campaign.campaign_leader_email ?? "")
+            .toLowerCase()
+            .includes(normalizedSearch)) ||
         getFilterStatusLabel(
           campaign.status,
           filterStatusLabelMap,
@@ -240,6 +247,7 @@ export default function CampaignsTable({
     initialData,
     selectedStatuses,
     selectedYears,
+    showLeaderEmail,
     statusSortPriority,
     statusFilter,
     yearFilter,
@@ -554,19 +562,19 @@ export default function CampaignsTable({
                       {userData.is_admin &&
                         (campaign.status === "published" ||
                           campaign.status === "suspended") && (
-                        <Button
-                          variant="outlined"
-                          onClick={() => {
-                            setSuspendCampaignId(campaign.campaign_id);
-                            setIsSuspendModalOpen(true);
-                          }}
-                          className="!min-w-0 !rounded-[8px] !px-3 !py-1.5 !text-[14px] !font-bold"
-                        >
-                          {campaign.status === "suspended"
-                            ? "Retry Suspension"
-                            : "Suspend"}
-                        </Button>
-                      )}
+                          <Button
+                            variant="outlined"
+                            onClick={() => {
+                              setSuspendCampaignId(campaign.campaign_id);
+                              setIsSuspendModalOpen(true);
+                            }}
+                            className="!min-w-0 !rounded-[8px] !px-3 !py-1.5 !text-[14px] !font-bold"
+                          >
+                            {campaign.status === "suspended"
+                              ? "Retry Suspension"
+                              : "Suspend"}
+                          </Button>
+                        )}
                       <Button
                         variant="outlined"
                         onClick={() => handleCampaignClick(campaign.campaign_id)}
@@ -586,6 +594,14 @@ export default function CampaignsTable({
                       label: "Campaign Leader",
                       value: campaign.campaign_leader || "N/A",
                     },
+                    ...(showLeaderEmail
+                      ? [
+                          {
+                            label: "Account Email",
+                            value: campaign.campaign_leader_email || "N/A",
+                          },
+                        ]
+                      : []),
                     {
                       label: "$ Raised",
                       value: formatCurrency(campaign.raised),
@@ -867,6 +883,7 @@ export default function CampaignsTable({
                       !hideYearColumn ? "Year" : null,
                       "Campaign Title",
                       "Campaign Leader",
+                      showLeaderEmail ? "Account Email" : null,
                       "$ Raised",
                       "Goal",
                       "Goal Progress",
@@ -876,13 +893,15 @@ export default function CampaignsTable({
                     ]
                       .filter((header) => header !== null)
                       .map((header, index, headers) => (
-                      <th
-                        key={header || "actions"}
-                        className={`px-4 py-4 text-left text-sm font-bold tracking-[0.17px] text-[rgba(0,0,0,0.87)] ${index === headers.length - 1 ? "w-10" : "whitespace-nowrap"}`}
-                      >
-                        {header}
-                      </th>
-                    ))}
+                        <th
+                          key={header || "actions"}
+                          className={`px-4 py-4 text-left text-sm font-bold tracking-[0.17px] text-[rgba(0,0,0,0.87)] ${
+                            index === headers.length - 1 ? "w-10" : "whitespace-nowrap"
+                          }`}
+                        >
+                          {header}
+                        </th>
+                      ))}
                   </tr>
                 </thead>
                 <tbody>
@@ -914,6 +933,17 @@ export default function CampaignsTable({
                             {campaign.campaign_leader || "N/A"}
                           </span>
                         </td>
+                        {showLeaderEmail && (
+                          <td className="max-w-[240px] px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
+                            <a
+                              href={`mailto:${campaign.campaign_leader_email || ""}`}
+                              onClick={(event) => event.stopPropagation()}
+                              className="block truncate"
+                            >
+                              {campaign.campaign_leader_email || "N/A"}
+                            </a>
+                          </td>
+                        )}
                         <td className="px-4 py-4 text-sm text-[rgba(0,0,0,0.87)]">
                           {formatCurrency(campaign.raised)}
                         </td>

@@ -14,7 +14,8 @@ export async function readCampaignsUnderReview(
         role, 
         users!inner(
           first_name, 
-          last_name
+          last_name,
+          email
         )
       )`
     ,)
@@ -38,7 +39,7 @@ export async function readCampaignsUnderReview(
     date_created: string;
     campaign_members: {
       role: string;
-      users: { first_name: string; last_name: string }[];
+      users: { first_name: string; last_name: string; email: string }[];
     }[];
   }[];
 
@@ -50,7 +51,8 @@ export async function readCampaignsUnderReview(
     return {
       campaignId: c.campaign_id,
       campaignTitle: c.name ?? "",
-      campaignLeader: leaderName,
+    campaignLeader: leaderName,
+      campaignLeaderEmail: user?.email ?? "",
       raised: c.raised ?? 0,
       goal: c.goal ?? 0,
       goalProgress: c.goal > 0 ? Math.round((c.raised / c.goal) * 100) : 0,

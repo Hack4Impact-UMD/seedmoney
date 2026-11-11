@@ -1,36 +1,46 @@
-"use server"
+"use server";
 
 import { createServerClient } from "@/src/lib/supabase-client";
 import { Campaign } from "@/src/types";
 import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
 
-// Temporary type
+type CampaignLeaderUser = {
+  first_name: string;
+  last_name: string;
+  email: string;
+};
+
 type RawCampaignRow = Campaign & {
   campaign_members: {
     role: string;
-    users: { first_name: string; last_name: string } | { first_name: string; last_name: string }[];
+    users: CampaignLeaderUser | CampaignLeaderUser[];
   }[];
 };
 
-function mapCampaignLeader(campaign:RawCampaignRow): CampaignWithLeader {
+function mapCampaignLeader(campaign: RawCampaignRow): CampaignWithLeader {
   const leaders = campaign.campaign_members || [];
 
   const sortedLeaders = [...leaders].sort((a, b) => {
     const userA = Array.isArray(a.users) ? a.users[0] : a.users;
     const userB = Array.isArray(b.users) ? b.users[0] : b.users;
-    const nameA = `${userA?.first_name || ""} ${userA?.last_name || ""}`.trim().toLowerCase();
-    const nameB = `${userB?.first_name || ""} ${userB?.last_name || ""}`.trim().toLowerCase();
+    const nameA =
+      `${userA?.first_name || ""} ${userA?.last_name || ""}`.trim().toLowerCase();
+    const nameB =
+      `${userB?.first_name || ""} ${userB?.last_name || ""}`.trim().toLowerCase();
     return nameA.localeCompare(nameB);
   });
 
   const leaderUser = (() => {
-    const m = sortedLeaders[0];
-    return Array.isArray(m?.users) ? m.users[0] : m?.users;
+    const member = sortedLeaders[0];
+    return Array.isArray(member?.users) ? member.users[0] : member?.users;
   })();
 
   return {
     ...campaign,
-    campaign_leader: leaderUser ? `${leaderUser.first_name} ${leaderUser.last_name}` : "",
+    campaign_leader: leaderUser
+      ? `${leaderUser.first_name} ${leaderUser.last_name}`
+      : "",
+    campaign_leader_email: leaderUser?.email ?? "",
   } as CampaignWithLeader;
 }
 
@@ -40,11 +50,14 @@ const BASE_SELECT = `
     role,
     users!inner(
       first_name,
-      last_name
+      last_name,
+      email
     )
   )`;
 
-export async function readApprovedCampaigns(competition_id?: number): Promise<CampaignWithLeader[]> {
+export async function readApprovedCampaigns(
+  competition_id?: number,
+): Promise<CampaignWithLeader[]> {
   if (competition_id === undefined) {
     return [];
   }
@@ -60,7 +73,9 @@ export async function readApprovedCampaigns(competition_id?: number): Promise<Ca
     .eq("campaign_members.role", "campaign_leader");
 
   if (error) throw error;
-  return (data ?? []).map(mapCampaignLeader);
+  return (data ?? []).map((campaign) =>
+    mapCampaignLeader(campaign as unknown as RawCampaignRow),
+  );
 }
 
 export async function readPreviousCampaigns(
@@ -81,10 +96,14 @@ export async function readPreviousCampaigns(
     .order("date_created", { ascending: false });
 
   if (error) throw error;
-  return (data ?? []).map(mapCampaignLeader);
+  return (data ?? []).map((campaign) =>
+    mapCampaignLeader(campaign as unknown as RawCampaignRow),
+  );
 }
 
-export async function readPreviousChallengeApplications(user_id?: string): Promise<CampaignWithLeader[]> {
+export async function readPreviousChallengeApplications(
+  user_id?: string,
+): Promise<CampaignWithLeader[]> {
   const supabase = await createServerClient();
   const {
     data: { user },
@@ -107,7 +126,7 @@ export async function readPreviousChallengeApplications(user_id?: string): Promi
     return [];
   }
 
-  const query = supabase
+  const { data, error } = await supabase
     .from("campaigns")
     .select(BASE_SELECT)
     .eq("campaign_members.role", "campaign_leader")
@@ -115,8 +134,8 @@ export async function readPreviousChallengeApplications(user_id?: string): Promi
     .neq("status", "in_progress")
     .order("date_created", { ascending: false });
 
-  const { data, error } = await query;
-
   if (error) throw error;
-  return (data ?? []).map(mapCampaignLeader);
+  return (data ?? []).map((campaign) =>
+    mapCampaignLeader(campaign as unknown as RawCampaignRow),
+  );
 }

@@ -116,7 +116,8 @@ export default function ReviewApplicationsTable({
       if (!normalizedQuery) return true;
       return (
         application.campaignTitle.toLowerCase().includes(normalizedQuery) ||
-        application.campaignLeader.toLowerCase().includes(normalizedQuery)
+        application.campaignLeader.toLowerCase().includes(normalizedQuery) ||
+        application.campaignLeaderEmail.toLowerCase().includes(normalizedQuery)
       );
     });
   }, [applications, searchQuery, tab]);
@@ -586,6 +587,15 @@ export default function ReviewApplicationsTable({
                         {application.campaignLeader || "—"}
                       </span>
                     </div>
+                    <div className="flex items-center justify-between gap-3 border-t border-[#eef2ee] pt-3 text-[14px]">
+                      <span className="text-[#7b827d]">Account Email</span>
+                      <a
+                        className="font-medium text-[#1f2320]"
+                        href={`mailto:${application.campaignLeaderEmail}`}
+                      >
+                        {application.campaignLeaderEmail || "—"}
+                      </a>
+                    </div>
                   </div>
                 </div>
               );
@@ -723,6 +733,7 @@ export default function ReviewApplicationsTable({
                   <th className="w-[190px] pl-0 pr-2 py-3">Submission Date</th>
                   <th className="w-[240px] pl-0 pr-2 py-3">Campaign Title</th>
                   <th className="w-[180px] px-2 py-3">Campaign Leader</th>
+                  <th className="w-[240px] px-2 py-3">Account Email</th>
                   <th className="w-[180px] px-5 py-3 text-right sm:px-6" />
                 </tr>
               </thead>
@@ -730,7 +741,7 @@ export default function ReviewApplicationsTable({
               <tbody>
                 {paginatedApplications.length === 0 ? (
                   <tr>
-                    <td colSpan={7} className="px-5 py-8 text-center text-sm text-[#8a918b]">
+                    <td colSpan={6} className="px-5 py-8 text-center text-sm text-[#8a918b]">
                       No applications found for this view.
                     </td>
                   </tr>
@@ -762,6 +773,11 @@ export default function ReviewApplicationsTable({
                         <td className="px-2 py-3 text-[#49514c]">{application.campaignTitle}</td>
                         <td className="px-2 py-3 text-[#49514c]">
                           {application.campaignLeader || "—"}
+                        </td>
+                        <td className="px-2 py-3 text-[#49514c]">
+                          <a href={`mailto:${application.campaignLeaderEmail}`}>
+                            {application.campaignLeaderEmail || "—"}
+                          </a>
                         </td>
                         <td className="px-4 py-2.5 text-right sm:px-6">
                           <Button
