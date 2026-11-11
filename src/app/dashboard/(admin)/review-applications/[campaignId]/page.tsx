@@ -19,7 +19,7 @@ import ContactInformationSection from "@/src/components/approved-campaigns/edit/
 import EditCampaignActions from "@/src/components/approved-campaigns/edit/EditCampaignActions";
 import EditCampaignDialogs from "@/src/components/approved-campaigns/edit/EditCampaignDialogs";
 import EditCampaignHeader from "@/src/components/approved-campaigns/edit/EditCampaignHeader";
-import GardenInformationSection from "@/src/components/approved-campaigns/edit/GardenInformationSection";
+import GardenInformationSection, { OTHER_CATEGORY } from "@/src/components/approved-campaigns/edit/GardenInformationSection";
 import GardenStorySection from "@/src/components/approved-campaigns/edit/GardenStorySection";
 import {DEFAULT_CAMPAIGN_DATA, EditCampaignFormData, TextFieldKey,} from "@/src/types/frontend/campaignEdit";
 import {beneficiaryOptions, categoryOptions,} from "@/src/components/approved-campaigns/options";
@@ -267,6 +267,16 @@ export default function CampaignReviewPage() {
 
   const handleConfirmSave = useCallback(async () => {
     if (!parsedCampaignId) return;
+
+    if (
+      formData.gardenCategory === OTHER_CATEGORY ||
+      formData.gardenCategory.trim() === ""
+    ) {
+      setSaveErrorMessage("Please specify your project's category before saving.");
+      setIsSaveModalOpen(false);
+      setShowErrorToast(true);
+      return;
+    }
 
     try {
       const campaignPayload: Partial<Campaign> = {

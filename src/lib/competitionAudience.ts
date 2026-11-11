@@ -49,6 +49,7 @@ export function countAudienceByStatus(
     "approved",
     "denied",
     "published",
+    "suspended",
     "publish_failed",
     "archived",
   ];

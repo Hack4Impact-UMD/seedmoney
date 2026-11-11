@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
 import {
   Button,
   Chip,
@@ -19,11 +19,14 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ImportExportOutlinedIcon from "@mui/icons-material/ImportExportOutlined";
 import { useRouter } from "next/navigation";
+import { useQueryClient } from "@tanstack/react-query";
+import BaseModal from "@/src/components/bases/BaseModal";
 import type { Status } from "@/src/types/db/enums";
 import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "../hooks/users/useUserByAuthId";
 import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
+import { unpublishGivebutterCampaign } from "@/src/actions/givebutter/campaignsGivebutter";
 
 interface Props {
   initialData: CampaignWithLeader[];
@@ -51,6 +54,7 @@ const statusLabels: Partial<Record<Status, string>> = {
   approved: "Approved",
   denied: "Denied",
   published: "Published",
+  suspended: "Suspended",
   archived: "Archived",
 };
 
@@ -89,6 +93,8 @@ function getStatusChipClasses(status: string) {
     case "approved":
     case "published":
       return "border-[#2D7A45] text-[#2D7A45]";
+    case "suspended":
+      return "border-[#667085] text-[#667085]";
     case "pending":
       return "border-[#F79009] text-[#B54708]";
     case "denied":
@@ -120,6 +126,7 @@ export default function CampaignsTable({
   adminRouteResolver,
 }: Props) {
   const router = useRouter();
+  const queryClient = useQueryClient();
   const [campaignSearch, setCampaignSearch] = useState("");
   const [yearFilter, setYearFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -136,6 +143,21 @@ export default function CampaignsTable({
     useState<MobileFilterCategory | null>(null);
   const [mobileFilterOpenedFromChip, setMobileFilterOpenedFromChip] =
     useState(false);
+  const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
+  const [suspendCampaignId, setSuspendCampaignId] = useState<number | null>(null);
+  const [isSuspending, setIsSuspending] = useState(false);
+  const [suspendError, setSuspendError] = useState<string | null>(null);
+  const suspendInFlightRef = useRef(false);
+  const suspendCampaign = initialData.find(
+    (campaign) => campaign.campaign_id === suspendCampaignId,
+  );
+  const closeSuspendModal = () => {
+    if (suspendInFlightRef.current) return;
+
+    setIsSuspendModalOpen(false);
+    setSuspendCampaignId(null);
+    setSuspendError(null);
+  };
 
   const { user } = useAuth();
   const {
@@ -392,6 +414,40 @@ export default function CampaignsTable({
       .join(", ")}`;
   };
 
+  const handleConfirmSuspend = async () => {
+    if (suspendCampaignId === null || suspendInFlightRef.current) return;
+
+    suspendInFlightRef.current = true;
+    setIsSuspending(true);
+    setSuspendError(null);
+    let succeeded = false;
+
+    try {
+      await unpublishGivebutterCampaign(suspendCampaignId);
+      await queryClient.invalidateQueries({
+        queryKey: ["campaigns", "approved-campaigns"],
+      });
+      await queryClient.invalidateQueries({
+        queryKey: ["campaigns", "previous-campaigns"],
+      });
+      succeeded = true;
+    } catch (error) {
+      console.error("Failed to suspend campaign:", error);
+      setSuspendError(
+        error instanceof Error
+          ? error.message
+          : "Failed to suspend campaign. Please try again.",
+      );
+    } finally {
+      suspendInFlightRef.current = false;
+      setIsSuspending(false);
+
+      if (succeeded) {
+        closeSuspendModal();
+      }
+    }
+  };
+
   return (
     <div className="w-full">
       <div className="md:hidden">
@@ -494,13 +550,31 @@ export default function CampaignsTable({
                         {campaign.name || "Untitled Campaign"}
                       </p>
                     </div>
-                    <Button
-                      variant="outlined"
-                      onClick={() => handleCampaignClick(campaign.campaign_id)}
-                      className="!min-w-0 !shrink-0 !rounded-[8px] !border-[#123A1E] !px-4 !py-1.5 !text-[14px] !font-bold !text-[#123A1E]"
-                    >
-                      View
-                    </Button>
+                    <div className="flex shrink-0 gap-2">
+                      {userData.is_admin &&
+                        (campaign.status === "published" ||
+                          campaign.status === "suspended") && (
+                        <Button
+                          variant="outlined"
+                          onClick={() => {
+                            setSuspendCampaignId(campaign.campaign_id);
+                            setIsSuspendModalOpen(true);
+                          }}
+                          className="!min-w-0 !rounded-[8px] !px-3 !py-1.5 !text-[14px] !font-bold"
+                        >
+                          {campaign.status === "suspended"
+                            ? "Retry Suspension"
+                            : "Suspend"}
+                        </Button>
+                      )}
+                      <Button
+                        variant="outlined"
+                        onClick={() => handleCampaignClick(campaign.campaign_id)}
+                        className="!min-w-0 !rounded-[8px] !border-[#123A1E] !px-4 !py-1.5 !text-[14px] !font-bold !text-[#123A1E]"
+                      >
+                        View
+                      </Button>
+                    </div>
                   </div>
 
                   {[
@@ -797,6 +871,7 @@ export default function CampaignsTable({
                       "Goal",
                       "Goal Progress",
                       statusColumnLabel,
+                      userData.is_admin ? "Suspend" : null,
                       "",
                     ]
                       .filter((header) => header !== null)
@@ -861,6 +936,26 @@ export default function CampaignsTable({
                         <td className="px-4 py-4">
                           <StatusChip status={campaign.status} />
                         </td>
+                        {userData.is_admin && (
+                          <td className="px-4 py-4">
+                            {(campaign.status === "published" ||
+                              campaign.status === "suspended") && (
+                              <Button
+                                variant="outlined"
+                                size="small"
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  setSuspendCampaignId(campaign.campaign_id);
+                                  setIsSuspendModalOpen(true);
+                                }}
+                              >
+                                {campaign.status === "suspended"
+                                  ? "Retry Suspension"
+                                  : "Suspend"}
+                              </Button>
+                            )}
+                          </td>
+                        )}
                         <td className="px-2 py-2">
                           <IconButton
                             aria-label={`Open ${campaign.name || "campaign"}`}
@@ -924,6 +1019,56 @@ export default function CampaignsTable({
           </>
         )}
       </div>
+
+      <BaseModal
+        open={isSuspendModalOpen}
+        onClose={closeSuspendModal}
+        title={
+          suspendCampaign?.status === "suspended"
+            ? "Retry Suspension"
+            : "Confirm Suspension"
+        }
+      >
+        <div className="px-4 pb-4 text-[16px] text-[#727873]">
+          <p>
+            {suspendCampaign?.status === "suspended"
+              ? "Retry unpublishing "
+              : "You are about to suspend "}
+            <span className="font-medium text-[#222622]">
+              {suspendCampaign?.name || "this campaign"}
+            </span>
+            {suspendCampaign?.status === "suspended"
+              ? " on Givebutter?"
+              : ". Are you sure you would like to proceed?"}
+          </p>
+          {suspendError && (
+            <p className="mt-3 text-sm text-red-600" role="alert">
+              {suspendError}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-3 px-4 pb-4">
+          <Button
+            onClick={closeSuspendModal}
+            variant="text"
+            disabled={isSuspending}
+          >
+            CANCEL
+          </Button>
+          <Button
+            onClick={handleConfirmSuspend}
+            variant="contained"
+            size="small"
+            disabled={isSuspending}
+          >
+            {isSuspending
+              ? "SUSPENDING..."
+              : suspendCampaign?.status === "suspended"
+                ? "RETRY"
+                : "SUSPEND"}
+          </Button>
+        </div>
+      </BaseModal>
     </div>
   );
 }

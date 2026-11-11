@@ -9,4 +9,5 @@ export type Status =
   | "denied"
   | "published"
   | "publish_failed"
-  | "archived";
+  | "archived"
+  | "suspended";

@@ -9,6 +9,7 @@ declare module "@mui/material/Chip" {
     published: true;
     in_progress: true;
     publish_failed: true;
+    suspended: true;
     archived: true;
   }
 }
@@ -174,6 +175,7 @@ const theme = createTheme({
         { props: { variant: "pending" },        style: { border: "1px solid #883280", color: "#883280", backgroundColor: "#FFFFFF" } },
         { props: { variant: "publish_failed" }, style: { border: "1px solid #D32F2F", color: "#D32F2F", backgroundColor: "#FFFFFF" } },
         { props: { variant: "published" },      style: { border: "1px solid #2D7A45", color: "#2D7A45", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "suspended" },      style: { border: "1px solid #667085", color: "#667085", backgroundColor: "#FFFFFF" } },
       ],
     },
   },

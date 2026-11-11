@@ -15,6 +15,7 @@ function getPreviousCampaignPath(campaign: CampaignWithLeader) {
       return `/dashboard/review-applications/${campaign.campaign_id}`;
     case "approved":
     case "published":
+    case "suspended":
     case "publish_failed":
     case "archived":
       return `/dashboard/approved-campaigns/${campaign.campaign_id}`;

@@ -2,6 +2,7 @@
 import { readCampaignServer } from "@/src/actions/db/campaigns";
 import { readAnswersByCampaignId } from "@/src/actions/db/answers";
 import { createServerClient } from "@/src/lib/supabase-client";
+import { requireAdmin } from "@/src/lib/requireAdmin";
 import { createServiceRoleClient } from "@/src/lib/supabase-service";
 import { getGardenStoryAnswers } from "@/src/lib/givebutterStoryAnswers";
 import type { Campaign } from "@/src/types";
@@ -262,6 +263,60 @@ async function deleteGivebutterCampaign(campaignId: string | number) {
     console.error(`Failed to delete Givebutter campaign ${campaignId}:`, error);
     return false;
   }
+}
+
+export async function unpublishGivebutterCampaign(campaignId: number) {
+  if (!Number.isInteger(campaignId) || campaignId <= 0) {
+    throw new Error("Invalid campaign ID");
+  }
+
+  const supabase = await requireAdmin();
+
+  const { data: campaign, error: campaignError } = await supabase
+    .from("campaigns")
+    .select("campaign_id, givebutter_id, status")
+    .eq("campaign_id", campaignId)
+    .maybeSingle();
+
+  if (campaignError) {
+    throw new Error(`Failed to load campaign: ${campaignError.message}`);
+  }
+  if (!campaign) {
+    throw new Error(`Campaign ${campaignId} was not found`);
+  }
+  if (!campaign.givebutter_id) {
+    throw new Error(`Campaign ${campaignId} has no Givebutter ID`);
+  }
+  if (campaign.status !== "published" && campaign.status !== "suspended") {
+    throw new Error(`Campaign ${campaignId} cannot be suspended`);
+  }
+
+  await updateCampaignWithRetry(
+    supabase,
+    campaignId,
+    { status: "suspended" },
+    "Failed to record suspended campaign",
+  );
+
+  const response = await fetchGivebutterWithRetry(
+    getGivebutterCampaignUrl(campaign.givebutter_id),
+    {
+      method: "PUT",
+      headers: getGivebutterHeaders(),
+      body: JSON.stringify({
+        published: false,
+      }),
+    },
+  );
+
+  if (!response.ok) {
+    const error = await readErrorBody(response);
+    throw new Error(
+      `Failed to unpublish campaign (${response.status}): ${JSON.stringify(error)}`,
+    );
+  }
+
+  return { success: true };
 }
 
 export async function createGivebutterCampaigns(campaignIds: number[]) {
@@ -611,21 +666,51 @@ export async function createGivebutterCampaigns(campaignIds: number[]) {
   return results;
 }
 
+export async function deleteCampaignAndGivebutter(campaignId: number) {
+  const supabase = await requireAdmin();
+
+  const { data: campaign, error: campaignError } = await supabase
+    .from("campaigns")
+    .select("campaign_id, givebutter_id")
+    .eq("campaign_id", campaignId)
+    .single();
+
+  if (!campaign || campaignError)
+    throw new Error("Campaign not found");
+
+  if (campaign.givebutter_id) {
+    const deleted = await deleteGivebutterCampaign(campaign.givebutter_id);
+    if (!deleted)
+      throw new Error("Failed to delete campaign on Givebutter");
+  }
+
+  const { data: deletedRows, error: deleteError } = await supabase
+    .from("campaigns")
+    .delete()
+    .eq("campaign_id", campaignId)
+    .select("campaign_id");
+
+  if (deleteError || !deletedRows || deletedRows.length === 0)
+    throw new Error("Failed to delete campaign");
+}
+
 export async function publishDueCampaigns() {
   const supabase = createServiceRoleClient();
 
   const { data: competition, error: compError } = await supabase
     .from("competition_metadata")
-    .select("competition_id, start_date, end_date")
+    .select("competition_id, start_date, end_date, publish_at")
     .eq("is_current", true)
     .single();
 
   if (compError || !competition)
     throw new Error("No current competition found");
 
-  // Not time yet
-  if (new Date(competition.start_date) > new Date()) return;
-
+  // Not time yet. publish_at holds an exact time; start_date is date-only, so
+  // without publish_at this falls back to midnight UTC on the start date.
+  const publishTime = new Date(competition.publish_at ?? competition.start_date);
+  if (publishTime > new Date()) return;
+                 
   const { data: campaigns, error } = await supabase
     .from("campaigns")
     .select("campaign_id, givebutter_id")

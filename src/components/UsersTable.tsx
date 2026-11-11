@@ -53,6 +53,7 @@ const STATUS_LABELS: Record<AggregateStatus, string> = {
   approved: "Approved",
   denied: "Denied",
   published: "Published",
+  suspended: "Suspended",
   publish_failed: "Publish Failed",
   archived: "Archived",
   mixed: "Mixed",
@@ -60,6 +61,7 @@ const STATUS_LABELS: Record<AggregateStatus, string> = {
 
 const FILTER_OPTIONS: { value: AudienceStatus; label: string }[] = [
   { value: "published", label: "Published" },
+  { value: "suspended", label: "Suspended" },
   { value: "publish_failed", label: "Publish Failed" },
   { value: "approved", label: "Approved" },
   { value: "denied", label: "Denied" },
@@ -84,6 +86,7 @@ function getAggregateStatus(campaigns: UserCampaign[]): AggregateStatus {
 
 const STATUS_PRIORITY: Status[] = [
   "publish_failed",
+  "suspended",
   "published",
   "approved",
   "pending",
@@ -105,6 +108,7 @@ const APP_STATUS_CONFIG: Record<
   approved: { label: "approved", buttonLabel: "VIEW CAMPAIGN" },
   denied: { label: "denied", buttonLabel: "VIEW APPLICATION" },
   published: { label: "published", buttonLabel: "VIEW CAMPAIGN" },
+  suspended: { label: "suspended", buttonLabel: "VIEW CAMPAIGN" },
   publish_failed: { label: "publish failed", buttonLabel: null },
   archived: { label: "archived", buttonLabel: "VIEW CAMPAIGN" },
 };
@@ -115,6 +119,7 @@ const APP_STATUS_ORDER: Status[] = [
   "in_progress",
   "denied",
   "published",
+  "suspended",
   "publish_failed",
   "archived",
 ];
@@ -139,6 +144,7 @@ function getCampaignStatusPath(status: Status, campaignId: number) {
       return `/dashboard/review-applications/${campaignId}`;
     case "approved":
     case "published":
+    case "suspended":
     case "publish_failed":
     case "archived":
       return `/dashboard/approved-campaigns/${campaignId}`;
@@ -176,6 +182,8 @@ function getStatusSummaryText(status: Status, count: number, fullName: string) {
       return `${fullName} has ${count} denied application${count === 1 ? "" : "s"}:`;
     case "published":
       return `${fullName} has ${count} published campaign${count === 1 ? "" : "s"}:`;
+    case "suspended":
+      return `${fullName} has ${count} suspended campaign${count === 1 ? "" : "s"}:`;
     case "publish_failed":
       return `${fullName} has ${count} campaign${count === 1 ? "" : "s"} that failed to publish:`;
     case "archived":
@@ -196,6 +204,10 @@ const STATUS_CHIP_STYLES: Record<AggregateStatus, {
   published: {
     avatarClassName: "bg-[#1B5E20]!",
     chipClassName: "border-[#2E7D32]! text-[#2E7D32]!",
+  },
+  suspended: {
+    avatarClassName: "bg-[#667085]!",
+    chipClassName: "border-[#98A2B3]! text-[#667085]!",
   },
   approved: {
     avatarClassName: "bg-[#1976D2]!",

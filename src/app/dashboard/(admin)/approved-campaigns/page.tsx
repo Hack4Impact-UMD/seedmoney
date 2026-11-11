@@ -11,11 +11,13 @@ import type { Status } from "@/src/types/db/enums";
 const approvedCampaignStatusOptions: Status[] = [
   "approved",
   "published",
+  "suspended",
   "publish_failed",
 ];
 
 const approvedCampaignStatusPriority: Status[] = [
   "publish_failed",
+  "suspended",
   "published",
   "approved",
 ];

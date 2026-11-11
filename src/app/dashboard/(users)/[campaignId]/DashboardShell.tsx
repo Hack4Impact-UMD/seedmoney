@@ -27,7 +27,9 @@ import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadC
 import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
 import BaseModal from "@/src/components/bases/BaseModal";
 import OpenInNew from "@mui/icons-material/OpenInNew";
+import QrCode2 from "@mui/icons-material/QrCode2";
 import BaseAlert from "@/src/components/bases/BaseAlert";
+import CampaignQrCodeModal from "@/src/components/dashboard/CampaignQrCodeModal";
 import DashboardFooter from "@/src/components/DashboardFooter";
 import useUserByAuthId from "@/src/hooks/users/useUserByAuthId";
 import { Chip } from "@mui/material";
@@ -71,6 +73,8 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
     raisedLoading || raisedError ? null : raisedPercent;
   const [toast, setToast] = useState(false);
   const [viewCampaignModal, setViewCampaignModal] = useState(false);
+  const [qrCodeModal, setQrCodeModal] = useState(false);
+  const [qrDownloadToast, setQrDownloadToast] = useState(false);
   const submissionToastOpen = searchParams.get("submitted") === "1";
 
   const handleCloseSubmissionToast = useCallback(() => {
@@ -246,53 +250,71 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
         <section id="dashboard-overview" className="scroll-mt-20">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
-            <Button
-              size="small"
-              variant="contained"
-              className="!shrink-0"
-              onClick={() => setViewCampaignModal(true)}
-            >
-              View Campaign
-              <OpenInNew fontSize="small" className="text-[#FFFFFF] ml-[5px]" />
-            </Button>
-            <Button
-              size="small"
-              variant="outlined"
-              className="!shrink-0"
-              onClick={async () => {
-                const campaignUrl = campaignData.givebutterlink;
-                const isMobile =
-                  typeof window !== "undefined" &&
-                  window.matchMedia("(max-width: 767px)").matches;
+            {campaignData.status !== "suspended" && (
+              <>
+                <Button
+                  size="small"
+                  variant="contained"
+                  className="!shrink-0"
+                  onClick={() => setViewCampaignModal(true)}
+                >
+                  View Campaign
+                  <OpenInNew
+                    fontSize="small"
+                    className="text-[#FFFFFF] ml-[5px]"
+                  />
+                </Button>
+                <Button
+                  size="small"
+                  variant="outlined"
+                  className="!shrink-0"
+                  onClick={async () => {
+                    const campaignUrl = campaignData.givebutterlink;
+                    const isMobile =
+                      typeof window !== "undefined" &&
+                      window.matchMedia("(max-width: 767px)").matches;
 
-                if (isMobile && navigator.share) {
-                  try {
-                    await navigator.share({
-                      title: campaignData.name,
-                      url: campaignUrl,
-                    });
-                    return;
-                  } catch (error) {
-                    if (
-                      error instanceof DOMException &&
-                      error.name === "AbortError"
-                    ) {
+                    if (isMobile && navigator.share) {
+                      try {
+                        await navigator.share({
+                          title: campaignData.name,
+                          url: campaignUrl,
+                        });
+                        return;
+                      } catch (error) {
+                        if (
+                          error instanceof DOMException &&
+                          error.name === "AbortError"
+                        ) {
+                          return;
+                        }
+                      }
+                    }
+
+                    try {
+                      await navigator.clipboard.writeText(campaignUrl);
+                      setToast(true);
+                    } catch {
                       return;
                     }
-                  }
-                }
-
-                try {
-                  await navigator.clipboard.writeText(campaignUrl);
-                  setToast(true);
-                } catch {
-                  return;
-                }
-              }}
-            >
-              <span className="md:hidden">Share campaign</span>
-              <span className="hidden md:inline">Copy campaign link</span>
-            </Button>
+                  }}
+                >
+                  <span className="md:hidden">Share campaign</span>
+                  <span className="hidden md:inline">Copy campaign link</span>
+                </Button>
+                {campaignData.givebutterlink && (
+                  <Button
+                    size="small"
+                    variant={qrCodeModal ? "contained" : "outlined"}
+                    className="shrink-0!"
+                    startIcon={<QrCode2 fontSize="small" />}
+                    onClick={() => setQrCodeModal(true)}
+                  >
+                    QR Code
+                  </Button>
+                )}
+              </>
+            )}
             <Button
               size="small"
               variant="outlined"
@@ -374,6 +396,26 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
       >
         <p>Campaign link has been copied to clipboard</p>
       </BaseAlert>
+
+      {campaignData.givebutterlink && (
+        <CampaignQrCodeModal
+          open={qrCodeModal}
+          onClose={() => setQrCodeModal(false)}
+          onDownloaded={() => {
+            setQrCodeModal(false);
+            setQrDownloadToast(true);
+          }}
+          campaignName={campaignData.name}
+          campaignUrl={campaignData.givebutterlink}
+        />
+      )}
+
+      <BaseAlert
+        open={qrDownloadToast}
+        onClose={() => setQrDownloadToast(false)}
+        title="QR Code downloaded successfully!"
+        copySuccess
+      />
       {currentCompetitionData != null &&
         campaignData.competition_id !==
           currentCompetitionData.competition_id && (

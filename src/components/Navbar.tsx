@@ -20,6 +20,7 @@ import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import HistoryIcon from "@mui/icons-material/History";
 import PersonOutlineIcon from "@mui/icons-material/PersonOutline";
 import FileDownloadOutlinedIcon from "@mui/icons-material/FileDownloadOutlined";
+import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import Image from "next/image";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { usePathname, useRouter, useParams } from "next/navigation";
@@ -60,6 +61,7 @@ const ADMIN_NAV_ITEMS = [
     path: "/dashboard/export",
     Icon: FileDownloadOutlinedIcon,
   },
+  { label: "Email Users", path: "/dashboard/email-users", Icon: EmailOutlinedIcon }
 ] as const;
 
 export default function Navbar({ compact = false }: { compact?: boolean }) {
