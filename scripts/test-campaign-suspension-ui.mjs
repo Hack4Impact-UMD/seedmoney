@@ -58,3 +58,14 @@ test("the unsuspend dialog promises only a Published status", () => {
   assert.match(html, /will return to Published status/);
   assert.doesNotMatch(html, /receive donations again/);
 });
+
+test("suspended campaigns expose retry alongside Unsuspend", () => {
+  const html = renderPage("suspended");
+  assert.match(html, /<button>Unsuspend<\/button>/);
+  assert.match(html, /<button>Retry Suspension<\/button>/);
+  const published = renderPage("published");
+  assert.match(published, /<button>Suspend<\/button>/);
+  assert.doesNotMatch(published, /<button>Unsuspend<\/button>/);
+  const approved = renderPage("approved");
+  assert.doesNotMatch(approved, /<button>(?:Suspend|Retry Suspension|Unsuspend)<\/button>/);
+});

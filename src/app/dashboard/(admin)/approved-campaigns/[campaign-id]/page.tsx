@@ -257,10 +257,11 @@ export default function AdminCampaignPage() {
                   ? "N/A"
                   : new Date(campaignData.date_created).getFullYear()}
               </span>
-              {campaignData.status === "suspended" ? (
+              {campaignData.status === "suspended" && (
                 <Button
                   size="small"
                   variant="outlined"
+                  disabled={suspend.isPending || unsuspend.isPending}
                   onClick={() => {
                     setUnsuspendError(null);
                     setIsUnsuspendModalOpen(true);
@@ -268,18 +269,18 @@ export default function AdminCampaignPage() {
                 >
                   Unsuspend
                 </Button>
-              ) : (
-                <Button
-                  size="small"
-                  variant="outlined"
-                  onClick={() => {
-                    setSuspendError(null);
-                    setIsSuspendModalOpen(true);
-                  }}
-                >
-                  Suspend
-                </Button>
               )}
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={suspend.isPending || unsuspend.isPending}
+                onClick={() => {
+                  setSuspendError(null);
+                  setIsSuspendModalOpen(true);
+                }}
+              >
+                {campaignData.status === "suspended" ? "Retry Suspension" : "Suspend"}
+              </Button>
             </div>
           )}
         </div>
