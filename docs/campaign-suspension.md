@@ -10,6 +10,10 @@ key prevents overlapping operations across tabs and server instances. Different
 campaigns remain independent. Successful and definitively rejected operations
 release their reservation.
 
+If remote republishing succeeds but the local Published write fails, the action
+uses the existing Givebutter PUT to unpublish again and restores Suspended
+locally. Failed recovery records the mismatch and retains the reservation.
+
 Reservations deliberately do not expire: a timed-out Givebutter request could
 still complete after an automatic expiry. Network errors, uncertain remote
 responses, and interrupted server executions leave the reservation in place.

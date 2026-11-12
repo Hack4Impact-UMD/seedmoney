@@ -159,3 +159,38 @@ test("authorization, invalid status, and release failures are not silently ignor
   await assert.rejects(instance().unpublishGivebutterCampaign(1), /Unable to release/);
   assert.ok(state.lock);
 });
+
+test("a failed local republish write unpublishes remotely and restores Suspended", async () => {
+  const { state, instance } = fixture("suspended");
+  state.failPublished = true;
+  await assert.rejects(instance().republishSuspendedGivebutterCampaign(1), /failed to update campaign status/);
+  assert.equal(state.campaign.status, "suspended");
+  assert.equal(state.remotePublished, false);
+  assert.deepEqual(state.calls.map(call => call.body.published), [true, false]);
+  assert.equal(state.lock, null);
+});
+
+test("failed compensation records the mismatch and blocks conflicting actions", async () => {
+  const { state, instance } = fixture("suspended");
+  state.failPublished = true;
+  state.defer = true;
+  const pending = instance().republishSuspendedGivebutterCampaign(1);
+  await until(() => state.calls.length === 1);
+  state.calls[0].finish();
+  await until(() => state.calls.length === 2);
+  state.remoteStatus = 403;
+  state.calls[1].finish();
+  await assert.rejects(pending, /reconciliation/i);
+  assert.match(state.lock.error, /recovery failed/i);
+  assert.equal(state.remotePublished, true);
+  await assert.rejects(instance().unpublishGivebutterCampaign(1), /already running/);
+});
+
+test("failed local compensation also retains a reconciliation record", async () => {
+  const { state, instance } = fixture("suspended");
+  state.failPublished = true;
+  state.failSuspended = true;
+  await assert.rejects(instance().republishSuspendedGivebutterCampaign(1), /reconciliation/i);
+  assert.equal(state.remotePublished, false);
+  assert.match(state.lock.error, /recovery failed/i);
+});
