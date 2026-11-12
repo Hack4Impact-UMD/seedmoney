@@ -3,6 +3,7 @@ import { readCampaignServer } from "@/src/actions/db/campaigns";
 import { readAnswersByCampaignId } from "@/src/actions/db/answers";
 import { createServerClient } from "@/src/lib/supabase-client";
 import { requireAdmin } from "@/src/lib/requireAdmin";
+import { withCampaignPublicationLock } from "@/src/lib/givebutterCampaignLock";
 import { createServiceRoleClient } from "@/src/lib/supabase-service";
 import { getGardenStoryAnswers } from "@/src/lib/givebutterStoryAnswers";
 import type { Campaign } from "@/src/types";
@@ -196,6 +197,7 @@ async function fetchGivebutterWithRetry(
   url: string,
   init: RequestInit,
   request: GivebutterFetch = fetch,
+  retryUncertainFailures = true,
 ): Promise<Response> {
   let lastError: unknown;
 
@@ -208,6 +210,7 @@ async function fetchGivebutterWithRetry(
       if (
         response.ok ||
         !isRetryableGivebutterStatus(response.status) ||
+        (!retryUncertainFailures && response.status !== 429) ||
         attempt === GIVEBUTTER_MAX_ATTEMPTS - 1
       ) {
         return response;
@@ -215,7 +218,7 @@ async function fetchGivebutterWithRetry(
     } catch (error) {
       lastError = error;
 
-      if (attempt === GIVEBUTTER_MAX_ATTEMPTS - 1) {
+      if (!retryUncertainFailures || attempt === GIVEBUTTER_MAX_ATTEMPTS - 1) {
         throw error;
       }
     }
@@ -272,51 +275,166 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
 
   const supabase = await requireAdmin();
 
-  const { data: campaign, error: campaignError } = await supabase
-    .from("campaigns")
-    .select("campaign_id, givebutter_id, status")
-    .eq("campaign_id", campaignId)
-    .maybeSingle();
+  return withCampaignPublicationLock(campaignId, "suspend", async (recordUncertainOutcome) => {
 
-  if (campaignError) {
-    throw new Error(`Failed to load campaign: ${campaignError.message}`);
-  }
-  if (!campaign) {
-    throw new Error(`Campaign ${campaignId} was not found`);
-  }
-  if (!campaign.givebutter_id) {
-    throw new Error(`Campaign ${campaignId} has no Givebutter ID`);
-  }
-  if (campaign.status !== "published" && campaign.status !== "suspended") {
-    throw new Error(`Campaign ${campaignId} cannot be suspended`);
-  }
+    const { data: campaign, error: campaignError } = await supabase
+      .from("campaigns")
+      .select("campaign_id, givebutter_id, status")
+      .eq("campaign_id", campaignId)
+      .maybeSingle();
 
-  await updateCampaignWithRetry(
-    supabase,
-    campaignId,
-    { status: "suspended" },
-    "Failed to record suspended campaign",
-  );
+    if (campaignError) {
+      throw new Error(`Failed to load campaign: ${campaignError.message}`);
+    }
+    if (!campaign) {
+      throw new Error(`Campaign ${campaignId} was not found`);
+    }
+    if (!campaign.givebutter_id) {
+      throw new Error(`Campaign ${campaignId} has no Givebutter ID`);
+    }
+    if (campaign.status !== "published" && campaign.status !== "suspended") {
+      throw new Error(`Campaign ${campaignId} cannot be suspended`);
+    }
 
-  const response = await fetchGivebutterWithRetry(
-    getGivebutterCampaignUrl(campaign.givebutter_id),
-    {
-      method: "PUT",
-      headers: getGivebutterHeaders(),
-      body: JSON.stringify({
-        published: false,
-      }),
-    },
-  );
-
-  if (!response.ok) {
-    const error = await readErrorBody(response);
-    throw new Error(
-      `Failed to unpublish campaign (${response.status}): ${JSON.stringify(error)}`,
+    await updateCampaignWithRetry(
+      supabase,
+      campaignId,
+      { status: "suspended" },
+      "Failed to record suspended campaign",
     );
+
+    let response: Response;
+    try {
+      response = await fetchGivebutterWithRetry(
+        getGivebutterCampaignUrl(campaign.givebutter_id),
+        {
+          method: "PUT",
+          headers: getGivebutterHeaders(),
+          body: JSON.stringify({
+            published: false,
+          }),
+        },
+        fetch, false,
+      );
+    } catch (error) {
+      await recordUncertainOutcome("Givebutter suspension outcome is unknown. Verify it before clearing this operation.");
+      throw error;
+    }
+
+    if (!response.ok) {
+      if (isRetryableGivebutterStatus(response.status)) {
+        await recordUncertainOutcome(`Givebutter suspension returned ${response.status}; verify its state before retrying.`);
+      }
+      const error = await readErrorBody(response);
+      throw new Error(
+        `Failed to unpublish campaign (${response.status}): ${JSON.stringify(error)}`,
+      );
+    }
+
+    return { success: true };
+  });
+}
+
+export async function republishSuspendedGivebutterCampaign(campaignId: number) {
+  if (!Number.isInteger(campaignId) || campaignId <= 0) {
+    throw new Error("Invalid campaign ID");
   }
 
-  return { success: true };
+  const supabase = await requireAdmin();
+
+  return withCampaignPublicationLock(campaignId, "republish", async (recordUncertainOutcome) => {
+
+    const { data: campaign, error: campaignError } = await supabase
+      .from("campaigns")
+      .select("campaign_id, givebutter_id, status")
+      .eq("campaign_id", campaignId)
+      .maybeSingle();
+
+    if (campaignError) {
+      throw new Error(`Failed to load campaign: ${campaignError.message}`);
+    }
+    if (!campaign) {
+      throw new Error(`Campaign ${campaignId} was not found`);
+    }
+    if (!campaign.givebutter_id) {
+      throw new Error(`Campaign ${campaignId} has no Givebutter ID`);
+    }
+    if (campaign.status !== "suspended") {
+      throw new Error(`Campaign ${campaignId} is not suspended`);
+    }
+
+    let response: Response;
+    try {
+      response = await fetchGivebutterWithRetry(
+        getGivebutterCampaignUrl(campaign.givebutter_id),
+        {
+          method: "PUT",
+          headers: getGivebutterHeaders(),
+          body: JSON.stringify({
+            published: true,
+            settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
+          }),
+        },
+        fetch, false,
+      );
+    } catch (error) {
+      await recordUncertainOutcome("Givebutter republish outcome is unknown. Verify it before clearing this operation.");
+      throw error;
+    }
+
+    if (!response.ok) {
+      if (isRetryableGivebutterStatus(response.status)) {
+        await recordUncertainOutcome(`Givebutter republish returned ${response.status}; verify its state before retrying.`);
+      }
+      const error = await readErrorBody(response);
+      throw new Error(
+        `Failed to republish campaign (${response.status}): ${JSON.stringify(error)}`,
+      );
+    }
+
+    try {
+      await updateCampaignWithRetry(
+        supabase,
+        campaignId,
+        { status: "published" },
+        "Givebutter campaign was republished, but failed to update campaign status",
+      );
+    } catch (error) {
+      const recoveryErrors: string[] = [];
+      try {
+        const rollback = await fetchGivebutterWithRetry(
+          getGivebutterCampaignUrl(campaign.givebutter_id),
+          {
+            method: "PUT",
+            headers: getGivebutterHeaders(),
+            body: JSON.stringify({ published: false }),
+          },
+          fetch, false,
+        );
+        if (!rollback.ok) throw new Error(`Givebutter unpublish returned ${rollback.status}`);
+      } catch (recoveryError) {
+        recoveryErrors.push(String(recoveryError));
+      }
+
+      try {
+        await updateCampaignWithRetry(
+          supabase, campaignId, { status: "suspended" },
+          "Failed to restore suspended campaign status",
+        );
+      } catch (recoveryError) {
+        recoveryErrors.push(String(recoveryError));
+      }
+
+      if (recoveryErrors.length > 0) {
+        const message = `Republish recovery failed; reconciliation is required: ${recoveryErrors.join("; ")}`;
+        await recordUncertainOutcome(message);
+        throw new Error(message);
+      }
+      throw error;
+    }
+
+    return { success: true };
+  });
 }
 
 export async function createGivebutterCampaigns(campaignIds: number[]) {
