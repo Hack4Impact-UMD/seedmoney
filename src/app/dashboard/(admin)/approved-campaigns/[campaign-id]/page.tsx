@@ -240,14 +240,14 @@ export default function AdminCampaignPage() {
     <div className="flex min-h-screen">
       <Navbar />
 
-      <div className="flex-1 flex-col bg-gray-50 p-10 space-y-3">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <h3 className="text-4xl font-bold text-[#096B2E]">
+      <div className="min-w-0 flex-1 flex-col bg-gray-50 p-10 space-y-3">
+        <div className="mb-5 flex flex-wrap items-start justify-between gap-4">
+          <h3 className="min-w-0 break-words text-4xl font-bold text-[#096B2E]">
             {campaignData.name}
           </h3>
           {(campaignData.status === "published" ||
             campaignData.status === "suspended") && (
-            <div className="flex items-center gap-3">
+            <div className="flex min-w-0 flex-wrap items-center gap-3">
               {campaignData.status === "suspended" && (
                 <Chip variant="suspended" label="Suspended" />
               )}
