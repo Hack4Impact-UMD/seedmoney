@@ -8,7 +8,8 @@ import useReadCampaignsByCompId from "@/src/hooks/campaigns/useReadCampaignsByCo
 import useReadCampaignImageUrlsByCampaignIds from "@/src/hooks/campaign-image-records/useReadCampaignImageUrlsByCampaignIds";
 import useReadTransactionsByCampaignIds from "@/src/hooks/transactions/useReadTransactionsByCampaignIds";
 import { calculateSpecialGrantCampaignIds } from "@/src/lib/leaderboardGrantCalculations";
-import type { Campaign } from "@/src/types/db/campaigns";
+import type { CampaignWithStanding } from "@/src/types/db/competitionStandings";
+import { getCampaignRankingInputs } from "@/src/lib/leaderboardRanking";
 import type { SpecialGrantCampaignIds } from "@/src/lib/leaderboardGrantCalculations";
 import { leaderboardGardenCategories } from "@/src/constants/gardenCategories";
 
@@ -19,17 +20,14 @@ const openSans = Open_Sans({
 });
 
 function mapCampaignsToLeaderboardData(
-  campaigns: Campaign[],
+  campaigns: CampaignWithStanding[],
   challengeTitle: string,
   imageUrlsByCampaignId: Record<number, string | null>,
   specialGrantCampaignIds: SpecialGrantCampaignIds,
 ) {
   const publicCampaigns = campaigns.map((campaign) => {
-    const raised =
-      typeof campaign.raised === "number" ? campaign.raised : 0;
+    const { raised, donors } = getCampaignRankingInputs(campaign);
     const goal = typeof campaign.goal === "number" ? campaign.goal : 0;
-    const donors =
-      typeof campaign.donors === "number" ? campaign.donors : 0;
     const locationParts = [campaign.city, campaign.state].filter(
       (value): value is string => typeof value === "string" && value.trim() !== "",
     );
