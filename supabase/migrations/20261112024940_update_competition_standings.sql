@@ -1,6 +1,6 @@
 begin;
 
-lock table public.transactions, public.campaigns, public.competition_metadata
+lock table public.competition_metadata, public.campaigns, public.transactions
 in share row exclusive mode;
 
 create or replace function public.apply_competition_donation_delta(
@@ -55,7 +55,7 @@ $function$;
 revoke all on function public.sync_competition_standings()
 from public, anon, authenticated, service_role;
 
-create trigger sync_competition_standings
+create or replace trigger sync_competition_standings
 after insert or delete or update of campaign_id, amount_donated, status, transacted_at
 on public.transactions
 for each row execute function public.sync_competition_standings();
@@ -69,7 +69,7 @@ as $function$
 declare
   missing_timestamps bigint;
 begin
-  lock table public.transactions, public.campaigns, public.competition_metadata
+  lock table public.competition_metadata, public.campaigns, public.transactions
   in share row exclusive mode;
 
   delete from public.competition_standings s
