@@ -37,11 +37,15 @@ import { getStatusLabel } from "@/src/lib/utils/statusConversions";
 import moment from "moment";
 import InformationSection from "@/src/components/dashboard/InformationSection";
 
-const USER_DASHBOARD_TABS: readonly DashboardTabItem[] = [
+// `path` marks a tab that routes to its own sub-page instead of scrolling to a section.
+const USER_DASHBOARD_TABS: readonly (Omit<DashboardTabItem, "href"> & {
+  path?: string;
+})[] = [
   { label: "Overview", sectionId: "dashboard-overview" },
   { label: "Donations", sectionId: "dashboard-donations" },
   { label: "Analytics", sectionId: "dashboard-analytics" },
   { label: "Help", sectionId: "dashboard-help" },
+  { label: "Campaign Outreach", sectionId: "dashboard-outreach", path: "outreach" },
 ];
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
@@ -122,6 +126,17 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   const handleContinueApplication = () => {
     router.push("/apply/campaign");
   };
+
+  const isOutreachPage = pathname.endsWith("/outreach");
+  const dashboardTabs: readonly DashboardTabItem[] = USER_DASHBOARD_TABS.map(
+    ({ path, ...tab }) => ({
+      ...tab,
+      href: path
+        ? `/dashboard/${campaignId}/${path}`
+        : `/dashboard/${campaignId}#${tab.sectionId}`,
+    }),
+  );
+
 
   const isViewingPendingApplication = pathname.endsWith("/application");
 
@@ -246,8 +261,10 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           )}
         </div>
 
-        <DashboardTabs tabs={USER_DASHBOARD_TABS} showMobileScrollControls />
+        
+        <DashboardTabs tabs={dashboardTabs} showMobileScrollControls />
 
+        {!isOutreachPage && (
         <section id="dashboard-overview" className="scroll-mt-20">
           <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
             {campaignData.status !== "suspended" && (
@@ -349,6 +366,8 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             </div>
           </div>
         </section>
+
+        )}
 
         <div className="mt-8">{children}</div>
         <DashboardFooter />
