@@ -61,8 +61,12 @@ export function downloadFile(filename: string, file: Blob) {
   const link = document.createElement("a");
   link.href = url;
   link.download = filename;
+  // Attach before clicking and revoke later: iOS Safari reads the blob after
+  // click() returns, so revoking immediately can make the download fail.
+  document.body.appendChild(link);
   link.click();
-  URL.revokeObjectURL(url);
+  link.remove();
+  setTimeout(() => URL.revokeObjectURL(url), 1000);
 }
 
 export function formatCsvDate(dateStr?: string | null) {
