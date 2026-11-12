@@ -29,7 +29,7 @@ function mapCampaignsToLeaderboardData(
   const publicCampaigns = campaigns.map((campaign) => {
     const { raised, donors } = getCampaignRankingInputs(campaign);
     const goal = typeof campaign.goal === "number" ? campaign.goal : 0;
-    const locationParts = [campaign.city, campaign.state].filter(
+    const locationParts = [campaign.city, campaign.state, campaign.country].filter(
       (value): value is string => typeof value === "string" && value.trim() !== "",
     );
     const location =

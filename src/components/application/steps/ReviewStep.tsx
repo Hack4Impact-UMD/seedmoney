@@ -3,6 +3,7 @@
 import Image from "next/image";
 import Link from "next/link";
 import { Button, MenuItem, TextField } from "@mui/material";
+import { useStore } from "@tanstack/react-form";
 import {
   useAgreementGate,
   useApplicationForm,
@@ -40,16 +41,22 @@ function hasStoryAnswerError(value: string) {
 
   return (
     value.length > storyAnswerMaxChars ||
-    (trimmedLength > 0 && trimmedLength < storyAnswerMinChars)
+    trimmedLength < storyAnswerMinChars
   );
 }
 
 function getStoryAnswerHelperText(value: string) {
   const characterCount = `${value.length.toLocaleString()} / ${storyAnswerMaxChars.toLocaleString()}`;
 
-  return value.length > storyAnswerMaxChars
-    ? `Please shorten your answer to ${storyAnswerMaxChars.toLocaleString()} characters. ${characterCount}`
-    : characterCount;
+  if (value.length > storyAnswerMaxChars) {
+    return `Please shorten your answer to ${storyAnswerMaxChars.toLocaleString()} characters. ${characterCount}`;
+  }
+
+  if (value.trim().length < storyAnswerMinChars) {
+    return `Please write at least ${storyAnswerMinChars} characters. ${characterCount}`;
+  }
+
+  return characterCount;
 }
 
 function normalizeNumericInput(value: string) {
@@ -205,7 +212,7 @@ export default function ReviewSubmitPage() {
   const [storySaveError, setStorySaveError] = useState<string | null>(null);
   const [submitError, setSubmitError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const values = form.state.values;
+  const values = useStore(form.store, (state) => state.values);
   const {
     campaignComplete,
     gardenComplete,
@@ -775,7 +782,7 @@ export default function ReviewSubmitPage() {
           Garden Story <span className="text-red-500">*</span>
         </h3>
 
-        <p className="text-sm">2-3 sentences each</p>
+        <p className="text-sm">Write 200-1,000 characters for each answer.</p>
 
         <EditableValueRow
           label={question1.question}

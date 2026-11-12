@@ -5,7 +5,7 @@
  
 ## 📞 Team Contacts
 
-| Name                   | Role      | Contact                     |
+| Name                   | Role      | Contacts                    |
 | ---------------------- | --------- | --------------------------- |
 | **Esha Vigneswaran**   | Tech Lead | eshavigneswaran@gmail.com   |
 | **Samarth Kolanupaka** | Tech Lead | samarthkolanupaka@gmail.com |

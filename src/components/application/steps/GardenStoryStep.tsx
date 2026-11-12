@@ -1,6 +1,7 @@
 "use client";
 import Image from "next/image";
 import { Button, IconButton } from "@mui/material";
+import { useStore } from "@tanstack/react-form";
 import TextField from "@mui/material/TextField";
 import { CheckCircle, Delete } from "@mui/icons-material";
 import Link from "next/link";
@@ -42,7 +43,8 @@ type UploadError = {
 
 const storyAnswerMinChars = 200;
 const storyAnswerMaxChars = 1000;
-const storyAnswerHint = "Write a short paragraph (4-5 sentences).";
+const storyAnswerHint =
+  "Write a short paragraph (4-5 sentences, 200-1,000 characters).";
 const storySaveErrorMessage =
   "We couldn't save your Garden Story. Your answers are still on this page. Please try again before continuing.";
 
@@ -135,7 +137,7 @@ export default function GardenStoryStep() {
   const createOriginalAnswerMutation = useCreateOriginalAnswer();
   const uploadCampaignImage = useUploadCampaignImage();
   const deleteCampaignImage = useDeleteCampaignImage();
-  const values = form.state.values;
+  const values = useStore(form.store, (state) => state.values);
   const { data: question1, isLoading: isLoadingQuestion1 } = useReadQuestion(1);
   const { data: question2, isLoading: isLoadingQuestion2 } = useReadQuestion(2);
   const { data: question3, isLoading: isLoadingQuestion3 } = useReadQuestion(3);
@@ -721,7 +723,7 @@ export default function GardenStoryStep() {
               const valueLength = getStoryAnswerLength(field.state.value);
               const isTooLong = valueLength > storyAnswerMaxChars;
               const isTooShort =
-                field.state.meta.isTouched &&
+                (field.state.meta.isTouched || field.state.value.length > 0) &&
                 getTrimmedStoryAnswerLength(field.state.value) <
                   storyAnswerMinChars;
               const showError = isTooLong || isTooShort;
@@ -780,7 +782,7 @@ export default function GardenStoryStep() {
               const valueLength = getStoryAnswerLength(field.state.value);
               const isTooLong = valueLength > storyAnswerMaxChars;
               const isTooShort =
-                field.state.meta.isTouched &&
+                (field.state.meta.isTouched || field.state.value.length > 0) &&
                 getTrimmedStoryAnswerLength(field.state.value) <
                   storyAnswerMinChars;
               const showError = isTooLong || isTooShort;
@@ -839,7 +841,7 @@ export default function GardenStoryStep() {
               const valueLength = getStoryAnswerLength(field.state.value);
               const isTooLong = valueLength > storyAnswerMaxChars;
               const isTooShort =
-                field.state.meta.isTouched &&
+                (field.state.meta.isTouched || field.state.value.length > 0) &&
                 getTrimmedStoryAnswerLength(field.state.value) <
                   storyAnswerMinChars;
               const showError = isTooLong || isTooShort;
@@ -898,7 +900,7 @@ export default function GardenStoryStep() {
               const valueLength = getStoryAnswerLength(field.state.value);
               const isTooLong = valueLength > storyAnswerMaxChars;
               const isTooShort =
-                field.state.meta.isTouched &&
+                (field.state.meta.isTouched || field.state.value.length > 0) &&
                 getTrimmedStoryAnswerLength(field.state.value) <
                   storyAnswerMinChars;
               const showError = isTooLong || isTooShort;
