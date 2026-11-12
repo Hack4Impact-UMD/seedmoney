@@ -1,6 +1,3 @@
-drop view if exists "public"."leaderboard_transactions";
-
-
   create table "public"."competition_standings" (
     "competition_id" bigint not null,
     "campaign_id" bigint not null,
@@ -27,7 +24,8 @@ alter table "public"."competition_standings" validate constraint "competition_st
 
 set check_function_bodies = off;
 
-create or replace view "public"."leaderboard_transactions" as  SELECT t.campaign_id,
+create or replace view "public"."leaderboard_transactions"
+with (security_invoker = on) as  SELECT t.campaign_id,
     t.date,
     t.transacted_at,
     t.amount_donated,
