@@ -67,7 +67,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   const {
     data: standing,
     isPending: standingPending,
-    error: standingError,
+    isLoadingError: standingLoadError,
   } = useCampaignStanding(
     Number(campaignId),
     campaignsData?.[0]?.competition_id ?? undefined,
@@ -221,9 +221,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
   const hasCompetition = campaignData.competition_id != null;
 
-  if (hasCompetition && standingPending) return <div>Loading...</div>;
-  if (standingError) throw standingError;
-
   const isChallengeActive = Boolean(
     competitionStartDate &&
     competitionEndDate &&
@@ -367,13 +364,19 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             </div>
           </div>
           <div className="mt-6">
-            <ChallengeStandingCard
-              rank={standing?.rank ?? null}
-              totalProjects={standing?.totalProjects ?? 0}
-              projectedGrant={grantTier?.amount ?? null}
-              grantTierMinRank={grantTier?.minRank ?? null}
-              grantTierMaxRank={grantTier?.maxRank ?? null}
-            />
+            {hasCompetition && standingPending ? (
+              <div role="status">Loading...</div>
+            ) : standingLoadError ? (
+              <p role="alert">Unable to load Challenge Standing. Retrying shortly.</p>
+            ) : (
+              <ChallengeStandingCard
+                rank={standing?.rank ?? null}
+                totalProjects={standing?.totalProjects ?? 0}
+                projectedGrant={grantTier?.amount ?? null}
+                grantTierMinRank={grantTier?.minRank ?? null}
+                grantTierMaxRank={grantTier?.maxRank ?? null}
+              />
+            )}
           </div>
         </section>
 

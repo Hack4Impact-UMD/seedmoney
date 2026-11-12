@@ -3,6 +3,7 @@
 import { useMemo } from "react";
 import { Open_Sans } from "next/font/google";
 import LeaderboardPage from "@/src/components/leaderboard/LeaderboardPage";
+import LeaderboardEmptyState from "@/src/components/leaderboard/LeaderboardEmptyState";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadCampaignsByCompId from "@/src/hooks/campaigns/useReadCampaignsByCompId";
 import useReadCampaignImageUrlsByCampaignIds from "@/src/hooks/campaign-image-records/useReadCampaignImageUrlsByCampaignIds";
@@ -79,7 +80,7 @@ export default function PublicLeaderboardPage() {
   const {
     data: campaignsData = [],
     isLoading: isLoadingCampaigns,
-    error,
+    isLoadingError: campaignsLoadError,
   } = useReadCampaignsByCompId(competitionId);
   const campaignIds = campaignsData.map((campaign) => campaign.campaign_id);
   const {
@@ -89,7 +90,7 @@ export default function PublicLeaderboardPage() {
   const {
     data: transactionsData = [],
     isLoading: isLoadingTransactions,
-    error: transactionsError,
+    isLoadingError: transactionsLoadError,
   } = useReadTransactionsByCampaignIds(campaignIds);
   const specialGrantCampaignIds = useMemo(
     () =>
@@ -107,14 +108,23 @@ export default function PublicLeaderboardPage() {
     ],
   );
 
+  if (campaignsLoadError || transactionsLoadError) {
+    return (
+      <div className={`${openSans.variable} min-h-screen bg-[#F6F4EE] px-6 py-8`} role="alert">
+        <LeaderboardEmptyState
+          title="Leaderboard temporarily unavailable"
+          description="We couldn't load the leaderboard. Please try again shortly."
+        />
+      </div>
+    );
+  }
+
   if (
     isLoadingCompetition ||
     isLoadingCampaigns ||
     isLoadingImages ||
     isLoadingTransactions
   ) return null;
-  if (error || transactionsError) return null;
-
   const leaderboardData = mapCampaignsToLeaderboardData(
     campaignsData,
     challengeTitle,

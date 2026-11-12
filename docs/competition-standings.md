@@ -50,10 +50,16 @@ the eligible query; their stored rows need not be deleted. These are tentative
 results, not an immutable record of approved awards. Both displays refresh their
 shared campaign query every 30 seconds while open.
 
+Background refresh errors preserve the last successful query data. Initial
+standings failures are confined to the standing-card area, and initial public
+leaderboard failures use the existing empty-state component rather than a blank
+page. The normal card and leaderboard layouts are unchanged.
+
 ## Tests
 
 ```sh
 node --test scripts/test-leaderboard-ranking.mjs
+node --test scripts/test-standings-refresh.mjs
 node --test scripts/test-standings-concurrency.mjs
 npx supabase test db
 ```
