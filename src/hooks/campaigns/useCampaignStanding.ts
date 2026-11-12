@@ -1,6 +1,9 @@
 import { useMemo } from "react";
 import useReadCampaignsByCompId from "./useReadCampaignsByCompId";
-import { getCampaignRank } from "@/src/lib/leaderboardRanking";
+import {
+  getCampaignRank,
+  getCampaignRankingInputs,
+} from "@/src/lib/leaderboardRanking";
 
 export default function useCampaignStanding(
   campaignId?: number,
@@ -11,11 +14,7 @@ export default function useCampaignStanding(
     if (!query.data || !campaignId) return null;
     const published = query.data
       .filter((c) => c.status === "published")
-      .map((c) => ({
-        campaignId: c.campaign_id,
-        raised: c.raised ?? 0,
-        donors: c.donors ?? 0,
-      }));
+      .map(getCampaignRankingInputs);
 
     return {
       rank: getCampaignRank(published, campaignId),
