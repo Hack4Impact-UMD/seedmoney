@@ -21,8 +21,8 @@ function fixture(status = "published") {
   const state = {
     campaign: { campaign_id: 1, givebutter_id: "remote-1", status },
     lock: null, calls: [], remotePublished: status === "published",
-    failPublished: false, failSuspended: false, defer: false, remoteStatus: 200,
-    networkError: false, authorized: true, failRelease: false,
+    failPublished: false, failSuspended: false, defer: false, remoteStatus: 200, remoteStatuses: [],
+    networkError: false, networkErrorsRemaining: 0, authorized: true, failRelease: false,
   };
   function client() {
     return { from(table) {
@@ -81,9 +81,10 @@ function fixture(status = "published") {
       const call = { body };
       state.calls.push(call);
       if (state.defer) await new Promise(resolve => { call.finish = resolve; });
-      if (state.networkError) throw new Error("Connection lost");
-      if (state.remoteStatus === 200) state.remotePublished = body.published;
-      return new Response(state.remoteStatus === 200 ? "{}" : "Rejected", { status: state.remoteStatus });
+      if (state.networkError || state.networkErrorsRemaining-- > 0) throw new Error("Connection lost");
+      const status = state.remoteStatuses.shift() ?? state.remoteStatus;
+      if (status === 200) state.remotePublished = body.published;
+      return new Response(status === 200 ? "{}" : "Rejected", { status });
     } });
   }
   return { state, instance };
@@ -133,6 +134,30 @@ test("uncertain remote outcomes retain the lock for reconciliation", async () =>
     assert.match(state.lock.error, /outcome is unknown/);
     await assert.rejects(instance()[action](1), /already running/);
   }
+});
+
+test("ambiguous publication requests are not retried and then mistaken for a clean success", async () => {
+  for (const action of ["unpublishGivebutterCampaign", "republishSuspendedGivebutterCampaign"]) {
+    const { state, instance } = fixture(action.startsWith("unpublish") ? "published" : "suspended");
+    state.networkErrorsRemaining = 1;
+    await assert.rejects(instance()[action](1), /Connection lost/);
+    assert.equal(state.calls.length, 1);
+    assert.ok(state.lock);
+  }
+});
+
+test("server errors retain the guard, while explicit rate limits can be retried", async () => {
+  const failed = fixture();
+  failed.state.remoteStatus = 503;
+  await assert.rejects(failed.instance().unpublishGivebutterCampaign(1), /503/);
+  assert.equal(failed.state.calls.length, 1);
+  assert.match(failed.state.lock.error, /503/);
+  const limited = fixture();
+  limited.state.remoteStatuses = [429, 200];
+  await limited.instance().unpublishGivebutterCampaign(1);
+  assert.equal(limited.state.calls.length, 2);
+  assert.equal(limited.state.remotePublished, false);
+  assert.equal(limited.state.lock, null);
 });
 
 test("definitive remote rejection releases the lock and permits suspension retry", async () => {

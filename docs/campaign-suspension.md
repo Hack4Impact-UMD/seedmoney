@@ -17,6 +17,10 @@ locally. Failed recovery records the mismatch and retains the reservation.
 Reservations deliberately do not expire: a timed-out Givebutter request could
 still complete after an automatic expiry. Network errors, uncertain remote
 responses, and interrupted server executions leave the reservation in place.
+These publication requests do not retry network failures, timeouts, or server
+errors: an earlier attempt could still land after a later successful response.
+Explicit rate-limit responses can still be retried. Other Givebutter flows keep
+their existing retry behavior.
 Administrators can inspect the table; only the trusted backend can write it.
 
 For a retained reservation, inspect its `error` and `started_at`, confirm the
@@ -29,4 +33,6 @@ Run the action regressions with:
 
 ```sh
 node --test scripts/test-campaign-suspension.mjs
+node --test scripts/test-campaign-suspension-ui.mjs
+npx supabase test db supabase/tests/campaign_publication_operations.test.sql
 ```

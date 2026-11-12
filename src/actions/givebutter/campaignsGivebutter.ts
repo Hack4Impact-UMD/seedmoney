@@ -197,6 +197,7 @@ async function fetchGivebutterWithRetry(
   url: string,
   init: RequestInit,
   request: GivebutterFetch = fetch,
+  retryUncertainFailures = true,
 ): Promise<Response> {
   let lastError: unknown;
 
@@ -209,6 +210,7 @@ async function fetchGivebutterWithRetry(
       if (
         response.ok ||
         !isRetryableGivebutterStatus(response.status) ||
+        (!retryUncertainFailures && response.status !== 429) ||
         attempt === GIVEBUTTER_MAX_ATTEMPTS - 1
       ) {
         return response;
@@ -216,7 +218,7 @@ async function fetchGivebutterWithRetry(
     } catch (error) {
       lastError = error;
 
-      if (attempt === GIVEBUTTER_MAX_ATTEMPTS - 1) {
+      if (!retryUncertainFailures || attempt === GIVEBUTTER_MAX_ATTEMPTS - 1) {
         throw error;
       }
     }
@@ -312,6 +314,7 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
             published: false,
           }),
         },
+        fetch, false,
       );
     } catch (error) {
       await recordUncertainOutcome("Givebutter suspension outcome is unknown. Verify it before clearing this operation.");
@@ -372,6 +375,7 @@ export async function republishSuspendedGivebutterCampaign(campaignId: number) {
             settings: GIVEBUTTER_CAMPAIGN_SETTINGS,
           }),
         },
+        fetch, false,
       );
     } catch (error) {
       await recordUncertainOutcome("Givebutter republish outcome is unknown. Verify it before clearing this operation.");
@@ -405,6 +409,7 @@ export async function republishSuspendedGivebutterCampaign(campaignId: number) {
             headers: getGivebutterHeaders(),
             body: JSON.stringify({ published: false }),
           },
+          fetch, false,
         );
         if (!rollback.ok) throw new Error(`Givebutter unpublish returned ${rollback.status}`);
       } catch (recoveryError) {
