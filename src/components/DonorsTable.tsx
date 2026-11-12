@@ -20,6 +20,7 @@ import BaseAlert from "@/src/components/bases/BaseAlert";
 import useReadTransactionsByCampaign from "@/src/hooks/transactions/useReadTransactionsByCampaign";
 import useReadCampaign from "@/src/hooks/campaigns/useReadCampaign";
 import { Donor } from "@/src/types/frontend/donorsTable";
+import { downloadFile } from "@/src/lib/utils/csv";
 
 function formatLocalDate(value: string) {
   if (!value.includes("T")) {
@@ -179,16 +180,10 @@ export default function DonorsTable({
       )
       .join("\n");
 
-    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
-    const url = window.URL.createObjectURL(blob);
-    const link = document.createElement("a");
-
-    link.href = url;
-    link.setAttribute("download", exportFileName);
-    document.body.appendChild(link);
-    link.click();
-    document.body.removeChild(link);
-    window.URL.revokeObjectURL(url);
+    downloadFile(
+      exportFileName,
+      new Blob([csvContent], { type: "text/csv;charset=utf-8;" }),
+    );
   }, [exportFileName, sanitizeCsvValue, sortedData]);
 
   const handleCopyEmail = useCallback(async (email: string) => {

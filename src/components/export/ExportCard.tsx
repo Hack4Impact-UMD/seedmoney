@@ -44,17 +44,21 @@ export default function ExportCard({
 
   return (
     <section className="rounded-2xl border border-black/10 bg-white p-6 md:p-8">
-      <div className="flex items-center gap-4 border-b border-gray-300 pb-4 md:gap-6">
-        <div className="shrink-0 text-[#1f2320]">{icon}</div>
-        <div>
-          <h4 className="text-2xl font-semibold text-black">{title}</h4>
-          <p className="mt-2 text-[#1f2320]">{description}</p>
+      {/* Mobile: icon + title on one row, description full width below.
+          Desktop: large icon to the left of the title and description. */}
+      <div className="grid grid-cols-[auto_1fr] items-center gap-x-3 md:gap-x-6 md:border-b md:border-gray-300 md:pb-4">
+        <div className="flex text-[40px] text-[#1f2320] md:row-span-2 md:text-[64px]">
+          {icon}
         </div>
+        <h4 className="text-2xl font-semibold text-black">{title}</h4>
+        <p className="col-span-2 mt-3 text-[#1f2320] md:col-span-1 md:col-start-2 md:mt-2">
+          {description}
+        </p>
       </div>
 
       <div className="mt-4">
         <p className="font-semibold text-black">Includes</p>
-        <ul className="mt-1 list-disc pl-8 text-[#1f2320]">
+        <ul className="mt-1 list-disc pl-5 text-[#1f2320] md:pl-8">
           {includes.map((item) => (
             <li key={item}>{item}</li>
           ))}
@@ -66,6 +70,7 @@ export default function ExportCard({
         onClick={() => setStep("confirm")}
         disabled={exportMutation.isPending}
         startIcon={<FileDownloadOutlinedIcon />}
+        className="!w-full md:!w-auto"
         sx={{
           mt: 3,
           bgcolor: "#2D7A45",

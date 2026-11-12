@@ -18,7 +18,7 @@ export default function ExportData() {
 
         <div className="mt-10 max-w-5xl">
           <ExportCard
-            icon={<InsertDriveFileOutlinedIcon sx={{ fontSize: 64 }} />}
+            icon={<InsertDriveFileOutlinedIcon sx={{ fontSize: "inherit" }} />}
             title="Users, Applications & Campaigns"
             description="Download a .zip with two CSV files: all registered users, and all application and campaign records, including unpublished and suspended campaigns."
             includes={[
@@ -31,7 +31,7 @@ export default function ExportData() {
             buttonLabel="Export All Data"
             confirmTitle="Export Data"
             confirmMessage="Are you sure you want to download all user, application, and campaign information?"
-            successMessage="Your data has been downloaded successfully."
+            successMessage="Your download has started."
             exportMutation={exportAllData}
           />
         </div>

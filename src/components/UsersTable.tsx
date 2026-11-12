@@ -28,6 +28,7 @@ import type {
 import useDeleteUser from "@/src/hooks/users/useDeleteUser";
 import type { Status } from "@/src/types/db/enums";
 import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
+import { downloadFile } from "@/src/lib/utils/csv";
 import {
   countAudienceByStatus,
   getAudienceStatuses,
@@ -470,14 +471,10 @@ export default function UsersTable({
     const csv = [header, ...rows]
       .map((row) => row.map((value) => toCsvCell(String(value))).join(","))
       .join("\n");
-    const url = URL.createObjectURL(
+    downloadFile(
+      "seedmoney-" + selectedYear + "-audience.csv",
       new Blob([csv], { type: "text/csv;charset=utf-8" }),
     );
-    const link = document.createElement("a");
-    link.href = url;
-    link.download = "seedmoney-" + selectedYear + "-audience.csv";
-    link.click();
-    URL.revokeObjectURL(url);
   }, [selectedYear, sortedData]);
 
   const mobileResetKey = [
