@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import { QueryClient } from "@tanstack/react-query";
 
 function load(file, require, extras = {}) {
   const exports = {};
@@ -193,4 +194,45 @@ test("failed local compensation also retains a reconciliation record", async () 
   await assert.rejects(instance().republishSuspendedGivebutterCampaign(1), /reconciliation/i);
   assert.equal(state.remotePublished, false);
   assert.match(state.lock.error, /recovery failed/i);
+});
+
+test("failed suspension refreshes detail and both list caches without swallowing the error", async () => {
+  const { state, instance } = fixture();
+  state.remoteStatus = 403;
+  const queryClient = new QueryClient();
+  const keys = [
+    [{ campaignId: 1 }, "campaigns", "read"],
+    ["campaigns", "approved-campaigns", 1],
+    ["campaigns", "previous-campaigns", 1],
+  ];
+  for (const key of keys) queryClient.setQueryData(key, [{ ...state.campaign }]);
+  const hook = load("../src/hooks/givebutter/useGivebutterCampaignSuspension.ts", name =>
+    name === "@tanstack/react-query"
+      ? { useQueryClient: () => queryClient, useMutation: options => options }
+      : instance());
+  try {
+    const mutation = queryClient.getMutationCache().build(queryClient, hook.default().suspend);
+    await assert.rejects(mutation.execute(1), /Failed to unpublish/);
+    assert.equal(state.campaign.status, "suspended");
+    for (const key of keys) assert.equal(queryClient.getQueryState(key).isInvalidated, true);
+  } finally {
+    queryClient.clear();
+  }
+});
+
+test("successful unsuspension still refreshes the same queries", async () => {
+  const { instance } = fixture("suspended");
+  const queryClient = new QueryClient();
+  const key = [{ campaignId: 1 }, "campaigns", "read"];
+  queryClient.setQueryData(key, []);
+  const hook = load("../src/hooks/givebutter/useGivebutterCampaignSuspension.ts", name =>
+    name === "@tanstack/react-query"
+      ? { useQueryClient: () => queryClient, useMutation: options => options }
+      : instance());
+  try {
+    await queryClient.getMutationCache().build(queryClient, hook.default().unsuspend).execute(1);
+    assert.equal(queryClient.getQueryState(key).isInvalidated, true);
+  } finally {
+    queryClient.clear();
+  }
 });

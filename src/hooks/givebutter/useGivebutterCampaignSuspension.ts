@@ -24,14 +24,14 @@ export default function useGivebutterCampaignSuspension() {
   const suspend = useMutation({
     mutationFn: (campaignId: number) =>
       unpublishGivebutterCampaign(campaignId),
-    onSuccess: (_result, campaignId) =>
+    onSettled: (_result, _error, campaignId) =>
       invalidateCampaignQueries(campaignId),
   });
 
   const unsuspend = useMutation({
     mutationFn: (campaignId: number) =>
       republishSuspendedGivebutterCampaign(campaignId),
-    onSuccess: (_result, campaignId) =>
+    onSettled: (_result, _error, campaignId) =>
       invalidateCampaignQueries(campaignId),
   });
 
