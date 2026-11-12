@@ -31,8 +31,14 @@ lack `transacted_at`. Reconcile those timestamps against Givebutter before
 treating results as complete. Donations missing from `transactions` also require
 reconciliation; a database backfill cannot recover records it never received.
 
-If competition dates or campaign competition assignments are corrected, rebuild
-the derived totals from the SQL editor or trusted service-role backend:
+Competition date edits and campaign competition reassignments automatically
+recalculate affected standings in the same transaction. Donation processing takes
+shared locks on those eligibility rows so concurrent edits cannot leave totals
+based on stale dates or assignments. Full rebuilds acquire table locks in
+parent-before-child order to avoid the campaign-deletion lock cycle.
+
+For reconciliation after correcting missing ledger data, the SQL editor or
+trusted service-role backend can also run a full rebuild:
 
 ```sql
 select public.rebuild_competition_standings();
@@ -48,6 +54,7 @@ shared campaign query every 30 seconds while open.
 
 ```sh
 node --test scripts/test-leaderboard-ranking.mjs
+node --test scripts/test-standings-concurrency.mjs
 npx supabase test db
 ```
 

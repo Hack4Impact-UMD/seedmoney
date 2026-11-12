@@ -1,6 +1,7 @@
 import assert from "node:assert/strict";
-import { spawn, spawnSync } from "node:child_process";
+import { execFileSync, spawn, spawnSync } from "node:child_process";
 import { test } from "node:test";
+import { createClient } from "@supabase/supabase-js";
 
 const container = "supabase_db_seedmoney";
 const pause = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -62,5 +63,63 @@ test("rebuilding and cascading campaign deletion do not deadlock", async () => {
       writer.child.kill("SIGTERM");
       rebuild.child.kill("SIGTERM");
     });
+  }
+});
+
+test("eligibility edits serialize with concurrent donation notifications", async () => {
+  const config = JSON.parse(execFileSync("npx", ["supabase", "status", "-o", "json"], {
+    encoding: "utf8", stdio: ["ignore", "pipe", "pipe"],
+  }));
+  assert.ok(["127.0.0.1", "localhost"].includes(new URL(config.API_URL).hostname));
+  const client = createClient(config.API_URL, config.SERVICE_ROLE_KEY, {
+    auth: { persistSession: false, autoRefreshToken: false },
+  });
+  const id = -Date.now();
+  const nextCompetition = id - 1;
+  function sql(query) {
+    const result = spawnSync("docker", [
+      "exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", "postgres",
+      "-v", "ON_ERROR_STOP=1", "-q",
+    ], { input: query, encoding: "utf8" });
+    assert.equal(result.status, 0, result.stderr);
+  }
+  let created = false;
+  try {
+    sql(`begin;
+      insert into public.competition_metadata(competition_id,start_date,end_date) overriding system value
+      values(${id},'2026-11-15','2026-12-15'),(${nextCompetition},'2026-11-15','2026-12-16');
+      insert into public.campaigns(campaign_id,competition_id,status) overriding system value
+      values(${id},${id},'published'); commit;`);
+    created = true;
+    const donation = (index) => client.from("transactions").insert({
+      campaign_id: id, givebutter_id: `eligibility-${id}-${index}`,
+      amount_donated: 1.25, status: "succeeded",
+      transacted_at: "2026-12-15T17:30:00Z",
+    });
+    const firstBatch = await Promise.all([
+      ...Array.from({ length: 40 }, (_, index) => donation(index)),
+      client.from("competition_metadata").update({ end_date: "2026-12-16" }).eq("competition_id", id),
+    ]);
+    for (const result of firstBatch) assert.equal(result.error, null);
+    const firstStanding = await client.from("competition_standings").select("raised, donation_count")
+      .eq("campaign_id", id).eq("competition_id", id).single();
+    assert.equal(firstStanding.error, null);
+    assert.equal(Number(firstStanding.data.raised), 50);
+    assert.equal(Number(firstStanding.data.donation_count), 40);
+
+    const secondBatch = await Promise.all([
+      ...Array.from({ length: 40 }, (_, index) => donation(index + 40)),
+      client.from("campaigns").update({ competition_id: nextCompetition }).eq("campaign_id", id),
+    ]);
+    for (const result of secondBatch) assert.equal(result.error, null);
+    const secondStanding = await client.from("competition_standings").select("competition_id, raised, donation_count")
+      .eq("campaign_id", id).single();
+    assert.equal(secondStanding.error, null);
+    assert.equal(Number(secondStanding.data.competition_id), nextCompetition);
+    assert.equal(Number(secondStanding.data.raised), 100);
+    assert.equal(Number(secondStanding.data.donation_count), 80);
+  } finally {
+    if (created) sql(`begin; delete from public.campaigns where campaign_id=${id};
+      delete from public.competition_metadata where competition_id in (${id},${nextCompetition}); commit;`);
   }
 });

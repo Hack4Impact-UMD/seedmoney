@@ -91,5 +91,30 @@ select lives_ok('delete from public.campaigns where campaign_id=-910100001', 'De
 select is((select count(*) from public.competition_standings where campaign_id=-910100001), 0::bigint, 'Campaign deletion cascades to its standings');
 select ok(exists(select 1 from public.campaigns where campaign_id=-910100002), 'Unrelated campaigns remain intact');
 
+insert into public.transactions (transaction_id,campaign_id,givebutter_id,amount_donated,status,transacted_at)
+overriding system value values(-910100011,-910100002,'standings-parent-correction',100,'succeeded','2026-12-15 17:30:00+00');
+select is((select raised from public.competition_standings where campaign_id=-910100002), 0::numeric, 'Donation starts outside the original window');
+update public.competition_metadata set end_date='2026-12-16' where competition_id=-910100001;
+select is((select raised from public.competition_standings where campaign_id=-910100002), 100::numeric, 'Extending the window includes existing donations atomically');
+update public.transactions set amount_donated=300 where transaction_id=-910100011;
+select is((select raised from public.competition_standings where campaign_id=-910100002), 300::numeric, 'Correcting a newly eligible donation does not subtract an uncounted contribution');
+select is((select donation_count from public.competition_standings where campaign_id=-910100002), 1::bigint, 'Date corrections preserve the correct count');
+update public.competition_metadata set end_date='2026-12-15' where competition_id=-910100001;
+select is((select raised from public.competition_standings where campaign_id=-910100002), 0::numeric, 'Shrinking the window removes newly ineligible donations');
+
+insert into public.competition_metadata (competition_id,start_date,end_date)
+overriding system value values(-910100002,'2026-11-15','2026-12-16');
+update public.campaigns set competition_id=-910100002 where campaign_id=-910100002;
+select is((select count(*) from public.competition_standings where campaign_id=-910100002 and competition_id=-910100001), 0::bigint, 'Reassignment removes the old competition row');
+select is((select raised from public.competition_standings where campaign_id=-910100002 and competition_id=-910100002), 300::numeric, 'Reassignment recalculates using the new competition window');
+update public.transactions set amount_donated=350 where transaction_id=-910100011;
+select is((select raised from public.competition_standings where campaign_id=-910100002), 350::numeric, 'Corrections after reassignment remain accurate');
+select is((select donation_count from public.competition_standings where campaign_id=-910100002), 1::bigint, 'Corrections after reassignment retain the count');
+update public.campaigns set competition_id=null where campaign_id=-910100002;
+select is((select count(*) from public.competition_standings where campaign_id=-910100002), 0::bigint, 'Removing a competition clears its standings');
+select is((select count(*) from public.transactions where transaction_id=-910100011), 1::bigint, 'Removing a competition preserves its donation ledger');
+update public.campaigns set competition_id=-910100002 where campaign_id=-910100002;
+select is((select raised from public.competition_standings where campaign_id=-910100002), 350::numeric, 'Assigning a competition restores eligible totals');
+
 select * from finish();
 rollback;
