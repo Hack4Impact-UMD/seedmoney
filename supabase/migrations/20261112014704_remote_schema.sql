@@ -71,6 +71,9 @@ end;
 $function$
 ;
 
+revoke all privileges on table public.competition_standings
+from public, anon, authenticated;
+
 grant select on table "public"."competition_standings" to "anon";
 
 grant select on table "public"."competition_standings" to "authenticated";
