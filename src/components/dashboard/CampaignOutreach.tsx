@@ -108,6 +108,10 @@ export default function CampaignOutreach() {
             Open a template to fill in its bracketed fields, preview your personalized message, and copy it to send using your own email.
             All nine templates are available whenever you need them.
           </p>
+          <p className="mt-2 text-sm leading-6 text-[#666666]">
+            Fill in every highlighted field. After copying the message into your email, edit or remove anything that does not fit your garden.
+            For a group email, you can enter “friends” in the recipient-name field.
+          </p>
         </div>
       </div>
 

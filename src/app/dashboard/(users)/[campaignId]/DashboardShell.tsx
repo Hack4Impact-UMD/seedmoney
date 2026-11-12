@@ -37,11 +37,15 @@ import { getStatusLabel } from "@/src/lib/utils/statusConversions";
 import moment from "moment";
 import InformationSection from "@/src/components/dashboard/InformationSection";
 
-const USER_DASHBOARD_TABS: readonly DashboardTabItem[] = [
+// `path` marks a tab that routes to its own sub-page instead of scrolling to a section.
+const USER_DASHBOARD_TABS: readonly (Omit<DashboardTabItem, "href"> & {
+  path?: string;
+})[] = [
   { label: "Overview", sectionId: "dashboard-overview" },
   { label: "Donations", sectionId: "dashboard-donations" },
   { label: "Analytics", sectionId: "dashboard-analytics" },
   { label: "Help", sectionId: "dashboard-help" },
+  { label: "Campaign Outreach", sectionId: "dashboard-outreach", path: "outreach" },
 ];
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
@@ -124,13 +128,14 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
   };
 
   const isOutreachPage = pathname.endsWith("/outreach");
-  const dashboardTabs: readonly DashboardTabItem[] = [
-    ...USER_DASHBOARD_TABS.map((tab) => ({
+  const dashboardTabs: readonly DashboardTabItem[] = USER_DASHBOARD_TABS.map(
+    ({ path, ...tab }) => ({
       ...tab,
-      href: `/dashboard/${campaignId}#${tab.sectionId}`,
-    })),
-    { label: "Campaign Outreach", sectionId: "dashboard-outreach", href: `/dashboard/${campaignId}/outreach` },
-  ];
+      href: path
+        ? `/dashboard/${campaignId}/${path}`
+        : `/dashboard/${campaignId}#${tab.sectionId}`,
+    }),
+  );
 
 
   const isViewingPendingApplication = pathname.endsWith("/application");
