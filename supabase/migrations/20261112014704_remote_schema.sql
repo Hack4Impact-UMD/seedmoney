@@ -17,7 +17,7 @@ CREATE UNIQUE INDEX competition_standings_pkey ON public.competition_standings U
 
 alter table "public"."competition_standings" add constraint "competition_standings_pkey" PRIMARY KEY using index "competition_standings_pkey";
 
-alter table "public"."competition_standings" add constraint "competition_standings_campaign_id_fkey" FOREIGN KEY (campaign_id) REFERENCES public.campaigns(campaign_id) not valid;
+alter table "public"."competition_standings" add constraint "competition_standings_campaign_id_fkey" FOREIGN KEY (campaign_id) REFERENCES public.campaigns(campaign_id) ON DELETE CASCADE not valid;
 
 alter table "public"."competition_standings" validate constraint "competition_standings_campaign_id_fkey";
 
