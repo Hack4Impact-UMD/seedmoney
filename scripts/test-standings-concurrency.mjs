@@ -11,10 +11,10 @@ function session(name) {
     "exec", "-i", container, "psql", "-X", "-U", "postgres", "-d", "postgres",
     "-v", "ON_ERROR_STOP=1", "-At",
   ]);
-  const state = { child, output: "", error: "", exited: false };
+  const state = { child, output: "", error: "", exited: false, exitCode: null };
   child.stdout.on("data", (data) => { state.output += data; });
   child.stderr.on("data", (data) => { state.error += data; });
-  child.on("exit", () => { state.exited = true; });
+  child.on("close", (code) => { state.exitCode = code; state.exited = true; });
   child.stdin.on("error", (error) => {
     if (error.code !== "EPIPE") state.error += error.message;
   });
@@ -52,8 +52,10 @@ test("rebuilding and cascading campaign deletion do not deadlock", async () => {
     await waitUntil(() => writer.output.includes("WRITER_FINISHED"), "Cascading writer could not finish");
     writer.child.stdin.end("rollback;\n");
     await waitUntil(() => rebuild.output.includes("REBUILD_FINISHED") || rebuild.exited, "Rebuild could not finish");
+    if (!rebuild.child.stdin.writableEnded) rebuild.child.stdin.end("rollback;\n");
+    await waitUntil(() => rebuild.exited, "Rebuild session did not close");
     assert.equal(writer.error, "");
-    assert.equal(rebuild.error, "");
+    assert.equal(rebuild.exitCode, 0, rebuild.error);
     assert.ok(rebuild.output.includes("REBUILD_FINISHED"));
   } finally {
     for (const item of [writer, rebuild]) {
