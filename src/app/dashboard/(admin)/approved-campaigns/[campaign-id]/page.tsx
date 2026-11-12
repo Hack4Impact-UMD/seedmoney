@@ -540,8 +540,7 @@ export default function AdminCampaignPage() {
             <span className="font-medium text-[#222622]">
               {campaignData.name || "This campaign"}
             </span>{" "}
-            will go back online with the status it had before (Published) and
-            can receive donations again.
+            will return to Published status.
           </p>
           {unsuspendError && (
             <p className="mt-3 text-sm text-red-600" role="alert">
