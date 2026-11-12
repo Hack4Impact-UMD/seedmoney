@@ -12,6 +12,7 @@ import LeaderboardGrid from "./LeaderboardGrid";
 import LeaderboardEmptyState from "./LeaderboardEmptyState";
 import type { LeaderboardGrantStat } from "./grantStatOptions";
 import { grantStatOptions } from "./grantStatOptions";
+import { compareCampaignsForRank } from "@/src/lib/leaderboardRanking";
 
 type LeaderboardPageProps = {
   data: PublicLeaderboardData;
@@ -39,7 +40,7 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
   const rankedCampaigns = useMemo<PublicLeaderboardCampaignWithRank[]>(
     () =>
       [...data.campaigns]
-        .sort((left, right) => right.raised - left.raised)
+        .sort(compareCampaignsForRank)
         .map((campaign, index) => ({
           ...campaign,
           displayRank: index + 1,
@@ -63,8 +64,7 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
         normalizedSearch.length === 0 ||
         campaign.name.toLowerCase().includes(normalizedSearch);
       const matchesGarden =
-        selectedGarden === "all" ||
-        campaign.projectCategory === selectedGarden;
+        selectedGarden === "all" || campaign.projectCategory === selectedGarden;
       const matchesGrantStat =
         selectedGrantOption === undefined ||
         (selectedGrantOption.minRank !== undefined &&
@@ -79,14 +79,14 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
 
     return [...visibleCampaigns].sort((left, right) => {
       if (selectedSort === "leastRaised") {
-        return left.raised - right.raised;
+        return right.displayRank - left.displayRank;
       }
 
       if (selectedSort === "mostDonors") {
         return right.donors - left.donors;
       }
 
-      return right.raised - left.raised;
+      return left.displayRank - right.displayRank;
     });
   }, [
     data.specialGrantCampaignIds,

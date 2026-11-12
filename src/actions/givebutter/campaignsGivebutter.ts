@@ -684,14 +684,28 @@ export async function deleteCampaignAndGivebutter(campaignId: number) {
       throw new Error("Failed to delete campaign on Givebutter");
   }
 
-  const { data: deletedRows, error: deleteError } = await supabase
-    .from("campaigns")
-    .delete()
-    .eq("campaign_id", campaignId)
-    .select("campaign_id");
+  for (let attempt = 0; attempt < GIVEBUTTER_MAX_ATTEMPTS; attempt += 1) {
+    const { data: deletedRows, error: deleteError } = await supabase
+      .from("campaigns")
+      .delete()
+      .eq("campaign_id", campaignId)
+      .select("campaign_id");
 
-  if (deleteError || !deletedRows || deletedRows.length === 0)
-    throw new Error("Failed to delete campaign");
+    if (!deleteError && deletedRows?.length) return;
+
+    if (
+      deleteError?.code !== "40P01" ||
+      attempt === GIVEBUTTER_MAX_ATTEMPTS - 1
+    ) {
+      throw new Error(
+        campaign.givebutter_id
+          ? "Campaign was deleted from Givebutter, but local cleanup failed. Please contact support."
+          : "Failed to delete campaign",
+      );
+    }
+
+    await wait(GIVEBUTTER_RETRY_BASE_DELAY_MS * 2 ** attempt);
+  }
 }
 
 export async function publishDueCampaigns() {

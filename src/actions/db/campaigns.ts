@@ -1,4 +1,8 @@
 import type { Campaign } from "@/src/types";
+import type {
+  CampaignWithStanding,
+  CompetitionStanding,
+} from "@/src/types/db/competitionStandings";
 import {
   createBrowserClient,
   createServerClient,
@@ -222,21 +226,31 @@ export async function readCampaignServer(
 
 export async function readCampaignsByCompId(
   competitionId: number,
-): Promise<Campaign[]> {
+): Promise<CampaignWithStanding[]> {
   const supabase = createBrowserClient();
 
   const { data, error } = await supabase
     .from("campaigns")
-    .select("*")
+    .select(
+      "*, competition_standings(competition_id, campaign_id, raised, donation_count)",
+    )
     .eq("competition_id", competitionId)
-    .eq("status", "published");
+    .eq("status", "published")
+    .eq("competition_standings.competition_id", competitionId);
 
   if (error) {
     console.error("Error reading campaigns by competition id:", error.message);
-    return [];
+    throw new Error(error.message);
   }
 
-  return (data ?? []) as Campaign[];
+  const campaigns = (data ?? []) as (Campaign & {
+    competition_standings: CompetitionStanding[];
+  })[];
+
+  return campaigns.map(({ competition_standings, ...campaign }) => ({
+    ...campaign,
+    competitionStanding: competition_standings[0] ?? null,
+  }));
 }
 
 export async function updateCampaign(
