@@ -8,8 +8,6 @@
 
 alter table "public"."competition_standings" enable row level security;
 
-alter table "public"."competition_metadata" add column "publish_at" timestamp with time zone;
-
 CREATE UNIQUE INDEX competition_standings_pkey ON public.competition_standings USING btree (competition_id, campaign_id);
 
 alter table "public"."competition_standings" add constraint "competition_standings_pkey" PRIMARY KEY using index "competition_standings_pkey";
@@ -110,14 +108,3 @@ using (( SELECT public.is_in_app_admin() AS is_in_app_admin));
 using ((EXISTS ( SELECT 1
    FROM public.campaigns c
   WHERE ((c.campaign_id = competition_standings.campaign_id) AND (c.competition_id = competition_standings.competition_id) AND (c.status = 'published'::public.status)))));
-
-
-
-  create policy "Admins can upload email images"
-  on "storage"."objects"
-  as permissive
-  for insert
-  to authenticated
-with check (((bucket_id = 'email_images'::text) AND ( SELECT public.is_in_app_admin() AS is_in_app_admin)));
-
-
