@@ -25,7 +25,7 @@ export default function CampaignTransferStatus({
   return (
     <>
       {transfer && (
-        <div className="flex items-center gap-3">
+        <div className="flex max-w-full flex-wrap items-center gap-x-3 gap-y-2">
           <TransferStatusChip
             status={transfer.status}
             onClick={() => setManaging(true)}
@@ -33,7 +33,7 @@ export default function CampaignTransferStatus({
           <button
             type="button"
             onClick={() => setManaging(true)}
-            className="text-[14px] font-bold text-[#2D7A45] underline"
+            className="shrink-0 text-[14px] font-bold uppercase text-[#666] md:normal-case md:text-[#2D7A45] md:underline"
           >
             Manage transfer
           </button>

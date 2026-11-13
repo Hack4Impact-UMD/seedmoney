@@ -102,7 +102,10 @@ export default function ManageTransferModal({
           </>
         }
       >
-        <Typography variant="body1">
+        <Typography
+          variant="body1"
+          sx={{ fontSize: { xs: "14px", sm: "16px" }, lineHeight: 1.5 }}
+        >
           The invitation to {recipient} will <strong>stop working</strong>.{" "}
           {campaignName} stays yours and you can transfer it again anytime.
         </Typography>
@@ -143,7 +146,7 @@ export default function ManageTransferModal({
         </>
       }
     >
-      <div className="text-[16px] leading-[1.5] text-black">
+      <div className="text-[14px] leading-[1.5] text-black sm:text-[16px]">
         {isExpired ? (
           <p>
             The invitation to <strong>{recipient}</strong> to take over{" "}

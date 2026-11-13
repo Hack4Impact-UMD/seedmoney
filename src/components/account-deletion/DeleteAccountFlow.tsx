@@ -201,6 +201,10 @@ export default function DeleteAccountFlow({
       <Button
         variant="text"
         size="medium"
+        sx={{
+          px: { xs: 1, sm: 1 },
+          py: { xs: 1, sm: 1.5 },
+        }}
         onClick={() => {
           setDeleteError(null);
           setStep("overview");
@@ -212,6 +216,11 @@ export default function DeleteAccountFlow({
       <Button
         variant="contained"
         size="small"
+        sx={{
+          px: { xs: 1.5, sm: 1.75 },
+          py: { xs: 1, sm: 1.25 },
+          whiteSpace: "nowrap",
+        }}
         onClick={handleDelete}
         disabled={isDeleting}
         className="enabled:bg-[#D32F2F]! enabled:hover:bg-[#B71C1C]!"
@@ -278,9 +287,9 @@ export default function DeleteAccountFlow({
             {rows.map((row) => (
               <div
                 key={row.campaignId}
-                className="flex items-center gap-3 rounded-[8px] px-4 py-3"
+                className="flex flex-col items-start gap-2 border-b border-gray-200 rounded-[8px] px-4 py-3 sm:flex-row sm:items-center sm:gap-3 sm:border-b-0"
               >
-                <div className="flex min-w-0 flex-1 flex-col gap-1">
+                <div className="flex w-full min-w-0 flex-col gap-1 sm:flex-1">
                   <p className="break-words text-[16px] font-bold text-[#142A19]">
                     {row.name || "Untitled Campaign"}
                   </p>

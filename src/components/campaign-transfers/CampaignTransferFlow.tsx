@@ -39,7 +39,7 @@ export default function CampaignTransferFlow({
   if (!EMAIL_REGEX.test(normalizedEmail)) {
     emailError = "Enter a valid email address";
   } else if (normalizedEmail === normalizeEmail(user?.email ?? "")) {
-    emailError = "That's your own email. Enter the new owner's email.";
+    emailError = "Enter the new owner's email.";
   }
 
   const confirmError =
@@ -80,12 +80,22 @@ export default function CampaignTransferFlow({
           </>
         }
       >
-        <Typography variant="body1">
+        <Typography
+          variant="body1"
+          sx={{ fontSize: { xs: "14px", sm: "16px" }, lineHeight: 1.5 }}
+        >
           Enter the email of the person who should take over. They&apos;ll get
           an invitation to accept, and can create a SeedMoney account if they
           don&apos;t have one.
         </Typography>
-        <Box display="flex" flexDirection="column" gap={2.5} mt={3}>
+        <Box
+          display="flex"
+          flexDirection="column"
+          sx={{
+            gap: { xs: 1.5, sm: 2.5 },
+            mt: { xs: 2, sm: 3 },
+          }}
+        >
           <TextField
             fullWidth
             type="email"
@@ -95,6 +105,11 @@ export default function CampaignTransferFlow({
             onBlur={() => setTouched((t) => ({ ...t, email: true }))}
             error={showEmailError}
             helperText={showEmailError ? emailError : undefined}
+            slotProps={{
+              formHelperText: {
+                sx: { mx: { xs: 1.5, sm: 1.75 } },
+              },
+            }}
           />
           <TextField
             fullWidth
@@ -105,6 +120,11 @@ export default function CampaignTransferFlow({
             onBlur={() => setTouched((t) => ({ ...t, confirm: true }))}
             error={showConfirmError}
             helperText={showConfirmError ? confirmError : undefined}
+            slotProps={{
+              formHelperText: {
+                sx: { mx: { xs: 1.5, sm: 1.75 } },
+              },
+            }}
           />
         </Box>
       </ConfirmEditModalShell>
@@ -138,11 +158,14 @@ export default function CampaignTransferFlow({
         </>
       }
     >
-      <Typography variant="body1">
-        We&apos;ll invite <strong>{normalizedEmail}</strong> to take over{" "}
-        <strong>“{campaignName}”</strong>.
+      <Typography
+        variant="body1"
+        sx={{ fontSize: { xs: "14px", sm: "16px" }, lineHeight: 1.5 }}
+      >
+        We&apos;ll invite <strong className="font-normal sm:font-bold">{normalizedEmail}</strong> to take over{" "}
+        <strong className="font-normal sm:font-bold">“{campaignName}”</strong>.
       </Typography>
-      <ul className="mt-6">
+      <ul className="mt-6 text-[14px] leading-[1.5] sm:text-[16px] sm:leading-normal">
         <li>• Campaign: {campaignName}</li>
         <li>
           • Once they accept, they become the campaign leader and you lose

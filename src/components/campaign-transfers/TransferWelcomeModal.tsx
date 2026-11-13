@@ -45,7 +45,7 @@ export default function TransferWelcomeModal({ campaignId }: { campaignId: numbe
         </Button>
       }
     >
-      <div className="text-[16px] leading-[1.5] text-[#333]">
+      <div className="text-[14px] leading-[1.5] text-[#333] sm:text-[16px]">
         <p>
           <strong>{transfer.inviterName || "The previous leader"}</strong>{" "}
           transferred this campaign to you on{" "}
