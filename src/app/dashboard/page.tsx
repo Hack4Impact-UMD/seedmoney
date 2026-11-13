@@ -275,7 +275,7 @@ export default function DashboardIndexPage() {
         {isLoading && <div className="mt-10 text-gray-500">Loading...</div>}
 
         {!isLoading && userData && !isAdmin && (
-          <div className="mt-10 flex flex-col gap-6">
+          <div className="mt-10">
             <NotStarted />
             <InformationSection />
           </div>
