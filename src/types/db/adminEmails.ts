@@ -29,3 +29,14 @@ export type SaveEmailDraftInput = EmailDraftValues & { id: string; version: numb
 export type EmailDraftResult =
   | { success: true; draft: AdminEmailDraft | null }
   | { success: false; error: string; code: "error" | "conflict" | "validation" };
+
+export type QueueEmailInput = Pick<AdminEmailDraft, "id" | "version">;
+export type QueuedEmailReceipt = {
+  emailId: string;
+  status: string;
+  recipientCount: number;
+  alreadyQueued: boolean;
+};
+export type QueueEmailResult =
+  | { success: true; receipt: QueuedEmailReceipt }
+  | { success: false; code: "validation" | "conflict" | "error"; errors: string[] };
