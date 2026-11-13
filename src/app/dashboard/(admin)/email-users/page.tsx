@@ -23,6 +23,7 @@ import EmailEditor, {
 import EmailPreviewBody from "@/src/components/email/EmailPreviewBody";
 import useUploadEmailImage from "@/src/hooks/email/useUploadEmailImage";
 import useEmailDraft from "@/src/hooks/email/useEmailDraft";
+import useEmailAudience from "@/src/hooks/email/useEmailAudience";
 import { ADMIN_EMAIL_GROUP_LABELS, type AdminEmailGroup } from "@/src/types/db/adminEmails";
 import { MAX_EMAIL_IMAGE_BYTES } from "@/src/actions/db/email-images";
 import {
@@ -37,6 +38,7 @@ export default function EmailUsersPage() {
   const router = useRouter();
   const draft = useEmailDraft();
   const { subject, bodyHtml, recipientGroups } = draft.values;
+  const audience = useEmailAudience(recipientGroups, draft.isLoaded);
   const [uploadError, setUploadError] = useState("");
   const [isUploadingBatch, setIsUploadingBatch] = useState(false);
   const editorRef = useRef<EmailEditorHandle>(null);
@@ -48,6 +50,10 @@ export default function EmailUsersPage() {
   const [testSendNotice, setTestSendNotice] = useState(false);
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false);
   const canEdit = draft.isLoaded && !draft.isDiscarding;
+  const audienceReady = draft.isLoaded && audience.isSuccess && !audience.isFetching;
+  const wrongCompetition = audienceReady && draft.hasDraft && draft.competitionId !== audience.data.competitionId;
+  const canPrepareSend = canEdit && !draft.error && audienceReady && !wrongCompetition &&
+    audience.data.total > 0 && recipientGroups.length > 0 && Boolean(subject.trim());
 
   const isValidTestEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail.trim());
 
@@ -203,17 +209,35 @@ export default function EmailUsersPage() {
                 }}
               >
                 {Object.entries(groupLabels).map(([value, label]) => (
-                  <MenuItem key={value} value={value}>{label}</MenuItem>
+                  <MenuItem key={value} value={value}>
+                    {label} ({audienceReady ? audience.data.groupCounts[value as AdminEmailGroup].toLocaleString() : "..."})
+                  </MenuItem>
                 ))}
               </Select>
             </FormControl>
             
+            {audience.isError && (
+              <div role="alert" className="mt-3 flex flex-wrap items-center gap-3 text-sm text-red-700">
+                <p>{audience.error.message}</p>
+                <Button size="small" onClick={() => audience.refetch()}>Retry recipients</Button>
+              </div>
+            )}
+            {wrongCompetition && (
+              <p role="alert" className="mt-3 text-sm text-red-700">
+                This draft belongs to a different or removed competition. Discard it and start a new draft before sending.
+              </p>
+            )}
+            {audienceReady && audience.data.excludedInvalidEmails > 0 && (
+              <p className="mt-3 text-sm text-amber-800">
+                {audience.data.excludedInvalidEmails.toLocaleString()} accounts excluded because their account email is missing or invalid.
+              </p>
+            )}
             {recipientGroups.length > 0 ? (
                 <div className="flex items-center gap-2 mt-3 rounded-md bg-[#F1F8F3] px-4 py-3 text-[#2F7D43]">
                   <PeopleOutlinedIcon /> 
-                  <p className="text-sm text-[#000000] font-bold">
-                    {/* change to display list count */}
-                    Recipient selection is for preview
+                  <p role="status" data-testid="email-recipient-count" className="text-sm text-[#000000] font-bold">
+                    {audience.isError ? "Recipient count unavailable" : !audienceReady ? "Loading recipients..." :
+                      `${audience.data.total.toLocaleString()} ${audience.data.total === 1 ? "recipient" : "recipients"} selected`}
                   </p>
                 </div>
               ) : (
@@ -328,7 +352,7 @@ export default function EmailUsersPage() {
             <Button 
               type="button" 
               variant="contained" 
-              disabled={!canEdit || Boolean(draft.error) || recipientGroups.length === 0 || !subject.trim()}
+              disabled={!canPrepareSend}
               onClick={() => {
                 setSendConfirmOpen(true);
               }}
@@ -451,6 +475,10 @@ export default function EmailUsersPage() {
                 </p>
 
                 <p className="mt-2 text-sm text-gray-600">
+                  {audienceReady ? `${audience.data.total.toLocaleString()} unique recipients` : "Recipient count unavailable"}
+                </p>
+
+                <p className="mt-2 text-sm text-gray-600">
                   Subject: {subject}
                 </p>
               </div>
@@ -473,6 +501,7 @@ export default function EmailUsersPage() {
                 <Button
                   type="button"
                   variant="contained"
+                  disabled={!canPrepareSend}
                   onClick={() => {
                     setSendConfirmOpen(false);
                     router.push("/dashboard/email-users/sent-history")

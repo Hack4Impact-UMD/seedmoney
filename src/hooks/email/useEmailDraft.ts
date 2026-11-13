@@ -191,5 +191,6 @@ export default function useEmailDraft() {
 
   return { values, update, status, error, savedAt, isLoaded, isDiscarding,
     hasDraft: Boolean(draft.current), isDirty: keyFor(values) !== savedKey.current,
+    competitionId: draft.current?.competition_id ?? null,
     flush, retry, reload: load, discard };
 }
