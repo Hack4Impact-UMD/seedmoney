@@ -40,3 +40,14 @@ export type QueuedEmailReceipt = {
 export type QueueEmailResult =
   | { success: true; receipt: QueuedEmailReceipt }
   | { success: false; code: "validation" | "conflict" | "error"; errors: string[] };
+
+export type PendingAdminEmail = { id: string; subject: string; status: string; recipientCount: number };
+export type EmailBatchProgress = {
+  email_id: string;
+  status: string;
+  done: boolean;
+  counts: Record<"pending" | "sending" | "accepted" | "failed" | "unknown" | "skipped", number>;
+  paused: null | "rate_limited" | "check_brevo_credentials_or_sender";
+  retry_after_seconds: number | null;
+  needs_manual_review: boolean;
+};

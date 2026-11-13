@@ -189,8 +189,14 @@ export default function useEmailDraft() {
     return () => clearTimeout(timer);
   }, [values, isLoaded, error, isDiscarding, flush]);
 
+  const getSavedIdentity = useCallback(() => {
+    if (!ready.current || lastError.current || inFlight.current || pendingWrite.current ||
+      keyFor(current.current) !== savedKey.current || !draft.current) return null;
+    return { id: draft.current.id, version: draft.current.version };
+  }, []);
+
   return { values, update, status, error, savedAt, isLoaded, isDiscarding,
     hasDraft: Boolean(draft.current), isDirty: keyFor(values) !== savedKey.current,
     competitionId: draft.current?.competition_id ?? null,
-    flush, retry, reload: load, discard };
+    flush, getSavedIdentity, retry, reload: load, discard };
 }
