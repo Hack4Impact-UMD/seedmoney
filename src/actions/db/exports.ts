@@ -111,7 +111,7 @@ export async function readAllApplicationsForExport(): Promise<
             role,
             users(first_name, last_name, email)
           ),
-          competition_metadata(start_date),
+          competition_metadata!campaigns_competition_id_fkey(start_date),
           answers(
             answer_id, question_id, final_answer,
             questions(question_number)
