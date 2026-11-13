@@ -24,6 +24,7 @@ import EmailPreviewBody from "@/src/components/email/EmailPreviewBody";
 import useUploadEmailImage from "@/src/hooks/email/useUploadEmailImage";
 import useEmailDraft from "@/src/hooks/email/useEmailDraft";
 import useEmailAudience from "@/src/hooks/email/useEmailAudience";
+import { validateEmailForSend } from "@/src/actions/email/validate";
 import { ADMIN_EMAIL_GROUP_LABELS, type AdminEmailGroup } from "@/src/types/db/adminEmails";
 import { MAX_EMAIL_IMAGE_BYTES } from "@/src/actions/db/email-images";
 import {
@@ -49,11 +50,17 @@ export default function EmailUsersPage() {
   const [testEmail, setTestEmail] = useState("");
   const [testSendNotice, setTestSendNotice] = useState(false);
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false);
-  const canEdit = draft.isLoaded && !draft.isDiscarding;
+  const [isValidating, setIsValidating] = useState(false);
+  const validationInFlight = useRef(false);
+  const [validation, setValidation] = useState<{ key: string; errors: string[] } | null>(null);
+  const [validatedRecipientCount, setValidatedRecipientCount] = useState<number | null>(null);
+  const validationKey = JSON.stringify({ subject, bodyHtml, recipientGroups, testEmail });
+  const validationErrors = validation?.key === validationKey ? validation.errors : [];
+  const canEdit = draft.isLoaded && !draft.isDiscarding && !isValidating;
   const audienceReady = draft.isLoaded && audience.isSuccess && !audience.isFetching;
   const wrongCompetition = audienceReady && draft.hasDraft && draft.competitionId !== audience.data.competitionId;
   const canPrepareSend = canEdit && !draft.error && audienceReady && !wrongCompetition &&
-    audience.data.total > 0 && recipientGroups.length > 0 && Boolean(subject.trim());
+    audience.data.total > 0 && recipientGroups.length > 0 && Boolean(subject.trim()) && !isUploadingBatch;
 
   const isValidTestEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail.trim());
 
@@ -93,6 +100,36 @@ export default function EmailUsersPage() {
   });
 
   const groupLabels = ADMIN_EMAIL_GROUP_LABELS;
+
+  const validateSend = async (mode: "send" | "test", confirm = false) => {
+    if (validationInFlight.current) return;
+    validationInFlight.current = true;
+    setIsValidating(true);
+    setValidation(null);
+    setTestSendNotice(false);
+    try {
+      await draft.flush();
+      const result = await validateEmailForSend({ ...draft.values, mode, testEmail,
+        competitionId: draft.hasDraft ? draft.competitionId : audience.data?.competitionId ?? null });
+      if (!result.success) { setValidation({ key: validationKey, errors: result.errors }); return; }
+      setValidatedRecipientCount(result.recipientCount);
+      if (mode === "test") setTestSendNotice(true);
+      else if (confirm) {
+        setSendConfirmOpen(false);
+        router.push("/dashboard/email-users/sent-history");
+      } else setSendConfirmOpen(true);
+    } catch {
+      setValidation({ key: validationKey, errors: ["Unable to save or validate this email. Your draft is still available; please retry."] });
+    } finally {
+      validationInFlight.current = false;
+      setIsValidating(false);
+    }
+  };
+  const validationNotice = validationErrors.length > 0 && (
+    <ul role="alert" className="space-y-1 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      {validationErrors.map(error => <li key={error}>{error}</li>)}
+    </ul>
+  );
 
   const handleDiscard = async () => {
     if (!window.confirm("Discard this draft? This cannot be undone.")) return;
@@ -324,6 +361,7 @@ export default function EmailUsersPage() {
           </section>
 
           {/* Email actions */}
+          {!testSendOpen && !sendConfirmOpen && validationNotice}
           <div className="flex flex-wrap items-center justify-end gap-3 rounded-xl border border-gray-200 bg-white p-4">
             <Button type="button" variant="text" startIcon={<DeleteOutlineIcon />}
               disabled={!canEdit || isUploadingBatch || (!draft.hasDraft && !draft.isDirty)}
@@ -340,6 +378,7 @@ export default function EmailUsersPage() {
             <Button
               type="button"
               variant="text"
+              disabled={!canPrepareSend}
               onClick={() => {
                 setTestSendNotice(false)
                 setTestSendOpen(true)
@@ -353,12 +392,10 @@ export default function EmailUsersPage() {
               type="button" 
               variant="contained" 
               disabled={!canPrepareSend}
-              onClick={() => {
-                setSendConfirmOpen(true);
-              }}
+              onClick={() => validateSend("send")}
               sx={{display: "flex", gap: 1}}>
               <SendOutlinedIcon fontSize="small" sx={{transform: "rotate(-45deg)", marginTop: "-5px"}}/>
-              Send Email
+              {isValidating && !testSendOpen ? "Checking..." : "Send Email"}
             </Button>
           </div>
 
@@ -402,7 +439,7 @@ export default function EmailUsersPage() {
           {/* Test Send modal */}
           <BaseModal
             open={testSendOpen}
-            onClose={() => setTestSendOpen(false)}
+            onClose={() => { if (!isValidating) setTestSendOpen(false); }}
             title="Send Test Email"
           >
             <div className="flex flex-col gap-5">
@@ -418,11 +455,14 @@ export default function EmailUsersPage() {
                 label="Email address"
                 placeholder="example@email.com"
                 value={testEmail}
+                disabled={isValidating}
                 onChange={(event) => {
                   setTestEmail(event.target.value);
                   setTestSendNotice(false);
                 }}
               />
+
+              {validationNotice}
 
               {testSendNotice && (
                 <p role="status" className="rounded-md bg-[#F1F8F3] p-3 text-sm text-[#2F7D43]">
@@ -434,6 +474,7 @@ export default function EmailUsersPage() {
                 <Button
                   type="button"
                   variant="text"
+                  disabled={isValidating}
                   sx={{ color: "#123A1E" }}
                   onClick={() => setTestSendOpen(false)}
                 >
@@ -443,8 +484,8 @@ export default function EmailUsersPage() {
                 <Button
                   type="button"
                   variant="contained"
-                  disabled={!isValidTestEmail}
-                  onClick={() => setTestSendNotice(true)}
+                  disabled={!isValidTestEmail || isValidating || !canPrepareSend}
+                  onClick={() => validateSend("test")}
                   sx={{
                     backgroundColor: "#2F7D43",
                     "&:hover": {
@@ -452,7 +493,7 @@ export default function EmailUsersPage() {
                     },
                   }}
                 >
-                  Send Test Email
+                  {isValidating ? "Checking..." : "Send Test Email"}
                 </Button>
               </div>
             </div>
@@ -461,7 +502,7 @@ export default function EmailUsersPage() {
           {/* Send Email confirmation */}
           <BaseModal
             open={sendConfirmOpen}
-            onClose={() => setSendConfirmOpen(false)}
+            onClose={() => { if (!isValidating) setSendConfirmOpen(false); }}
             title="Send this email?"
           >
             <div className="flex flex-col gap-5">
@@ -475,13 +516,15 @@ export default function EmailUsersPage() {
                 </p>
 
                 <p className="mt-2 text-sm text-gray-600">
-                  {audienceReady ? `${audience.data.total.toLocaleString()} unique recipients` : "Recipient count unavailable"}
+                  {validatedRecipientCount !== null ? `${validatedRecipientCount.toLocaleString()} unique recipients` : "Recipient count unavailable"}
                 </p>
 
                 <p className="mt-2 text-sm text-gray-600">
                   Subject: {subject}
                 </p>
               </div>
+
+              {validationNotice}
 
               <p className="text-sm text-gray-500">
                 Please review your recipients and message before confirming.
@@ -492,6 +535,7 @@ export default function EmailUsersPage() {
                 <Button
                   type="button"
                   variant="text"
+                  disabled={isValidating}
                   onClick={() => setSendConfirmOpen(false)}
                   sx={{ color: "#123A1E" }}
                 >
@@ -502,10 +546,7 @@ export default function EmailUsersPage() {
                   type="button"
                   variant="contained"
                   disabled={!canPrepareSend}
-                  onClick={() => {
-                    setSendConfirmOpen(false);
-                    router.push("/dashboard/email-users/sent-history")
-                  }}
+                  onClick={() => validateSend("send", true)}
                   sx={{
                     backgroundColor: "#2F7D43",
                     "&:hover": {
@@ -513,7 +554,7 @@ export default function EmailUsersPage() {
                     },
                   }}
                 >
-                  Confirm (Demo)
+                  {isValidating ? "Checking..." : "Confirm (Demo)"}
                 </Button>
               </div>
             </div>

@@ -226,10 +226,34 @@ async function until(check, message) {
     await page.keyboard.press('Escape');
     await until(async () => (await selectedCount()) === baseline[0] + 5, 'All Users was double counted with other groups');
     await subject.fill('Audience confirmation');
+    await code.fill('<p>Unclosed message');
+    await page.getByRole('button', { name: 'Send Email', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'Close every non-void' }).waitFor();
+    assert.equal(await page.getByRole('heading', { name: 'Send this email?', exact: true }).count(), 0);
+    assert.equal((await service.from('admin_emails').select('body_html').eq('created_by', userId).eq('status', 'draft').single()).data.body_html, '<p>Unclosed message');
+    await code.fill('<p>{{unknown}}</p>');
+    await page.getByRole('button', { name: 'Send Email', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'Use only complete' }).waitFor();
+    await code.fill('<p onclick="alert(1)">Unsafe message</p>');
+    await page.getByRole('button', { name: 'Test send', exact: true }).click();
+    await page.getByRole('textbox', { name: 'Email address', exact: true }).fill('test@example.org');
+    await page.getByRole('button', { name: 'Send Test Email', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'unsafe or unsupported' }).waitFor();
+    assert.equal(await page.getByText(/Test send simulated/).count(), 0);
+    await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await code.fill('<p>{{campaign_url}}</p>');
+    await page.getByRole('button', { name: 'Send Email', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'Every recipient must have exactly one' }).waitFor();
+    await code.fill('<p>Hello {{first_name}}</p>');
     await until(async () => await page.getByRole('button', { name: 'Send Email', exact: true }).isEnabled(), 'Valid audience did not enable confirmation');
     await page.getByRole('button', { name: 'Send Email', exact: true }).click();
     await page.getByText(`${(baseline[0] + 5).toLocaleString()} unique recipients`, { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await page.getByRole('button', { name: 'Test send', exact: true }).click();
+    await page.getByRole('button', { name: 'Send Test Email', exact: true }).click();
+    await page.getByText('Test send simulated for test@example.org. No email was actually sent.', { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+    console.log('PASS: send and test-send validation block malformed/unsafe HTML and invalid personalization without changing the saved draft.');
     await page.route('**/dashboard/email-users', async route => {
       let args;
       try { args = JSON.parse(route.request().postData() || 'null'); } catch { /* Not a JSON server action. */ }

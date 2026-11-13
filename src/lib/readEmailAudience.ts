@@ -3,13 +3,12 @@ import "server-only";
 import { requireAdmin } from "@/src/lib/requireAdmin";
 import { createServiceRoleClient } from "@/src/lib/supabase-service";
 import { fetchAllPages } from "@/src/lib/fetchAllPages";
-import { resolveEmailRecipients, validEmailGroups } from "@/src/lib/emailRecipients";
+import { resolveEmailRecipients, validEmailGroups, type EmailAudienceCampaign } from "@/src/lib/emailRecipients";
 import type { AdminEmailGroup } from "@/src/types/db/adminEmails";
 import type { Users } from "@/src/types/db/users";
-import type { UserCampaign } from "@/src/types/frontend/usersTable";
 
 type AudienceAccount = Pick<Users, "id" | "email" | "first_name" | "last_name" | "is_admin">;
-type LeaderMembership = { user_id: string; role: string; campaigns: UserCampaign | null };
+type LeaderMembership = { user_id: string; role: string; campaigns: EmailAudienceCampaign | null };
 
 // Future sends must call this again, not trust counts or recipients from the browser.
 export async function readCurrentEmailAudience(groups: AdminEmailGroup[]) {
@@ -25,10 +24,10 @@ export async function readCurrentEmailAudience(groups: AdminEmailGroup[]) {
     .select("id, email, first_name, last_name, is_admin", { count: "exact" })
     .eq("is_admin", false).order("id").range(from, to));
   const members = await fetchAllPages<LeaderMembership>((from, to) => supabase.from("campaign_members")
-    .select("user_id, role, campaigns!inner(campaign_id, name, status, competition_id)", { count: "exact" })
+    .select("user_id, role, campaigns!inner(campaign_id, name, status, competition_id, givebutterlink)", { count: "exact" })
     .eq("role", "campaign_leader").eq("campaigns.competition_id", competition.competition_id)
     .order("user_id").order("campaign_id").range(from, to));
-  const campaignsByUser = new Map<string, UserCampaign[]>();
+  const campaignsByUser = new Map<string, EmailAudienceCampaign[]>();
   for (const member of members) {
     if (member.role !== "campaign_leader" || !member.campaigns) continue;
     const campaigns = campaignsByUser.get(member.user_id) ?? [];

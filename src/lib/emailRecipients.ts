@@ -1,9 +1,10 @@
 import { getAudienceStatuses, getCompetitionAudience } from "@/src/lib/competitionAudience";
 import { ADMIN_EMAIL_GROUP_LABELS, type AdminEmailGroup } from "@/src/types/db/adminEmails";
-import type { UsersTableRow } from "@/src/types/frontend/usersTable";
+import type { UserCampaign, UsersTableRow } from "@/src/types/frontend/usersTable";
 
-export type EmailAudienceUser = UsersTableRow & { is_admin: boolean };
-export type EmailRecipient = { userId: string; email: string; firstName: string };
+export type EmailAudienceCampaign = UserCampaign & { givebutterlink?: string | null };
+export type EmailAudienceUser = UsersTableRow & { is_admin: boolean; campaigns: EmailAudienceCampaign[] };
+export type EmailRecipient = { userId: string; email: string; firstName: string; campaignId: number | null; campaignUrl: string | null };
 export type EmailAudienceSummary = {
   competitionId: number;
   groupCounts: Record<AdminEmailGroup, number>;
@@ -39,7 +40,12 @@ export function resolveEmailRecipients(
     if (statuses.includes("not_started")) memberships.push("not_started");
     if (statuses.includes("in_progress")) memberships.push("unfinished");
     if (statuses.includes("approved") || statuses.includes("published")) memberships.push("approved");
-    const recipient = { userId: user.id, email, firstName: user.first_name ?? "" };
+    const approved = new Map((user.campaigns as EmailAudienceCampaign[])
+      .filter(campaign => campaign.status === "approved" || campaign.status === "published")
+      .map(campaign => [campaign.campaign_id, campaign]));
+    const campaign = approved.size === 1 ? [...approved.values()][0] : null;
+    const recipient = { userId: user.id, email, firstName: user.first_name ?? "",
+      campaignId: campaign?.campaign_id ?? null, campaignUrl: campaign?.givebutterlink?.trim() || null };
     const emailKey = email.toLowerCase();
     for (const group of memberships) {
       if (!byGroup[group].has(emailKey)) byGroup[group].set(emailKey, recipient);

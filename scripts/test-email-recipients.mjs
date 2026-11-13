@@ -72,6 +72,20 @@ test("unknown groups and missing competition IDs fail closed", () => {
   for (const id of [null, 0, -1, 1.2]) assert.throws(() => resolver.resolveEmailRecipients([], id, []), /Invalid/);
 });
 
+test("campaign personalization uses only one eligible current campaign and never guesses", () => {
+  const eligible = { ...campaign("approved"), givebutterlink: " https://givebutter.com/garden " };
+  const result = resolver.resolveEmailRecipients([
+    user("single", [eligible, { ...campaign("approved", 2), campaign_id: 2 }]),
+    user("many", [eligible, { ...eligible, campaign_id: 2 }]),
+    user("pending", [{ ...eligible, status: "pending" }]),
+  ], 1, ["all"]);
+  const recipients = new Map(result.recipients.map(value => [value.userId, value]));
+  assert.equal(recipients.get("single").campaignUrl, "https://givebutter.com/garden");
+  assert.equal(recipients.get("single").campaignId, 1);
+  assert.equal(recipients.get("many").campaignUrl, null);
+  assert.equal(recipients.get("pending").campaignUrl, null);
+});
+
 const paging = load("../src/lib/fetchAllPages.ts");
 function readerFixture() {
   const state = { authorized: true, services: 0, competition: { competition_id: 1 }, competitionError: null,
