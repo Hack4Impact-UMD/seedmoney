@@ -11,6 +11,9 @@ declare module "@mui/material/Chip" {
     publish_failed: true;
     suspended: true;
     archived: true;
+    transfer_pending: true;
+    transfer_expired: true;
+    transferred: true;
   }
 }
 
@@ -176,6 +179,9 @@ const theme = createTheme({
         { props: { variant: "publish_failed" }, style: { border: "1px solid #D32F2F", color: "#D32F2F", backgroundColor: "#FFFFFF" } },
         { props: { variant: "published" },      style: { border: "1px solid #2D7A45", color: "#2D7A45", backgroundColor: "#FFFFFF" } },
         { props: { variant: "suspended" },      style: { border: "1px solid #667085", color: "#667085", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "transfer_pending" }, style: { border: "1px solid #ED6C02", color: "#ED6C02", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "transfer_expired" }, style: { border: "1px solid #666666", color: "#666666", backgroundColor: "#FFFFFF" } },
+        { props: { variant: "transferred" },      style: { border: "1px solid #2E7D32", color: "#2E7D32", backgroundColor: "#FFFFFF" } },
       ],
     },
   },
