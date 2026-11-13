@@ -20,6 +20,8 @@ async function until(check, message) {
 }
 (async () => {
   let userId, browser, uploadedPath;
+  const audienceUsers = [], audienceCampaigns = [];
+  let pastCompetitionId;
   try {
     const created = await service.auth.admin.createUser({ email, password, email_confirm: true, user_metadata: { first_name: 'Draft', last_name: 'Tester' } });
     assert.equal(created.error, null);
@@ -47,7 +49,7 @@ async function until(check, message) {
     const code = page.locator('.cm-content');
     await code.fill('<table><tr><td>Hello {{first_name}}</td></tr></table>');
     await page.getByRole('combobox', { name: 'Recipient groups' }).click();
-    await page.getByRole('option', { name: 'All Users', exact: true }).click();
+    await page.getByRole('option', { name: /^All Users \(/ }).click();
     await page.keyboard.press('Escape');
     await until(async () => (await service.from('admin_emails').select('*').eq('created_by', userId)).data?.[0]?.body_html === '<table><tr><td>Hello {{first_name}}</td></tr></table>', 'Body did not autosave');
     let rows = (await service.from('admin_emails').select('*').eq('created_by', userId)).data;
@@ -164,6 +166,103 @@ async function until(check, message) {
     console.log('PASS: an already-queued message cannot be edited by the stale compose form.');
     assert.deepEqual(errors, []);
     console.log('PASS: discard removes only the draft and reload does not recreate it. No browser errors.');
+
+    await page.reload();
+    await page.getByText('No draft saved', { exact: true }).waitFor();
+    const labels = ['All Users', "Haven't started an application", 'Unfinished applications', 'Approved Campaigns'];
+    const option = label => page.getByRole('option').filter({ hasText: label });
+    const readCounts = async () => {
+      await page.getByRole('combobox', { name: 'Recipient groups' }).click();
+      await until(async () => /\([\d,]+\)/.test(await option(labels[0]).innerText()), 'Audience counts did not load');
+      const counts = [];
+      for (const label of labels) counts.push(Number((await option(label).innerText()).match(/\(([\d,]+)\)/)[1].replaceAll(',', '')));
+      return counts;
+    };
+    const baseline = await readCounts();
+    await option(labels[2]).click();
+    await option(labels[3]).click();
+    await page.keyboard.press('Escape');
+    const selectedCount = async () => Number((await page.getByTestId('email-recipient-count').innerText()).match(/^([\d,]+)/)?.[1].replaceAll(',', ''));
+    await until(async () => Number.isFinite(await selectedCount()), 'Baseline selected count did not load');
+    const baselineSelected = await selectedCount();
+    await until(async () => (await service.from('admin_emails').select('recipient_groups').eq('created_by', userId).eq('status', 'draft').maybeSingle()).data?.recipient_groups.length === 2,
+      'Recipient selection did not autosave before reload');
+    const competition = await service.from('competition_metadata').select('competition_id').eq('is_current', true).single();
+    assert.equal(competition.error, null);
+    const past = await service.from('competition_metadata').insert({ competition_id: token, start_date: '2000-01-01', end_date: '2000-12-15', is_current: false }).select('competition_id').single();
+    assert.equal(past.error, null);
+    pastCompetitionId = past.data.competition_id;
+    for (let i = 0; i < 5; i++) {
+      const account = await service.auth.admin.createUser({ email: `audience-${token}-${i}@example.com`, password, email_confirm: true,
+        user_metadata: { first_name: 'Audience', last_name: 'Tester' } });
+      assert.equal(account.error, null);
+      audienceUsers.push(account.data.user.id);
+    }
+    const addCampaign = async (ownerIndex, status, competitionId = competition.data.competition_id) => {
+      const created = await service.from('campaigns').insert({ campaign_id: token + audienceCampaigns.length, name: `Audience test ${token}`, status, competition_id: competitionId,
+        contact_email: 'not-the-account-email@example.com' }).select('campaign_id').single();
+      assert.equal(created.error, null);
+      audienceCampaigns.push(created.data.campaign_id);
+      assert.equal((await service.from('campaign_members').insert({ campaign_id: created.data.campaign_id,
+        user_id: audienceUsers[ownerIndex], role: 'campaign_leader' })).error, null);
+      return created.data.campaign_id;
+    };
+    const approvedId = await addCampaign(0, 'approved');
+    await addCampaign(0, 'in_progress');
+    const draftIdForAudience = await addCampaign(1, 'in_progress');
+    await addCampaign(2, 'approved', pastCompetitionId);
+    await addCampaign(4, 'published');
+    assert.equal((await service.from('campaign_members').insert({ campaign_id: approvedId, user_id: audienceUsers[3], role: 'campaign_member' })).error, null);
+    await page.reload();
+    const counts = await readCounts();
+    assert.deepEqual(counts, baseline.map((count, i) => count + [5, 2, 2, 2][i]));
+    await page.keyboard.press('Escape');
+    await until(async () => (await selectedCount()) === baselineSelected + 3, 'Overlapping recipient groups were not deduplicated');
+    assert.equal((await service.from('campaigns').update({ status: 'pending' }).eq('campaign_id', draftIdForAudience)).error, null);
+    await page.reload();
+    await until(async () => (await selectedCount()) === baselineSelected + 2, 'Changed application status did not refresh the audience');
+    await page.getByRole('combobox', { name: 'Recipient groups' }).click();
+    await option(labels[0]).click();
+    await page.keyboard.press('Escape');
+    await until(async () => (await selectedCount()) === baseline[0] + 5, 'All Users was double counted with other groups');
+    await subject.fill('Audience confirmation');
+    await until(async () => await page.getByRole('button', { name: 'Send Email', exact: true }).isEnabled(), 'Valid audience did not enable confirmation');
+    await page.getByRole('button', { name: 'Send Email', exact: true }).click();
+    await page.getByText(`${(baseline[0] + 5).toLocaleString()} unique recipients`, { exact: true }).waitFor();
+    await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await page.route('**/dashboard/email-users', async route => {
+      let args;
+      try { args = JSON.parse(route.request().postData() || 'null'); } catch { /* Not a JSON server action. */ }
+      if (route.request().method() === 'POST' && Array.isArray(args) && args.length === 1 && Array.isArray(args[0])) {
+        await route.abort('failed');
+      } else await route.continue();
+    });
+    await page.getByRole('combobox', { name: 'Recipient groups' }).click();
+    await option(labels[1]).click();
+    await page.keyboard.press('Escape');
+    await page.getByRole('button', { name: 'Retry recipients', exact: true }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Send Email', exact: true }).isDisabled(), true);
+    assert.equal(await page.getByTestId('email-recipient-count').innerText(), 'Recipient count unavailable');
+    await page.unroute('**/dashboard/email-users');
+    await page.getByRole('button', { name: 'Retry recipients', exact: true }).click();
+    await until(async () => (await selectedCount()) === baseline[0] + 5, 'Recipient counts did not recover after retry');
+    console.log('PASS: recipient-query failures are visible, block confirmation, and recover through retry.');
+    await until(async () => {
+      const saved = (await service.from('admin_emails').select('subject, recipient_groups').eq('created_by', userId).eq('status', 'draft').single()).data;
+      return saved?.subject === 'Audience confirmation' && saved.recipient_groups.length === 4;
+    }, 'Audience draft did not save');
+    assert.equal((await service.from('admin_emails').update({ competition_id: pastCompetitionId }).eq('created_by', userId).eq('status', 'draft')).error, null);
+    await page.reload();
+    await page.getByRole('alert').filter({ hasText: 'different or removed competition' }).waitFor();
+    assert.equal(await page.getByRole('button', { name: 'Send Email', exact: true }).isDisabled(), true);
+    await page.setViewportSize({ width: 1365, height: 1000 });
+    await page.screenshot({ path: '/private/tmp/email-audience-desktop.png', fullPage: true });
+    await page.setViewportSize({ width: 390, height: 844 });
+    assert.equal(await page.getByRole('heading', { name: 'Email Users', exact: true }).count(), 1);
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    await page.screenshot({ path: '/private/tmp/email-audience-mobile.png' });
+    assert.deepEqual(errors, []);
+    console.log('PASS: real group counts, current leader membership, status changes, deduplication, confirmation totals, and old-draft guards.');
   } finally {
     if (browser) await browser.close();
     if (userId) {
@@ -171,5 +270,8 @@ async function until(check, message) {
       if (uploadedPath) assert.equal((await service.storage.from('email_images').remove([uploadedPath])).error, null);
       assert.equal((await service.auth.admin.deleteUser(userId)).error, null);
     }
+    if (audienceCampaigns.length) assert.equal((await service.from('campaigns').delete().in('campaign_id', audienceCampaigns)).error, null);
+    for (const id of audienceUsers) assert.equal((await service.auth.admin.deleteUser(id)).error, null);
+    if (pastCompetitionId) assert.equal((await service.from('competition_metadata').delete().eq('competition_id', pastCompetitionId)).error, null);
   }
 })().catch(error => { console.error(error); process.exitCode = 1; });
