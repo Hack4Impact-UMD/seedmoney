@@ -28,6 +28,16 @@ const GIVEBUTTER_CAMPAIGN_SETTINGS = [
     name: "disable_recurring",
     value: true,
   },
+  // Turns off Public messages on the campaign page.
+  {
+    name: "disable_spaces",
+    value: true,
+  },
+  // Maintain aspect ratio for the cover image.
+  {
+    name: "use_actual_cover_size",
+    value: true,
+  },
 ];
 const GARDEN_STORY_HEADERS = [
   "Our Garden & Community",

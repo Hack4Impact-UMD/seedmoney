@@ -18,6 +18,18 @@ const GIVEBUTTER_CAMPAIGN_SETTINGS = [
     name: "disable_recurring",
     value: true,
   },
+  // Keep in sync with GIVEBUTTER_CAMPAIGN_SETTINGS in
+  // src/actions/givebutter/campaignsGivebutter.ts.
+  // Turns off Public messages on the campaign page.
+  {
+    name: "disable_spaces",
+    value: true,
+  },
+  // Maintain aspect ratio for the cover image.
+  {
+    name: "use_actual_cover_size",
+    value: true,
+  },
 ];
 
 function wait(ms) {
