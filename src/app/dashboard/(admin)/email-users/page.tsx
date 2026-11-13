@@ -7,6 +7,7 @@ import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Navbar from "@/src/components/Navbar"
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
@@ -21,6 +22,8 @@ import EmailEditor, {
 } from "@/src/components/email/EmailEditor";
 import EmailPreviewBody from "@/src/components/email/EmailPreviewBody";
 import useUploadEmailImage from "@/src/hooks/email/useUploadEmailImage";
+import useEmailDraft from "@/src/hooks/email/useEmailDraft";
+import { ADMIN_EMAIL_GROUP_LABELS, type AdminEmailGroup } from "@/src/types/db/adminEmails";
 import { MAX_EMAIL_IMAGE_BYTES } from "@/src/actions/db/email-images";
 import {
   EXAMPLE_TOKEN_VALUES,
@@ -32,10 +35,10 @@ import { useRouter } from "next/navigation";
 
 export default function EmailUsersPage() {
   const router = useRouter();
-  const [recipientGroups, setRecipientGroups] = useState<string[]>([]);
-  const [subject, setSubject] = useState("");
-  const [bodyHtml, setBodyHtml] = useState("");
+  const draft = useEmailDraft();
+  const { subject, bodyHtml, recipientGroups } = draft.values;
   const [uploadError, setUploadError] = useState("");
+  const [isUploadingBatch, setIsUploadingBatch] = useState(false);
   const editorRef = useRef<EmailEditorHandle>(null);
   const { mutateAsync: uploadImage, isPending: isUploadingImage } =
     useUploadEmailImage();
@@ -44,7 +47,7 @@ export default function EmailUsersPage() {
   const [testEmail, setTestEmail] = useState("");
   const [testSendNotice, setTestSendNotice] = useState(false);
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false);
-  const [sendNotice, setSendNotice] = useState(false);
+  const canEdit = draft.isLoaded && !draft.isDiscarding;
 
   const isValidTestEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail.trim());
 
@@ -57,20 +60,24 @@ export default function EmailUsersPage() {
     },
     multiple: true,
     maxSize: MAX_EMAIL_IMAGE_BYTES,
-    disabled: isUploadingImage,
+    disabled: !canEdit || isUploadingImage || isUploadingBatch,
 
     // Upload each image to storage, then insert it where the cursor is
     onDropAccepted: async (files) => {
       setUploadError("");
-
-      for (const file of files) {
-        try {
-          const url = await uploadImage(file);
-          editorRef.current?.insertImage(url, file.name);
-        } catch (error) {
-          console.error(error);
-          setUploadError(`Couldn't upload ${file.name}. Please try again.`);
+      setIsUploadingBatch(true);
+      try {
+        for (const file of files) {
+          try {
+            const url = await uploadImage(file);
+            editorRef.current?.insertImage(url, file.name);
+          } catch (error) {
+            console.error(error);
+            setUploadError(`Couldn't upload ${file.name}. Please try again.`);
+          }
         }
+      } finally {
+        setIsUploadingBatch(false);
       }
     },
   
@@ -79,18 +86,21 @@ export default function EmailUsersPage() {
     },
   });
 
-  const groupLabels: Record<string, string> = {
-    all: "All Users",
-    applicants: "Applicants",
-    approved: "Approved Campaigns",
+  const groupLabels = ADMIN_EMAIL_GROUP_LABELS;
+
+  const handleDiscard = async () => {
+    if (!window.confirm("Discard this draft? This cannot be undone.")) return;
+    if (await draft.discard()) setUploadError("");
   };
 
-  const handleDiscard = () => {
-    setRecipientGroups([]);
-    setSubject("");
-    setBodyHtml("");
-    setUploadError("");
-  };
+  const saveLabel = !draft.isLoaded
+    ? draft.error ? "Draft unavailable" : "Loading draft..."
+    : draft.isDiscarding ? "Discarding..."
+    : draft.status === "saving" ? "Saving..."
+    : draft.error ? "Draft not saved"
+    : draft.isDirty ? "Unsaved changes"
+    : draft.savedAt ? `Auto saved at ${new Date(draft.savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+    : "No draft saved";
 
   return (
     <div className="flex min-h-screen">
@@ -120,6 +130,14 @@ export default function EmailUsersPage() {
               <Button
                 component={Link}
                 href="/dashboard/email-users/sent-history"
+                onClick={async (event) => {
+                  event.preventDefault();
+                  if (!canEdit || isUploadingBatch) return;
+                  try {
+                    await draft.flush();
+                    router.push("/dashboard/email-users/sent-history");
+                  } catch { /* The draft error is displayed below. */ }
+                }}
                 variant="outlined"
                 size="small"
               >
@@ -128,7 +146,18 @@ export default function EmailUsersPage() {
             </div>
           </div>
 
-          <section className="rounded-xl border border-gray-200 bg-white p-6">
+          {draft.error && (
+            <div role="alert" className="flex flex-wrap items-center gap-3 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              <p>{draft.error.error}</p>
+              {draft.error.code === "conflict" ? (
+                <Button size="small" onClick={() => {
+                  if (window.confirm("Reloading will replace your unsaved edits with the saved draft. Continue?")) draft.reload();
+                }}>Reload draft</Button>
+              ) : <Button size="small" onClick={draft.retry}>Retry</Button>}
+            </div>
+          )}
+
+          <section inert={!canEdit} className="rounded-xl border border-gray-200 bg-white p-6">
             <div className="flex items-center gap-3 mb-2">
               <h2 className="text-lg font-semibold text-[#123A1E]">
                 1. Recipients
@@ -144,9 +173,7 @@ export default function EmailUsersPage() {
                     variant="outlined"
                     color="success"
                     onDelete={() =>
-                      setRecipientGroups((prev) =>
-                        prev.filter((item) => item !== group)
-                      )
+                      draft.update({ recipientGroups: recipientGroups.filter((item) => item !== group) })
                     }
                   />
                 ))}
@@ -158,7 +185,7 @@ export default function EmailUsersPage() {
                 Recipient groups
               </InputLabel>
 
-              <Select<string[]>
+              <Select<AdminEmailGroup[]>
                 labelId="recipient-groups-label"
                 value={recipientGroups}
                 label="Recipient groups"
@@ -172,14 +199,12 @@ export default function EmailUsersPage() {
                 onChange={(event) => {
                   const value = event.target.value;
 
-                  setRecipientGroups(
-                    typeof value === "string" ? value.split(",") : value
-                  );
+                  draft.update({ recipientGroups: typeof value === "string" ? value.split(",") as AdminEmailGroup[] : value });
                 }}
               >
-                <MenuItem value="all">All Users</MenuItem>
-                <MenuItem value="applicants">Applicants</MenuItem>
-                <MenuItem value="approved">Approved Campaigns</MenuItem>
+                {Object.entries(groupLabels).map(([value, label]) => (
+                  <MenuItem key={value} value={value}>{label}</MenuItem>
+                ))}
               </Select>
             </FormControl>
             
@@ -214,63 +239,71 @@ export default function EmailUsersPage() {
                 </p>
               </div>
 
-              <p className="text-sm text-[#2F7D43]">
-                Draft preview (not saved)
+              <p role="status" className={`text-sm ${draft.error ? "text-red-600" : "text-[#2F7D43]"}`}>
+                {saveLabel}
               </p>
             </div>
 
-            <TextField
-              fullWidth
-              label="Subject"
-              value={subject}
-              onChange={(event) => setSubject(event.target.value)}
-            />
+            <div inert={!canEdit}>
+              <TextField
+                fullWidth
+                label="Subject"
+                value={subject}
+                onChange={(event) => draft.update({ subject: event.target.value })}
+              />
 
-            <EmailEditor
-              ref={editorRef}
-              value={bodyHtml}
-              onChange={setBodyHtml}
-            />
-
-            {/* Image upload: inserted into the message at the cursor */}
-            <div {...getRootProps({ className: "dropzone" })}>
-              <input {...getInputProps()} />
-
-              <div className="mt-6 flex min-h-[175px] cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-dashed border-gray-300 bg-white p-6 text-center">
-                <Image
-                  src="/icons/upload-icon.svg"
-                  alt="Upload icon"
-                  width={16}
-                  height={20}
+              {draft.isLoaded ? (
+                <EmailEditor
+                  ref={editorRef}
+                  value={bodyHtml}
+                  initialFormat={draft.hasDraft ? "html" : "text"}
+                  onChange={(bodyHtml) => draft.update({ bodyHtml })}
                 />
+              ) : <div className="mt-6 min-h-[400px]" />}
 
-                {isUploadingImage ? (
-                  <p className="text-base">Uploading...</p>
-                ) : (
-                  <p className="text-base">
-                    <span className="text-blue-600 underline">
-                      Upload
-                    </span>{" "}
-                    or drag and drop
+              {/* Image upload: inserted into the message at the cursor */}
+              <div {...getRootProps({ className: "dropzone" })}>
+                <input {...getInputProps()} />
+
+                <div className="mt-6 flex min-h-[175px] cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-dashed border-gray-300 bg-white p-6 text-center">
+                  <Image
+                    src="/icons/upload-icon.svg"
+                    alt="Upload icon"
+                    width={16}
+                    height={20}
+                  />
+
+                  {isUploadingImage || isUploadingBatch ? (
+                    <p className="text-base">Uploading...</p>
+                  ) : (
+                    <p className="text-base">
+                      <span className="text-blue-600 underline">
+                        Upload
+                      </span>{" "}
+                      or drag and drop
+                    </p>
+                  )}
+
+                  <p className="text-sm text-gray-500">
+                    Add images to your email · PNG, JPG or GIF (max. 3MB)
                   </p>
-                )}
-
-                <p className="text-sm text-gray-500">
-                  Add images to your email · PNG, JPG or GIF (max. 3MB)
-                </p>
+                </div>
               </div>
-            </div>
 
-            {uploadError && (
-              <p className="mt-2 text-sm text-red-600">
-                {uploadError}
-              </p>
-            )}
+              {uploadError && (
+                <p className="mt-2 text-sm text-red-600">
+                  {uploadError}
+                </p>
+              )}
+            </div>
 
           </section>
 
           {/* Email actions */}
           <div className="flex flex-wrap items-center justify-end gap-3 rounded-xl border border-gray-200 bg-white p-4">
+            <Button type="button" variant="text" startIcon={<DeleteOutlineIcon />}
+              disabled={!canEdit || isUploadingBatch || (!draft.hasDraft && !draft.isDirty)}
+              onClick={handleDiscard}>Discard draft</Button>
             <Button 
               type="button" 
               variant="text"
@@ -295,9 +328,8 @@ export default function EmailUsersPage() {
             <Button 
               type="button" 
               variant="contained" 
-              disabled={recipientGroups.length === 0 || !subject.trim()}
+              disabled={!canEdit || Boolean(draft.error) || recipientGroups.length === 0 || !subject.trim()}
               onClick={() => {
-                setSendNotice(false);
                 setSendConfirmOpen(true);
               }}
               sx={{display: "flex", gap: 1}}>
