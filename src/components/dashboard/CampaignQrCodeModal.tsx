@@ -16,7 +16,6 @@ type CampaignQrCodeModalProps = {
   campaignUrl: string;
 };
 
-// Rendered off-screen at a larger size so the downloaded PNG prints cleanly.
 const DOWNLOAD_SIZE = 1024;
 
 const toFileName = (name: string) => {
@@ -52,18 +51,18 @@ export default function CampaignQrCodeModal({
     <BaseModal
       open={open}
       onClose={onClose}
-      containerClassName="!w-[90%] max-w-[360px] !min-h-0 items-center text-center"
+      containerClassName="!w-[calc(100%_-_2rem)] sm:!w-[90%] max-w-[360px] !min-h-0 items-center text-center !p-5 sm:!p-6"
     >
       <IconButton
         aria-label="Close"
-        size="small"
+        size="medium"
         onClick={onClose}
         className="!absolute right-2 top-2 !text-[#666666]"
       >
         <Close fontSize="small" />
       </IconButton>
 
-      <h2 className="mt-2 text-xl font-semibold text-[#123A1E]">
+      <h2 className="mt-2 max-w-full break-words text-xl font-semibold text-[#123A1E]">
         {campaignName}
       </h2>
       <p className="mt-1 text-sm text-[#666666]">Campaign QR Code</p>
@@ -76,7 +75,7 @@ export default function CampaignQrCodeModal({
         size={180}
         level="M"
         title={`QR code for ${campaignName}`}
-        className="my-5"
+        className="my-5 h-auto max-w-full"
       />
 
       <div className="hidden" aria-hidden>
@@ -91,10 +90,11 @@ export default function CampaignQrCodeModal({
 
       <Button
         fullWidth
-        size="small"
+        size="medium"
         variant="contained"
         startIcon={<FileDownloadOutlined />}
         onClick={handleDownload}
+        className="!min-h-11 !whitespace-normal !leading-tight"
       >
         Download QR Code
       </Button>
