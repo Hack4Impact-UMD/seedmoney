@@ -9,9 +9,10 @@ action returns errors or a count, never recipient addresses.
 The composer validates before opening confirmation, again on confirmation, and
 before simulating a test send. It keeps the draft unchanged on failure, displays
 errors, and prevents duplicate validation requests or edits during a check.
-Actual delivery is still a demonstration. Future real/test delivery must call
-`prepareAdminEmail` again immediately before queueing, not trust a prior browser
-validation result. The existing event-email Edge Function is untouched.
+Bulk delivery uses `queueAdminEmail`, which calls `prepareAdminEmail` again before
+queueing rather than trusting prior browser validation. Test sends remain
+simulated. See `admin-email-delivery.md` for batch sending and resume behavior.
+The existing event-email Edge Function is untouched.
 
 ## Supported Content
 

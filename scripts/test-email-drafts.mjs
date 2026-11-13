@@ -214,8 +214,10 @@ test("the hook serializes initial creation and saves edits made during it", asyn
     return writes.length === 1 ? new Promise(resolve => { finish = () => resolve(saved(value)); }) : Promise.resolve(saved(value));
   });
   hook.update({ subject: "First" });
+  assert.equal(hook.getSavedIdentity(), null);
   const first = hook.flush();
   await new Promise(resolve => setImmediate(resolve));
+  assert.equal(hook.getSavedIdentity(), null);
   hook.update({ subject: "Latest" });
   const second = hook.flush();
   finish();
@@ -224,6 +226,10 @@ test("the hook serializes initial creation and saves edits made during it", asyn
   assert.equal(writes[0].id, writes[1].id);
   assert.equal(writes[1].version, 1);
   assert.equal(writes[1].subject, "Latest");
+  assert.equal(hook.getSavedIdentity().id, writes[1].id);
+  assert.equal(hook.getSavedIdentity().version, 2);
+  hook.update({ subject: "Unsaved" });
+  assert.equal(hook.getSavedIdentity(), null);
 });
 
 test("retry resolves an unacknowledged creation before saving newer local text", async () => {

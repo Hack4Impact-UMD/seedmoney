@@ -24,6 +24,8 @@ import EmailPreviewBody from "@/src/components/email/EmailPreviewBody";
 import useUploadEmailImage from "@/src/hooks/email/useUploadEmailImage";
 import useEmailDraft from "@/src/hooks/email/useEmailDraft";
 import useEmailAudience from "@/src/hooks/email/useEmailAudience";
+import useEmailDelivery from "@/src/hooks/email/useEmailDelivery";
+import { queueAdminEmail } from "@/src/actions/email/queue";
 import { validateEmailForSend } from "@/src/actions/email/validate";
 import { ADMIN_EMAIL_GROUP_LABELS, type AdminEmailGroup } from "@/src/types/db/adminEmails";
 import { MAX_EMAIL_IMAGE_BYTES } from "@/src/actions/db/email-images";
@@ -38,6 +40,7 @@ import { useRouter } from "next/navigation";
 export default function EmailUsersPage() {
   const router = useRouter();
   const draft = useEmailDraft();
+  const delivery = useEmailDelivery();
   const { subject, bodyHtml, recipientGroups } = draft.values;
   const audience = useEmailAudience(recipientGroups, draft.isLoaded);
   const [uploadError, setUploadError] = useState("");
@@ -56,10 +59,10 @@ export default function EmailUsersPage() {
   const [validatedRecipientCount, setValidatedRecipientCount] = useState<number | null>(null);
   const validationKey = JSON.stringify({ subject, bodyHtml, recipientGroups, testEmail });
   const validationErrors = validation?.key === validationKey ? validation.errors : [];
-  const canEdit = draft.isLoaded && !draft.isDiscarding && !isValidating;
+  const canEdit = draft.isLoaded && !draft.isDiscarding && !isValidating && !delivery.isSending;
   const audienceReady = draft.isLoaded && audience.isSuccess && !audience.isFetching;
   const wrongCompetition = audienceReady && draft.hasDraft && draft.competitionId !== audience.data.competitionId;
-  const canPrepareSend = canEdit && !draft.error && audienceReady && !wrongCompetition &&
+  const canPrepareSend = canEdit && delivery.isLoaded && !delivery.job && !delivery.error && !draft.error && audienceReady && !wrongCompetition &&
     audience.data.total > 0 && recipientGroups.length > 0 && Boolean(subject.trim()) && !isUploadingBatch;
 
   const isValidTestEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail.trim());
@@ -109,15 +112,29 @@ export default function EmailUsersPage() {
     setTestSendNotice(false);
     try {
       await draft.flush();
+      if (mode === "send" && confirm) {
+        const identity = draft.getSavedIdentity();
+        if (!identity) throw new Error("Draft not saved");
+        const queued = await queueAdminEmail(identity);
+        if (!queued.success) { setValidation({ key: validationKey, errors: queued.errors }); return; }
+        setSendConfirmOpen(false);
+        await draft.reload();
+        setIsValidating(false);
+        if (queued.receipt.alreadyQueued) {
+          // Another tab may have queued a different version. Require an explicit resume.
+          await delivery.refresh();
+        } else {
+          await delivery.send({ id: queued.receipt.emailId, subject, status: queued.receipt.status,
+            recipientCount: queued.receipt.recipientCount });
+        }
+        return;
+      }
       const result = await validateEmailForSend({ ...draft.values, mode, testEmail,
         competitionId: draft.hasDraft ? draft.competitionId : audience.data?.competitionId ?? null });
       if (!result.success) { setValidation({ key: validationKey, errors: result.errors }); return; }
       setValidatedRecipientCount(result.recipientCount);
       if (mode === "test") setTestSendNotice(true);
-      else if (confirm) {
-        setSendConfirmOpen(false);
-        router.push("/dashboard/email-users/sent-history");
-      } else setSendConfirmOpen(true);
+      else setSendConfirmOpen(true);
     } catch {
       setValidation({ key: validationKey, errors: ["Unable to save or validate this email. Your draft is still available; please retry."] });
     } finally {
@@ -188,6 +205,24 @@ export default function EmailUsersPage() {
               </Button>
             </div>
           </div>
+
+          {(delivery.job || delivery.progress || delivery.error) && (
+            <div className="space-y-2 rounded-md border border-gray-200 bg-white p-4 text-sm" aria-live="polite">
+              {delivery.job && <p className="break-words font-semibold">{delivery.job.subject} ({delivery.job.recipientCount.toLocaleString()} recipients)</p>}
+              {delivery.progress && (!delivery.job || delivery.progress.email_id === delivery.job.id) && (
+                <p>
+                  {delivery.progress.done ? "Sending finished." : "Sending in progress."} {delivery.progress.counts.accepted.toLocaleString()} accepted by the email provider;
+                  {" "}{delivery.progress.counts.failed.toLocaleString()} failed; {delivery.progress.counts.unknown.toLocaleString()} uncertain.
+                </p>
+              )}
+              {delivery.progress?.needs_manual_review && <p role="alert" className="text-amber-800">Check provider logs for uncertain recipients before retrying them. They will not be resent automatically.</p>}
+              {delivery.isSending && <p>Keep this page open until sending finishes.</p>}
+              {delivery.error && <p role="alert" className="text-red-700">{delivery.error}</p>}
+              {delivery.job && <Button size="small" disabled={delivery.isSending || isValidating || isUploadingBatch || draft.isDiscarding}
+                onClick={() => delivery.send(delivery.job!)}>{delivery.isSending ? "Sending..." : "Resume sending"}</Button>}
+              {!delivery.isLoaded && !delivery.isSending && <Button size="small" onClick={delivery.refresh}>Check queued emails</Button>}
+            </div>
+          )}
 
           {draft.error && (
             <div role="alert" className="flex flex-wrap items-center gap-3 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
@@ -528,7 +563,6 @@ export default function EmailUsersPage() {
 
               <p className="text-sm text-gray-500">
                 Please review your recipients and message before confirming.
-                This is a frontend demonstration; no email will be sent.
               </p>
 
               <div className="flex justify-end gap-3">
@@ -554,7 +588,7 @@ export default function EmailUsersPage() {
                     },
                   }}
                 >
-                  {isValidating ? "Checking..." : "Confirm (Demo)"}
+                  {isValidating ? "Checking..." : "Confirm and send"}
                 </Button>
               </div>
             </div>

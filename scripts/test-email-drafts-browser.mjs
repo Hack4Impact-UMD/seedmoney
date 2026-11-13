@@ -164,6 +164,7 @@ async function until(check, message) {
     await page.getByRole('alert').filter({ hasText: 'no longer editable' }).waitFor();
     assert.equal((await service.from('admin_emails').select('subject').eq('id', latest.id).single()).data.subject, 'Saved before navigation');
     console.log('PASS: an already-queued message cannot be edited by the stale compose form.');
+    assert.equal((await service.from('admin_emails').delete().eq('id', latest.id)).error, null);
     assert.deepEqual(errors, []);
     console.log('PASS: discard removes only the draft and reload does not recreate it. No browser errors.');
 
@@ -287,6 +288,54 @@ async function until(check, message) {
     await page.screenshot({ path: '/private/tmp/email-audience-mobile.png' });
     assert.deepEqual(errors, []);
     console.log('PASS: real group counts, current leader membership, status changes, deduplication, confirmation totals, and old-draft guards.');
+
+    assert.equal((await service.from('admin_emails').update({ competition_id: competition.data.competition_id }).eq('created_by', userId).eq('status', 'draft')).error, null);
+    let calls = 0, queuedId, snapshotSize;
+    await page.route('**/functions/v1/send-admin-email', async route => {
+      const headers = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization, apikey, x-client-info, content-type' };
+      if (route.request().method() === 'OPTIONS') { await route.fulfill({ status: 200, headers }); return; }
+      calls++;
+      const { email_id: id } = route.request().postDataJSON();
+      if (queuedId) assert.equal(id, queuedId);
+      queuedId = id;
+      const snapshot = await service.from('admin_email_recipients').select('*').eq('email_id', id);
+      assert.equal(snapshot.error, null);
+      snapshotSize ??= snapshot.data.length;
+      assert.equal(snapshot.data.length, snapshotSize);
+      assert.ok(snapshotSize > 1);
+      if (calls === 2) { await route.abort('failed'); return; }
+      const done = calls > 2;
+      const update = service.from('admin_email_recipients').update({ status: 'accepted', accepted_at: new Date().toISOString() }).eq('email_id', id);
+      assert.equal((await (done ? update : update.eq('id', snapshot.data[0].id))).error, null);
+      assert.equal((await service.from('admin_emails').update({ status: done ? 'sent' : 'sending',
+        completed_at: done ? new Date().toISOString() : null }).eq('id', id)).error, null);
+      await route.fulfill({ status: 200, headers, json: { email_id: id, processed: done ? snapshotSize - 1 : 1,
+        status: done ? 'sent' : 'sending', done, paused: null, retry_after_seconds: done ? null : 1, needs_manual_review: false,
+        counts: { pending: done ? 0 : snapshotSize - 1, sending: 0, accepted: done ? snapshotSize : 1, failed: 0, unknown: 0, skipped: 0 } } });
+    });
+    await page.reload();
+    await until(async () => await page.getByRole('button', { name: 'Send Email', exact: true }).isEnabled(), 'Send did not enable');
+    await page.getByRole('button', { name: 'Send Email', exact: true }).click();
+    await page.getByRole('button', { name: 'Confirm and send', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'Unable to confirm this batch' }).waitFor();
+    assert.equal(calls, 2);
+    assert.equal(await subject.inputValue(), '');
+    assert.equal((await service.from('admin_emails').select('id').eq('created_by', userId)).data.length, 1);
+    await page.evaluate(() => window.scrollTo(0, 0));
+    assert.equal(await page.evaluate(() => document.documentElement.scrollWidth <= window.innerWidth), true);
+    await page.screenshot({ path: '/private/tmp/email-delivery-mobile.png' });
+    await page.reload();
+    await page.getByRole('button', { name: 'Resume sending', exact: true }).waitFor();
+    assert.equal(calls, 2, 'Reload must not automatically send');
+    assert.equal(await page.getByRole('button', { name: 'Send Email', exact: true }).isDisabled(), true);
+    await page.getByRole('button', { name: 'Resume sending', exact: true }).click();
+    await page.getByText(/Sending finished\./).waitFor();
+    assert.equal(calls, 3);
+    assert.equal((await service.from('admin_email_recipients').select('id').eq('email_id', queuedId)).data.length, snapshotSize);
+    assert.equal((await service.from('admin_emails').select('status').eq('id', queuedId).single()).data.status, 'sent');
+    await page.setViewportSize({ width: 1365, height: 1000 });
+    await page.screenshot({ path: '/private/tmp/email-delivery-desktop.png', fullPage: true });
+    console.log('PASS: mocked delivery batches, visible interruption, reload without auto-send, and same-job resume without duplicate recipients. No emails sent.');
   } finally {
     if (browser) await browser.close();
     if (userId) {

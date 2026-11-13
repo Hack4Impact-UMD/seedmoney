@@ -32,10 +32,11 @@ Foreign-key deletion between validation and insertion fails atomically and can
 be retried with fresh resolution. Ambiguous/missing current competition fails
 closed before queueing.
 
-This is backend step 1 only. The UI Send/Test buttons remain demonstrations.
-Nothing invokes the deployed `send-admin-email` function, schedules work, sends
-test emails, or loads sent history yet. Do not wire the UI to queue alone before
-the durable batch runner is ready. Existing event-driven emails are untouched.
+The composer now queues on confirmation and calls the deployed `send-admin-email`
+function in page-driven batches. See `admin-email-delivery.md`. There is no
+scheduler; the page must remain open, or the admin can resume the same job later.
+Test sends remain simulated and sent history is not connected yet. Existing
+event-driven emails are untouched.
 
 ```sh
 node --test scripts/test-email-queue.mjs
