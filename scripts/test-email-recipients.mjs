@@ -160,3 +160,23 @@ test("authorization, missing competition, and partial-page failures fail closed"
   assert.equal(result.success, false);
   assert.equal("summary" in result, false);
 });
+
+test("audience hook isolates selections, refreshes counts, and propagates errors", async () => {
+  let result = { success: true, summary: { competitionId: 1, total: 2 } };
+  const selections = [];
+  const hook = load("../src/hooks/email/useEmailAudience.ts", {
+    "@tanstack/react-query": { useQuery: options => options },
+    "@/src/actions/email/recipients": { readEmailAudienceSummary: async groups => { selections.push(groups); return result; } },
+  }).default;
+  const approved = hook(["unfinished", "approved", "approved"]);
+  assert.deepEqual(plain(approved.queryKey), ["admin-emails", "audience", ["approved", "unfinished"]]);
+  assert.deepEqual(plain(hook(["approved", "unfinished"]).queryKey), plain(approved.queryKey));
+  assert.notDeepEqual(plain(hook(["all"]).queryKey), plain(approved.queryKey));
+  assert.equal(approved.refetchInterval, 30_000);
+  assert.equal(approved.refetchOnWindowFocus, true);
+  assert.equal(hook([], false).enabled, false);
+  assert.equal((await approved.queryFn()).total, 2);
+  assert.deepEqual(plain(selections[0]), ["approved", "unfinished"]);
+  result = { success: false, error: "Recipients unavailable" };
+  await assert.rejects(approved.queryFn(), /Recipients unavailable/);
+});
