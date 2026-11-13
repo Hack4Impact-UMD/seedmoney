@@ -24,8 +24,10 @@ with unsaved changes triggers the browser's warning; other client navigation
 makes a best-effort final save. This is not offline storage: don't close a tab
 after a failed save without resolving it or retaining the text separately.
 
-Discard waits for saves to finish, deletes only the expected owned draft, and
-does not delete uploaded images that might be referenced elsewhere. No sending,
+Discard waits for active saves and reconciles any unacknowledged write before
+deleting only the expected owned draft. It does not save unwanted edits or
+require them to pass validation. It does not delete uploaded images that might
+be referenced elsewhere. No sending,
 recipient counts, sent-history loading, or event-email behavior is changed.
 
 ```sh

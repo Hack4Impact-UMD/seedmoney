@@ -254,6 +254,79 @@ test("retrying failed discard retries deletion rather than reporting a false sav
   assert.equal(deletes, 2);
 });
 
+test("an invalid unsaved draft can be discarded without writing it", async () => {
+  let writes = 0;
+  const hook = await hookFixture(async value => { writes++; return saved(value); });
+  hook.update({ subject: "x".repeat(1001) });
+  await assert.rejects(hook.flush(), /oversized/);
+  assert.equal(await hook.discard(), true);
+  await hook.flush();
+  assert.equal(writes, 0);
+  hook.update({ subject: "New draft" });
+  await hook.flush();
+  assert.equal(writes, 1);
+});
+
+test("discard deletes a saved draft without saving invalid newer edits", async () => {
+  const writes = [], deletes = [];
+  const hook = await hookFixture(async value => { writes.push(value); return saved(value); }, async (id, version) => {
+    deletes.push({ id, version });
+    return { success: true, draft: null };
+  });
+  hook.update({ subject: "Saved draft" });
+  await hook.flush();
+  hook.update({ bodyHtml: "x".repeat(500_001) });
+  assert.equal(await hook.discard(), true);
+  assert.equal(writes.length, 1);
+  assert.equal(deletes[0].id, writes[0].id);
+  assert.equal(deletes[0].version, 1);
+  await hook.flush();
+  assert.equal(writes.length, 1);
+});
+
+test("discard waits for an active save without saving subsequent edits", async () => {
+  const writes = [], deletes = [];
+  let finish;
+  const hook = await hookFixture(value => {
+    writes.push(value);
+    return new Promise(resolve => { finish = () => resolve(saved(value)); });
+  }, async (id, version) => {
+    deletes.push({ id, version });
+    return { success: true, draft: null };
+  });
+  hook.update({ subject: "In flight" });
+  const saving = hook.flush();
+  await new Promise(resolve => setImmediate(resolve));
+  hook.update({ subject: "x".repeat(1001) });
+  const discarding = hook.discard();
+  assert.equal(deletes.length, 0);
+  finish();
+  await saving;
+  assert.equal(await discarding, true);
+  assert.equal(writes.length, 1);
+  assert.equal(deletes[0].id, writes[0].id);
+  assert.equal(deletes[0].version, 1);
+});
+
+test("discard recovers an uncertain write without saving newer content", async () => {
+  const writes = [], deletes = [];
+  const hook = await hookFixture(async value => {
+    writes.push(value);
+    return writes.length === 1 ? { success: false, code: "error", error: "Response lost" } : saved(value);
+  }, async (id, version) => {
+    deletes.push({ id, version });
+    return { success: true, draft: null };
+  });
+  hook.update({ subject: "Attempted draft" });
+  await assert.rejects(hook.flush(), /Response lost/);
+  hook.update({ subject: "x".repeat(1001) });
+  assert.equal(await hook.discard(), true);
+  assert.equal(writes.length, 2);
+  assert.equal(writes[1].subject, "Attempted draft");
+  assert.equal(deletes[0].id, writes[0].id);
+  assert.equal(deletes[0].version, 1);
+});
+
 test("restored HTML can open without passing through the restricted text editor", () => {
   const element = (type, props) => ({ type, props });
   const component = value => ({ __esModule: true, default: value });

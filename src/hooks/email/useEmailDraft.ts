@@ -62,7 +62,7 @@ export default function useEmailDraft() {
   }, [showError]);
 
   const flush = useCallback(async function flushDraft(): Promise<void> {
-    if (!ready.current) return;
+    if (!ready.current || discarding.current) return;
     if (lastError.current) throw new Error(lastError.current.error);
     if (inFlight.current) { await inFlight.current; return flushDraft(); }
     if (!pendingWrite.current && keyFor(current.current) === savedKey.current) return;
@@ -71,7 +71,7 @@ export default function useEmailDraft() {
     const save = async () => {
       try {
         // Serialize writes and replay an unacknowledged request before newer edits.
-        while (pendingWrite.current || keyFor(current.current) !== savedKey.current) {
+        while (!discarding.current && (pendingWrite.current || keyFor(current.current) !== savedKey.current)) {
           const invalidFields = emailDraftValuesError(pendingWrite.current ?? current.current);
           if (invalidFields) {
             showError({ success: false, code: "validation", error: invalidFields });
@@ -119,14 +119,18 @@ export default function useEmailDraft() {
 
   const discard = useCallback(async () => {
     if (!ready.current || discarding.current) return false;
-    if (lastError.current?.code === "error") {
-      lastError.current = null;
-      setError(null);
-    }
     discarding.current = true;
     setIsDiscarding(true);
     try {
-      await flush();
+      await inFlight.current?.catch(() => { /* Resolve uncertain writes below before deleting. */ });
+      // Reconcile only a previously attempted write, never save unwanted edits.
+      if (pendingWrite.current) {
+        const result = await saveEmailDraft(pendingWrite.current);
+        if (!result.success) { showError({ ...result, operation: "discard" }); return false; }
+        if (!result.draft) throw new Error("The saved draft was not returned.");
+        draft.current = result.draft;
+        pendingWrite.current = null;
+      }
       if (draft.current) {
         const result = await discardEmailDraft(draft.current.id, draft.current.version);
         if (!result.success) { showError({ ...result, operation: "discard" }); return false; }
@@ -135,18 +139,20 @@ export default function useEmailDraft() {
       pendingWrite.current = null;
       current.current = emptyValues();
       savedKey.current = keyFor(current.current);
+      lastError.current = null;
+      setError(null);
       setValues(current.current);
       setSavedAt(null);
       setStatus("saved");
       return true;
     } catch {
-      if (!lastError.current) showError({ success: false, code: "error", operation: "discard", error: "Unable to discard your draft. Please retry." });
+      showError({ success: false, code: "error", operation: "discard", error: "Unable to discard your draft. Please retry." });
       return false;
     } finally {
       discarding.current = false;
       setIsDiscarding(false);
     }
-  }, [flush, showError]);
+  }, [showError]);
 
   const retry = useCallback(async () => {
     if (!ready.current) return load();
