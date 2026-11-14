@@ -2,6 +2,7 @@ import assert from 'node:assert/strict';
 import path from 'node:path';
 import { execFileSync } from 'node:child_process';
 import { createRequire } from 'node:module';
+import { readFileSync } from 'node:fs';
 const req = createRequire(path.join(process.cwd(), 'package.json'));
 const { createClient } = req('@supabase/supabase-js');
 const { createServerClient } = req('@supabase/ssr');
@@ -13,6 +14,10 @@ const token = Date.now();
 const email = `email-draft-test-${token}@example.com`;
 const password = `Draft-test-${token}!`;
 const base = 'http://localhost:3001';
+const manifest = JSON.parse(readFileSync('.next/server/server-reference-manifest.json', 'utf8'));
+const testActionIds = new Set(Object.entries(manifest.node)
+  .filter(([, entry]) => entry.exportedName === 'sendAdminTestEmail').map(([id]) => id));
+assert.ok(testActionIds.size > 0, 'Build the app first; unknown test sender IDs must fail closed');
 const pause = ms => new Promise(resolve => setTimeout(resolve, ms));
 async function until(check, message) {
   for (let i = 0; i < 100; i++) { if (await check()) return; await pause(100); }
@@ -41,10 +46,15 @@ async function until(check, message) {
     const testRequests = [];
     // Fulfill test actions before execution. Never let the browser suite invoke
     // the server-side sender, even if the local function has real credentials.
-    await page.route('**/dashboard/email-users', async route => {
+    await context.route('**/dashboard/email-users', async route => {
       let args;
       try { args = JSON.parse(route.request().postData() || 'null'); } catch { /* Not a JSON action. */ }
-      if (route.request().method() !== 'POST' || !args?.[0]?.requestId) { await route.continue(); return; }
+      const testAction = testActionIds.has(route.request().headers()['next-action']);
+      if (route.request().method() !== 'POST' || !testAction) {
+        assert.ok(!args?.[0]?.requestId, 'Unknown test sender action must not execute');
+        await route.continue(); return;
+      }
+      assert.ok(args?.[0]?.requestId, 'Unexpected test payload encoding must fail closed');
       const input = args[0];
       let result;
       if (input.bodyHtml.includes('onclick=')) result = { success: false, errors: ['The HTML contains unsafe or unsupported attributes.'] };
@@ -55,7 +65,7 @@ async function until(check, message) {
           : { success: true, testEmail: 'test@example.org' };
       }
       await route.fulfill({ status: 200, contentType: 'text/x-component',
-        body: '0:{"a":"$@1","f":null,"b":"test"}\n1:' + JSON.stringify(result) + '\n' });
+        body: '0:{"a":"$@1","f":"","b":"test"}\n1:' + JSON.stringify(result) + '\n' });
     });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
