@@ -72,6 +72,17 @@ test("campaign URLs must be unambiguous HTTPS Givebutter links", () => {
     'https://user:pass@givebutter.com/garden', 'http://givebutter.com/garden']) assert.equal(validation.validCampaignUrl(value), false);
 });
 
+test("malformed styles cannot disappear from both sanitizer comparisons", () => {
+  for (const style of ['color red', 'color: red; broken', 'color: rgb(',
+    'color: red; } other { color: blue', '@media print { color: red; }']) {
+    assert.ok(errors(`<p style="${style}">Hello</p>`).length > 0, style);
+  }
+  for (const style of ['color: red;', ' color : red ; padding: 10px 0; ', 'font-weight: bold; color: #123456']) {
+    assert.equal(errors(`<p style="${style}">Hello</p>`).length, 0, style);
+  }
+  assert.ok(errors('<p style="position: fixed">Hello</p>').length > 0);
+});
+
 function preparationFixture() {
   const state = { authorized: true, reads: 0, competitionId: 1,
     recipients: [{ userId: "1", email: "member@example.org", firstName: "Garden", campaignId: 1, campaignUrl: "https://givebutter.com/garden" }] };
