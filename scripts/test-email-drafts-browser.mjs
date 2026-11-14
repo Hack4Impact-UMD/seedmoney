@@ -240,7 +240,7 @@ async function until(check, message) {
     await page.getByRole('textbox', { name: 'Email address', exact: true }).fill('test@example.org');
     await page.getByRole('button', { name: 'Send Test Email', exact: true }).click();
     await page.getByRole('alert').filter({ hasText: 'unsafe or unsupported' }).waitFor();
-    assert.equal(await page.getByText(/Test send simulated/).count(), 0);
+    assert.equal(await page.getByText(/Test email accepted by the email provider/).count(), 0);
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
     await code.fill('<p>{{campaign_url}}</p>');
     await page.getByRole('button', { name: 'Send Email', exact: true }).click();
@@ -250,10 +250,50 @@ async function until(check, message) {
     await page.getByRole('button', { name: 'Send Email', exact: true }).click();
     await page.getByText(`${(baseline[0] + 5).toLocaleString()} unique recipients`, { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+    const testRequests = [];
+    // Mock only the test action's result. Its real validation still runs against
+    // local Supabase; no provider is contacted or bulk snapshot is created.
+    await page.route('**/dashboard/email-users', async route => {
+      let args;
+      try { args = JSON.parse(route.request().postData() || 'null'); } catch { /* Not a server action. */ }
+      if (route.request().method() !== 'POST' || !args?.[0]?.requestId) { await route.continue(); return; }
+      testRequests.push(args[0]);
+      const response = await route.fetch();
+      const lines = (await response.text()).split('\n');
+      let replaced = false;
+      const body = lines.map(line => {
+        const colon = line.indexOf(':');
+        let value;
+        try { value = JSON.parse(line.slice(colon + 1)); } catch { return line; }
+        if (typeof value?.success !== 'boolean' || (!value.errors && !value.testEmail)) return line;
+        replaced = true;
+        const result = testRequests.length === 1
+          ? { success: false, uncertain: true, errors: ['Test acceptance is uncertain. Check your inbox or provider logs before trying again.'] }
+          : { success: true, testEmail: 'test@example.org' };
+        return line.slice(0, colon + 1) + JSON.stringify(result);
+      }).join('\n');
+      assert.equal(replaced, true);
+      await route.fulfill({ response, body });
+    });
     await page.getByRole('button', { name: 'Test send', exact: true }).click();
+    await page.getByRole('button', { name: 'Send Test Email', exact: true }).evaluate(button => { button.click(); button.click(); });
+    await page.getByRole('alert').filter({ hasText: 'Test acceptance is uncertain' }).waitFor();
+    assert.equal(testRequests.length, 1, 'Duplicate clicks must not start duplicate tests');
+    assert.equal(await page.getByText(/Test email accepted by the email provider/).count(), 0);
     await page.getByRole('button', { name: 'Send Test Email', exact: true }).click();
-    await page.getByText('Test send simulated for test@example.org. No email was actually sent.', { exact: true }).waitFor();
+    await page.getByText('Test email accepted by the email provider for test@example.org. Check your inbox.', { exact: true }).waitFor();
+    assert.equal(testRequests.length, 2);
+    assert.equal(testRequests[0].requestId, testRequests[1].requestId, 'Uncertain retries must reuse their request ID');
+    assert.equal(testRequests[1].testEmail, 'test@example.org');
+    const unchanged = (await service.from('admin_emails').select('id, status, body_html').eq('created_by', userId)).data;
+    assert.equal(unchanged.length, 1);
+    assert.equal(unchanged[0].status, 'draft');
+    assert.equal(unchanged[0].body_html, '<p>Hello {{first_name}}</p>');
+    assert.equal((await service.from('admin_email_recipients').select('id').eq('email_id', unchanged[0].id)).data.length, 0);
+    await page.screenshot({ path: '/private/tmp/email-test-send-mobile.png' });
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await page.unroute('**/dashboard/email-users');
+    console.log('PASS: test-send uncertainty, same-request retry, duplicate-click protection, and provider-acceptance feedback without queueing the bulk audience.');
     console.log('PASS: send and test-send validation block malformed/unsafe HTML and invalid personalization without changing the saved draft.');
     await page.route('**/dashboard/email-users', async route => {
       let args;

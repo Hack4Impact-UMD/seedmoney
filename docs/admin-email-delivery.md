@@ -18,8 +18,9 @@ error, and credential errors require correction before resuming.
 
 No scheduler, cron secret, new environment variables, or additional migration is
 needed for this step. The existing queue migration and deployed `send-admin-email`
-function are prerequisites. Test sends remain simulated; sent-history integration
-is a separate step. The deployed Edge Function source stays in Supabase.
+function are prerequisites. Test sends use a separate server-only mode in that
+function (see `admin-email-test-sends.md`); sent-history integration is a separate
+step. The deployed Edge Function source stays in Supabase.
 
 Validation: `node --test scripts/test-email-delivery.mjs` covers batching,
 backoff, invalid responses, failures, aborts, and authorized pending-job lookup.

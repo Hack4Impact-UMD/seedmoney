@@ -26,6 +26,7 @@ import useEmailDraft from "@/src/hooks/email/useEmailDraft";
 import useEmailAudience from "@/src/hooks/email/useEmailAudience";
 import useEmailDelivery from "@/src/hooks/email/useEmailDelivery";
 import { queueAdminEmail } from "@/src/actions/email/queue";
+import { sendAdminTestEmail } from "@/src/actions/email/test";
 import { validateEmailForSend } from "@/src/actions/email/validate";
 import { ADMIN_EMAIL_GROUP_LABELS, type AdminEmailGroup } from "@/src/types/db/adminEmails";
 import { MAX_EMAIL_IMAGE_BYTES } from "@/src/actions/db/email-images";
@@ -51,7 +52,8 @@ export default function EmailUsersPage() {
   const [previewOpen, setPreviewOpen] = useState(false);
   const [testSendOpen, setTestSendOpen] = useState(false);
   const [testEmail, setTestEmail] = useState("");
-  const [testSendNotice, setTestSendNotice] = useState(false);
+  const [testSendNotice, setTestSendNotice] = useState<string | null>(null);
+  const testRequest = useRef<{ key: string; id: string } | null>(null);
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false);
   const [isValidating, setIsValidating] = useState(false);
   const validationInFlight = useRef(false);
@@ -109,7 +111,7 @@ export default function EmailUsersPage() {
     validationInFlight.current = true;
     setIsValidating(true);
     setValidation(null);
-    setTestSendNotice(false);
+    setTestSendNotice(null);
     try {
       await draft.flush();
       if (mode === "send" && confirm) {
@@ -129,12 +131,24 @@ export default function EmailUsersPage() {
         }
         return;
       }
-      const result = await validateEmailForSend({ ...draft.values, mode, testEmail,
-        competitionId: draft.hasDraft ? draft.competitionId : audience.data?.competitionId ?? null });
+      const input = { ...draft.values, mode, testEmail,
+        competitionId: draft.hasDraft ? draft.competitionId : audience.data?.competitionId ?? null };
+      if (mode === "test") {
+        if (testRequest.current?.key !== validationKey) testRequest.current = { key: validationKey, id: crypto.randomUUID() };
+        try {
+          const result = await sendAdminTestEmail({ ...input, requestId: testRequest.current.id });
+          if (result.success) setTestSendNotice(result.testEmail);
+          else setValidation({ key: validationKey, errors: result.errors });
+          if (result.success || !result.uncertain) testRequest.current = null;
+        } catch {
+          setValidation({ key: validationKey, errors: ["Unable to confirm the test email. Check your inbox or provider logs before trying again."] });
+        }
+        return;
+      }
+      const result = await validateEmailForSend(input);
       if (!result.success) { setValidation({ key: validationKey, errors: result.errors }); return; }
       setValidatedRecipientCount(result.recipientCount);
-      if (mode === "test") setTestSendNotice(true);
-      else setSendConfirmOpen(true);
+      setSendConfirmOpen(true);
     } catch {
       setValidation({ key: validationKey, errors: ["Unable to save or validate this email. Your draft is still available; please retry."] });
     } finally {
@@ -415,7 +429,7 @@ export default function EmailUsersPage() {
               variant="text"
               disabled={!canPrepareSend}
               onClick={() => {
-                setTestSendNotice(false)
+                setTestSendNotice(null)
                 setTestSendOpen(true)
               }}
               sx={{ color: "#123A1E", display: "flex", gap: 1}}>
@@ -480,7 +494,7 @@ export default function EmailUsersPage() {
             <div className="flex flex-col gap-5">
               <p className="text-sm text-gray-600">
                 Enter an email address to test your message before
-                sending it to recipients.
+                sending it to recipients. Personalization uses example values.
               </p>
 
               <TextField
@@ -493,7 +507,7 @@ export default function EmailUsersPage() {
                 disabled={isValidating}
                 onChange={(event) => {
                   setTestEmail(event.target.value);
-                  setTestSendNotice(false);
+                  setTestSendNotice(null);
                 }}
               />
 
@@ -501,7 +515,7 @@ export default function EmailUsersPage() {
 
               {testSendNotice && (
                 <p role="status" className="rounded-md bg-[#F1F8F3] p-3 text-sm text-[#2F7D43]">
-                  Test send simulated for {testEmail}. No email was actually sent.
+                  Test email accepted by the email provider for {testSendNotice}. Check your inbox.
                 </p>
               )}
 
@@ -528,7 +542,7 @@ export default function EmailUsersPage() {
                     },
                   }}
                 >
-                  {isValidating ? "Checking..." : "Send Test Email"}
+                  {isValidating ? "Sending..." : "Send Test Email"}
                 </Button>
               </div>
             </div>

@@ -35,7 +35,8 @@ closed before queueing.
 The composer now queues on confirmation and calls the deployed `send-admin-email`
 function in page-driven batches. See `admin-email-delivery.md`. There is no
 scheduler; the page must remain open, or the admin can resume the same job later.
-Test sends remain simulated and sent history is not connected yet. Existing
+Test sends use a separate single-address mode without queueing (see
+`admin-email-test-sends.md`), and sent history is not connected yet. Existing
 event-driven emails are untouched.
 
 ```sh

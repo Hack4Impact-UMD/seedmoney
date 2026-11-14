@@ -10,8 +10,9 @@ The composer validates before opening confirmation, again on confirmation, and
 before simulating a test send. It keeps the draft unchanged on failure, displays
 errors, and prevents duplicate validation requests or edits during a check.
 Bulk delivery uses `queueAdminEmail`, which calls `prepareAdminEmail` again before
-queueing rather than trusting prior browser validation. Test sends remain
-simulated. See `admin-email-delivery.md` for batch sending and resume behavior.
+queueing rather than trusting prior browser validation. Test sends also prepare
+again before forwarding one address to the Edge Function; see
+`admin-email-test-sends.md`. See `admin-email-delivery.md` for bulk delivery.
 The existing event-email Edge Function is untouched.
 
 ## Supported Content
@@ -50,4 +51,4 @@ node --test scripts/test-email-send-validation.mjs scripts/test-email-recipients
 ```
 
 The local browser suite also verifies validation errors, unchanged draft content,
-valid confirmation, and simulated test sends. See `admin-email-drafts.md` for setup.
+valid confirmation, and mocked test delivery. See `admin-email-drafts.md` for setup.
