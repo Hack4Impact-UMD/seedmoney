@@ -139,7 +139,7 @@ export default function EmailUsersPage() {
           const result = await sendAdminTestEmail({ ...input, requestId: testRequest.current.id });
           if (result.success) setTestSendNotice(result.testEmail);
           else setValidation({ key: validationKey, errors: result.errors });
-          if (result.success || !result.uncertain) testRequest.current = null;
+          if (result.success) testRequest.current = null;
         } catch {
           setValidation({ key: validationKey, errors: ["Unable to confirm the test email. Check your inbox or provider logs before trying again."] });
         }
