@@ -38,6 +38,25 @@ async function until(check, message) {
     const context = await browser.newContext({ viewport: { width: 1365, height: 1000 } });
     await context.addCookies(cookies.map(({ name, value }) => ({ name, value, url: base, sameSite: 'Lax' })));
     const page = await context.newPage();
+    const testRequests = [];
+    // Fulfill test actions before execution. Never let the browser suite invoke
+    // the server-side sender, even if the local function has real credentials.
+    await page.route('**/dashboard/email-users', async route => {
+      let args;
+      try { args = JSON.parse(route.request().postData() || 'null'); } catch { /* Not a JSON action. */ }
+      if (route.request().method() !== 'POST' || !args?.[0]?.requestId) { await route.continue(); return; }
+      const input = args[0];
+      let result;
+      if (input.bodyHtml.includes('onclick=')) result = { success: false, errors: ['The HTML contains unsafe or unsupported attributes.'] };
+      else {
+        testRequests.push(input);
+        result = testRequests.length === 1
+          ? { success: false, uncertain: true, errors: ['Test acceptance is uncertain. Check your inbox or provider logs before trying again.'] }
+          : { success: true, testEmail: 'test@example.org' };
+      }
+      await route.fulfill({ status: 200, contentType: 'text/x-component',
+        body: '0:{"a":"$@1","f":null,"b":"test"}\n1:' + JSON.stringify(result) + '\n' });
+    });
     const errors = [];
     page.on('pageerror', error => errors.push(error.message));
     await page.goto(`${base}/dashboard/email-users`);
@@ -250,31 +269,6 @@ async function until(check, message) {
     await page.getByRole('button', { name: 'Send Email', exact: true }).click();
     await page.getByText(`${(baseline[0] + 5).toLocaleString()} unique recipients`, { exact: true }).waitFor();
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
-    const testRequests = [];
-    // Mock only the test action's result. Its real validation still runs against
-    // local Supabase; no provider is contacted or bulk snapshot is created.
-    await page.route('**/dashboard/email-users', async route => {
-      let args;
-      try { args = JSON.parse(route.request().postData() || 'null'); } catch { /* Not a server action. */ }
-      if (route.request().method() !== 'POST' || !args?.[0]?.requestId) { await route.continue(); return; }
-      testRequests.push(args[0]);
-      const response = await route.fetch();
-      const lines = (await response.text()).split('\n');
-      let replaced = false;
-      const body = lines.map(line => {
-        const colon = line.indexOf(':');
-        let value;
-        try { value = JSON.parse(line.slice(colon + 1)); } catch { return line; }
-        if (typeof value?.success !== 'boolean' || (!value.errors && !value.testEmail)) return line;
-        replaced = true;
-        const result = testRequests.length === 1
-          ? { success: false, uncertain: true, errors: ['Test acceptance is uncertain. Check your inbox or provider logs before trying again.'] }
-          : { success: true, testEmail: 'test@example.org' };
-        return line.slice(0, colon + 1) + JSON.stringify(result);
-      }).join('\n');
-      assert.equal(replaced, true);
-      await route.fulfill({ response, body });
-    });
     await page.getByRole('button', { name: 'Test send', exact: true }).click();
     await page.getByRole('button', { name: 'Send Test Email', exact: true }).evaluate(button => { button.click(); button.click(); });
     await page.getByRole('alert').filter({ hasText: 'Test acceptance is uncertain' }).waitFor();
