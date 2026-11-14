@@ -9,6 +9,7 @@ import {
   fromTextEditorHtml,
   toTextEditorHtml,
 } from "@/src/components/email/emailHtml";
+import { EMAIL_TOKEN_NODE } from "@/src/components/email/emailTokenNode";
 import styles from "./EmailContent.module.css";
 
 // The stored HTML: token chips become {{key}} text, and blank lines and
@@ -61,6 +62,13 @@ export default function EmailTextEditor({
       // focus() restores the cursor from before the admin clicked away
       insertImage: (src, alt) => {
         editor?.chain().focus().setImage({ src, alt }).run();
+      },
+      insertToken: (key) => {
+        editor
+          ?.chain()
+          .focus()
+          .insertContent({ type: EMAIL_TOKEN_NODE, attrs: { key } })
+          .run();
       },
     }),
     [editor],

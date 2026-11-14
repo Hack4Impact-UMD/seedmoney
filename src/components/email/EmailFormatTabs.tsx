@@ -8,6 +8,8 @@ export type EmailFormatTab = "text" | "html";
 interface EmailFormatTabsProps {
   activeTab: EmailFormatTab;
   onChange: (tab: EmailFormatTab) => void;
+  // Shown at the right end of the tab row
+  children?: React.ReactNode;
 }
 
 const TABS: { value: EmailFormatTab; label: string; Icon: typeof Code }[] = [
@@ -18,6 +20,7 @@ const TABS: { value: EmailFormatTab; label: string; Icon: typeof Code }[] = [
 export default function EmailFormatTabs({
   activeTab,
   onChange,
+  children,
 }: EmailFormatTabsProps) {
   return (
     <div
@@ -47,6 +50,10 @@ export default function EmailFormatTabs({
           </button>
         );
       })}
+
+      {children && (
+        <div className="mb-1.5 ml-auto flex items-center">{children}</div>
+      )}
     </div>
   );
 }
