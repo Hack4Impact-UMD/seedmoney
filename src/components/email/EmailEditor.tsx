@@ -22,14 +22,16 @@ interface EmailEditorProps {
   value: string;
   onChange: (html: string) => void;
   ref?: Ref<EmailEditorHandle>;
+  initialFormat?: EmailFormatTab;
 }
 
 export default function EmailEditor({
   value,
   onChange,
   ref,
+  initialFormat = "text",
 }: EmailEditorProps) {
-  const [activeTab, setActiveTab] = useState<EmailFormatTab>("text");
+  const [activeTab, setActiveTab] = useState<EmailFormatTab>(initialFormat);
   // Formatting that would be lost; non-null while the warning is open
   const [pendingRemovals, setPendingRemovals] = useState<string[] | null>(
     null,

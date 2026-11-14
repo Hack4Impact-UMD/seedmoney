@@ -1,4 +1,5 @@
 import { createBrowserClient } from "@/src/lib/supabase-client";
+import { fetchAllPages } from "@/src/lib/fetchAllPages";
 import { getGardenStoryAnswers } from "@/src/lib/givebutterStoryAnswers";
 import moment from "moment";
 import type { Campaign } from "@/src/types/db/campaigns";
@@ -10,39 +11,7 @@ import type {
   UserExportRow,
 } from "@/src/types/frontend/exports";
 
-// Supabase caps each response (max_rows = 1000 in supabase/config.toml), so
-// exports page through results until the reported total has been read.
-const PAGE_SIZE = 1000;
-
-type PageResult = {
-  data: unknown[] | null;
-  error: { message: string } | null;
-  count: number | null;
-};
-
-// Rows are cast to T because without generated DB types Supabase infers
-// embedded many-to-one relations (e.g. campaigns) as arrays.
-export async function fetchAllPages<T>(
-  fetchPage: (from: number, to: number) => PromiseLike<PageResult>,
-): Promise<T[]> {
-  const rows: T[] = [];
-
-  while (true) {
-    const from = rows.length;
-    const { data, error, count } = await fetchPage(from, from + PAGE_SIZE - 1);
-
-    // Throw instead of returning a partial list: a silently incomplete
-    // export is worse than a visible error.
-    if (error) throw new Error(error.message);
-    if (!data || data.length === 0) break;
-
-    rows.push(...(data as T[]));
-
-    if (count !== null && rows.length >= count) break;
-  }
-
-  return rows;
-}
+export { fetchAllPages };
 
 type UserWithMemberships = Users & {
   campaign_members: {
