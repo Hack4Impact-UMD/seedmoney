@@ -1,5 +1,6 @@
 import type { EditableUser, NewUser, Users } from "@/src/types";
 import { createBrowserClient } from "@/src/lib/supabase-client";
+import { fetchAllPages } from "@/src/lib/fetchAllPages";
 import type { UsersTableRow } from "@/src/types/frontend/usersTable";
 import type { Campaign } from "@/src/types/db/campaigns";
 
@@ -23,20 +24,33 @@ type UserWithCampaigns = Pick<
 export async function readAllUsersWithCampaigns(): Promise<UsersTableRow[]> {
   const supabase = createBrowserClient();
 
-  const { data, error } = await supabase.from("users").select(`
-      id, first_name, last_name, email, created_at, is_admin,
-      campaign_members(
-        role,
-        campaigns(campaign_id, name, status, competition_id)
-      )
-    `);
+  let users: UserWithCampaigns[];
 
-  if (error) {
-    console.error("Error reading users with campaigns:", error.message);
+  // Supabase returns at most 1,000 rows per request, so read every page.
+  try {
+    users = await fetchAllPages<UserWithCampaigns>((from, to) =>
+      supabase
+        .from("users")
+        .select(
+          `
+            id, first_name, last_name, email, created_at, is_admin,
+            campaign_members(
+              role,
+              campaigns(campaign_id, name, status, competition_id)
+            )
+          `,
+          { count: "exact" },
+        )
+        .order("id", { ascending: true })
+        .range(from, to),
+    );
+  } catch (error) {
+    console.error(
+      "Error reading users with campaigns:",
+      error instanceof Error ? error.message : error,
+    );
     return [];
   }
-
-  const users = (data ?? []) as unknown as UserWithCampaigns[];
 
   return users.filter((user) => !user.is_admin).map((user) => ({
     id: user.id,
