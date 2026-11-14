@@ -30,7 +30,8 @@ export type EmailDraftResult =
   | { success: true; draft: AdminEmailDraft | null }
   | { success: false; error: string; code: "error" | "conflict" | "validation" };
 
-export type QueueEmailInput = Pick<AdminEmailDraft, "id" | "version">;
+// sendCopy also emails the admin who queued it
+export type QueueEmailInput = Pick<AdminEmailDraft, "id" | "version"> & { sendCopy?: boolean };
 export type QueuedEmailReceipt = {
   emailId: string;
   status: string;
@@ -50,4 +51,12 @@ export type EmailBatchProgress = {
   paused: null | "rate_limited" | "check_brevo_credentials_or_sender";
   retry_after_seconds: number | null;
   needs_manual_review: boolean;
+};
+
+export type SentAdminEmail = {
+  id: string;
+  subject: string;
+  recipientGroups: AdminEmailGroup[];
+  status: "sent" | "partially_failed";
+  sentAt: string;
 };

@@ -3,7 +3,7 @@
 import { requireAdmin } from "@/src/lib/requireAdmin";
 import { createServiceRoleClient } from "@/src/lib/supabase-service";
 import { prepareAdminEmail } from "@/src/lib/prepareAdminEmail";
-import type { EmailRecipient } from "@/src/lib/emailRecipients";
+import { FIRST_NAME_FALLBACK, type EmailRecipient } from "@/src/lib/emailRecipients";
 import type { AdminEmailDraft, QueueEmailInput, QueueEmailResult, QueuedEmailReceipt } from "@/src/types/db/adminEmails";
 
 const UUID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i;
@@ -48,6 +48,15 @@ export async function queueAdminEmail(input: QueueEmailInput): Promise<QueueEmai
       bodyHtml = prepared.bodyHtml;
       competitionId = prepared.competitionId;
       recipients = prepared.recipients;
+      // "Send me a copy": the admin joins the snapshot like any other recipient,
+      // borrowing the first recipient's campaign link so the copy reads the same.
+      const copyEmail = input.sendCopy === true ? user.email?.trim() : "";
+      if (copyEmail && !recipients.some(recipient => recipient.email.toLowerCase() === copyEmail.toLowerCase())) {
+        const firstName = user.user_metadata?.first_name;
+        recipients = [...recipients, { userId: user.id, email: copyEmail,
+          firstName: typeof firstName === "string" ? firstName : "",
+          campaignId: null, campaignUrl: recipients[0]?.campaignUrl ?? null }];
+      }
     } else if (!draft.queued_at || !QUEUED_STATUSES.has(draft.status)) return conflict();
 
     // The RPC serializes against autosave/discard and concurrent queue requests.
@@ -57,7 +66,7 @@ export async function queueAdminEmail(input: QueueEmailInput): Promise<QueueEmai
       p_competition_id: competitionId, p_subject: subject, p_body_html: bodyHtml,
       p_recipient_groups: draft.recipient_groups,
       p_recipients: recipients.map(recipient => ({ user_id: recipient.userId, recipient_email: recipient.email,
-        first_name: recipient.firstName, campaign_id: recipient.campaignId, campaign_url: recipient.campaignUrl })),
+        first_name: recipient.firstName.trim() || FIRST_NAME_FALLBACK, campaign_id: recipient.campaignId, campaign_url: recipient.campaignUrl })),
     });
     if (result.error?.message === "email_draft_conflict") return conflict();
     if (result.error?.message === "email_competition_changed") {
