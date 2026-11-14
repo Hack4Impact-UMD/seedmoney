@@ -3,6 +3,7 @@ import "server-only";
 import { parser } from "@lezer/html";
 import { HtmlValidate } from "html-validate/browser";
 import sanitizeHtml from "sanitize-html";
+import { parse as parseCss } from "postcss";
 import { EXAMPLE_TOKEN_VALUES, fillEmailTokens, tokenPattern } from "@/src/components/email/emailTokens";
 import { emailDraftValuesError } from "@/src/lib/emailDraftValidation";
 import type { EmailDraftValues } from "@/src/types/db/adminEmails";
@@ -102,7 +103,20 @@ export function emailContentErrors(input: unknown): string[] {
   // Compare canonical forms, so normal quote/entity/style serialization isn't an error.
   // Never send a silently stripped or repaired version of the admin's draft.
   const canonical = sanitizeHtml(html, { allowedTags: false, allowedAttributes: false,
-    allowedSchemesAppliedToAttributes: [], allowVulnerableTags: true });
+    allowedSchemesAppliedToAttributes: [], allowVulnerableTags: true,
+    onOpenTag(_tag, attributes) {
+      if (!attributes.style) return;
+      try {
+        const css = parseCss(`email-style {${attributes.style}}`);
+        const rule = css.nodes[0];
+        if (css.nodes.length !== 1 || rule.type !== "rule" || rule.selector !== "email-style" ||
+          rule.nodes.some(node => node.type !== "decl" && node.type !== "comment")) {
+          errors.add("The HTML contains malformed or unsupported CSS in a style attribute.");
+        }
+      } catch {
+        errors.add("The HTML contains malformed or unsupported CSS in a style attribute.");
+      }
+    } });
   const safe = sanitizeHtml(html, {
     allowedTags: ["p", "br", "div", "span", "strong", "b", "em", "i", "u", "s", "h1", "h2", "h3", "h4", "h5", "h6",
       "ul", "ol", "li", "a", "img", "table", "thead", "tbody", "tfoot", "tr", "td", "th", "hr", "blockquote", "pre", "code", "center"],
