@@ -2,7 +2,7 @@ import "server-only";
 
 import { requireAdmin } from "@/src/lib/requireAdmin";
 import { createServiceRoleClient } from "@/src/lib/supabase-service";
-import { fetchAllPages, fetchAllPagesAfter } from "@/src/lib/fetchAllPages";
+import { fetchAllPagesAfter } from "@/src/lib/fetchAllPages";
 import { resolveEmailRecipients, validEmailGroups, type EmailAudienceCampaign } from "@/src/lib/emailRecipients";
 import type { AdminEmailGroup } from "@/src/types/db/adminEmails";
 import type { Users } from "@/src/types/db/users";
@@ -20,9 +20,12 @@ export async function readCurrentEmailAudience(groups: AdminEmailGroup[]) {
   if (error) throw error;
   if (!competition) throw new Error("No current competition is configured.");
 
-  const users = await fetchAllPages<AudienceAccount>((from, to) => supabase.from("users")
-    .select("id, email, first_name, last_name, is_admin", { count: "exact" })
-    .eq("is_admin", false).order("id").range(from, to));
+  const users = await fetchAllPagesAfter<AudienceAccount, string>((after, limit) => {
+    let query = supabase.from("users").select("id, email, first_name, last_name, is_admin")
+      .eq("is_admin", false).order("id").limit(limit);
+    if (after) query = query.gt("id", after);
+    return query;
+  }, row => row.id);
   const members = await fetchAllPagesAfter<LeaderMembership, { userId: string; campaignId: number }>((after, limit) => {
     let query = supabase.from("campaign_members")
       .select("user_id, campaign_id, role, campaigns!inner(campaign_id, name, status, competition_id, givebutterlink)")

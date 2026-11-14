@@ -99,7 +99,7 @@ test('keyset paging ignores changing counts and rejects stalled or failed reads'
 });
 function readerFixture() {
   const state = { authorized: true, services: 0, competition: { competition_id: 1 }, competitionError: null,
-    users: [], members: [], reads: [], cap: 1000, failAt: null, deleteMemberAfterFirst: false };
+    users: [], members: [], reads: [], cap: 1000, failAt: null, deleteMemberAfterFirst: false, deleteUserAfterFirst: false };
   const client = { from(table) {
     const filters = [];
     let after = null, limit = 1000;
@@ -108,6 +108,7 @@ function readerFixture() {
       eq(key, value) { filters.push([key, value]); return query; },
       order() { return query; },
       limit(value) { limit = value; return query; },
+      gt(key, value) { assert.equal(key, 'id'); after = value; return query; },
       or(value) {
         const match = value.match(/^user_id.gt.([^,]+),and\(user_id.eq.([^,]+),campaign_id.gt.(\d+)\)$/);
         assert.ok(match); assert.equal(match[1], match[2]);
@@ -117,6 +118,13 @@ function readerFixture() {
       then(resolve, reject) {
         return Promise.resolve().then(() => {
           state.reads.push({ table, after });
+          if (state.failAt === `${table}:${after}`) return { data: null, count: null, error: { message: 'Page failed' } };
+          if (table === 'users') {
+            if (after && state.deleteUserAfterFirst) { state.users.shift(); state.deleteUserAfterFirst = false; }
+            const rows = state.users.filter(row => filters.every(([key, value]) => row[key] === value))
+              .sort((a, b) => a.id.localeCompare(b.id)).filter(row => !after || row.id > after);
+            return { data: rows.slice(0, Math.min(limit, state.cap)), count: null, error: null };
+          }
           if (after && state.deleteMemberAfterFirst) { state.members.shift(); state.deleteMemberAfterFirst = false; }
           const rows = state.members.map(row => ({ ...row, campaign_id: row.campaign_id ?? row.campaigns.campaign_id }))
             .filter(row => filters.every(([key, value]) => (key === 'campaigns.competition_id' ? row.campaigns?.competition_id : row[key]) === value))
@@ -126,13 +134,6 @@ function readerFixture() {
         }).then(resolve, reject);
       },
       async maybeSingle() { return { data: state.competition, error: state.competitionError }; },
-      async range(from, to) {
-        state.reads.push({ table, from, to });
-        if (state.failAt === `${table}:${from}`) return { data: null, count: null, error: { message: "Page failed" } };
-        const rows = (table === "users" ? state.users : state.members).filter(row => filters.every(([key, value]) =>
-          (key === "campaigns.competition_id" ? row.campaigns?.competition_id : row[key]) === value));
-        return { data: rows.slice(from, Math.min(to + 1, from + state.cap)), count: rows.length, error: null };
-      },
     };
     return query;
   } };
@@ -170,7 +171,7 @@ test("all users and memberships are paginated beyond Supabase's response limit",
   const result = await reader.readCurrentEmailAudience(["unfinished"]);
   assert.equal(result.total, 1005);
   assert.equal(result.groupCounts.not_started, 0);
-  assert.equal(state.reads.filter(value => value.from === 1000).length, 1);
+  assert.ok(state.reads.some(value => value.table === 'users' && value.after));
   assert.ok(state.reads.some(value => value.table === 'campaign_members' && value.after));
 });
 
@@ -179,7 +180,18 @@ test("pagination also works with a smaller server row cap", async () => {
   state.cap = 2;
   state.users = Array.from({ length: 5 }, (_, i) => user(`u${i}`));
   assert.equal((await reader.readCurrentEmailAudience(["all"])).total, 5);
-  assert.deepEqual(state.reads.filter(value => value.table === "users").map(value => value.from), [0, 2, 4]);
+  assert.deepEqual(state.reads.filter(value => value.table === "users").map(value => value.after), [null, 'u1', 'u3', 'u4']);
+});
+
+test('deleting an earlier user between pages does not skip another recipient', async () => {
+  const { state, reader } = readerFixture();
+  state.cap = 1;
+  state.users = [user('a'), user('b'), user('c')];
+  state.deleteUserAfterFirst = true;
+  const result = await reader.readCurrentEmailAudience(['not_started']);
+  assert.deepEqual(plain(result.recipients.map(row => row.userId)), ['a', 'b', 'c']);
+  assert.equal(result.total, 3);
+  assert.deepEqual(state.reads.filter(row => row.table === 'users').map(row => row.after), [null, 'a', 'b', 'c']);
 });
 
 test('membership cursors keep both keys and do not skip rows after deletion', async () => {
@@ -214,7 +226,7 @@ test("authorization, missing competition, and partial-page failures fail closed"
   state.competitionError = null;
   state.cap = 2;
   state.users = [user("one"), user("two"), user("three")];
-  state.failAt = "users:2";
+  state.failAt = "users:three";
   await assert.rejects(reader.readCurrentEmailAudience(["all"]), /Page failed/);
   const result = await action.readEmailAudienceSummary(["all"]);
   assert.equal(result.success, false);
