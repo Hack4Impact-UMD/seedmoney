@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, type Ref } from "react";
+import { useImperativeHandle, useRef, useState, type Ref } from "react";
 import Button from "@mui/material/Button";
 import BaseModal from "@/src/components/bases/BaseModal";
 import EmailFormatTabs, {
@@ -8,6 +8,8 @@ import EmailFormatTabs, {
 } from "@/src/components/email/EmailFormatTabs";
 import EmailHtmlEditor from "@/src/components/email/EmailHtmlEditor";
 import EmailTextEditor from "@/src/components/email/EmailTextEditor";
+import EmailTokenMenu from "@/src/components/email/EmailTokenMenu";
+import type { EmailTokenKey } from "@/src/components/email/emailTokens";
 import {
   findUnsupportedFormatting,
   normalizeEmailHtml,
@@ -16,6 +18,7 @@ import {
 // Lets the page insert content at the cursor of whichever tab is open
 export interface EmailEditorHandle {
   insertImage: (src: string, alt: string) => void;
+  insertToken: (key: EmailTokenKey) => void;
 }
 
 interface EmailEditorProps {
@@ -36,6 +39,13 @@ export default function EmailEditor({
   const [pendingRemovals, setPendingRemovals] = useState<string[] | null>(
     null,
   );
+
+  // The open tab's editor; the page reaches it through the same handle
+  const tabRef = useRef<EmailEditorHandle>(null);
+  useImperativeHandle(ref, () => ({
+    insertImage: (src, alt) => tabRef.current?.insertImage(src, alt),
+    insertToken: (key) => tabRef.current?.insertToken(key),
+  }));
 
   const switchToText = () => {
     // Store what the Text tab shows, so the email matches what Roger sees
@@ -62,12 +72,19 @@ export default function EmailEditor({
 
   return (
     <div className="mt-6 overflow-hidden rounded-xl border border-gray-300">
-      <EmailFormatTabs activeTab={activeTab} onChange={handleTabChange} />
+      <EmailFormatTabs activeTab={activeTab} onChange={handleTabChange}>
+        {/* Phones keep Insert token beside the tabs. On desktop the Text tab
+            has it in the toolbar, so only the HTML tab needs it here. */}
+        <EmailTokenMenu
+          className={activeTab === "text" ? "md:hidden!" : undefined}
+          onInsert={(key) => tabRef.current?.insertToken(key)}
+        />
+      </EmailFormatTabs>
 
       {activeTab === "html" ? (
-        <EmailHtmlEditor ref={ref} value={value} onChange={onChange} />
+        <EmailHtmlEditor ref={tabRef} value={value} onChange={onChange} />
       ) : (
-        <EmailTextEditor ref={ref} value={value} onChange={onChange} />
+        <EmailTextEditor ref={tabRef} value={value} onChange={onChange} />
       )}
 
       <BaseModal

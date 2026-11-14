@@ -1,7 +1,7 @@
 import { generateHTML, generateJSON } from "@tiptap/react";
 import StarterKit from "@tiptap/starter-kit";
 import TextAlign from "@tiptap/extension-text-align";
-import Image from "@tiptap/extension-image";
+import { EmailImage } from "@/src/components/email/EmailImageNode";
 import {
   EmailTokenNode,
   fromEditorHtml,
@@ -23,7 +23,7 @@ export const EMAIL_EXTENSIONS = [
     strike: false,
   }),
   TextAlign.configure({ types: ["heading", "paragraph"] }),
-  Image,
+  EmailImage,
   EmailTokenNode,
 ];
 

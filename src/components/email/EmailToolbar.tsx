@@ -218,6 +218,7 @@ export default function EmailToolbar({ editor }: { editor: Editor }) {
         endIcon={<ExpandMore sx={{ fontSize: 18 }} />}
         onClick={(event) => setTokenAnchorEl(event.currentTarget)}
         aria-haspopup="menu"
+        className="max-md:hidden!"
         sx={{ ml: "auto" }}
       >
         Insert token
@@ -227,6 +228,8 @@ export default function EmailToolbar({ editor }: { editor: Editor }) {
         anchorEl={tokenAnchorEl}
         open={Boolean(tokenAnchorEl)}
         onClose={() => setTokenAnchorEl(null)}
+        // Keep the cursor in the editor instead of returning focus to the button
+        disableRestoreFocus
         anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
         transformOrigin={{ vertical: "top", horizontal: "right" }}
       >
@@ -245,6 +248,7 @@ export default function EmailToolbar({ editor }: { editor: Editor }) {
         anchorEl={alignAnchorEl}
         open={Boolean(alignAnchorEl)}
         onClose={() => setAlignAnchorEl(null)}
+        disableRestoreFocus
       >
         {ALIGNMENTS.map(({ value, label, Icon }) => (
           <MenuItem

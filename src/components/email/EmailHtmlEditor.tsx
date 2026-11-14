@@ -14,7 +14,7 @@ import { html } from "@codemirror/lang-html";
 import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
 import { tags } from "@lezer/highlight";
 import type { EmailEditorHandle } from "@/src/components/email/EmailEditor";
-import { tokenPattern } from "@/src/components/email/emailTokens";
+import { tokenPattern, tokenText } from "@/src/components/email/emailTokens";
 
 interface EmailHtmlEditorProps {
   value: string;
@@ -101,6 +101,13 @@ export default function EmailHtmlEditor({
           `<img src="${escapeAttribute(src)}" alt="${escapeAttribute(alt)}">`,
         ),
       );
+      view.focus();
+    },
+    insertToken: (key) => {
+      const view = codeMirrorRef.current?.view;
+      if (!view) return;
+
+      view.dispatch(view.state.replaceSelection(tokenText(key)));
       view.focus();
     },
   }));

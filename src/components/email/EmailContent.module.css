@@ -91,3 +91,55 @@
 .editor img:global(.ProseMirror-selectednode) {
   outline: 2px solid #2d7a45;
 }
+
+/* Phones: give the message more of the narrow screen */
+@media (max-width: 767px) {
+  .editor {
+    min-height: 280px;
+    padding: 12px 14px;
+  }
+}
+
+/* Text tab only: file name, size and Replace / Remove under each image */
+.editor :global(.email-image img) {
+  display: block;
+}
+
+.editor :global(.email-image.ProseMirror-selectednode img) {
+  outline: 2px solid #2d7a45;
+}
+
+.editor :global(.email-image-caption) {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 2px 6px;
+  margin-top: 4px;
+  font-size: 11px;
+  line-height: 1.4;
+  color: #6b7280;
+  user-select: none;
+}
+
+.editor :global(.email-image-name) {
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.editor :global(.email-image-caption button) {
+  color: #2d7a45;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.editor :global(.email-image-caption button:disabled) {
+  color: #9ca3af;
+  cursor: default;
+}
+
+.editor :global(.email-image-error) {
+  flex-basis: 100%;
+  color: #dc2626;
+}

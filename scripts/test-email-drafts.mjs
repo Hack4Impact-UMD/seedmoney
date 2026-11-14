@@ -337,8 +337,9 @@ test("restored HTML can open without passing through the restricted text editor"
   const element = (type, props) => ({ type, props });
   const component = value => ({ __esModule: true, default: value });
   const editor = load("../src/components/email/EmailEditor.tsx", {
-    react: { useState: value => [value, () => {}] },
+    react: { useState: value => [value, () => {}], useRef: current => ({ current }), useImperativeHandle() {} },
     "react/jsx-runtime": { jsx: element, jsxs: element },
+    "@/src/components/email/EmailTokenMenu": component("token-menu"),
     "@/src/components/email/EmailHtmlEditor": component("html-editor"),
     "@/src/components/email/EmailTextEditor": component("text-editor"),
   }).default;

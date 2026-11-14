@@ -10,7 +10,11 @@ export type EmailAudienceSummary = {
   groupCounts: Record<AdminEmailGroup, number>;
   total: number;
   excludedInvalidEmails: number;
+  // Selected recipients with no first name; their greeting falls back to "There"
+  missingFirstNames: number;
 };
+
+export const FIRST_NAME_FALLBACK = "There";
 
 export function validEmailGroups(value: unknown): value is AdminEmailGroup[] {
   return Array.isArray(value) && value.length <= 4 && value.every(
@@ -56,6 +60,8 @@ export function resolveEmailRecipients(
   }
   return {
     competitionId, groupCounts: Object.fromEntries(groups.map(group => [group, byGroup[group].size])) as Record<AdminEmailGroup, number>,
-    total: selected.size, excludedInvalidEmails, recipients: [...selected.values()],
+    total: selected.size, excludedInvalidEmails,
+    missingFirstNames: [...selected.values()].filter(recipient => !recipient.firstName.trim()).length,
+    recipients: [...selected.values()],
   };
 }

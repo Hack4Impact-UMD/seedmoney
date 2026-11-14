@@ -32,8 +32,10 @@ export default function useEmailDelivery() {
     }
   }, []);
 
-  const send = useCallback(async (email: PendingAdminEmail) => {
-    if (running.current || !mounted.current) return;
+  // Resolves true only when every recipient was accepted by the provider
+  const send = useCallback(async (email: PendingAdminEmail): Promise<boolean> => {
+    if (running.current || !mounted.current) return false;
+    const final = { status: "" };
     running.current = true;
     const abort = new AbortController();
     controller.current = abort;
@@ -45,10 +47,12 @@ export default function useEmailDelivery() {
       const supabase = createBrowserClient();
       await sendEmailBatches(email.id, () => supabase.functions.invoke("send-admin-emails", {
         body: { email_id: email.id }, signal: abort.signal, timeout: 45_000,
-      }), batch => { if (mounted.current) setProgress(batch); }, abort.signal);
+      }), batch => { final.status = batch.done ? batch.status : ""; if (mounted.current) setProgress(batch); }, abort.signal);
       if (mounted.current && !abort.signal.aborted) await refresh();
+      return final.status === "sent" && !abort.signal.aborted;
     } catch (failure) {
       if (mounted.current && !abort.signal.aborted) setError(failure instanceof Error ? failure.message : "Delivery stopped. Resume this same email.");
+      return false;
     } finally {
       running.current = false;
       controller.current = null;
