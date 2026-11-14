@@ -32,7 +32,7 @@ Foreign-key deletion between validation and insertion fails atomically and can
 be retried with fresh resolution. Ambiguous/missing current competition fails
 closed before queueing.
 
-The composer now queues on confirmation and calls the deployed `send-admin-email`
+The composer now queues on confirmation and calls the deployed `send-admin-emails`
 function in page-driven batches. See `admin-email-delivery.md`. There is no
 scheduler; the page must remain open, or the admin can resume the same job later.
 Test sends use a separate single-address mode without queueing (see

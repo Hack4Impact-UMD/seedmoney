@@ -48,7 +48,7 @@ test("sends exactly one test address using example tokens, never audience addres
   assert.equal(state.preparation.mode, "test");
   assert.equal(state.calls.length, 1);
   const call = state.calls[0];
-  assert.equal(call.name, "send-admin-email");
+  assert.equal(call.name, "send-admin-emails");
   assert.deepEqual(Object.keys(call.body).sort(), ["body_html", "mode", "recipient_email", "request_id", "subject"]);
   assert.equal(call.body.recipient_email, "test@example.org");
   assert.equal(call.body.subject, "Hello Jane");

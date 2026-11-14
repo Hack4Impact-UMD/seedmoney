@@ -9,8 +9,9 @@ values as Preview (Jane and the example Givebutter URL), not a real recipient's
 details. The original draft and bulk recipient queue are not modified, and tests
 are not recorded as bulk sends in sent history.
 
-The server action invokes the existing `send-admin-email` Edge Function using the
-existing service-role client. The new `mode: "test"` path accepts service-role
+The server action invokes the existing function's **`send-admin-emails` URL slug**
+(its dashboard display name is `send-admin-email`) using the existing service-role
+client. The new `mode: "test"` path accepts service-role
 requests only; browser user JWTs cannot submit HTML directly to this path. Brevo
 credentials stay in Supabase. The existing `{ email_id }` bulk path is unchanged.
 
@@ -24,7 +25,8 @@ environment variables are required.
 
 Localhost must use the same Supabase project's URL, public key, and service-role
 JWT as the deployed function (the legacy `service_role` key, not an `sb_secret_`
-key; the function compares it with its built-in service-role credential).
+key). Equivalent service-role JWTs are verified by Supabase rather than requiring
+an exact string match with the function's built-in credential.
 Restart Next.js after changing local environment
 variables. A local Supabase instance without the function will show a visible
 configuration error instead of pretending the test succeeded.

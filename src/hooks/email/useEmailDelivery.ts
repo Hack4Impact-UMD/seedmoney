@@ -43,7 +43,7 @@ export default function useEmailDelivery() {
     setIsSending(true);
     try {
       const supabase = createBrowserClient();
-      await sendEmailBatches(email.id, () => supabase.functions.invoke("send-admin-email", {
+      await sendEmailBatches(email.id, () => supabase.functions.invoke("send-admin-emails", {
         body: { email_id: email.id }, signal: abort.signal, timeout: 45_000,
       }), batch => { if (mounted.current) setProgress(batch); }, abort.signal);
       if (mounted.current && !abort.signal.aborted) await refresh();

@@ -27,13 +27,13 @@ export async function sendAdminTestEmail(input: EmailSendInput & { requestId: st
     }
     const supabase = createServiceRoleClient();
     invoked = true;
-    const { data, error } = await supabase.functions.invoke("send-admin-email", {
+    const { data, error } = await supabase.functions.invoke("send-admin-emails", {
       body: { mode: "test", request_id: input.requestId, recipient_email: prepared.testEmail, subject, body_html: body },
       timeout: 15_000,
     });
     if (error) {
       if ([400, 404, 405, 409].includes(error.context?.status)) {
-        return { success: false, errors: ["Test sending is unavailable. Update the send-admin-email Edge Function in this Supabase project first."] };
+        return { success: false, errors: ["Test sending is unavailable. Check the send-admin-emails endpoint and deployed test mode in this Supabase project."] };
       }
       if ([401, 403].includes(error.context?.status)) {
         return { success: false, errors: ["The test sender refused authorization. Check the app's Supabase service-role configuration."] };

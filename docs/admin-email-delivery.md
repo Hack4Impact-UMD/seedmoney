@@ -1,7 +1,8 @@
 # Admin Email Delivery
 
 The composer queues the saved, validated draft with `queueAdminEmail`, then calls
-the dashboard-managed `send-admin-email` Supabase Edge Function through the
+the dashboard-managed Supabase Edge Function at the `send-admin-emails` URL slug
+(display name `send-admin-email`) through the
 authenticated browser client. The function sends one batch and returns progress;
 the page waits for its retry interval before requesting another batch.
 
@@ -17,7 +18,7 @@ Rate limits respect the function's retry delay; network errors stop with a visib
 error, and credential errors require correction before resuming.
 
 No scheduler, cron secret, new environment variables, or additional migration is
-needed for this step. The existing queue migration and deployed `send-admin-email`
+needed for this step. The existing queue migration and deployed `send-admin-emails`
 function are prerequisites. Test sends use a separate server-only mode in that
 function (see `admin-email-test-sends.md`); sent-history integration is a separate
 step. The deployed Edge Function source stays in Supabase.

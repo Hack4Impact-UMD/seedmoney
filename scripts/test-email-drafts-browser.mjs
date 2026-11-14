@@ -331,7 +331,7 @@ async function until(check, message) {
 
     assert.equal((await service.from('admin_emails').update({ competition_id: competition.data.competition_id }).eq('created_by', userId).eq('status', 'draft')).error, null);
     let calls = 0, queuedId, snapshotSize;
-    await page.route('**/functions/v1/send-admin-email', async route => {
+    await page.route('**/functions/v1/send-admin-emails', async route => {
       const headers = { 'access-control-allow-origin': '*', 'access-control-allow-headers': 'authorization, apikey, x-client-info, content-type' };
       if (route.request().method() === 'OPTIONS') { await route.fulfill({ status: 200, headers }); return; }
       calls++;
