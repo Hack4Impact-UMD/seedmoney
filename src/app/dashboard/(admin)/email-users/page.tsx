@@ -7,6 +7,7 @@ import PeopleOutlinedIcon from '@mui/icons-material/PeopleOutlined';
 import EmailOutlinedIcon from '@mui/icons-material/EmailOutlined';
 import RemoveRedEyeOutlinedIcon from '@mui/icons-material/RemoveRedEyeOutlined';
 import SendOutlinedIcon from '@mui/icons-material/SendOutlined';
+import DeleteOutlineIcon from '@mui/icons-material/DeleteOutline';
 import Navbar from "@/src/components/Navbar"
 import FormControl from "@mui/material/FormControl";
 import Select from "@mui/material/Select";
@@ -21,6 +22,13 @@ import EmailEditor, {
 } from "@/src/components/email/EmailEditor";
 import EmailPreviewBody from "@/src/components/email/EmailPreviewBody";
 import useUploadEmailImage from "@/src/hooks/email/useUploadEmailImage";
+import useEmailDraft from "@/src/hooks/email/useEmailDraft";
+import useEmailAudience from "@/src/hooks/email/useEmailAudience";
+import useEmailDelivery from "@/src/hooks/email/useEmailDelivery";
+import { queueAdminEmail } from "@/src/actions/email/queue";
+import { sendAdminTestEmail } from "@/src/actions/email/test";
+import { validateEmailForSend } from "@/src/actions/email/validate";
+import { ADMIN_EMAIL_GROUP_LABELS, type AdminEmailGroup } from "@/src/types/db/adminEmails";
 import { MAX_EMAIL_IMAGE_BYTES } from "@/src/actions/db/email-images";
 import {
   EXAMPLE_TOKEN_VALUES,
@@ -32,19 +40,32 @@ import { useRouter } from "next/navigation";
 
 export default function EmailUsersPage() {
   const router = useRouter();
-  const [recipientGroups, setRecipientGroups] = useState<string[]>([]);
-  const [subject, setSubject] = useState("");
-  const [bodyHtml, setBodyHtml] = useState("");
+  const draft = useEmailDraft();
+  const delivery = useEmailDelivery();
+  const { subject, bodyHtml, recipientGroups } = draft.values;
+  const audience = useEmailAudience(recipientGroups, draft.isLoaded);
   const [uploadError, setUploadError] = useState("");
+  const [isUploadingBatch, setIsUploadingBatch] = useState(false);
   const editorRef = useRef<EmailEditorHandle>(null);
   const { mutateAsync: uploadImage, isPending: isUploadingImage } =
     useUploadEmailImage();
   const [previewOpen, setPreviewOpen] = useState(false);
   const [testSendOpen, setTestSendOpen] = useState(false);
   const [testEmail, setTestEmail] = useState("");
-  const [testSendNotice, setTestSendNotice] = useState(false);
+  const [testSendNotice, setTestSendNotice] = useState<string | null>(null);
+  const testRequest = useRef<{ key: string; id: string } | null>(null);
   const [sendConfirmOpen, setSendConfirmOpen] = useState(false);
-  const [sendNotice, setSendNotice] = useState(false);
+  const [isValidating, setIsValidating] = useState(false);
+  const validationInFlight = useRef(false);
+  const [validation, setValidation] = useState<{ key: string; errors: string[] } | null>(null);
+  const [validatedRecipientCount, setValidatedRecipientCount] = useState<number | null>(null);
+  const validationKey = JSON.stringify({ subject, bodyHtml, recipientGroups, testEmail });
+  const validationErrors = validation?.key === validationKey ? validation.errors : [];
+  const canEdit = draft.isLoaded && !draft.isDiscarding && !isValidating && !delivery.isSending;
+  const audienceReady = draft.isLoaded && audience.isSuccess && !audience.isFetching;
+  const wrongCompetition = audienceReady && draft.hasDraft && draft.competitionId !== audience.data.competitionId;
+  const canPrepareSend = canEdit && delivery.isLoaded && !delivery.job && !delivery.error && !draft.error && audienceReady && !wrongCompetition &&
+    audience.data.total > 0 && recipientGroups.length > 0 && Boolean(subject.trim()) && !isUploadingBatch;
 
   const isValidTestEmail = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(testEmail.trim());
 
@@ -57,20 +78,24 @@ export default function EmailUsersPage() {
     },
     multiple: true,
     maxSize: MAX_EMAIL_IMAGE_BYTES,
-    disabled: isUploadingImage,
+    disabled: !canEdit || isUploadingImage || isUploadingBatch,
 
     // Upload each image to storage, then insert it where the cursor is
     onDropAccepted: async (files) => {
       setUploadError("");
-
-      for (const file of files) {
-        try {
-          const url = await uploadImage(file);
-          editorRef.current?.insertImage(url, file.name);
-        } catch (error) {
-          console.error(error);
-          setUploadError(`Couldn't upload ${file.name}. Please try again.`);
+      setIsUploadingBatch(true);
+      try {
+        for (const file of files) {
+          try {
+            const url = await uploadImage(file);
+            editorRef.current?.insertImage(url, file.name);
+          } catch (error) {
+            console.error(error);
+            setUploadError(`Couldn't upload ${file.name}. Please try again.`);
+          }
         }
+      } finally {
+        setIsUploadingBatch(false);
       }
     },
   
@@ -79,18 +104,77 @@ export default function EmailUsersPage() {
     },
   });
 
-  const groupLabels: Record<string, string> = {
-    all: "All Users",
-    applicants: "Applicants",
-    approved: "Approved Campaigns",
+  const groupLabels = ADMIN_EMAIL_GROUP_LABELS;
+
+  const validateSend = async (mode: "send" | "test", confirm = false) => {
+    if (validationInFlight.current) return;
+    validationInFlight.current = true;
+    setIsValidating(true);
+    setValidation(null);
+    setTestSendNotice(null);
+    try {
+      await draft.flush();
+      if (mode === "send" && confirm) {
+        const identity = draft.getSavedIdentity();
+        if (!identity) throw new Error("Draft not saved");
+        const queued = await queueAdminEmail(identity);
+        if (!queued.success) { setValidation({ key: validationKey, errors: queued.errors }); return; }
+        setSendConfirmOpen(false);
+        await draft.reload();
+        setIsValidating(false);
+        if (queued.receipt.alreadyQueued) {
+          // Another tab may have queued a different version. Require an explicit resume.
+          await delivery.refresh();
+        } else {
+          await delivery.send({ id: queued.receipt.emailId, subject, status: queued.receipt.status,
+            recipientCount: queued.receipt.recipientCount });
+        }
+        return;
+      }
+      const input = { ...draft.values, mode, testEmail,
+        competitionId: draft.hasDraft ? draft.competitionId : audience.data?.competitionId ?? null };
+      if (mode === "test") {
+        if (testRequest.current?.key !== validationKey) testRequest.current = { key: validationKey, id: crypto.randomUUID() };
+        try {
+          const result = await sendAdminTestEmail({ ...input, requestId: testRequest.current.id });
+          if (result.success) setTestSendNotice(result.testEmail);
+          else setValidation({ key: validationKey, errors: result.errors });
+          if (result.success || !result.uncertain) testRequest.current = null;
+        } catch {
+          setValidation({ key: validationKey, errors: ["Unable to confirm the test email. Check your inbox or provider logs before trying again."] });
+        }
+        return;
+      }
+      const result = await validateEmailForSend(input);
+      if (!result.success) { setValidation({ key: validationKey, errors: result.errors }); return; }
+      setValidatedRecipientCount(result.recipientCount);
+      setSendConfirmOpen(true);
+    } catch {
+      setValidation({ key: validationKey, errors: ["Unable to save or validate this email. Your draft is still available; please retry."] });
+    } finally {
+      validationInFlight.current = false;
+      setIsValidating(false);
+    }
+  };
+  const validationNotice = validationErrors.length > 0 && (
+    <ul role="alert" className="space-y-1 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+      {validationErrors.map(error => <li key={error}>{error}</li>)}
+    </ul>
+  );
+
+  const handleDiscard = async () => {
+    if (!window.confirm("Discard this draft? This cannot be undone.")) return;
+    if (await draft.discard()) setUploadError("");
   };
 
-  const handleDiscard = () => {
-    setRecipientGroups([]);
-    setSubject("");
-    setBodyHtml("");
-    setUploadError("");
-  };
+  const saveLabel = !draft.isLoaded
+    ? draft.error ? "Draft unavailable" : "Loading draft..."
+    : draft.isDiscarding ? "Discarding..."
+    : draft.status === "saving" ? "Saving..."
+    : draft.error ? "Draft not saved"
+    : draft.isDirty ? "Unsaved changes"
+    : draft.savedAt ? `Auto saved at ${new Date(draft.savedAt).toLocaleTimeString([], { hour: "numeric", minute: "2-digit" })}`
+    : "No draft saved";
 
   return (
     <div className="flex min-h-screen">
@@ -120,6 +204,14 @@ export default function EmailUsersPage() {
               <Button
                 component={Link}
                 href="/dashboard/email-users/sent-history"
+                onClick={async (event) => {
+                  event.preventDefault();
+                  if (!canEdit || isUploadingBatch) return;
+                  try {
+                    await draft.flush();
+                    router.push("/dashboard/email-users/sent-history");
+                  } catch { /* The draft error is displayed below. */ }
+                }}
                 variant="outlined"
                 size="small"
               >
@@ -128,7 +220,36 @@ export default function EmailUsersPage() {
             </div>
           </div>
 
-          <section className="rounded-xl border border-gray-200 bg-white p-6">
+          {(delivery.job || delivery.progress || delivery.error) && (
+            <div className="space-y-2 rounded-md border border-gray-200 bg-white p-4 text-sm" aria-live="polite">
+              {delivery.job && <p className="break-words font-semibold">{delivery.job.subject} ({delivery.job.recipientCount.toLocaleString()} recipients)</p>}
+              {delivery.progress && (!delivery.job || delivery.progress.email_id === delivery.job.id) && (
+                <p>
+                  {delivery.progress.done ? "Sending finished." : "Sending in progress."} {delivery.progress.counts.accepted.toLocaleString()} accepted by the email provider;
+                  {" "}{delivery.progress.counts.failed.toLocaleString()} failed; {delivery.progress.counts.unknown.toLocaleString()} uncertain.
+                </p>
+              )}
+              {delivery.progress?.needs_manual_review && <p role="alert" className="text-amber-800">Check provider logs for uncertain recipients before retrying them. They will not be resent automatically.</p>}
+              {delivery.isSending && <p>Keep this page open until sending finishes.</p>}
+              {delivery.error && <p role="alert" className="text-red-700">{delivery.error}</p>}
+              {delivery.job && <Button size="small" disabled={delivery.isSending || isValidating || isUploadingBatch || draft.isDiscarding}
+                onClick={() => delivery.send(delivery.job!)}>{delivery.isSending ? "Sending..." : "Resume sending"}</Button>}
+              {!delivery.isLoaded && !delivery.isSending && <Button size="small" onClick={delivery.refresh}>Check queued emails</Button>}
+            </div>
+          )}
+
+          {draft.error && (
+            <div role="alert" className="flex flex-wrap items-center gap-3 rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+              <p>{draft.error.error}</p>
+              {draft.error.code === "conflict" ? (
+                <Button size="small" onClick={() => {
+                  if (window.confirm("Reloading will replace your unsaved edits with the saved draft. Continue?")) draft.reload();
+                }}>Reload draft</Button>
+              ) : <Button size="small" onClick={draft.retry}>Retry</Button>}
+            </div>
+          )}
+
+          <section inert={!canEdit} className="rounded-xl border border-gray-200 bg-white p-6">
             <div className="flex items-center gap-3 mb-2">
               <h2 className="text-lg font-semibold text-[#123A1E]">
                 1. Recipients
@@ -144,9 +265,7 @@ export default function EmailUsersPage() {
                     variant="outlined"
                     color="success"
                     onDelete={() =>
-                      setRecipientGroups((prev) =>
-                        prev.filter((item) => item !== group)
-                      )
+                      draft.update({ recipientGroups: recipientGroups.filter((item) => item !== group) })
                     }
                   />
                 ))}
@@ -158,7 +277,7 @@ export default function EmailUsersPage() {
                 Recipient groups
               </InputLabel>
 
-              <Select<string[]>
+              <Select<AdminEmailGroup[]>
                 labelId="recipient-groups-label"
                 value={recipientGroups}
                 label="Recipient groups"
@@ -172,23 +291,39 @@ export default function EmailUsersPage() {
                 onChange={(event) => {
                   const value = event.target.value;
 
-                  setRecipientGroups(
-                    typeof value === "string" ? value.split(",") : value
-                  );
+                  draft.update({ recipientGroups: typeof value === "string" ? value.split(",") as AdminEmailGroup[] : value });
                 }}
               >
-                <MenuItem value="all">All Users</MenuItem>
-                <MenuItem value="applicants">Applicants</MenuItem>
-                <MenuItem value="approved">Approved Campaigns</MenuItem>
+                {Object.entries(groupLabels).map(([value, label]) => (
+                  <MenuItem key={value} value={value}>
+                    {label} ({audienceReady ? audience.data.groupCounts[value as AdminEmailGroup].toLocaleString() : "..."})
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
             
+            {audience.isError && (
+              <div role="alert" className="mt-3 flex flex-wrap items-center gap-3 text-sm text-red-700">
+                <p>{audience.error.message}</p>
+                <Button size="small" onClick={() => audience.refetch()}>Retry recipients</Button>
+              </div>
+            )}
+            {wrongCompetition && (
+              <p role="alert" className="mt-3 text-sm text-red-700">
+                This draft belongs to a different or removed competition. Discard it and start a new draft before sending.
+              </p>
+            )}
+            {audienceReady && audience.data.excludedInvalidEmails > 0 && (
+              <p className="mt-3 text-sm text-amber-800">
+                {audience.data.excludedInvalidEmails.toLocaleString()} accounts excluded because their account email is missing or invalid.
+              </p>
+            )}
             {recipientGroups.length > 0 ? (
                 <div className="flex items-center gap-2 mt-3 rounded-md bg-[#F1F8F3] px-4 py-3 text-[#2F7D43]">
                   <PeopleOutlinedIcon /> 
-                  <p className="text-sm text-[#000000] font-bold">
-                    {/* change to display list count */}
-                    Recipient selection is for preview
+                  <p role="status" data-testid="email-recipient-count" className="text-sm text-[#000000] font-bold">
+                    {audience.isError ? "Recipient count unavailable" : !audienceReady ? "Loading recipients..." :
+                      `${audience.data.total.toLocaleString()} ${audience.data.total === 1 ? "recipient" : "recipients"} selected`}
                   </p>
                 </div>
               ) : (
@@ -214,63 +349,72 @@ export default function EmailUsersPage() {
                 </p>
               </div>
 
-              <p className="text-sm text-[#2F7D43]">
-                Draft preview (not saved)
+              <p role="status" className={`text-sm ${draft.error ? "text-red-600" : "text-[#2F7D43]"}`}>
+                {saveLabel}
               </p>
             </div>
 
-            <TextField
-              fullWidth
-              label="Subject"
-              value={subject}
-              onChange={(event) => setSubject(event.target.value)}
-            />
+            <div inert={!canEdit}>
+              <TextField
+                fullWidth
+                label="Subject"
+                value={subject}
+                onChange={(event) => draft.update({ subject: event.target.value })}
+              />
 
-            <EmailEditor
-              ref={editorRef}
-              value={bodyHtml}
-              onChange={setBodyHtml}
-            />
-
-            {/* Image upload: inserted into the message at the cursor */}
-            <div {...getRootProps({ className: "dropzone" })}>
-              <input {...getInputProps()} />
-
-              <div className="mt-6 flex min-h-[175px] cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-dashed border-gray-300 bg-white p-6 text-center">
-                <Image
-                  src="/icons/upload-icon.svg"
-                  alt="Upload icon"
-                  width={16}
-                  height={20}
+              {draft.isLoaded ? (
+                <EmailEditor
+                  ref={editorRef}
+                  value={bodyHtml}
+                  initialFormat={draft.hasDraft ? "html" : "text"}
+                  onChange={(bodyHtml) => draft.update({ bodyHtml })}
                 />
+              ) : <div className="mt-6 min-h-[400px]" />}
 
-                {isUploadingImage ? (
-                  <p className="text-base">Uploading...</p>
-                ) : (
-                  <p className="text-base">
-                    <span className="text-blue-600 underline">
-                      Upload
-                    </span>{" "}
-                    or drag and drop
+              {/* Image upload: inserted into the message at the cursor */}
+              <div {...getRootProps({ className: "dropzone" })}>
+                <input {...getInputProps()} />
+
+                <div className="mt-6 flex min-h-[175px] cursor-pointer flex-col items-center justify-center gap-3 rounded-md border border-dashed border-gray-300 bg-white p-6 text-center">
+                  <Image
+                    src="/icons/upload-icon.svg"
+                    alt="Upload icon"
+                    width={16}
+                    height={20}
+                  />
+
+                  {isUploadingImage || isUploadingBatch ? (
+                    <p className="text-base">Uploading...</p>
+                  ) : (
+                    <p className="text-base">
+                      <span className="text-blue-600 underline">
+                        Upload
+                      </span>{" "}
+                      or drag and drop
+                    </p>
+                  )}
+
+                  <p className="text-sm text-gray-500">
+                    Add images to your email · PNG, JPG or GIF (max. 3MB)
                   </p>
-                )}
-
-                <p className="text-sm text-gray-500">
-                  Add images to your email · PNG, JPG or GIF (max. 3MB)
-                </p>
+                </div>
               </div>
-            </div>
 
-            {uploadError && (
-              <p className="mt-2 text-sm text-red-600">
-                {uploadError}
-              </p>
-            )}
+              {uploadError && (
+                <p className="mt-2 text-sm text-red-600">
+                  {uploadError}
+                </p>
+              )}
+            </div>
 
           </section>
 
           {/* Email actions */}
+          {!testSendOpen && !sendConfirmOpen && validationNotice}
           <div className="flex flex-wrap items-center justify-end gap-3 rounded-xl border border-gray-200 bg-white p-4">
+            <Button type="button" variant="text" startIcon={<DeleteOutlineIcon />}
+              disabled={!canEdit || isUploadingBatch || (!draft.hasDraft && !draft.isDirty)}
+              onClick={handleDiscard}>Discard draft</Button>
             <Button 
               type="button" 
               variant="text"
@@ -283,8 +427,9 @@ export default function EmailUsersPage() {
             <Button
               type="button"
               variant="text"
+              disabled={!canPrepareSend}
               onClick={() => {
-                setTestSendNotice(false)
+                setTestSendNotice(null)
                 setTestSendOpen(true)
               }}
               sx={{ color: "#123A1E", display: "flex", gap: 1}}>
@@ -295,14 +440,11 @@ export default function EmailUsersPage() {
             <Button 
               type="button" 
               variant="contained" 
-              disabled={recipientGroups.length === 0 || !subject.trim()}
-              onClick={() => {
-                setSendNotice(false);
-                setSendConfirmOpen(true);
-              }}
+              disabled={!canPrepareSend}
+              onClick={() => validateSend("send")}
               sx={{display: "flex", gap: 1}}>
               <SendOutlinedIcon fontSize="small" sx={{transform: "rotate(-45deg)", marginTop: "-5px"}}/>
-              Send Email
+              {isValidating && !testSendOpen ? "Checking..." : "Send Email"}
             </Button>
           </div>
 
@@ -346,13 +488,13 @@ export default function EmailUsersPage() {
           {/* Test Send modal */}
           <BaseModal
             open={testSendOpen}
-            onClose={() => setTestSendOpen(false)}
+            onClose={() => { if (!isValidating) setTestSendOpen(false); }}
             title="Send Test Email"
           >
             <div className="flex flex-col gap-5">
               <p className="text-sm text-gray-600">
                 Enter an email address to test your message before
-                sending it to recipients.
+                sending it to recipients. Personalization uses example values.
               </p>
 
               <TextField
@@ -362,15 +504,18 @@ export default function EmailUsersPage() {
                 label="Email address"
                 placeholder="example@email.com"
                 value={testEmail}
+                disabled={isValidating}
                 onChange={(event) => {
                   setTestEmail(event.target.value);
-                  setTestSendNotice(false);
+                  setTestSendNotice(null);
                 }}
               />
 
+              {validationNotice}
+
               {testSendNotice && (
                 <p role="status" className="rounded-md bg-[#F1F8F3] p-3 text-sm text-[#2F7D43]">
-                  Test send simulated for {testEmail}. No email was actually sent.
+                  Test email accepted by the email provider for {testSendNotice}. Check your inbox.
                 </p>
               )}
 
@@ -378,6 +523,7 @@ export default function EmailUsersPage() {
                 <Button
                   type="button"
                   variant="text"
+                  disabled={isValidating}
                   sx={{ color: "#123A1E" }}
                   onClick={() => setTestSendOpen(false)}
                 >
@@ -387,8 +533,8 @@ export default function EmailUsersPage() {
                 <Button
                   type="button"
                   variant="contained"
-                  disabled={!isValidTestEmail}
-                  onClick={() => setTestSendNotice(true)}
+                  disabled={!isValidTestEmail || isValidating || !canPrepareSend}
+                  onClick={() => validateSend("test")}
                   sx={{
                     backgroundColor: "#2F7D43",
                     "&:hover": {
@@ -396,7 +542,7 @@ export default function EmailUsersPage() {
                     },
                   }}
                 >
-                  Send Test Email
+                  {isValidating ? "Sending..." : "Send Test Email"}
                 </Button>
               </div>
             </div>
@@ -405,7 +551,7 @@ export default function EmailUsersPage() {
           {/* Send Email confirmation */}
           <BaseModal
             open={sendConfirmOpen}
-            onClose={() => setSendConfirmOpen(false)}
+            onClose={() => { if (!isValidating) setSendConfirmOpen(false); }}
             title="Send this email?"
           >
             <div className="flex flex-col gap-5">
@@ -419,19 +565,25 @@ export default function EmailUsersPage() {
                 </p>
 
                 <p className="mt-2 text-sm text-gray-600">
+                  {validatedRecipientCount !== null ? `${validatedRecipientCount.toLocaleString()} unique recipients` : "Recipient count unavailable"}
+                </p>
+
+                <p className="mt-2 text-sm text-gray-600">
                   Subject: {subject}
                 </p>
               </div>
 
+              {validationNotice}
+
               <p className="text-sm text-gray-500">
                 Please review your recipients and message before confirming.
-                This is a frontend demonstration; no email will be sent.
               </p>
 
               <div className="flex justify-end gap-3">
                 <Button
                   type="button"
                   variant="text"
+                  disabled={isValidating}
                   onClick={() => setSendConfirmOpen(false)}
                   sx={{ color: "#123A1E" }}
                 >
@@ -441,10 +593,8 @@ export default function EmailUsersPage() {
                 <Button
                   type="button"
                   variant="contained"
-                  onClick={() => {
-                    setSendConfirmOpen(false);
-                    router.push("/dashboard/email-users/sent-history")
-                  }}
+                  disabled={!canPrepareSend}
+                  onClick={() => validateSend("send", true)}
                   sx={{
                     backgroundColor: "#2F7D43",
                     "&:hover": {
@@ -452,7 +602,7 @@ export default function EmailUsersPage() {
                     },
                   }}
                 >
-                  Confirm (Demo)
+                  {isValidating ? "Checking..." : "Confirm and send"}
                 </Button>
               </div>
             </div>
