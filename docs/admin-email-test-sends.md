@@ -39,8 +39,9 @@ Network/timeout and ambiguous results explicitly warn to check the inbox or
 provider logs before trying again. There are no automatic retries.
 
 Duplicate clicks are guarded synchronously. An unchanged uncertain test reuses
-its request ID for provider idempotency; an acknowledged test or definite
-rejection clears it. This is not a durable exactly-once guarantee across reloads
+its request ID for provider idempotency; only confirmed provider acceptance
+clears it. Preparation and configuration failures preserve it across unchanged
+retries. This is not a durable exactly-once guarantee across reloads
 or beyond the provider's idempotency window.
 
 ## Validation

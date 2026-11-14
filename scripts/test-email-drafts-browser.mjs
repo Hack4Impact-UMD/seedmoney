@@ -62,7 +62,9 @@ async function until(check, message) {
         testRequests.push(input);
         result = testRequests.length === 1
           ? { success: false, uncertain: true, errors: ['Test acceptance is uncertain. Check your inbox or provider logs before trying again.'] }
-          : { success: true, testEmail: 'test@example.org' };
+          : testRequests.length === 2
+            ? { success: false, errors: ['Unable to prepare the test email. Please retry.'] }
+            : { success: true, testEmail: 'test@example.org' };
       }
       await route.fulfill({ status: 200, contentType: 'text/x-component',
         body: '0:{"a":"$@1","f":"","b":"test"}\n1:' + JSON.stringify(result) + '\n' });
@@ -285,9 +287,12 @@ async function until(check, message) {
     assert.equal(testRequests.length, 1, 'Duplicate clicks must not start duplicate tests');
     assert.equal(await page.getByText(/Test email accepted by the email provider/).count(), 0);
     await page.getByRole('button', { name: 'Send Test Email', exact: true }).click();
+    await page.getByRole('alert').filter({ hasText: 'Unable to prepare the test email' }).waitFor();
+    await page.getByRole('button', { name: 'Send Test Email', exact: true }).click();
     await page.getByText('Test email accepted by the email provider for test@example.org. Check your inbox.', { exact: true }).waitFor();
-    assert.equal(testRequests.length, 2);
+    assert.equal(testRequests.length, 3);
     assert.equal(testRequests[0].requestId, testRequests[1].requestId, 'Uncertain retries must reuse their request ID');
+    assert.equal(testRequests[0].requestId, testRequests[2].requestId, 'Preparation failures must not clear an unresolved request ID');
     assert.equal(testRequests[1].testEmail, 'test@example.org');
     const unchanged = (await service.from('admin_emails').select('id, status, body_html').eq('created_by', userId)).data;
     assert.equal(unchanged.length, 1);
