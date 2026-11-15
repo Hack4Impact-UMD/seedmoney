@@ -3,6 +3,7 @@ import { Button, Typography } from "@mui/material";
 import {
   SUPPORT_EMAIL,
   SUPPORT_MAILTO,
+  SUPPORT_FORM,
 } from "@/src/constants/emailConstants";
 
 export default function HelpForm() {
@@ -30,21 +31,22 @@ export default function HelpForm() {
           maxWidth: "58rem",
         }}
       >
-        Questions about your campaign or account? Send us an email and
+        Questions about your campaign or account? Reach out on our help form
         we&apos;ll get back to you as soon as we can.
       </Typography>
 
       <div className="flex flex-col items-start gap-3 sm:flex-row sm:items-center">
         <Button
           component="a"
-          href={SUPPORT_MAILTO}
+          href={SUPPORT_FORM}
+          target="_blank"
           variant="contained"
           size="medium"
           startIcon={<EmailOutlinedIcon fontSize="small" />}
         >
           Contact Support
         </Button>
-
+        {/*
         <Typography
           component="span"
           sx={{
@@ -55,6 +57,7 @@ export default function HelpForm() {
         >
           {SUPPORT_EMAIL}
         </Typography>
+        */}
       </div>
     </section>
   );
