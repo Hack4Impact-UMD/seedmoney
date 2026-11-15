@@ -41,7 +41,7 @@ try {
         batches.push(paths);
         return reply(paths.map(path => ({ path, signedURL: `/object/sign/campaign_images/${path}?token=fake`, error: null })));
       }
-      if (url.pathname.startsWith('/storage/v1/object/sign/')) {
+      if (url.pathname.startsWith('/storage/v1/object/sign/') || url.pathname === '/_next/image') {
         return route.fulfill({ contentType: 'image/png', body: Buffer.from(
           'iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAQAAAC1HAwCAAAAC0lEQVR42mP8/x8AAwMCAO+aWQAAAABJRU5ErkJggg==', 'base64') });
       }
@@ -59,7 +59,15 @@ try {
       console.error({ errors, body: (await page.locator('body').innerText()).slice(0, 800) });
       throw error;
     }
-    await page.waitForFunction(() => document.querySelector('article [aria-label="Garden 1"]')?.style.backgroundImage.includes('token=fake'), null, { timeout: 10000 });
+    await page.getByRole('img', { name: 'Garden 1', exact: true }).waitFor();
+    await page.waitForFunction(() => {
+      const image = document.querySelector('article img');
+      return image?.complete && image.naturalWidth > 0;
+    }, null, { timeout: 10000 });
+    const image = page.getByRole('img', { name: 'Garden 1', exact: true });
+    const source = await image.getAttribute('src');
+    assert.ok(source.startsWith('/_next/image?') || source.startsWith('http://127.0.0.1:54321/'));
+    assert.equal(await image.getAttribute('loading'), 'lazy');
     assert.equal(await page.locator('article').count(), 12);
     await page.getByRole('button', { name: 'Go to page 2', exact: true }).click();
     await page.getByRole('heading', { name: 'Garden 13', exact: true }).waitFor();

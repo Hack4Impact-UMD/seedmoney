@@ -1,4 +1,5 @@
 import type { PublicLeaderboardCampaign } from "@/src/types/frontend/leaderboard";
+import Image from "next/image";
 import leaderboardTypography from "./leaderboardTypography.module.css";
 
 type LeaderboardCardProps = {
@@ -30,10 +31,13 @@ export default function LeaderboardCard({
     <article className="rounded-[12px] bg-[#FCF9F2] px-[10px] py-5 shadow-[0_8px_24px_rgba(18,58,30,0.08)]">
       <div className="relative h-[247px] overflow-hidden rounded-[12px]">
         {campaign.imageUrl ? (
-          <div
-            aria-label={campaign.name}
-            className="h-full w-full bg-cover bg-center"
-            style={{ backgroundImage: `url(${campaign.imageUrl})` }}
+          <Image
+            src={campaign.imageUrl}
+            alt={campaign.name}
+            fill
+            unoptimized={campaign.imageUrl.startsWith("http://127.0.0.1:54321/")}
+            sizes="(min-width: 1280px) 33vw, (min-width: 768px) 50vw, 100vw"
+            className="object-cover object-center"
           />
         ) : (
           <div className="flex h-full w-full items-center justify-center bg-[linear-gradient(135deg,#163422_0%,#2D7A45_100%)] text-center text-white">
