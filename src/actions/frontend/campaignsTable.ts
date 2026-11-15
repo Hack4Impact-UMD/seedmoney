@@ -34,7 +34,17 @@ function mapCampaignLeader(campaign:RawCampaignRow): CampaignWithLeader {
   } as CampaignWithLeader;
 }
 
-const BASE_SELECT = `
+const ADMIN_BASE_SELECT = `
+  *,
+  campaign_members(
+    role,
+    users(
+      first_name,
+      last_name
+    )
+  )`;
+
+const USER_BASE_SELECT = `
   *,
   campaign_members!inner(
     role,
@@ -53,7 +63,7 @@ export async function readApprovedCampaigns(competition_id?: number): Promise<Ca
 
   const { data, error } = await supabase
     .from("campaigns")
-    .select(BASE_SELECT)
+    .select(ADMIN_BASE_SELECT)
     .eq("competition_id", competition_id)
     .in("status", ["approved", "published", "suspended", "publish_failed"])
     .order("date_created", { ascending: false })
@@ -74,7 +84,7 @@ export async function readPreviousCampaigns(
 
   const { data, error } = await supabase
     .from("campaigns")
-    .select(BASE_SELECT)
+    .select(ADMIN_BASE_SELECT)
     .neq("competition_id", currentCompetitionId)
     .neq("status", "in_progress")
     .eq("campaign_members.role", "campaign_leader")
@@ -109,7 +119,7 @@ export async function readPreviousChallengeApplications(user_id?: string): Promi
 
   const query = supabase
     .from("campaigns")
-    .select(BASE_SELECT)
+    .select(USER_BASE_SELECT)
     .eq("campaign_members.role", "campaign_leader")
     .eq("campaign_members.user_id", user.id)
     .neq("status", "in_progress")

@@ -275,12 +275,10 @@ async function deleteGivebutterCampaign(campaignId: string | number) {
   }
 }
 
-export async function unpublishGivebutterCampaign(campaignId: number) {
+async function unpublishCampaignInternal(supabase: SupabaseClient, campaignId: number) {
   if (!Number.isInteger(campaignId) || campaignId <= 0) {
     throw new Error("Invalid campaign ID");
   }
-
-  const supabase = await requireAdmin();
 
   const { data: campaign, error: campaignError } = await supabase
     .from("campaigns")
@@ -291,22 +289,18 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
   if (campaignError) {
     throw new Error(`Failed to load campaign: ${campaignError.message}`);
   }
+
   if (!campaign) {
     throw new Error(`Campaign ${campaignId} was not found`);
   }
+
   if (!campaign.givebutter_id) {
     throw new Error(`Campaign ${campaignId} has no Givebutter ID`);
   }
+
   if (campaign.status !== "published" && campaign.status !== "suspended") {
     throw new Error(`Campaign ${campaignId} cannot be suspended`);
   }
-
-  await updateCampaignWithRetry(
-    supabase,
-    campaignId,
-    { status: "suspended" },
-    "Failed to record suspended campaign",
-  );
 
   const response = await fetchGivebutterWithRetry(
     getGivebutterCampaignUrl(campaign.givebutter_id),
@@ -325,6 +319,59 @@ export async function unpublishGivebutterCampaign(campaignId: number) {
       `Failed to unpublish campaign (${response.status}): ${JSON.stringify(error)}`,
     );
   }
+
+  await updateCampaignWithRetry(
+    supabase,
+    campaignId,
+    { status: "suspended" },
+    "Failed to record suspended campaign",
+  );
+}
+
+export async function unpublishGivebutterCampaign(campaignId: number) {
+  const supabase = await requireAdmin();
+
+  await unpublishCampaignInternal(supabase, campaignId);
+
+  return { success: true };
+}
+
+export async function unpublishCampaignAsLeader(campaignId: number) {
+  if (!Number.isInteger(campaignId) || campaignId <= 0) {
+    throw new Error("Invalid campaign ID");
+  }
+
+  const supabase = await createServerClient();
+  const {
+    data: { user },
+    error: authError,
+  } = await supabase.auth.getUser();
+
+  if (authError || !user) {
+    throw new Error("Not authenticated");
+  }
+
+  const { data: membership, error: membershipError } = await supabase
+    .from("campaign_members")
+    .select("campaign_id")
+    .eq("campaign_id", campaignId)
+    .eq("user_id", user.id)
+    .eq("role", "campaign_leader")
+    .maybeSingle();
+
+  if (membershipError) {
+    throw new Error(
+      `Failed to verify campaign ownership: ${membershipError.message}`,
+    );
+  }
+
+  if (!membership) {
+    throw new Error("Not authorized to unpublish this campaign");
+  }
+
+  // Leader RLS does not allow updating published campaigns.
+  const serviceRoleSupabase = createServiceRoleClient();
+  await unpublishCampaignInternal(serviceRoleSupabase, campaignId);
 
   return { success: true };
 }
@@ -737,9 +784,10 @@ export async function publishDueCampaigns() {
                  
   const { data: campaigns, error } = await supabase
     .from("campaigns")
-    .select("campaign_id, givebutter_id")
+    .select("campaign_id, givebutter_id, campaign_members!inner(role)")
     .eq("competition_id", competition.competition_id)
-    .eq("status", "approved");
+    .eq("status", "approved")
+    .eq("campaign_members.role", "campaign_leader");
 
   if (error) throw new Error(error.message);
   if (!campaigns?.length) return;
@@ -752,6 +800,7 @@ export async function publishDueCampaigns() {
 
   const results = await Promise.allSettled(
     campaigns.map(async (campaign) => {
+
       if (!campaign.givebutter_id) {
         await updateCampaignWithRetry(
           supabase,

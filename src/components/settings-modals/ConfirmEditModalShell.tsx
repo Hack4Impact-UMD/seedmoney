@@ -16,6 +16,7 @@ type ConfirmEditModalShellProps = {
   actions?: React.ReactNode;
   title?: string;
   maxWidth?: DialogProps["maxWidth"];
+  titleColor?: string;
 };
 
 export default function ConfirmEditModalShell({
@@ -25,6 +26,7 @@ export default function ConfirmEditModalShell({
   actions,
   title = "Confirm Edit",
   maxWidth = "sm",
+  titleColor,
 }: ConfirmEditModalShellProps) {
   return (
     <Dialog
@@ -33,10 +35,25 @@ export default function ConfirmEditModalShell({
       maxWidth={maxWidth}
       fullWidth
       aria-labelledby="confirm-edit-dialog-title"
-      PaperProps={{ sx: { borderRadius: "12px" } }}
+      PaperProps={{
+        sx: {
+          borderRadius: "12px",
+          m: { xs: 2, sm: 4 },
+          width: {
+            xs: "calc(100% - 32px)",
+            sm: "calc(100% - 64px)",
+          },
+          maxHeight: { xs: "calc(100dvh - 32px)", sm: "calc(100% - 64px)" },
+        },
+      }}
     >
       <DialogTitle id="confirm-edit-dialog-title" sx={{ m: 0, p: 2, pr: 6 }}>
-        <Typography component="span" fontWeight={700} fontSize="1.25rem">
+        <Typography
+          component="span"
+          fontWeight={700}
+          fontSize={{ xs: "1.125rem", sm: "1.25rem" }}
+          color={titleColor}
+        >
           {title}
         </Typography>
         <IconButton
@@ -48,12 +65,34 @@ export default function ConfirmEditModalShell({
         </IconButton>
       </DialogTitle>
       <DialogContent
-        sx={{ px: 3, pt: 3, pb: actions ? 1 : 3, overflow: "visible" }}
+        sx={{
+          px: { xs: 2, sm: 3 },
+          pt: { xs: 2, sm: 3 },
+          pb: actions ? 1 : { xs: 2, sm: 3 },
+          overflowY: "auto",
+          overflowX: "hidden",
+          overflowWrap: "anywhere",
+        }}
       >
         {children}
       </DialogContent>
       {actions && (
-        <DialogActions sx={{ px: 3, pb: 2 }}>{actions}</DialogActions>
+        <DialogActions
+          sx={{
+            px: { xs: 2, sm: 3 },
+            pb: 2,
+            flexWrap: { xs: "wrap", sm: "nowrap" },
+            gap: { xs: 1, sm: 0 },
+            "& > :not(style) ~ :not(style)": {
+              ml: { xs: 0, sm: 1 },
+            },
+            "& .MuiButton-root": {
+              whiteSpace: "nowrap",
+            },
+          }}
+        >
+          {actions}
+        </DialogActions>
       )}
     </Dialog>
   );

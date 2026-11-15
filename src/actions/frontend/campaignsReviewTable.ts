@@ -9,15 +9,15 @@ export async function readCampaignsUnderReview(
   const { data: campaignsData, error: campaignsError } = await supabase
     .from("campaigns")
     .select(
-      `campaign_id, name, raised, goal, status, date_created, 
-      campaign_members!inner(
-        role, 
-        users!inner(
-          first_name, 
+      `campaign_id, name, raised, goal, status, date_created,
+      campaign_members(
+        role,
+        users(
+          first_name,
           last_name
         )
-      )`
-    ,)
+      )`,
+    )
     .in("status", ["pending", "denied"])
     .eq("competition_id", competitionId)
     .eq("campaign_members.role", "campaign_leader");
