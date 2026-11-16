@@ -1,11 +1,11 @@
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { TextField, Button } from "@mui/material";
 import { Google } from "@mui/icons-material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { createBrowserClient } from "@/src/lib/supabase-client";
 import { signInWithGoogle } from "@/src/lib/google-auth";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Turnstile } from "@marsidev/react-turnstile"; // 👈 added
+import { Turnstile, type TurnstileInstance } from "@marsidev/react-turnstile";
 
 const PENDING_SIGNUP_STORAGE_KEY = "seedmoney:pending-signup";
 
@@ -21,7 +21,10 @@ const LoginForm = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [captchaToken, setCaptchaToken] = useState<string | null>(null); // 👈 added
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
+  const [isSigningIn, setIsSigningIn] = useState(false);
+  const inFlight = useRef(false);
+  const captcha = useRef<TurnstileInstance | undefined>(undefined);
   const router = useRouter();
   const searchParams = useSearchParams();
   const queryError = searchParams.get("error");
@@ -36,7 +39,7 @@ const LoginForm = () => {
     }
   }
 
-  const displayedError = decodedQueryError || errorMsg;
+  const displayedError = errorMsg || decodedQueryError;
   const displayedSuccess =
     queryConfirmed && !displayedError
       ? "Email confirmed. You can now log in."
@@ -44,6 +47,7 @@ const LoginForm = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    if (inFlight.current) return;
     setErrorMsg(null);
 
     if (!captchaToken) {
@@ -51,24 +55,40 @@ const LoginForm = () => {
       return;
     }
 
-    const supabase = await createBrowserClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-      options: { captchaToken },
-    });
+    inFlight.current = true;
+    setIsSigningIn(true);
+    const token = captchaToken;
+    setCaptchaToken(null);
+    try {
+      const supabase = createBrowserClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+        options: { captchaToken: token },
+      });
 
-    if (error) {
-      setErrorMsg(error.message);
-      return { success: false, error: error.message };
+      if (error) {
+        setErrorMsg(error.message);
+        return { success: false, error: error.message };
+      }
+
+      clearPendingSignupState();
+      router.push("/dashboard");
+      router.refresh();
+    } catch {
+      setErrorMsg("Unable to log in. Please try again.");
+    } finally {
+      inFlight.current = false;
+      setIsSigningIn(false);
+      setCaptchaToken(null);
+      captcha.current?.reset();
     }
-
-    clearPendingSignupState();
-    router.push("/dashboard");
-    router.refresh();
   };
 
   const handleGoogleLogin = async () => {
+    if (inFlight.current || !captchaToken) return;
+    inFlight.current = true;
+    setIsSigningIn(true);
     setErrorMsg(null);
 
     try {
@@ -82,6 +102,11 @@ const LoginForm = () => {
       console.error("Unexpected sign-in error:", err);
       setErrorMsg("Unexpected server error");
       return { error: "Unexpected server error" };
+    } finally {
+      inFlight.current = false;
+      setIsSigningIn(false);
+      setCaptchaToken(null);
+      captcha.current?.reset();
     }
   };
 
@@ -109,10 +134,13 @@ const LoginForm = () => {
       />
 
       <Turnstile
+        id="login-captcha"
+        ref={captcha}
         siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
         onSuccess={(token) => setCaptchaToken(token)}
         onExpire={() => setCaptchaToken(null)}
         onError={() => setCaptchaToken(null)}
+        onTimeout={() => setCaptchaToken(null)}
       />
 
       <Button
@@ -121,7 +149,7 @@ const LoginForm = () => {
         startIcon={<LogoutIcon />}
         color="primary"
         size="medium"
-        disabled={!captchaToken}
+        disabled={isSigningIn || !captchaToken}
       >
         Log in
       </Button>
@@ -132,7 +160,7 @@ const LoginForm = () => {
         variant="outlined"
         color="primary"
         size="medium"
-        disabled={!captchaToken}
+        disabled={isSigningIn || !captchaToken}
       >
         Log in with Google
       </Button>

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -18,6 +18,7 @@ type ChangePasswordModalProps = {
   onClose: () => void;
   userEmail?: string;
   onLogin?: () => void;
+  recovery?: boolean;
 };
 
 const validatePassword = (password: string) => {
@@ -49,8 +50,9 @@ export default function ChangePasswordModal({
   onClose,
   userEmail = "johnsmith@gmail.com",
   onLogin,
+  recovery = false,
 }: ChangePasswordModalProps) {
-  const [step, setStep] = useState(0);
+  const [step, setStep] = useState(recovery ? 2 : 0);
   const [verificationCode, setVerificationCode] = useState("");
   const [codeError, setCodeError] = useState<string | null>(null);
   const [newPassword, setNewPassword] = useState("");
@@ -62,8 +64,10 @@ export default function ChangePasswordModal({
   const [isSendingVerificationEmail, setIsSendingVerificationEmail] =
     useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const passwordSaveInFlight = useRef(false);
 
   const handleCancel = () => {
+    if (passwordSaveInFlight.current) return;
     onClose();
   };
 
@@ -88,6 +92,8 @@ export default function ChangePasswordModal({
   };
 
   const handleUpdatePassword = async () => {
+    if (passwordSaveInFlight.current) return;
+    passwordSaveInFlight.current = true;
     try {
       setPasswordError(null);
       setCodeError(null);
@@ -107,16 +113,17 @@ export default function ChangePasswordModal({
       const supabase = createBrowserClient();
       const { error } = await supabase.auth.updateUser({
         password: newPassword,
-        nonce: verificationCode.trim(),
+        ...(recovery ? {} : { nonce: verificationCode.trim() }),
       });
 
       if (error) {
         const normalizedMessage = error.message.toLowerCase();
 
         if (
-          normalizedMessage.includes("nonce") ||
-          normalizedMessage.includes("otp") ||
-          normalizedMessage.includes("token")
+          !recovery &&
+          (normalizedMessage.includes("nonce") ||
+            normalizedMessage.includes("otp") ||
+            normalizedMessage.includes("token"))
         ) {
           setCodeError(error.message);
           setStep(1);
@@ -128,7 +135,10 @@ export default function ChangePasswordModal({
       }
 
       setStep(3);
+    } catch {
+      setPasswordError("Unable to change your password. Please try again.");
     } finally {
+      passwordSaveInFlight.current = false;
       setIsUpdatingPassword(false);
     }
   };

@@ -4,8 +4,11 @@ import Link from "next/link";
 import Image from "next/image";
 import LoginForm from "@/src/components/LoginForm";
 import LoginNavbar from "@/src/components/LoginNavbar";
+import { useState } from "react";
+import ForgotPasswordModal from "@/src/components/settings-modals/ForgotPasswordModal";
 
 export default function LoginPage() {
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
   return (
     <>
       <LoginNavbar />
@@ -28,6 +31,9 @@ export default function LoginPage() {
             </div>
 
             <LoginForm />
+            <p className="text-[rgba(0,0,0,0.6)] text-sm text-center">
+              Signed up with Google? Use Log in with Google instead of resetting a password.
+            </p>
 
             <p className="text-[rgba(0,0,0,0.6)] text-sm">
               Don&apos;t have an account?{" "}
@@ -39,12 +45,14 @@ export default function LoginPage() {
               </Link>
             </p>
 
-            <p className="text-[rgba(0,0,0,0.6)] text-sm">
+            <button type="button" onClick={() => setForgotPasswordOpen(true)}
+              className="text-[rgba(0,0,0,0.6)] text-sm underline cursor-pointer">
               Forgot Password / Activate Account
-            </p>
+            </button>
           </div>
         </div>
       </div>
+      {forgotPasswordOpen && <ForgotPasswordModal onClose={() => setForgotPasswordOpen(false)} />}
     </>
   );
 }

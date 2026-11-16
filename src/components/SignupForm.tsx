@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { TextField, Button, Checkbox, FormControlLabel } from "@mui/material";
 import LogoutIcon from "@mui/icons-material/Logout";
 import { Google } from "@mui/icons-material";
@@ -225,6 +225,7 @@ const SignupForm = () => {
   const [captchaWidgetKey, setCaptchaWidgetKey] = useState(0);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [isResending, setIsResending] = useState(false);
+  const inFlight = useRef(false);
   const [now, setNow] = useState(() => Date.now());
   const [pendingSignup, setPendingSignup] =
     useState<PendingSignupState | null>(null);
@@ -332,6 +333,8 @@ const SignupForm = () => {
       return;
     }
 
+    if (inFlight.current) return;
+    inFlight.current = true;
     setIsSubmitting(true);
 
     try {
@@ -393,6 +396,7 @@ const SignupForm = () => {
       setErrorMsg("Unexpected server error");
     } finally {
       setIsSubmitting(false);
+      inFlight.current = false;
       resetCaptcha();
     }
   };
@@ -417,6 +421,8 @@ const SignupForm = () => {
       return;
     }
 
+    if (inFlight.current) return;
+    inFlight.current = true;
     setIsResending(true);
 
     try {
@@ -456,11 +462,15 @@ const SignupForm = () => {
       setErrorMsg("Unexpected server error");
     } finally {
       setIsResending(false);
+      inFlight.current = false;
       resetCaptcha();
     }
   };
 
   const signInWithGoogle = async () => {
+    if (inFlight.current || !captchaToken) return;
+    inFlight.current = true;
+    setIsSubmitting(true);
     setErrorMsg(null);
     setStatusMsg(null);
 
@@ -475,6 +485,10 @@ const SignupForm = () => {
       console.error("Unexpected sign-in error:", err);
       setErrorMsg("Unexpected server error");
       return { error: "Unexpected server error" };
+    } finally {
+      inFlight.current = false;
+      setIsSubmitting(false);
+      resetCaptcha();
     }
   };
 
@@ -506,6 +520,7 @@ const SignupForm = () => {
           onSuccess={(token) => setCaptchaToken(token)}
           onExpire={() => setCaptchaToken(null)}
           onError={() => setCaptchaToken(null)}
+          onTimeout={() => setCaptchaToken(null)}
         />
 
         <Button
@@ -535,6 +550,7 @@ const SignupForm = () => {
         <Button
           type="button"
           onClick={() => {
+            if (inFlight.current) return;
             clearPendingSignupState();
             setPendingSignup(null);
             setEmail("");
@@ -544,6 +560,7 @@ const SignupForm = () => {
           }}
           variant="outlined"
           size="medium"
+          disabled={isResending}
         >
           Use a different email
         </Button>
@@ -655,6 +672,7 @@ const SignupForm = () => {
         onSuccess={(token) => setCaptchaToken(token)}
         onExpire={() => setCaptchaToken(null)}
         onError={() => setCaptchaToken(null)}
+        onTimeout={() => setCaptchaToken(null)}
       />
 
       <Button
@@ -673,7 +691,7 @@ const SignupForm = () => {
         variant="outlined"
         size="medium"
         startIcon={<Google className="text-[rgba(0,0,0,0.6)]" />}
-        disabled={!captchaToken}
+        disabled={isSubmitting || !captchaToken}
       >
         Sign Up with Google
       </Button>
