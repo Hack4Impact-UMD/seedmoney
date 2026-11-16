@@ -61,8 +61,15 @@ the app running locally:
 
 ```sh
 node --test scripts/test-password-recovery.mjs scripts/test-change-password-modal.mjs
+node --test scripts/test-login-captcha.mjs scripts/test-signup-captcha.mjs
 TEST_BASE_URL=http://localhost:3000 node scripts/test-password-recovery-browser.mjs
 ```
+
+For a real local Auth test, start Docker and local Supabase, then run
+`TEST_BASE_URL=http://localhost:3004 node scripts/test-password-recovery-local.mjs`.
+This script refuses non-local URLs, generates a recovery token without sending an
+email, verifies old/new passwords and used-token rejection, and removes its
+temporary local account. It requires a running app on the selected port.
 
 After deployment and the production template update, complete one real recovery
 with a test account, then verify login with its new password. Local/mocked tests
