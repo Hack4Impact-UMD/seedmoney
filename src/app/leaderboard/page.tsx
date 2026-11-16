@@ -6,7 +6,6 @@ import LeaderboardPage from "@/src/components/leaderboard/LeaderboardPage";
 import LeaderboardEmptyState from "@/src/components/leaderboard/LeaderboardEmptyState";
 import useReadCurrentCompetition from "@/src/hooks/competition-metadata/useReadCurrentCompetition";
 import useReadCampaignsByCompId from "@/src/hooks/campaigns/useReadCampaignsByCompId";
-import useReadCampaignImageUrlsByCampaignIds from "@/src/hooks/campaign-image-records/useReadCampaignImageUrlsByCampaignIds";
 import useReadTransactionsByCampaignIds from "@/src/hooks/transactions/useReadTransactionsByCampaignIds";
 import { calculateSpecialGrantCampaignIds } from "@/src/lib/leaderboardGrantCalculations";
 import type { CampaignWithStanding } from "@/src/types/db/competitionStandings";
@@ -23,7 +22,6 @@ const openSans = Open_Sans({
 function mapCampaignsToLeaderboardData(
   campaigns: CampaignWithStanding[],
   challengeTitle: string,
-  imageUrlsByCampaignId: Record<number, string | null>,
   specialGrantCampaignIds: SpecialGrantCampaignIds,
 ) {
   const publicCampaigns = campaigns.map((campaign) => {
@@ -45,7 +43,7 @@ function mapCampaignsToLeaderboardData(
       projectCategory: campaign.project_category,
       donateUrl: campaign.givebutterlink,
       summary: campaign.organization_name || "",
-      imageUrl: imageUrlsByCampaignId[campaign.campaign_id] ?? null,
+      imageUrl: null,
     };
   });
 
@@ -84,10 +82,6 @@ export default function PublicLeaderboardPage() {
   } = useReadCampaignsByCompId(competitionId);
   const campaignIds = campaignsData.map((campaign) => campaign.campaign_id);
   const {
-    data: imageUrlsByCampaignId = {},
-    isLoading: isLoadingImages,
-  } = useReadCampaignImageUrlsByCampaignIds(campaignIds);
-  const {
     data: transactionsData = [],
     isLoading: isLoadingTransactions,
     isLoadingError: transactionsLoadError,
@@ -122,13 +116,11 @@ export default function PublicLeaderboardPage() {
   if (
     isLoadingCompetition ||
     isLoadingCampaigns ||
-    isLoadingImages ||
     isLoadingTransactions
   ) return null;
   const leaderboardData = mapCampaignsToLeaderboardData(
     campaignsData,
     challengeTitle,
-    imageUrlsByCampaignId,
     specialGrantCampaignIds,
   );
 

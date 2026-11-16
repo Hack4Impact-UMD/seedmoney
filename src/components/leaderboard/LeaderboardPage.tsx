@@ -1,6 +1,7 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useMemo, useRef, useState } from "react";
+import Pagination from "@mui/material/Pagination";
 import type {
   LeaderboardSort,
   PublicLeaderboardData,
@@ -13,6 +14,9 @@ import LeaderboardEmptyState from "./LeaderboardEmptyState";
 import type { LeaderboardGrantStat } from "./grantStatOptions";
 import { grantStatOptions } from "./grantStatOptions";
 import { compareCampaignsForRank } from "@/src/lib/leaderboardRanking";
+import useReadCampaignImageUrlsByCampaignIds from "@/src/hooks/campaign-image-records/useReadCampaignImageUrlsByCampaignIds";
+
+const PAGE_SIZE = 12;
 
 type LeaderboardPageProps = {
   data: PublicLeaderboardData;
@@ -36,6 +40,8 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
   const [selectedGrantStat, setSelectedGrantStat] =
     useState<LeaderboardGrantStat | null>(null);
   const [isGrantPanelOpen, setIsGrantPanelOpen] = useState(false);
+  const [page, setPage] = useState(1);
+  const resultsRef = useRef<HTMLDivElement>(null);
 
   const rankedCampaigns = useMemo<PublicLeaderboardCampaignWithRank[]>(
     () =>
@@ -96,6 +102,19 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
     selectedGrantStat,
     selectedSort,
   ]);
+  const pageCount = Math.max(1, Math.ceil(filteredCampaigns.length / PAGE_SIZE));
+  const currentPage = Math.min(page, pageCount);
+  const pageCampaigns = filteredCampaigns.slice(
+    (currentPage - 1) * PAGE_SIZE,
+    currentPage * PAGE_SIZE,
+  );
+  const { data: imageUrls = {} } = useReadCampaignImageUrlsByCampaignIds(
+    pageCampaigns.map((campaign) => campaign.campaignId),
+  );
+  const visibleCampaigns = pageCampaigns.map((campaign) => ({
+    ...campaign,
+    imageUrl: imageUrls[campaign.campaignId] ?? campaign.imageUrl,
+  }));
   const isSelectedGrantPending =
     isSpecialGrantStat(selectedGrantStat) &&
     data.specialGrantCampaignIds[selectedGrantStat] === null;
@@ -110,6 +129,7 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
         : "Try a different search term, garden category, or grant filter to see more campaigns.";
 
   const handleSortChange = (value: LeaderboardSort) => {
+    setPage(1);
     setSelectedSort(value);
   };
 
@@ -117,6 +137,7 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
     if (isGrantPanelOpen) {
       setIsGrantPanelOpen(false);
       setSelectedGrantStat(null);
+      setPage(1);
       return;
     }
 
@@ -124,6 +145,7 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
   };
 
   const handleGrantSelect = (value: LeaderboardGrantStat) => {
+    setPage(1);
     setSelectedGrantStat(value);
     setIsGrantPanelOpen(false);
   };
@@ -145,8 +167,8 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
           selectedSort={selectedSort}
           selectedGrantStat={selectedGrantStat}
           isGrantPanelOpen={isGrantPanelOpen}
-          onSearchChange={setSearchQuery}
-          onGardenChange={setSelectedGarden}
+          onSearchChange={(value) => { setSearchQuery(value); setPage(1); }}
+          onGardenChange={(value) => { setSelectedGarden(value); setPage(1); }}
           onSortChange={handleSortChange}
           onGrantChipClick={handleGrantChipClick}
           onGrantSelect={handleGrantSelect}
@@ -154,7 +176,7 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
       )}
 
       <main className="px-6 py-8 md:px-10 lg:px-16">
-        <div className="mx-auto max-w-[1728px]">
+        <div ref={resultsRef} className="mx-auto max-w-[1728px]">
           {data.campaigns.length === 0 ? (
             <LeaderboardEmptyState
               title="No public campaigns yet"
@@ -166,7 +188,22 @@ export default function LeaderboardPage({ data }: LeaderboardPageProps) {
               description={emptyStateDescription}
             />
           ) : (
-            <LeaderboardGrid campaigns={filteredCampaigns} />
+            <>
+              <LeaderboardGrid campaigns={visibleCampaigns} />
+              {pageCount > 1 && (
+                <Pagination
+                  className="mt-8 flex justify-center"
+                  count={pageCount}
+                  page={currentPage}
+                  siblingCount={0}
+                  color="primary"
+                  onChange={(_, value) => {
+                    setPage(value);
+                    resultsRef.current?.scrollIntoView({ block: "start", behavior: "smooth" });
+                  }}
+                />
+              )}
+            </>
           )}
         </div>
       </main>

@@ -175,7 +175,7 @@ export async function readCampaignImageUrlsByCampaignIds(
       "Error reading campaign images by campaign ids:",
       error.message,
     );
-    return {};
+    throw new Error(error.message);
   }
 
   const firstImageByCampaign = new Map<number, string>();
@@ -185,28 +185,26 @@ export async function readCampaignImageUrlsByCampaignIds(
     }
   }
 
-  const imageEntries = await Promise.all(
-    Array.from(firstImageByCampaign.entries()).map(
-      async ([campaignId, storagePath]) => {
-        const { data: signedUrlData, error: signedUrlError } =
-          await supabase.storage
-            .from("campaign_images")
-            .createSignedUrl(storagePath, 60 * 60);
+  if (firstImageByCampaign.size === 0) return {};
 
-        if (signedUrlError) {
-          console.error(
-            `Error creating signed URL for ${storagePath}:`,
-            signedUrlError.message,
-          );
-          return [campaignId, null] as const;
-        }
+  const { data: signedUrls, error: signingError } = await supabase.storage
+    .from("campaign_images")
+    .createSignedUrls([...firstImageByCampaign.values()], 60 * 60);
 
-        return [campaignId, signedUrlData.signedUrl] as const;
-      },
-    ),
+  if (signingError) throw new Error(signingError.message);
+
+  const urlsByPath = new Map(
+    (signedUrls ?? []).map((image) => [
+      image.path,
+      image.error ? null : image.signedUrl,
+    ]),
   );
-
-  return Object.fromEntries(imageEntries);
+  return Object.fromEntries(
+    [...firstImageByCampaign].map(([campaignId, path]) => [
+      campaignId,
+      urlsByPath.get(path) ?? null,
+    ]),
+  );
 }
 
 export async function updateCampaignImageRecord(
