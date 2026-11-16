@@ -550,6 +550,7 @@ const SignupForm = () => {
         <Button
           type="button"
           onClick={() => {
+            if (inFlight.current) return;
             clearPendingSignupState();
             setPendingSignup(null);
             setEmail("");
@@ -559,6 +560,7 @@ const SignupForm = () => {
           }}
           variant="outlined"
           size="medium"
+          disabled={isResending}
         >
           Use a different email
         </Button>
