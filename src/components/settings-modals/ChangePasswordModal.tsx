@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Button from "@mui/material/Button";
 import TextField from "@mui/material/TextField";
 import Typography from "@mui/material/Typography";
@@ -64,9 +64,10 @@ export default function ChangePasswordModal({
   const [isSendingVerificationEmail, setIsSendingVerificationEmail] =
     useState(false);
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false);
+  const passwordSaveInFlight = useRef(false);
 
   const handleCancel = () => {
-    if (isUpdatingPassword) return;
+    if (passwordSaveInFlight.current) return;
     onClose();
   };
 
@@ -91,6 +92,8 @@ export default function ChangePasswordModal({
   };
 
   const handleUpdatePassword = async () => {
+    if (passwordSaveInFlight.current) return;
+    passwordSaveInFlight.current = true;
     try {
       setPasswordError(null);
       setCodeError(null);
@@ -135,6 +138,7 @@ export default function ChangePasswordModal({
     } catch {
       setPasswordError("Unable to change your password. Please try again.");
     } finally {
+      passwordSaveInFlight.current = false;
       setIsUpdatingPassword(false);
     }
   };
