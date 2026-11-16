@@ -54,6 +54,16 @@ try {
   await page.goto(recoveryUrl);
   await page.getByRole('main').getByRole('alert').waitFor();
   assert.equal(await page.getByRole('dialog').count(), 0);
+  const freshLink = await admin.auth.admin.generateLink({ type: 'recovery', email });
+  if (freshLink.error) throw freshLink.error;
+  const tokenHash = freshLink.data.properties.hashed_token;
+  const verifications = await Promise.all([
+    anon().auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }),
+    anon().auth.verifyOtp({ token_hash: tokenHash, type: 'recovery' }),
+  ]);
+  assert.equal(verifications.filter(result => !result.error && result.data.session).length, 1);
+  assert.equal(verifications.filter(result => result.error).length, 1);
+  console.log('pass: exactly one concurrent recovery-token verification succeeds');
   console.log('pass: real local recovery, password update, logout, old/new credentials, reused-link rejection');
 } finally {
   try { if (browser) await browser.close(); }
