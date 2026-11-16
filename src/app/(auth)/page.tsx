@@ -31,6 +31,9 @@ export default function LoginPage() {
             </div>
 
             <LoginForm />
+            <p className="text-[rgba(0,0,0,0.6)] text-sm text-center">
+              Signed up with Google? Use Log in with Google instead of resetting a password.
+            </p>
 
             <p className="text-[rgba(0,0,0,0.6)] text-sm">
               Don&apos;t have an account?{" "}
