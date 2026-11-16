@@ -34,9 +34,9 @@ export function EarningsTrendCard({
     campaignGoal <= yAxisMax;
 
   return (
-    <div className="bg-white rounded-lg border border-1 border-[#e5e5e5] p-6 pb-2">
+    <div className="min-w-0 overflow-hidden rounded-lg border border-[#e5e5e5] bg-white p-4 pb-2 md:p-6">
       {/* Header row */}
-      <div className="flex justify-between items-start mb-1">
+      <div className="mb-1 flex flex-wrap items-start justify-between gap-3">
         <div>
           <p className="font-bold text-black">Earnings Trend</p>
           <p className="text-sm text-gray-500">
@@ -45,7 +45,7 @@ export function EarningsTrendCard({
         </div>
 
         {/* Custom legend */}
-        <div className="flex gap-6 items-center mt-1">
+        <div className="mt-1 flex flex-wrap items-center gap-x-4 gap-y-2">
           <div className="flex items-center gap-2">
             <div className="w-6 h-[2.5px] bg-[#10B981] rounded" />
             <span className="text-xs text-[#717182]">Daily Earnings</span>

@@ -54,7 +54,7 @@ export default function ApprovedCampaignsPage() {
   return (
     <div className="flex min-h-screen">
       <Navbar />
-      <div className="flex-1 bg-gray-50 p-4 pb-24 md:p-10 md:pb-10">
+      <div className="min-w-0 flex-1 bg-gray-50 p-4 pb-24 md:p-10 md:pb-10">
         <h3 className="mb-5 hidden text-4xl font-bold text-[#096B2E] md:block">
           Approved Campaigns
         </h3>

@@ -91,7 +91,7 @@ function getStatusChipClasses(status: string) {
     case "published":
       return "border-[#2D7A45] text-[#2D7A45]";
     case "suspended":
-      return "border-[#667085] text-[#667085]";
+      return "border-[#F79009] text-[#B54708]";
     case "pending":
       return "border-[#F79009] text-[#B54708]";
     case "denied":
@@ -395,18 +395,18 @@ export default function CampaignsTable({
   };
 
   return (
-    <div className="w-full">
-      <div className="md:hidden">
+    <div className="w-full min-w-0 max-w-full">
+      <div className="w-full min-w-0 max-w-full md:hidden">
         <div className="sticky top-0 z-10 -mx-4 bg-[#F6FAF9] px-4 pb-4 pt-2">
           <h2 className="text-[20px] font-bold leading-[1.35] text-[#123A1E]">
             {pageTitle}
           </h2>
-          <p className="mt-2 text-[14px] text-[#667085]">
+          <p className="mt-2 min-w-0 break-words text-[14px] text-[#667085]">
             <span className="font-bold text-[#101828]">{pageListLabel}</span>
             {` - ${initialData.length} Campaign${initialData.length === 1 ? "" : "s"}`}
           </p>
 
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-4 flex w-full min-w-0 items-center gap-2">
             <TextField
               placeholder="Search"
               size="small"
@@ -420,7 +420,7 @@ export default function CampaignsTable({
                   </InputAdornment>
                 ),
               }}
-              className="bg-white"
+              className="min-w-0 flex-1 bg-white"
             />
             <IconButton
               aria-label="Open filters"
@@ -448,7 +448,7 @@ export default function CampaignsTable({
                   onClick={(event) =>
                     openMobileFilterValues("year", event.currentTarget, true)
                   }
-                  className="rounded-full border border-[#2E90FA] bg-white px-3 py-1 text-xs font-medium text-[#2E90FA]"
+                  className="max-w-full break-words rounded-full border border-[#2E90FA] bg-white px-3 py-1 text-left text-xs font-medium text-[#2E90FA]"
                 >
                   {formatMobileFilterChipLabel("year", selectedYears)}
                 </button>
@@ -459,7 +459,7 @@ export default function CampaignsTable({
                   onClick={(event) =>
                     openMobileFilterValues("status", event.currentTarget, true)
                   }
-                  className="rounded-full border border-[#2E90FA] bg-white px-3 py-1 text-xs font-medium text-[#2E90FA]"
+                  className="max-w-full break-words rounded-full border border-[#2E90FA] bg-white px-3 py-1 text-left text-xs font-medium text-[#2E90FA]"
                 >
                   {formatMobileFilterChipLabel("status", selectedStatuses)}
                 </button>
@@ -470,7 +470,7 @@ export default function CampaignsTable({
           <div className="mt-4 border-b border-[#D0D5DD]" />
         </div>
 
-        <div className="space-y-4 pb-24 pt-4">
+        <div className="w-full min-w-0 space-y-4 pb-24 pt-4">
           {mobileFilteredData.length === 0 ? (
             <div className="rounded-2xl border border-[#EAECF0] bg-white px-4 py-12 text-center text-sm text-[#6A7282]">
               No campaigns found.
@@ -485,10 +485,10 @@ export default function CampaignsTable({
               return (
                 <div
                   key={campaign.campaign_id}
-                  className="overflow-hidden rounded-[16px] border border-[#DFE8DF] bg-white shadow-[0px_1px_2px_rgba(16,24,40,0.05)]"
+                  className="w-full min-w-0 max-w-full overflow-hidden rounded-[16px] border border-[#DFE8DF] bg-white shadow-[0px_1px_2px_rgba(16,24,40,0.05)]"
                 >
-                  <div className="flex items-start justify-between gap-4 px-4 py-4">
-                    <div className="min-w-0">
+                  <div className="flex min-w-0 items-start justify-between gap-2 px-3 py-4">
+                    <div className="min-w-0 flex-1">
                       <p className="text-[11px] text-[#7B827D]">
                         Campaign Title:
                       </p>
@@ -529,36 +529,36 @@ export default function CampaignsTable({
                       key={item.label}
                       className="flex items-center justify-between gap-4 border-t border-[#EAECF0] px-4 py-3"
                     >
-                      <span className="text-[13px] text-[#667085]">
+                      <span className="w-1/2 shrink-0 text-[13px] text-[#667085]">
                         {item.label}
                       </span>
-                      <span className="text-[14px] text-[#101828]">
+                      <span className="min-w-0 flex-1 break-all text-right text-[14px] text-[#101828]">
                         {item.value}
                       </span>
                     </div>
                   ))}
 
-                  <div className="flex items-center justify-between gap-4 border-t border-[#EAECF0] px-4 py-3">
-                    <span className="text-[13px] text-[#667085]">
+                  <div className="flex min-w-0 items-center justify-between gap-2 border-t border-[#EAECF0] px-3 py-3">
+                    <span className="w-1/2 shrink-0 text-[13px] text-[#667085]">
                       Goal Progress
                     </span>
-                    <div className="flex w-[46%] min-w-[120px] items-center gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
                       <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-[#B2D1FF]">
                         <div
                           className="h-full rounded-full bg-[#1570EF]"
                           style={{ width: `${displayedProgress}%` }}
                         />
                       </div>
-                      <span className="text-[12px] text-[#344054]">
+                      <span className="shrink-0 text-[12px] text-[#344054]">
                         {displayedProgress}%
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 border-t border-[#EAECF0] px-4 py-3">
-                    <span className="text-[13px] text-[#667085]">Status</span>
+                  <div className="flex min-w-0 items-center justify-between gap-2 border-t border-[#EAECF0] px-3 py-3">
+                    <span className="w-1/2 shrink-0 text-[13px] text-[#667085]">Status</span>
                     <span
-                      className={`rounded-full border px-3 py-1 text-[12px] font-medium ${getStatusChipClasses(campaign.status)}`}
+                      className={`max-w-1/2 break-words rounded-full border px-2 py-1 text-right text-[12px] font-medium ${getStatusChipClasses(campaign.status)}`}
                     >
                       {getStatusLabel(campaign.status)}
                     </span>
