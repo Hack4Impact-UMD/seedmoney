@@ -67,3 +67,34 @@ TEST_BASE_URL=http://localhost:3000 node scripts/test-password-recovery-browser.
 After deployment and the production template update, complete one real recovery
 with a test account, then verify login with its new password. Local/mocked tests
 do not validate production SMTP, CAPTCHA, or dashboard template settings.
+
+## CAPTCHA And Production Rollout
+
+Login now consumes each CAPTCHA token once, blocks concurrent sign-in attempts,
+and resets the widget after an attempt, including network failures. Signup and
+confirmation resends retain their existing widget reset and now block concurrent
+submissions. Login, signup, and recovery clear tokens on widget timeout as well
+as expiration/errors. Supabase Auth remains responsible for server-side CAPTCHA
+validation; do not add a second Siteverify request that consumes the same token.
+
+The login page directs Google users to Log in with Google. It does not expose
+account-provider information or block recovery based on an email lookup.
+
+Before deploying, merge the current main branch into this branch so existing
+launch fixes are preserved. Deploy the app first, then change only the Reset
+Password template as described above and request a fresh email. Keep the Site
+URL unchanged. No migration, database push, account deletion, or temporary
+password SQL is part of this change.
+
+Check these with a designated production test account:
+
+- Failed email login resets CAPTCHA and disables both login buttons until a new solve.
+- Retry with a new CAPTCHA succeeds; also test after leaving the page idle for over five minutes.
+- Signup/resend failures require a new CAPTCHA and do not send duplicate requests.
+- Recovery email opens the password modal on desktop and phone; the new password works.
+- Expired/reused recovery links show an error instead of signup or a password form.
+- Google sign-in still works and its guidance is visible.
+
+Review Supabase Authentication logs around any new failure. Local tests cannot
+prove production CAPTCHA keys, hostname configuration, SMTP delivery, or quotas
+are correct. Share timestamps and redacted error codes, not passwords or tokens.
