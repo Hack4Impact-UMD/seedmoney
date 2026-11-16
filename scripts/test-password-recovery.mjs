@@ -4,18 +4,22 @@ import { test } from 'node:test';
 import vm from 'node:vm';
 import ts from 'typescript';
 
-const exports = {};
-vm.runInNewContext(ts.transpileModule(readFileSync(new URL(
-  '../src/lib/passwordRecovery.ts', import.meta.url,
-), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, {
-  exports, URLSearchParams, URL,
-  window: { location: { href: 'http://localhost:3000/reset-password' } },
-});
-const verify = exports.verifyPasswordRecovery;
+function loadVerify(href = 'http://localhost:3000/reset-password') {
+  const exports = {};
+  vm.runInNewContext(ts.transpileModule(readFileSync(new URL(
+    '../src/lib/passwordRecovery.ts', import.meta.url,
+  ), 'utf8'), { compilerOptions: { module: ts.ModuleKind.CommonJS } }).outputText, {
+    exports, URLSearchParams, URL,
+    window: { location: { href } },
+  });
+  return exports.verifyPasswordRecovery;
+}
+const verify = loadVerify();
 const url = (suffix) => new URL(`http://localhost:3000/reset-password${suffix}`);
 
 function client({ error = null, session = { user: {} } } = {}) {
   let verifiedType;
+  const exchangedCodes = [];
   return { auth: {
     verifyOtp: async (params) => {
       verifiedType = params.type;
@@ -24,8 +28,8 @@ function client({ error = null, session = { user: {} } } = {}) {
     initialize: async () => ({ error }),
     getSession: async () => ({ data: { session }, error }),
     setSession: async () => ({ data: { session }, error }),
-    exchangeCodeForSession: async () => ({ data: { session }, error }),
-  }, get verifiedType() { return verifiedType; } };
+    exchangeCodeForSession: async (code) => { exchangedCodes.push(code); return { data: { session }, error }; },
+  }, exchangedCodes, get verifiedType() { return verifiedType; } };
 }
 
 test('token hash recovery is verified and rejects invalid or missing sessions', async () => {
@@ -34,6 +38,18 @@ test('token hash recovery is verified and rejects invalid or missing sessions', 
   assert.equal(good.verifiedType, 'recovery');
   assert.equal(await verify(client({ error: {} }), url('?token_hash=test&type=recovery')), false);
   assert.equal(await verify(client({ session: null }), url('?token_hash=test&type=recovery')), false);
+});
+
+test('exchanges a pending PKCE code once and never re-exchanges a consumed code', async () => {
+  const pending = client();
+  assert.equal(await loadVerify(url('?code=test').href)(pending, url('?code=test')), true);
+  assert.equal(pending.exchangedCodes.join(','), 'test');
+  const consumed = client();
+  assert.equal(await loadVerify(url('').href)(consumed, url('?code=test')), true);
+  assert.equal(consumed.exchangedCodes.length, 0);
+  const missing = client();
+  assert.equal(await loadVerify(url('').href)(missing, url('')), false);
+  assert.equal(missing.exchangedCodes.length, 0);
 });
 
 test('wrong-type and missing tokens cannot reuse an existing session', async () => {
