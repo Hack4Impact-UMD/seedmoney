@@ -9,6 +9,7 @@ function fixture(recovery = false, updateError = null) {
   let index = 0;
   let reauthenticated = 0;
   let update;
+  let updateCount = 0;
   const exports = {};
   const jsx = (type, props) => ({ type, props });
   vm.runInNewContext(ts.transpileModule(readFileSync(new URL(
@@ -16,7 +17,10 @@ function fixture(recovery = false, updateError = null) {
   ), 'utf8'), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, jsx: ts.JsxEmit.ReactJSX },
   }).outputText, { exports, require: (name) => {
-    if (name === 'react') return { useState(initial) {
+    if (name === 'react') return { useRef(initial) {
+      const slot = index++;
+      return state[slot] ??= { current: initial };
+    }, useState(initial) {
       const slot = index++;
       if (!(slot in state)) state[slot] = initial;
       return [state[slot], (value) => { state[slot] = typeof value === 'function' ? value(state[slot]) : value; }];
@@ -24,12 +28,16 @@ function fixture(recovery = false, updateError = null) {
     if (name === 'react/jsx-runtime') return { jsx, jsxs: jsx, Fragment: 'fragment' };
     if (name.includes('supabase-client')) return { createBrowserClient: () => ({ auth: {
       reauthenticate: async () => { reauthenticated++; return { error: null }; },
-      updateUser: async (value) => { update = value; return { error: updateError }; },
+      updateUser: async (value) => {
+        update = value; updateCount++;
+        if (typeof updateError === 'function') return updateError();
+        return { error: updateError };
+      },
     } }) };
     return { default: name };
   } });
   const render = () => { index = 0; return exports.default({ open: true, recovery, onClose() {} }); };
-  return { render, get update() { return update; }, get reauthenticated() { return reauthenticated; } };
+  return { render, get updateCount() { return updateCount; }, get update() { return update; }, get reauthenticated() { return reauthenticated; } };
 }
 
 function find(node, predicate) {
@@ -71,4 +79,20 @@ test('recovery skips verification and keeps token failures on the password step'
   assert.equal(Object.hasOwn(f.update, 'nonce'), false);
   assert.equal(f.render().props.title, 'Change Password');
   assert.equal(field(f.render(), 'Type new password').props.helperText, 'Recovery token expired');
+});
+
+test('duplicate password updates are blocked and a thrown request can be retried', async () => {
+  let reject;
+  const f = fixture(true, () => new Promise((_, fail) => { reject = fail; }));
+  field(f.render(), 'Type new password').props.onChange({ target: { value: 'Password-123!' } });
+  field(f.render(), 'Confirm new password').props.onChange({ target: { value: 'Password-123!' } });
+  const save = button(f.render(), 'NEXT').props.onClick;
+  const first = save();
+  await save();
+  assert.equal(f.updateCount, 1);
+  reject(new Error('offline')); await first;
+  assert.match(field(f.render(), 'Type new password').props.helperText, /Unable to change/);
+  const retry = button(f.render(), 'NEXT').props.onClick();
+  assert.equal(f.updateCount, 2);
+  reject(new Error('offline')); await retry;
 });
