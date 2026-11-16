@@ -23,10 +23,12 @@ export default function ForgotPasswordModal({ onClose }: { onClose: () => void }
     inFlight.current = true;
     setPending(true);
     setError(null);
+    const token = captchaToken;
+    setCaptchaToken(null);
     try {
       const { error } = await createBrowserClient().auth.resetPasswordForEmail(email.trim(), {
         redirectTo: `${window.location.origin}/reset-password`,
-        captchaToken,
+        captchaToken: token,
       });
       if (error) {
         setError(error.message);
@@ -73,7 +75,8 @@ export default function ForgotPasswordModal({ onClose }: { onClose: () => void }
             value={email} onChange={(event) => setEmail(event.target.value)} disabled={pending} fullWidth />
           <Turnstile id="password-recovery-captcha" ref={captcha} siteKey={process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY!}
             onSuccess={setCaptchaToken} onExpire={() => setCaptchaToken(null)}
-            onError={() => setCaptchaToken(null)} />
+            onError={() => setCaptchaToken(null)}
+            onTimeout={() => setCaptchaToken(null)} />
           {error && <Alert severity="error">{error}</Alert>}
         </Box>
       )}
