@@ -172,6 +172,49 @@ try {
     console.log(`pass: ${scenario}`);
     await context.close();
   }
+  const loginContext = await browser.newContext();
+  const loginRequests = [];
+  await loginContext.route('**/*', async route => {
+    const url = new URL(route.request().url());
+    if (url.hostname === 'challenges.cloudflare.com') {
+      return route.fulfill({ contentType: 'application/javascript', body: `
+        window.testWidgets = {}; window.testCaptchaResets = 0;
+        window.turnstile = {
+          render(element, options) { window.testWidgets[element.id] = options; return element.id; },
+          reset() { window.testCaptchaResets++; }, remove() {}, getResponse() { return ''; }
+        };
+        window[${JSON.stringify(url.searchParams.get('onload'))}]?.();
+      ` });
+    }
+    if (url.pathname.endsWith('/auth/v1/token')) {
+      loginRequests.push(route.request().postDataJSON());
+      return route.fulfill({ status: 400, contentType: 'application/json',
+        body: JSON.stringify({ code: 'invalid_credentials', msg: 'Invalid login credentials' }) });
+    }
+    if (url.pathname.includes('/auth/v1/')) return route.abort();
+    if (url.origin !== new URL(baseUrl).origin) return route.abort();
+    return route.continue();
+  });
+  const loginPage = await loginContext.newPage();
+  await loginPage.goto(baseUrl);
+  await loginPage.getByText('Signed up with Google? Use Log in with Google instead of resetting a password.').waitFor();
+  await loginPage.getByRole('textbox', { name: 'Email', exact: true }).fill('test@example.invalid');
+  await loginPage.getByLabel('Password', { exact: true }).fill('Wrong-Password123!');
+  const login = loginPage.getByRole('button', { name: 'Log in', exact: true });
+  assert.ok(await login.isDisabled());
+  await loginPage.waitForFunction(() => !!window.testWidgets?.['login-captcha']);
+  for (const token of ['first-token', 'fresh-token']) {
+    await loginPage.evaluate(token => window.testWidgets['login-captcha'].callback(token), token);
+    await login.click();
+    await loginPage.getByText('Invalid login credentials', { exact: true }).waitFor();
+    await loginPage.waitForFunction(count => window.testCaptchaResets >= count, loginRequests.length);
+    assert.ok(await login.isDisabled());
+  }
+  assert.equal(loginRequests.length, 2);
+  assert.equal(loginRequests[0].gotrue_meta_security.captcha_token, 'first-token');
+  assert.equal(loginRequests[1].gotrue_meta_security.captcha_token, 'fresh-token');
+  console.log('pass: login failures require fresh CAPTCHA; Google guidance visible');
+  await loginContext.close();
 } finally {
   await browser.close();
 }

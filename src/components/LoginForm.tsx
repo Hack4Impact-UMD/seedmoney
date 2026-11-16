@@ -60,21 +60,21 @@ const LoginForm = () => {
     const token = captchaToken;
     setCaptchaToken(null);
     try {
-    const supabase = createBrowserClient();
-    const { error } = await supabase.auth.signInWithPassword({
-      email: email.trim(),
-      password,
-      options: { captchaToken: token },
-    });
+      const supabase = createBrowserClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email: email.trim(),
+        password,
+        options: { captchaToken: token },
+      });
 
-    if (error) {
-      setErrorMsg(error.message);
-      return { success: false, error: error.message };
-    }
+      if (error) {
+        setErrorMsg(error.message);
+        return { success: false, error: error.message };
+      }
 
-    clearPendingSignupState();
-    router.push("/dashboard");
-    router.refresh();
+      clearPendingSignupState();
+      router.push("/dashboard");
+      router.refresh();
     } catch {
       setErrorMsg("Unable to log in. Please try again.");
     } finally {
