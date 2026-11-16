@@ -468,6 +468,9 @@ const SignupForm = () => {
   };
 
   const signInWithGoogle = async () => {
+    if (inFlight.current || !captchaToken) return;
+    inFlight.current = true;
+    setIsSubmitting(true);
     setErrorMsg(null);
     setStatusMsg(null);
 
@@ -482,6 +485,10 @@ const SignupForm = () => {
       console.error("Unexpected sign-in error:", err);
       setErrorMsg("Unexpected server error");
       return { error: "Unexpected server error" };
+    } finally {
+      inFlight.current = false;
+      setIsSubmitting(false);
+      resetCaptcha();
     }
   };
 
@@ -682,7 +689,7 @@ const SignupForm = () => {
         variant="outlined"
         size="medium"
         startIcon={<Google className="text-[rgba(0,0,0,0.6)]" />}
-        disabled={!captchaToken}
+        disabled={isSubmitting || !captchaToken}
       >
         Sign Up with Google
       </Button>

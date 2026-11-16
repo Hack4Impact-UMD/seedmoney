@@ -80,6 +80,7 @@ const LoginForm = () => {
     } finally {
       inFlight.current = false;
       setIsSigningIn(false);
+      setCaptchaToken(null);
       captcha.current?.reset();
     }
   };
