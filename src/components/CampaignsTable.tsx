@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useState } from "react";
 import {
   Button,
   Chip,
@@ -19,14 +19,11 @@ import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import ImportExportOutlinedIcon from "@mui/icons-material/ImportExportOutlined";
 import { useRouter } from "next/navigation";
-import { useQueryClient } from "@tanstack/react-query";
-import BaseModal from "@/src/components/bases/BaseModal";
 import type { Status } from "@/src/types/db/enums";
 import { CampaignWithLeader } from "@/src/types/frontend/campaignsTable";
 import { useAuth } from "@/src/context/AuthProvider";
 import useUserByAuthId from "../hooks/users/useUserByAuthId";
 import useIncrementalMobileList from "@/src/hooks/useIncrementalMobileList";
-import { unpublishGivebutterCampaign } from "@/src/actions/givebutter/campaignsGivebutter";
 
 interface Props {
   initialData: CampaignWithLeader[];
@@ -94,7 +91,7 @@ function getStatusChipClasses(status: string) {
     case "published":
       return "border-[#2D7A45] text-[#2D7A45]";
     case "suspended":
-      return "border-[#667085] text-[#667085]";
+      return "border-[#F79009] text-[#B54708]";
     case "pending":
       return "border-[#F79009] text-[#B54708]";
     case "denied":
@@ -126,7 +123,6 @@ export default function CampaignsTable({
   adminRouteResolver,
 }: Props) {
   const router = useRouter();
-  const queryClient = useQueryClient();
   const [campaignSearch, setCampaignSearch] = useState("");
   const [yearFilter, setYearFilter] = useState("all");
   const [statusFilter, setStatusFilter] = useState("all");
@@ -143,22 +139,6 @@ export default function CampaignsTable({
     useState<MobileFilterCategory | null>(null);
   const [mobileFilterOpenedFromChip, setMobileFilterOpenedFromChip] =
     useState(false);
-  const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
-  const [suspendCampaignId, setSuspendCampaignId] = useState<number | null>(null);
-  const [isSuspending, setIsSuspending] = useState(false);
-  const [suspendError, setSuspendError] = useState<string | null>(null);
-  const suspendInFlightRef = useRef(false);
-  const suspendCampaign = initialData.find(
-    (campaign) => campaign.campaign_id === suspendCampaignId,
-  );
-  const closeSuspendModal = () => {
-    if (suspendInFlightRef.current) return;
-
-    setIsSuspendModalOpen(false);
-    setSuspendCampaignId(null);
-    setSuspendError(null);
-  };
-
   const { user } = useAuth();
   const {
     data: userData,
@@ -414,53 +394,19 @@ export default function CampaignsTable({
       .join(", ")}`;
   };
 
-  const handleConfirmSuspend = async () => {
-    if (suspendCampaignId === null || suspendInFlightRef.current) return;
-
-    suspendInFlightRef.current = true;
-    setIsSuspending(true);
-    setSuspendError(null);
-    let succeeded = false;
-
-    try {
-      await unpublishGivebutterCampaign(suspendCampaignId);
-      await queryClient.invalidateQueries({
-        queryKey: ["campaigns", "approved-campaigns"],
-      });
-      await queryClient.invalidateQueries({
-        queryKey: ["campaigns", "previous-campaigns"],
-      });
-      succeeded = true;
-    } catch (error) {
-      console.error("Failed to suspend campaign:", error);
-      setSuspendError(
-        error instanceof Error
-          ? error.message
-          : "Failed to suspend campaign. Please try again.",
-      );
-    } finally {
-      suspendInFlightRef.current = false;
-      setIsSuspending(false);
-
-      if (succeeded) {
-        closeSuspendModal();
-      }
-    }
-  };
-
   return (
-    <div className="w-full">
-      <div className="md:hidden">
+    <div className="w-full min-w-0 max-w-full">
+      <div className="w-full min-w-0 max-w-full md:hidden">
         <div className="sticky top-0 z-10 -mx-4 bg-[#F6FAF9] px-4 pb-4 pt-2">
           <h2 className="text-[20px] font-bold leading-[1.35] text-[#123A1E]">
             {pageTitle}
           </h2>
-          <p className="mt-2 text-[14px] text-[#667085]">
+          <p className="mt-2 min-w-0 break-words text-[14px] text-[#667085]">
             <span className="font-bold text-[#101828]">{pageListLabel}</span>
             {` - ${initialData.length} Campaign${initialData.length === 1 ? "" : "s"}`}
           </p>
 
-          <div className="mt-4 flex items-center gap-2">
+          <div className="mt-4 flex w-full min-w-0 items-center gap-2">
             <TextField
               placeholder="Search"
               size="small"
@@ -474,7 +420,7 @@ export default function CampaignsTable({
                   </InputAdornment>
                 ),
               }}
-              className="bg-white"
+              className="min-w-0 flex-1 bg-white"
             />
             <IconButton
               aria-label="Open filters"
@@ -502,7 +448,7 @@ export default function CampaignsTable({
                   onClick={(event) =>
                     openMobileFilterValues("year", event.currentTarget, true)
                   }
-                  className="rounded-full border border-[#2E90FA] bg-white px-3 py-1 text-xs font-medium text-[#2E90FA]"
+                  className="max-w-full break-words rounded-full border border-[#2E90FA] bg-white px-3 py-1 text-left text-xs font-medium text-[#2E90FA]"
                 >
                   {formatMobileFilterChipLabel("year", selectedYears)}
                 </button>
@@ -513,7 +459,7 @@ export default function CampaignsTable({
                   onClick={(event) =>
                     openMobileFilterValues("status", event.currentTarget, true)
                   }
-                  className="rounded-full border border-[#2E90FA] bg-white px-3 py-1 text-xs font-medium text-[#2E90FA]"
+                  className="max-w-full break-words rounded-full border border-[#2E90FA] bg-white px-3 py-1 text-left text-xs font-medium text-[#2E90FA]"
                 >
                   {formatMobileFilterChipLabel("status", selectedStatuses)}
                 </button>
@@ -524,7 +470,7 @@ export default function CampaignsTable({
           <div className="mt-4 border-b border-[#D0D5DD]" />
         </div>
 
-        <div className="space-y-4 pb-24 pt-4">
+        <div className="w-full min-w-0 space-y-4 pb-24 pt-4">
           {mobileFilteredData.length === 0 ? (
             <div className="rounded-2xl border border-[#EAECF0] bg-white px-4 py-12 text-center text-sm text-[#6A7282]">
               No campaigns found.
@@ -539,10 +485,10 @@ export default function CampaignsTable({
               return (
                 <div
                   key={campaign.campaign_id}
-                  className="overflow-hidden rounded-[16px] border border-[#DFE8DF] bg-white shadow-[0px_1px_2px_rgba(16,24,40,0.05)]"
+                  className="w-full min-w-0 max-w-full overflow-hidden rounded-[16px] border border-[#DFE8DF] bg-white shadow-[0px_1px_2px_rgba(16,24,40,0.05)]"
                 >
-                  <div className="flex items-start justify-between gap-4 px-4 py-4">
-                    <div className="min-w-0">
+                  <div className="flex min-w-0 items-start justify-between gap-2 px-3 py-4">
+                    <div className="min-w-0 flex-1">
                       <p className="text-[11px] text-[#7B827D]">
                         Campaign Title:
                       </p>
@@ -551,22 +497,6 @@ export default function CampaignsTable({
                       </p>
                     </div>
                     <div className="flex shrink-0 gap-2">
-                      {userData.is_admin &&
-                        (campaign.status === "published" ||
-                          campaign.status === "suspended") && (
-                        <Button
-                          variant="outlined"
-                          onClick={() => {
-                            setSuspendCampaignId(campaign.campaign_id);
-                            setIsSuspendModalOpen(true);
-                          }}
-                          className="!min-w-0 !rounded-[8px] !px-3 !py-1.5 !text-[14px] !font-bold"
-                        >
-                          {campaign.status === "suspended"
-                            ? "Retry Suspension"
-                            : "Suspend"}
-                        </Button>
-                      )}
                       <Button
                         variant="outlined"
                         onClick={() => handleCampaignClick(campaign.campaign_id)}
@@ -599,36 +529,36 @@ export default function CampaignsTable({
                       key={item.label}
                       className="flex items-center justify-between gap-4 border-t border-[#EAECF0] px-4 py-3"
                     >
-                      <span className="text-[13px] text-[#667085]">
+                      <span className="w-1/2 shrink-0 text-[13px] text-[#667085]">
                         {item.label}
                       </span>
-                      <span className="text-[14px] text-[#101828]">
+                      <span className="min-w-0 flex-1 break-all text-right text-[14px] text-[#101828]">
                         {item.value}
                       </span>
                     </div>
                   ))}
 
-                  <div className="flex items-center justify-between gap-4 border-t border-[#EAECF0] px-4 py-3">
-                    <span className="text-[13px] text-[#667085]">
+                  <div className="flex min-w-0 items-center justify-between gap-2 border-t border-[#EAECF0] px-3 py-3">
+                    <span className="w-1/2 shrink-0 text-[13px] text-[#667085]">
                       Goal Progress
                     </span>
-                    <div className="flex w-[46%] min-w-[120px] items-center gap-2">
+                    <div className="flex min-w-0 flex-1 items-center gap-2">
                       <div className="h-[3px] flex-1 overflow-hidden rounded-full bg-[#B2D1FF]">
                         <div
                           className="h-full rounded-full bg-[#1570EF]"
                           style={{ width: `${displayedProgress}%` }}
                         />
                       </div>
-                      <span className="text-[12px] text-[#344054]">
+                      <span className="shrink-0 text-[12px] text-[#344054]">
                         {displayedProgress}%
                       </span>
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between gap-4 border-t border-[#EAECF0] px-4 py-3">
-                    <span className="text-[13px] text-[#667085]">Status</span>
+                  <div className="flex min-w-0 items-center justify-between gap-2 border-t border-[#EAECF0] px-3 py-3">
+                    <span className="w-1/2 shrink-0 text-[13px] text-[#667085]">Status</span>
                     <span
-                      className={`rounded-full border px-3 py-1 text-[12px] font-medium ${getStatusChipClasses(campaign.status)}`}
+                      className={`max-w-1/2 break-words rounded-full border px-2 py-1 text-right text-[12px] font-medium ${getStatusChipClasses(campaign.status)}`}
                     >
                       {getStatusLabel(campaign.status)}
                     </span>
@@ -871,7 +801,6 @@ export default function CampaignsTable({
                       "Goal",
                       "Goal Progress",
                       statusColumnLabel,
-                      userData.is_admin ? "Suspend" : null,
                       "",
                     ]
                       .filter((header) => header !== null)
@@ -936,26 +865,6 @@ export default function CampaignsTable({
                         <td className="px-4 py-4">
                           <StatusChip status={campaign.status} />
                         </td>
-                        {userData.is_admin && (
-                          <td className="px-4 py-4">
-                            {(campaign.status === "published" ||
-                              campaign.status === "suspended") && (
-                              <Button
-                                variant="outlined"
-                                size="small"
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  setSuspendCampaignId(campaign.campaign_id);
-                                  setIsSuspendModalOpen(true);
-                                }}
-                              >
-                                {campaign.status === "suspended"
-                                  ? "Retry Suspension"
-                                  : "Suspend"}
-                              </Button>
-                            )}
-                          </td>
-                        )}
                         <td className="px-2 py-2">
                           <IconButton
                             aria-label={`Open ${campaign.name || "campaign"}`}
@@ -1020,55 +929,6 @@ export default function CampaignsTable({
         )}
       </div>
 
-      <BaseModal
-        open={isSuspendModalOpen}
-        onClose={closeSuspendModal}
-        title={
-          suspendCampaign?.status === "suspended"
-            ? "Retry Suspension"
-            : "Confirm Suspension"
-        }
-      >
-        <div className="px-4 pb-4 text-[16px] text-[#727873]">
-          <p>
-            {suspendCampaign?.status === "suspended"
-              ? "Retry unpublishing "
-              : "You are about to suspend "}
-            <span className="font-medium text-[#222622]">
-              {suspendCampaign?.name || "this campaign"}
-            </span>
-            {suspendCampaign?.status === "suspended"
-              ? " on Givebutter?"
-              : ". Are you sure you would like to proceed?"}
-          </p>
-          {suspendError && (
-            <p className="mt-3 text-sm text-red-600" role="alert">
-              {suspendError}
-            </p>
-          )}
-        </div>
-        <div className="flex items-center justify-end gap-3 px-4 pb-4">
-          <Button
-            onClick={closeSuspendModal}
-            variant="text"
-            disabled={isSuspending}
-          >
-            CANCEL
-          </Button>
-          <Button
-            onClick={handleConfirmSuspend}
-            variant="contained"
-            size="small"
-            disabled={isSuspending}
-          >
-            {isSuspending
-              ? "SUSPENDING..."
-              : suspendCampaign?.status === "suspended"
-                ? "RETRY"
-                : "SUSPEND"}
-          </Button>
-        </div>
-      </BaseModal>
     </div>
   );
 }

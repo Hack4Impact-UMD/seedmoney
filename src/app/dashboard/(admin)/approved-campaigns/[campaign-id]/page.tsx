@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useMemo, useEffect } from "react";
+import { useState, useMemo, useEffect, useRef } from "react";
 import { useParams, useRouter, notFound } from "next/navigation";
 import moment from "moment";
 import clsx from "clsx";
@@ -25,9 +25,11 @@ import useReadCampaignTransactions from "@/src/hooks/transactions/useReadCampaig
 import useRaisedChangePercent from "@/src/hooks/transactions/useRaisedChangePercent";
 import useDonorsChangePercent from "@/src/hooks/transactions/useDonorsChangePercent";
 import useDeleteCampaign from "@/src/hooks/campaigns/useDeleteCampaign";
+import useGivebutterCampaignSuspension from "@/src/hooks/givebutter/useGivebutterCampaignSuspension";
 
 import { ArrowBack, Close, OpenInNew } from "@mui/icons-material";
 import Button from "@mui/material/Button";
+import Chip from "@mui/material/Chip";
 import BaseModal from "@/src/components/bases/BaseModal";
 import BaseAlert from "@/src/components/bases/BaseAlert";
 
@@ -50,6 +52,14 @@ export default function AdminCampaignPage() {
   const [deleteModalOpen, setDeleteModalOpen] = useState(false);
   const [deleteUnlockIn, setDeleteUnlockIn] = useState(0);
   const [deleteError, setDeleteError] = useState<string | null>(null);
+  const [isSuspendModalOpen, setIsSuspendModalOpen] = useState(false);
+  const [suspendError, setSuspendError] = useState<string | null>(null);
+  const suspendInFlightRef = useRef(false);
+  const [isUnsuspendModalOpen, setIsUnsuspendModalOpen] = useState(false);
+  const [unsuspendError, setUnsuspendError] = useState<string | null>(null);
+  const unsuspendInFlightRef = useRef(false);
+
+  const { suspend, unsuspend } = useGivebutterCampaignSuspension();
 
   const {
     mutate: deleteCampaign,
@@ -131,6 +141,58 @@ export default function AdminCampaignPage() {
     });
   };
 
+  const closeSuspendModal = () => {
+    if (suspendInFlightRef.current) return;
+    setIsSuspendModalOpen(false);
+    setSuspendError(null);
+  };
+
+  const handleConfirmSuspend = async () => {
+    if (suspendInFlightRef.current) return;
+
+    suspendInFlightRef.current = true;
+    setSuspendError(null);
+    try {
+      await suspend.mutateAsync(campaignId);
+      setIsSuspendModalOpen(false);
+    } catch (error) {
+      console.error("Failed to suspend campaign:", error);
+      setSuspendError(
+        error instanceof Error
+          ? error.message
+          : "Failed to suspend campaign. Please try again.",
+      );
+    } finally {
+      suspendInFlightRef.current = false;
+    }
+  };
+
+  const closeUnsuspendModal = () => {
+    if (unsuspendInFlightRef.current) return;
+    setIsUnsuspendModalOpen(false);
+    setUnsuspendError(null);
+  };
+
+  const handleConfirmUnsuspend = async () => {
+    if (unsuspendInFlightRef.current) return;
+
+    unsuspendInFlightRef.current = true;
+    setUnsuspendError(null);
+    try {
+      await unsuspend.mutateAsync(campaignId);
+      setIsUnsuspendModalOpen(false);
+    } catch (error) {
+      console.error("Failed to unsuspend campaign:", error);
+      setUnsuspendError(
+        error instanceof Error
+          ? error.message
+          : "Failed to unsuspend campaign. Please try again.",
+      );
+    } finally {
+      unsuspendInFlightRef.current = false;
+    }
+  };
+
   useEffect(() => {
     if (!deleteModalOpen) return;
 
@@ -175,13 +237,53 @@ export default function AdminCampaignPage() {
   }
 
   return (
-    <div className="flex min-h-screen">
+    <div className="flex min-h-screen min-w-0">
       <Navbar />
 
-      <div className="flex-1 flex-col bg-gray-50 p-10 space-y-3">
-        <h3 className="text-4xl font-bold text-[#096B2E] mb-5">
-          {campaignData.name}
-        </h3>
+      <div className="min-w-0 flex-1 space-y-3 bg-gray-50 p-4 sm:p-6 md:p-10">
+        <div className="mb-5 flex flex-col items-start justify-between gap-3 sm:flex-row sm:gap-4">
+          <h3 className="max-w-full break-words text-2xl font-bold text-[#096B2E] sm:text-3xl md:text-4xl">
+            {campaignData.name}
+          </h3>
+          {(campaignData.status === "published" ||
+            campaignData.status === "suspended") && (
+            <div className="flex max-w-full flex-wrap items-center gap-3">
+              {campaignData.status === "suspended" && (
+                <Chip variant="suspended" label="Suspended" />
+              )}
+              <span className="text-sm text-[#666666]">
+                Created in{" "}
+                {Number.isNaN(new Date(campaignData.date_created).getFullYear())
+                  ? "N/A"
+                  : new Date(campaignData.date_created).getFullYear()}
+              </span>
+              {campaignData.status === "suspended" && (
+                <Button
+                  size="small"
+                  variant="outlined"
+                  disabled={suspend.isPending || unsuspend.isPending}
+                  onClick={() => {
+                    setUnsuspendError(null);
+                    setIsUnsuspendModalOpen(true);
+                  }}
+                >
+                  Unsuspend
+                </Button>
+              )}
+              <Button
+                size="small"
+                variant="outlined"
+                disabled={suspend.isPending || unsuspend.isPending}
+                onClick={() => {
+                  setSuspendError(null);
+                  setIsSuspendModalOpen(true);
+                }}
+              >
+                {campaignData.status === "suspended" ? "Retry Suspension" : "Suspend"}
+              </Button>
+            </div>
+          )}
+        </div>
 
         <p
           onClick={handleBack}
@@ -251,14 +353,16 @@ export default function AdminCampaignPage() {
             </Button>
           </div>
 
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
-            <TotalRaisedCard
-              totalRaised={campaignData.raised}
-              campaignGoal={campaignData.goal}
-              raisedChangePercent={raisedChangePercent}
-            />
+          <div className="grid min-w-0 grid-cols-1 gap-4 md:grid-cols-2 md:gap-8">
+            <div className="min-w-0">
+              <TotalRaisedCard
+                totalRaised={campaignData.raised}
+                campaignGoal={campaignData.goal}
+                raisedChangePercent={raisedChangePercent}
+              />
+            </div>
 
-            <div className="grid grid-rows-2 gap-8">
+            <div className="grid min-w-0 grid-rows-2 gap-4 md:gap-8">
               <TotalDonorsCard
                 totalDonors={campaignData.donors}
                 donorsChangePercent={donorsChangePercent}
@@ -273,11 +377,11 @@ export default function AdminCampaignPage() {
           </div>
         </section>
 
-        <section id="dashboard-donations" className="scroll-mt-20">
+        <section id="dashboard-donations" className="min-w-0 scroll-mt-20">
           <DonorsTable campaignId={campaignId} campaignName={campaignData.name} />
         </section>
 
-        <section id="dashboard-analytics" className="scroll-mt-20">
+        <section id="dashboard-analytics" className="min-w-0 scroll-mt-20">
           {txnsError || dates.length === 0 ? (
             <div className="bg-white rounded-lg border border-[#e5e5e5] p-6 h-[360px] flex flex-col items-center justify-center text-center">
               <p className="font-medium text-black">No donations yet</p>
@@ -380,6 +484,91 @@ export default function AdminCampaignPage() {
                 ? `DELETE (${deleteUnlockIn})`
                 : "DELETE"}
           </button>
+        </div>
+      </BaseModal>
+
+      <BaseModal
+        open={isSuspendModalOpen}
+        onClose={closeSuspendModal}
+        title="Suspend Campaign?"
+        containerClassName="!min-h-0 !p-4"
+        titleClassName="!mb-2"
+      >
+        <div className="px-2 pb-2 text-[16px] text-[#727873]">
+          <p>
+            This will take{" "}
+            <span className="font-medium text-[#222622]">
+              &ldquo;{campaignData.name || "this campaign"}&rdquo;
+            </span>{" "}
+            offline while you look into it. Nothing is deleted. You can
+            unsuspend it at any time from this page.
+          </p>
+          {suspendError && (
+            <p className="mt-3 text-sm text-red-600" role="alert">
+              {suspendError}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-3 px-2 pb-1">
+          <Button
+            onClick={closeSuspendModal}
+            variant="text"
+            disabled={suspend.isPending}
+          >
+            CANCEL
+          </Button>
+          <Button
+            onClick={handleConfirmSuspend}
+            variant="contained"
+            size="small"
+            disabled={suspend.isPending}
+            className="!bg-[#D92D20] hover:!bg-[#B42318]"
+          >
+            {suspend.isPending
+              ? "SUSPENDING..."
+              : "YES, SUSPEND CAMPAIGN"}
+          </Button>
+        </div>
+      </BaseModal>
+
+      <BaseModal
+        open={isUnsuspendModalOpen}
+        onClose={closeUnsuspendModal}
+        title="Unsuspend Campaign?"
+        containerClassName="!min-h-0 !p-4"
+        titleClassName="!mb-2"
+      >
+        <div className="px-2 pb-2 text-[16px] text-[#727873]">
+          <p>
+            <span className="font-medium text-[#222622]">
+              {campaignData.name || "This campaign"}
+            </span>{" "}
+            will return to Published status.
+          </p>
+          {unsuspendError && (
+            <p className="mt-3 text-sm text-red-600" role="alert">
+              {unsuspendError}
+            </p>
+          )}
+        </div>
+        <div className="flex items-center justify-end gap-3 px-2 pb-1">
+          <Button
+            onClick={closeUnsuspendModal}
+            variant="text"
+            disabled={unsuspend.isPending}
+          >
+            CANCEL
+          </Button>
+          <Button
+            onClick={handleConfirmUnsuspend}
+            variant="contained"
+            size="small"
+            disabled={unsuspend.isPending}
+          >
+            {unsuspend.isPending
+              ? "UNSUSPENDING..."
+              : "YES, UNSUSPEND"}
+          </Button>
         </div>
       </BaseModal>
 

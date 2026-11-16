@@ -28,7 +28,7 @@ export function TotalRaisedCard({
   const progressBarPercent = Math.min(100, Math.max(0, campaignPercent));
 
   return (
-    <div className="bg-white rounded-lg border border-[#e5e5e5] p-4 md:p-6 overflow-hidden">
+    <div className="min-w-0 overflow-hidden rounded-lg border border-[#e5e5e5] bg-white p-4 md:p-6">
       <CardHeader label="Total Raised" icon={<DollarIcon />} />
 
       {/* Progress bar */}
@@ -46,12 +46,12 @@ export function TotalRaisedCard({
       </h2>
 
       {/* Footer */}
-      <div className="flex justify-between items-center gap-2 min-w-0">
-        <p className="text-sm text-gray-500 truncate min-w-0">
+      <div className="flex min-w-0 flex-wrap items-center justify-between gap-2">
+        <p className="min-w-0 flex-1 truncate text-sm text-gray-500">
           {campaignPercent}% of {`$${campaignGoal.toLocaleString()}`} goal
         </p>
         <p
-          className={`text-sm font-medium shrink-0 ${
+          className={`max-w-full text-sm font-medium ${
             raisedChangePercent === null
               ? "text-gray-400"
               : raisedChangePercent < 0
