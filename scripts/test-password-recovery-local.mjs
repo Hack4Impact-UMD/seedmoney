@@ -59,9 +59,14 @@ try {
   try { if (browser) await browser.close(); }
   finally {
     if (userId) {
-      const { error } = await admin.auth.admin.deleteUser(userId);
-      if (error) throw error;
-      console.log('Removed temporary local test account');
+      try {
+        const { error } = await admin.auth.admin.deleteUser(userId);
+        if (error) throw error;
+        console.log('Removed temporary local test account');
+      } catch (error) {
+        console.error('Failed to remove temporary local test account:', error.message);
+        process.exitCode = 1;
+      }
     }
   }
 }
