@@ -77,7 +77,6 @@ try {
       if (scenario === 'valid') {
         for (const width of [1280, 375]) {
           await page.setViewportSize({ width, height: 850 });
-          await page.screenshot({ path: `/private/tmp/password-recovery-${width}.png` });
           assert.ok(await page.getByRole('button', { name: 'NEXT', exact: true }).isVisible());
         }
       }
