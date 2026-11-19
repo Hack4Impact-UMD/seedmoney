@@ -1,10 +1,12 @@
 import { getAudienceStatuses, getCompetitionAudience } from "@/src/lib/competitionAudience";
 import { ADMIN_EMAIL_GROUP_LABELS, type AdminEmailGroup } from "@/src/types/db/adminEmails";
 import type { UserCampaign, UsersTableRow } from "@/src/types/frontend/usersTable";
+import type { EmailCampaignLink } from "@/src/types/emailCampaignLink";
 
 export type EmailAudienceCampaign = UserCampaign & { givebutterlink?: string | null };
 export type EmailAudienceUser = UsersTableRow & { is_admin: boolean; campaigns: EmailAudienceCampaign[] };
-export type EmailRecipient = { userId: string; email: string; firstName: string; campaignId: number | null; campaignUrl: string | null };
+export type EmailRecipient = { userId: string; email: string; firstName: string; campaignId: number | null; campaignUrl: string | null;
+  campaignLinks: EmailCampaignLink[] };
 export type EmailAudienceSummary = {
   competitionId: number;
   groupCounts: Record<AdminEmailGroup, number>;
@@ -44,8 +46,17 @@ export function resolveEmailRecipients(
       .filter(campaign => campaign.status === "approved" || campaign.status === "published")
       .map(campaign => [campaign.campaign_id, campaign]));
     const campaign = approved.size === 1 ? [...approved.values()][0] : null;
+    const seenUrls = new Set<string>();
+    const campaignLinks = [...approved.values()].sort((a, b) => a.campaign_id - b.campaign_id)
+      .flatMap(campaign => {
+        const url = campaign.givebutterlink?.trim() ?? "";
+        // Keep missing links so validation cannot silently omit a campaign.
+        if (url && seenUrls.has(url)) return [];
+        if (url) seenUrls.add(url);
+        return [{ campaignId: campaign.campaign_id, name: campaign.name, url }];
+      });
     const recipient = { userId: user.id, email, firstName: user.first_name ?? "",
-      campaignId: campaign?.campaign_id ?? null, campaignUrl: campaign?.givebutterlink?.trim() || null };
+      campaignId: campaign?.campaign_id ?? null, campaignUrl: campaign?.givebutterlink?.trim() || null, campaignLinks };
     const emailKey = email.toLowerCase();
     for (const group of memberships) {
       if (!byGroup[group].has(emailKey)) byGroup[group].set(emailKey, recipient);

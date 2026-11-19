@@ -72,7 +72,7 @@ test("unknown groups and missing competition IDs fail closed", () => {
   for (const id of [null, 0, -1, 1.2]) assert.throws(() => resolver.resolveEmailRecipients([], id, []), /Invalid/);
 });
 
-test("campaign personalization uses only one eligible current campaign and never guesses", () => {
+test("campaign personalization retains all eligible current campaigns without guessing a single URL", () => {
   const eligible = { ...campaign("approved"), givebutterlink: " https://givebutter.com/garden " };
   const result = resolver.resolveEmailRecipients([
     user("single", [eligible, { ...campaign("approved", 2), campaign_id: 2 }]),
@@ -84,6 +84,26 @@ test("campaign personalization uses only one eligible current campaign and never
   assert.equal(recipients.get("single").campaignId, 1);
   assert.equal(recipients.get("many").campaignUrl, null);
   assert.equal(recipients.get("pending").campaignUrl, null);
+  assert.equal(recipients.get("single").campaignLinks.length, 1);
+  assert.equal(recipients.get("many").campaignLinks.length, 1, "duplicate URLs are listed once");
+  assert.equal(recipients.get("pending").campaignLinks.length, 0);
+});
+
+test("campaign links are ordered, deduplicated, and retain missing URLs for validation", () => {
+  const campaigns = [
+    { ...campaign("published"), campaign_id: 3, givebutterlink: "https://givebutter.com/three" },
+    { ...campaign("approved"), campaign_id: 1, givebutterlink: " https://givebutter.com/one " },
+    { ...campaign("published"), campaign_id: 2, givebutterlink: "https://givebutter.com/one" },
+    { ...campaign("approved"), campaign_id: 4 },
+    { ...campaign("suspended"), campaign_id: 5 },
+    { ...campaign("approved", 2), campaign_id: 6 },
+  ];
+  const links = resolver.resolveEmailRecipients([user("many", campaigns)], 1, ["approved"]).recipients[0].campaignLinks;
+  assert.deepEqual(plain(links.map(link => link.campaignId)), [1, 3, 4]);
+  assert.equal(links[0].url, "https://givebutter.com/one");
+  assert.equal(links[2].url, "");
+  assert.deepEqual(plain(resolver.resolveEmailRecipients([user("many", campaigns.reverse())], 1, ["approved"])
+    .recipients[0].campaignLinks), plain(links));
 });
 
 const paging = load("../src/lib/fetchAllPages.ts");
