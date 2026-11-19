@@ -1,6 +1,8 @@
 // Personalization tokens. In the email HTML a token is plain text like
 // {{first_name}}, and it's filled in separately for each recipient at send time.
 // Nothing here touches the DOM, so the send code on the server can use it too.
+import { parser } from "@lezer/html";
+import type { EmailCampaignLink } from "@/src/types/emailCampaignLink";
 
 export const EMAIL_TOKENS = [
   {
@@ -18,7 +20,9 @@ export const EMAIL_TOKENS = [
 ] as const;
 
 export type EmailTokenKey = (typeof EMAIL_TOKENS)[number]["key"];
-export type EmailTokenValues = Partial<Record<EmailTokenKey, string>>;
+export type EmailTokenValues = Partial<Record<EmailTokenKey, string>> & {
+  campaign_links?: EmailCampaignLink[] | null;
+};
 
 export const EXAMPLE_TOKEN_VALUES: EmailTokenValues = Object.fromEntries(
   EMAIL_TOKENS.map(({ key, example }) => [key, example]),
@@ -83,14 +87,18 @@ export function fillEmailTokens(
   values: EmailTokenValues,
   { wrapValue = (value) => value }: FillOptions = {},
 ) {
-  const valueFor = (key: string) =>
-    escapeHtml(values[key as EmailTokenKey] ?? "");
-
-  return mapHtmlText(
-    html,
+  const links = values.campaign_links;
+  const render = (source: string, link?: EmailCampaignLink) => mapHtmlText(
+    source,
     (text, insideLink) =>
       text.replace(tokenPattern(), (_, key: string) => {
-        const value = valueFor(key);
+        if (key === "campaign_url" && !link && links?.length) {
+          return wrapValue(links.map(item => {
+            const url = escapeHtml(item.url);
+            return insideLink ? url : `<a href="${url}">${url}</a>`;
+          }).join("<br>"));
+        }
+        const value = escapeHtml(key === "campaign_url" && link ? link.url : values[key as EmailTokenKey] ?? "");
         if (!value) return "";
 
         const isUrl = getEmailToken(key)?.isUrl;
@@ -99,14 +107,42 @@ export function fillEmailTokens(
         return wrapValue(content);
       }),
     // Tokens inside attributes, e.g. <a href="{{campaign_url}}">
-    (tag) => tag.replace(tokenPattern(), (_, key: string) => valueFor(key)),
+    (tag) => tag.replace(tokenPattern(), (_, key: string) =>
+      escapeHtml(key === "campaign_url" ? link?.url ?? links?.[0]?.url ?? values.campaign_url ?? "" : values.first_name ?? "")),
   );
+
+  if (!links || links.length < 2) return render(html, links?.[0]);
+
+  // Expand whole anchors, not href values: one href can only contain one URL.
+  // Parse boundaries so quoted attributes containing '>' remain intact.
+  const anchors: { from: number; to: number; close: number }[] = [];
+  parser.parse(html).iterate({ enter({ node }) {
+    if (node.name !== "Element") return;
+    const tag = node.firstChild?.getChild("TagName");
+    if (!tag || html.slice(tag.from, tag.to).toLowerCase() !== "a" || node.lastChild?.name !== "CloseTag") return;
+    if ([...html.slice(node.from, node.to).matchAll(tokenPattern())].some(match => match[1] === "campaign_url")) {
+      anchors.push({ from: node.from, to: node.to, close: node.lastChild.from });
+      return false;
+    }
+  } });
+  let result = "", cursor = 0;
+  for (const anchor of anchors) {
+    result += render(html.slice(cursor, anchor.from));
+    result += links.map(link => {
+      const label = ` (${escapeHtml(link.name || link.url)})`;
+      return render(html.slice(anchor.from, anchor.close), link) + label + html.slice(anchor.close, anchor.to);
+    }).join("<br>");
+    cursor = anchor.to;
+  }
+  return result + render(html.slice(cursor));
 }
 
 // For plain text such as the subject line
 export function fillTextTokens(text: string, values: EmailTokenValues) {
   return text.replace(
     tokenPattern(),
-    (_, key: string) => values[key as EmailTokenKey] ?? "",
+    (_, key: string) => key === "campaign_url" && values.campaign_links?.length
+      ? values.campaign_links.map(link => link.url).join(", ")
+      : values[key as EmailTokenKey] ?? "",
   );
 }

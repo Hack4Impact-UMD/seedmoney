@@ -3,13 +3,15 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 import vm from "node:vm";
 import ts from "typescript";
+import { parser } from "@lezer/html";
 
 const ID = "cfa20000-0000-0000-0000-000000000001";
 function load(file, imports = {}) {
   const exports = {};
   vm.runInNewContext(ts.transpileModule(readFileSync(new URL(file, import.meta.url), "utf8"), {
     compilerOptions: { module: ts.ModuleKind.CommonJS, target: ts.ScriptTarget.ES2022 },
-  }).outputText, { exports, TextEncoder, console: { error() {} }, require: name => imports[name] });
+  }).outputText, { exports, TextEncoder, console: { error() {} }, require: name =>
+    name === "@lezer/html" ? { parser } : imports[name] });
   return exports;
 }
 const tokens = load("../src/components/email/emailTokens.ts");
