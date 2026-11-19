@@ -56,6 +56,23 @@ test("multiple token locations do not create nested anchors or miss later occurr
   assert.ok(!/<a\b[^>]*>[^<]*<a\b/.test(result));
   const upper = tokens.fillEmailTokens('<A HREF="{{campaign_url}}">Donate</A>', values);
   assert.equal((upper.match(/<A /g) ?? []).length, 2);
-  assert.ok(upper.includes('href=') === false);
-  assert.ok(upper.includes('HREF="https://givebutter.com/two"'));
+  assert.ok(upper.includes('href="https://givebutter.com/two"'));
+});
+
+test("expanded anchors always point to their own campaign, replacing fixed or missing destinations", () => {
+  for (const html of [
+    '<a href="https://seedmoney.org">{{campaign_url}}</a>',
+    '<a HREF=\'https://seedmoney.org\'>{{campaign_url}}</a>',
+    '<a href=https://seedmoney.org>{{campaign_url}}</a>',
+    '<a>{{campaign_url}}</a>',
+    '<a title="Garden" target="_blank">{{campaign_url}}</a>',
+  ]) {
+    const result = tokens.fillEmailTokens(html, values);
+    assert.equal((result.match(/href="https:\/\/givebutter.com\//g) ?? []).length, 2, html);
+    assert.ok(!result.includes('https://seedmoney.org'), html);
+    assert.ok(result.includes('href="https://givebutter.com/one?a=1&amp;b=2"'), html);
+    assert.ok(result.includes('href="https://givebutter.com/two"'), html);
+    assert.ok(!result.includes('{{'), html);
+    if (html.includes('title=')) assert.equal((result.match(/title="Garden" target="_blank"/g) ?? []).length, 2);
+  }
 });

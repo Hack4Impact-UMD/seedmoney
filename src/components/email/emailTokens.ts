@@ -115,13 +115,20 @@ export function fillEmailTokens(
 
   // Expand whole anchors, not href values: one href can only contain one URL.
   // Parse boundaries so quoted attributes containing '>' remain intact.
-  const anchors: { from: number; to: number; close: number }[] = [];
+  const anchors: { from: number; to: number; close: number; content: string }[] = [];
   parser.parse(html).iterate({ enter({ node }) {
     if (node.name !== "Element") return;
     const tag = node.firstChild?.getChild("TagName");
     if (!tag || html.slice(tag.from, tag.to).toLowerCase() !== "a" || node.lastChild?.name !== "CloseTag") return;
     if ([...html.slice(node.from, node.to).matchAll(tokenPattern())].some(match => match[1] === "campaign_url")) {
-      anchors.push({ from: node.from, to: node.to, close: node.lastChild.from });
+      const href = node.firstChild?.getChildren("Attribute").find(attribute => {
+        const name = attribute.getChild("AttributeName");
+        return name && html.slice(name.from, name.to).toLowerCase() === "href";
+      });
+      // Body tokens can sit inside fixed or destination-less anchors too.
+      const content = html.slice(node.from, href?.from ?? tag.to) +
+        `${href ? "" : " "}href="{{campaign_url}}"` + html.slice(href?.to ?? tag.to, node.lastChild.from);
+      anchors.push({ from: node.from, to: node.to, close: node.lastChild.from, content });
       return false;
     }
   } });
@@ -130,7 +137,7 @@ export function fillEmailTokens(
     result += render(html.slice(cursor, anchor.from));
     result += links.map(link => {
       const label = ` (${escapeHtml(link.name || link.url)})`;
-      return render(html.slice(anchor.from, anchor.close), link) + label + html.slice(anchor.close, anchor.to);
+      return render(anchor.content, link) + label + html.slice(anchor.close, anchor.to);
     }).join("<br>");
     cursor = anchor.to;
   }

@@ -42,6 +42,10 @@ test('updated dashboard function preserves transport and renders frozen links', 
     '<a href="https://givebutter.com/one">View (One)</a><br><a href="https://givebutter.com/two">View (Two)</a>');
   assert.equal(exported.personalize('{{campaign_url}}', multi, false),
     'https://givebutter.com/one, https://givebutter.com/two');
+  for (const template of ['<a href="https://seedmoney.org">{{campaign_url}}</a>', '<a>{{campaign_url}}</a>']) {
+    assert.equal(exported.personalize(template, multi, true),
+      '<a href="https://givebutter.com/one">https://givebutter.com/one (One)</a><br><a href="https://givebutter.com/two">https://givebutter.com/two (Two)</a>');
+  }
   for (const value of [[], {}, [null], [{ campaignId: 1, name: 'Bad', url: 'javascript:bad' }]]) {
     const invalid = { ...multi, campaign_links: value };
     assert.equal(exported.validCampaignSnapshot(invalid), false);
