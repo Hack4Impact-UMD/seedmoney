@@ -2,12 +2,12 @@
 
 Draft autosave is unchanged: incomplete HTML can be saved and corrected later.
 `prepareAdminEmail` is the shared server-only validation boundary for both send
-and test-send. It authorizes the admin, validates content, resolves a fresh
-audience, and checks the competition and personalized subjects. The UI validation
+and test-send. It authorizes the admin and validates content. Real sends also
+resolve a fresh audience and check the competition and personalized subjects. The UI validation
 action returns errors or a count, never recipient addresses.
 
 The composer validates before opening confirmation, again on confirmation, and
-before simulating a test send. It keeps the draft unchanged on failure, displays
+before requesting a test send. It keeps the draft unchanged on failure, displays
 errors, and prevents duplicate validation requests or edits during a check.
 Bulk delivery uses `queueAdminEmail`, which calls `prepareAdminEmail` again before
 queueing rather than trusting prior browser validation. Test sends also prepare
@@ -35,11 +35,11 @@ block validation. Recipient values are escaped in HTML, and personalized subject
 lines must remain nonempty, within the limit, and free of control characters.
 
 `campaign_url` requires the Approved Campaigns group and a valid HTTPS Givebutter
-URL for every resolved recipient, even when other groups are selected. An account
-must lead exactly one approved/published campaign in the current competition;
-multiple eligible campaigns are blocked rather than selecting an arbitrary URL.
-No special grants, subscription workflows, database changes, or provider calls
-are added here.
+URL for every eligible campaign of every resolved recipient, even when other
+groups are selected. Multiple campaigns render as separate links, rather than
+selecting an arbitrary URL. Test sends use example values without requiring real
+audience eligibility. See [Campaign URL Tokens](admin-email-campaign-links.md)
+for rendering rules, snapshot migration, and the required dashboard update.
 
 The validation libraries require Node 22.22+. The package engine and both CI
 workflows now target Node 22; [Vercel honors the package engine](https://vercel.com/docs/functions/runtimes/node-js/node-js-versions)

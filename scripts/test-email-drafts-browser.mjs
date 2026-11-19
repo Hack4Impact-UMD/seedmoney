@@ -275,7 +275,7 @@ async function until(check, message) {
     await page.getByRole('button', { name: 'Cancel', exact: true }).click();
     await code.fill('<p>{{campaign_url}}</p>');
     await page.getByRole('button', { name: 'Send Email', exact: true }).click();
-    await page.getByRole('alert').filter({ hasText: 'Every recipient must have exactly one' }).waitFor();
+    await page.getByRole('alert').filter({ hasText: 'Every recipient must have at least one' }).waitFor();
     await code.fill('<p>Hello {{first_name}}</p>');
     await until(async () => await page.getByRole('button', { name: 'Send Email', exact: true }).isEnabled(), 'Valid audience did not enable confirmation');
     await page.getByRole('button', { name: 'Send Email', exact: true }).click();

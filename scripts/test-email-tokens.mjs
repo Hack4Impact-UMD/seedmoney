@@ -47,3 +47,15 @@ test("inserted values are never interpreted as template instructions", () => {
   assert.equal((result.match(/\{\{first_name\}\}/g) ?? []).length, 2);
   assert.equal((result.match(/\{\{campaign_url\}\}/g) ?? []).length, 2);
 });
+
+test("multiple token locations do not create nested anchors or miss later occurrences", () => {
+  const result = tokens.fillEmailTokens('<p>{{campaign_url}} <a href=\'{{campaign_url}}\'>{{campaign_url}}</a> {{campaign_url}}</p>', values);
+  assert.equal((result.match(/<a /g) ?? []).length, 6);
+  assert.equal((result.match(/<\/a>/g) ?? []).length, 6);
+  assert.ok(!result.includes('{{'));
+  assert.ok(!/<a\b[^>]*>[^<]*<a\b/.test(result));
+  const upper = tokens.fillEmailTokens('<A HREF="{{campaign_url}}">Donate</A>', values);
+  assert.equal((upper.match(/<A /g) ?? []).length, 2);
+  assert.ok(upper.includes('href=') === false);
+  assert.ok(upper.includes('HREF="https://givebutter.com/two"'));
+});
