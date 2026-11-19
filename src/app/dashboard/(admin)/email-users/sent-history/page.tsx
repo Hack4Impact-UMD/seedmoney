@@ -94,7 +94,7 @@ export default function SentHistoryPage() {
               </h2>
 
               <p className="text-sm text-[#8E938E]">
-                {history.isPending ? "Loading…" : `${total} ${total === 1 ? "email" : "emails"}`}
+                {history.isPending ? "Loading..." : history.isError ? "History unavailable" : `${total} ${total === 1 ? "email" : "emails"}`}
               </p>
             </div>
 
@@ -135,6 +135,17 @@ export default function SentHistoryPage() {
               </TextField>
             </div>
 
+            {history.isError && <div role="alert" className="mb-4 text-red-700">
+              {history.error.message} <Button onClick={() => void history.refetch()}>Retry</Button>
+            </div>}
+            {dates.isError && <div role="alert" className="mb-4 text-red-700">
+              {dates.error.message} <Button onClick={() => void dates.refetch()}>Retry date filters</Button>
+            </div>}
+            {history.isPending && <p role="status">Loading sent history...</p>}
+            {history.isFetching && !history.isPending && <p role="status">Refreshing...</p>}
+            {!history.isError && !history.isPending && page > 0 && page * rowsPerPage >= total &&
+              <Button onClick={() => setPage(0)}>Return to first page</Button>}
+
             {/* Sent history table */}
             <TableContainer>
               <Table sx={{ minWidth: 600 }}>
@@ -154,7 +165,7 @@ export default function SentHistoryPage() {
                 </TableHead>
 
                 <TableBody>
-                  {visibleEmails.map((email) => (
+                  {!history.isError && visibleEmails.map((email) => (
                     <TableRow key={email.id} hover>
                       <TableCell
                         sx={{
@@ -211,7 +222,7 @@ export default function SentHistoryPage() {
             </TableContainer>
 
             {/* Pagination */}
-            <TablePagination
+            {!history.isPending && !history.isError && (page === 0 || page * rowsPerPage < total) && <TablePagination
               component="div"
               count={total}
               page={page}
@@ -226,7 +237,7 @@ export default function SentHistoryPage() {
                 borderTop: "1px solid #E5E7EB",
                 color: "#6B7280",
               }}
-            />
+            />}
           </section>
         </div>
       </div>
