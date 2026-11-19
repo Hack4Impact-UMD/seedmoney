@@ -28,3 +28,6 @@ backoff, invalid responses, failures, aborts, and authorized pending-job lookup.
 `scripts/test-email-drafts-browser.mjs` uses local Supabase with mocked Edge
 Function responses, including interrupted delivery and same-job resume. It sends
 no real email.
+
+Multi-campaign URL tokens require the coordinated migration and dashboard update
+in [Campaign URL Tokens](admin-email-campaign-links.md).
