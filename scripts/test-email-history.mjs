@@ -18,6 +18,32 @@ const filters = load('../src/lib/emailHistory.ts', {
 const paging = load('../src/lib/fetchAllPages.ts');
 const plain = value => JSON.parse(JSON.stringify(value));
 const input = { page: 0, pageSize: 10, month: 'all', group: 'any' };
+
+test('first-page recovery remains available after range errors on later pages', () => {
+  const source = readFileSync(new URL('../src/app/dashboard/(admin)/email-users/sent-history/page.tsx', import.meta.url), 'utf8');
+  const file = ts.createSourceFile('page.tsx', source, ts.ScriptTarget.Latest, true, ts.ScriptKind.TSX);
+  let condition;
+  function visit(node) {
+    if (ts.isJsxElement(node) && node.children.some(child => ts.isJsxText(child) && child.text.trim() === 'Return to first page')) {
+      assert.ok(ts.isBinaryExpression(node.parent));
+      condition = node.parent.left.getText(file);
+    }
+    ts.forEachChild(node, visit);
+  }
+  visit(file);
+  assert.ok(condition, 'Recovery button guard must be tested from the actual page');
+  for (const [page, isError, isPending, total, expected] of [
+    [2, true, false, 100, true], // Includes PGRST103, even with cached totals.
+    [0, true, false, 0, false],
+    [2, false, true, 0, false],
+    [2, false, false, 20, true],
+    [2, false, false, 21, false],
+    [0, false, false, 0, false],
+  ]) {
+    assert.equal(vm.runInNewContext(condition, { page, history: { isError, isPending }, total, rowsPerPage: 10 }), expected);
+  }
+});
+
 function fixture() {
   const state = { authorized: true, queries: [], rows: [], count: 0, error: null, countError: false };
   const db = { from(table) {

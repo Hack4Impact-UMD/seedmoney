@@ -145,7 +145,7 @@ export default function SentHistoryPage() {
             </div>}
             {history.isPending && <p role="status">Loading sent history...</p>}
             {history.isFetching && !history.isPending && <p role="status">Refreshing...</p>}
-            {!history.isError && !history.isPending && page > 0 && page * rowsPerPage >= total &&
+            {page > 0 && (history.isError || (!history.isPending && page * rowsPerPage >= total)) &&
               <Button onClick={() => setPage(0)}>Return to first page</Button>}
 
             {/* Sent history table */}
