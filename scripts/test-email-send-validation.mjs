@@ -85,7 +85,8 @@ test("malformed styles cannot disappear from both sanitizer comparisons", () => 
 
 function preparationFixture() {
   const state = { authorized: true, reads: 0, competitionId: 1,
-    recipients: [{ userId: "1", email: "member@example.org", firstName: "Garden", campaignId: 1, campaignUrl: "https://givebutter.com/garden" }] };
+    recipients: [{ userId: "1", email: "member@example.org", firstName: "Garden", campaignId: 1, campaignUrl: "https://givebutter.com/garden",
+      campaignLinks: [{ campaignId: 1, name: "Garden", url: "https://givebutter.com/garden" }] }] };
   const preparation = load("../src/lib/prepareAdminEmail.ts", {
     "@/src/lib/requireAdmin": { requireAdmin: async () => { if (!state.authorized) throw new Error("Not authorized"); } },
     "@/src/lib/readEmailAudience": { readCurrentEmailAudience: async () => {
@@ -97,18 +98,48 @@ function preparationFixture() {
   return { state, preparation, action };
 }
 
-test("both send modes use fresh recipients and the same content and campaign-URL rules", async () => {
+test("real sends validate every campaign URL while test sends use examples independently", async () => {
   const { state, preparation } = preparationFixture();
   for (const mode of ["test", "send"]) {
     const message = input({ mode, testEmail: " test@example.org ", bodyHtml: '<p>{{campaign_url}}</p>' });
     assert.equal((await preparation.prepareAdminEmail(message)).success, true);
-    assert.equal((await preparation.prepareAdminEmail({ ...message, recipientGroups: ["all"] })).success, false);
-    state.recipients[0].campaignUrl = null;
-    assert.equal((await preparation.prepareAdminEmail(message)).success, false);
-    state.recipients[0].campaignUrl = 'https://givebutter.com/garden';
+    assert.equal((await preparation.prepareAdminEmail({ ...message, recipientGroups: ["all"] })).success, mode === "test");
+    state.recipients[0].campaignLinks[0].url = "";
+    assert.equal((await preparation.prepareAdminEmail(message)).success, mode === "test");
+    state.recipients[0].campaignLinks[0].url = 'https://givebutter.com/garden';
     assert.equal((await preparation.prepareAdminEmail({ ...message, bodyHtml: '<script>x</script>' })).success, false);
   }
-  assert.ok(state.reads >= 6);
+  assert.equal(state.reads, 3);
+});
+
+test("multiple campaigns are accepted, but empty lists and any invalid link block real sends", async () => {
+  const { state, preparation } = preparationFixture();
+  const message = input({ bodyHtml: '<a href="{{campaign_url}}">View campaign</a>' });
+  state.recipients[0].campaignLinks.push({ campaignId: 2, name: 'Second Garden', url: 'https://givebutter.com/second' });
+  assert.equal((await preparation.prepareAdminEmail(message)).success, true);
+  state.recipients[0].campaignLinks[1].url = 'javascript:bad';
+  assert.equal((await preparation.prepareAdminEmail(message)).success, false);
+  state.recipients[0].campaignLinks = [];
+  assert.equal((await preparation.prepareAdminEmail(message)).success, false);
+  assert.equal((await preparation.prepareAdminEmail(input())).success, true, "a URL is not required without its token");
+});
+
+test("test preparation neither reads the audience nor exposes real personalization", async () => {
+  const { state, preparation } = preparationFixture();
+  state.recipients = [];
+  const result = await preparation.prepareAdminEmail(input({ mode: 'test', testEmail: 'test@example.org', bodyHtml: '<p>{{campaign_url}}</p>' }));
+  assert.equal(result.success, true);
+  assert.equal(result.recipients.length, 0);
+  assert.equal(state.reads, 0);
+});
+
+test("expanded subjects and message bodies still respect provider size limits", async () => {
+  const { state, preparation } = preparationFixture();
+  state.recipients[0].campaignLinks = Array.from({ length: 100 }, (_, index) => ({
+    campaignId: index + 1, name: 'Garden', url: `https://givebutter.com/garden-${index}`,
+  }));
+  assert.equal((await preparation.prepareAdminEmail(input({ subject: '{{campaign_url}}' }))).success, false);
+  assert.equal((await preparation.prepareAdminEmail(input({ bodyHtml: `<p>${'{{campaign_url}}'.repeat(100)}</p>` }))).success, false);
 });
 
 test("stale competitions, empty audiences, bad test addresses, and personalized subjects are rejected", async () => {
