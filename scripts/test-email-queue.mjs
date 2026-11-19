@@ -11,7 +11,8 @@ function fixture() {
     draft: { id: ID, created_by: "admin-1", competition_id: 1, subject: "Saved subject", body_html: "<p>Saved body</p>",
       recipient_groups: ["approved"], status: "draft", version: 3, queued_at: null },
     preparedError: null,
-    recipients: [{ userId: "recipient-1", email: "signup@example.org", firstName: "Garden", campaignId: 1, campaignUrl: "https://givebutter.com/garden" }],
+    recipients: [{ userId: "recipient-1", email: "signup@example.org", firstName: "Garden", campaignId: 1, campaignUrl: "https://givebutter.com/garden",
+      campaignLinks: [{ campaignId: 1, name: 'Garden', url: 'https://givebutter.com/garden' }] }],
   };
   const client = {
     from() {
@@ -67,8 +68,21 @@ test("queue revalidates saved content and snapshots only server-resolved recipie
   assert.equal(call.args.p_actor_id, "admin-1");
   assert.equal(call.args.p_expected_version, 3);
   assert.deepEqual(plain(call.args.p_recipients), [{ user_id: "recipient-1", recipient_email: "signup@example.org",
-    first_name: "Garden", campaign_id: 1, campaign_url: "https://givebutter.com/garden" }]);
+    first_name: "Garden", campaign_id: 1, campaign_url: "https://givebutter.com/garden",
+    campaign_links: [{ campaignId: 1, name: 'Garden', url: 'https://givebutter.com/garden' }] }]);
   assert.ok(!JSON.stringify(result).includes("signup@example.org"));
+});
+
+test("queue freezes every campaign link without choosing an arbitrary campaign", async () => {
+  const { state, queue } = fixture();
+  state.recipients[0].campaignId = null;
+  state.recipients[0].campaignUrl = null;
+  state.recipients[0].campaignLinks.push({ campaignId: 2, name: 'Second Garden', url: 'https://givebutter.com/second' });
+  assert.equal((await queue(input)).success, true);
+  const snapshot = state.calls[0].args.p_recipients[0];
+  assert.equal(snapshot.campaign_id, null);
+  assert.equal(snapshot.campaign_url, null);
+  assert.equal(snapshot.campaign_links.length, 2);
 });
 
 test("authorization and identity checks precede privileged access", async () => {
