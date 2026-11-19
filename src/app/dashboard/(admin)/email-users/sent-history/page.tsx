@@ -105,6 +105,7 @@ export default function SentHistoryPage() {
                 fullWidth
                 size="small"
                 label="Date (UTC)"
+                id="history-date"
                 value={dateFilter}
                 onChange={(event) => {
                   setDateFilter(event.target.value);
@@ -124,6 +125,7 @@ export default function SentHistoryPage() {
                 fullWidth
                 size="small"
                 label="Recipient groups"
+                id="history-recipient-groups"
                 value={groupFilter}
                 onChange={(event) => {
                   setGroupFilter(event.target.value);
@@ -176,10 +178,10 @@ export default function SentHistoryPage() {
                         {formatHistoryDate(email.completed_at)}
                       </TableCell>
 
-                      <TableCell sx={{ color: "#1F2937" }}>
-                        <Button variant="text" onClick={() => setSelectedId(email.id)} sx={{ textTransform: "none", textAlign: "left", overflowWrap: "anywhere" }}>
+                      <TableCell sx={{ color: "#1F2937", minWidth: 220, maxWidth: 400, overflowWrap: "anywhere" }}>
+                        <button type="button" onClick={() => setSelectedId(email.id)} className="cursor-pointer text-left font-medium text-[#123A1E] underline decoration-transparent hover:decoration-current">
                           {email.subject}
-                        </Button>
+                        </button>
                       </TableCell>
 
                       <TableCell>
