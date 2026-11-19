@@ -8,6 +8,7 @@ import { useEmailHistory, useEmailHistoryMonths } from "@/src/hooks/email/useEma
 import { ADMIN_EMAIL_GROUP_LABELS } from "@/src/types/db/adminEmails";
 import { EMAIL_HISTORY_LABELS } from "@/src/types/emailHistory";
 import { formatHistoryDate } from "@/src/lib/emailHistory";
+import EmailHistoryModal from "@/src/components/email/EmailHistoryModal";
 import {
   Button,
   Chip,
@@ -36,6 +37,7 @@ export default function SentHistoryPage() {
   const [groupFilter, setGroupFilter] = useState("any");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
   const history = useEmailHistory({ page, pageSize: rowsPerPage, month: dateFilter, group: groupFilter });
   const dates = useEmailHistoryMonths();
@@ -164,7 +166,9 @@ export default function SentHistoryPage() {
                       </TableCell>
 
                       <TableCell sx={{ color: "#1F2937" }}>
-                        {email.subject}
+                        <Button variant="text" onClick={() => setSelectedId(email.id)} sx={{ textTransform: "none", textAlign: "left", overflowWrap: "anywhere" }}>
+                          {email.subject}
+                        </Button>
                       </TableCell>
 
                       <TableCell>
@@ -226,6 +230,7 @@ export default function SentHistoryPage() {
           </section>
         </div>
       </div>
+      <EmailHistoryModal id={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   );
 }
