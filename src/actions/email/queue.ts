@@ -57,7 +57,8 @@ export async function queueAdminEmail(input: QueueEmailInput): Promise<QueueEmai
       p_competition_id: competitionId, p_subject: subject, p_body_html: bodyHtml,
       p_recipient_groups: draft.recipient_groups,
       p_recipients: recipients.map(recipient => ({ user_id: recipient.userId, recipient_email: recipient.email,
-        first_name: recipient.firstName, campaign_id: recipient.campaignId, campaign_url: recipient.campaignUrl })),
+        first_name: recipient.firstName, campaign_id: recipient.campaignId, campaign_url: recipient.campaignUrl,
+        campaign_links: recipient.campaignLinks })),
     });
     if (result.error?.message === "email_draft_conflict") return conflict();
     if (result.error?.message === "email_competition_changed") {

@@ -4,6 +4,11 @@
 import { useState } from "react";
 import Link from "next/link";
 import Navbar from "@/src/components/Navbar";
+import { useEmailHistory, useEmailHistoryMonths } from "@/src/hooks/email/useEmailHistory";
+import { ADMIN_EMAIL_GROUP_LABELS } from "@/src/types/db/adminEmails";
+import { EMAIL_HISTORY_LABELS } from "@/src/types/emailHistory";
+import { formatHistoryDate } from "@/src/lib/emailHistory";
+import EmailHistoryModal from "@/src/components/email/EmailHistoryModal";
 import {
   Button,
   Chip,
@@ -18,22 +23,6 @@ import {
   TextField,
 } from "@mui/material";
 
-type RecipientGroup = "all" | "applicants" | "approved";
-
-type SentEmail = {
-  id: number;
-  sentAt: string;
-  month: string;
-  subject: string;
-  recipients: RecipientGroup[];
-};
-
-const groupLabels: Record<RecipientGroup, string> = {
-  all: "All Users",
-  applicants: "Applicants",
-  approved: "Approved Campaigns",
-};
-
 // "2026-10" -> "October 2026"
 function formatMonth(month: string) {
   const [year, monthNumber] = month.split("-").map(Number);
@@ -44,36 +33,17 @@ function formatMonth(month: string) {
 }
 
 export default function SentHistoryPage() {
-  // TODO: load sent emails once sending is connected to the backend
-  const sentEmails: SentEmail[] = [];
-
   const [dateFilter, setDateFilter] = useState("all");
   const [groupFilter, setGroupFilter] = useState("any");
   const [page, setPage] = useState(0);
   const [rowsPerPage, setRowsPerPage] = useState(10);
+  const [selectedId, setSelectedId] = useState<string | null>(null);
 
-  // Months that have at least one sent email, newest first
-  const months = [...new Set(sentEmails.map((email) => email.month))]
-    .sort()
-    .reverse();
-
-  // Filter records by month and recipient group
-  const filteredEmails = sentEmails.filter((email) => {
-    const matchesDate =
-      dateFilter === "all" || email.month === dateFilter;
-
-    const matchesGroup =
-      groupFilter === "any" ||
-      email.recipients.includes(groupFilter as RecipientGroup);
-
-    return matchesDate && matchesGroup;
-  });
-
-  // Show only the records on the current page
-  const visibleEmails = filteredEmails.slice(
-    page * rowsPerPage,
-    (page + 1) * rowsPerPage
-  );
+  const history = useEmailHistory({ page, pageSize: rowsPerPage, month: dateFilter, group: groupFilter });
+  const dates = useEmailHistoryMonths();
+  const visibleEmails = history.data?.emails ?? [];
+  const total = history.data?.total ?? 0;
+  const months = dates.data ?? [];
 
   return (
     <div className="flex min-h-screen">
@@ -110,7 +80,7 @@ export default function SentHistoryPage() {
                 variant="contained"
                 size="small"
               >
-                Sent history ({sentEmails.length})
+                Sent history
               </Button>
             </div>
           </div>
@@ -124,8 +94,7 @@ export default function SentHistoryPage() {
               </h2>
 
               <p className="text-sm text-[#8E938E]">
-                {filteredEmails.length}{" "}
-                {filteredEmails.length === 1 ? "email" : "emails"}
+                {history.isPending ? "Loading..." : history.isError ? "History unavailable" : `${total} ${total === 1 ? "email" : "emails"}`}
               </p>
             </div>
 
@@ -135,7 +104,8 @@ export default function SentHistoryPage() {
                 select
                 fullWidth
                 size="small"
-                label="Date"
+                label="Date (UTC)"
+                id="history-date"
                 value={dateFilter}
                 onChange={(event) => {
                   setDateFilter(event.target.value);
@@ -155,6 +125,7 @@ export default function SentHistoryPage() {
                 fullWidth
                 size="small"
                 label="Recipient groups"
+                id="history-recipient-groups"
                 value={groupFilter}
                 onChange={(event) => {
                   setGroupFilter(event.target.value);
@@ -162,11 +133,20 @@ export default function SentHistoryPage() {
                 }}
               >
                 <MenuItem value="any">All groups</MenuItem>
-                <MenuItem value="all">All Users</MenuItem>
-                <MenuItem value="applicants">Applicants</MenuItem>
-                <MenuItem value="approved">Approved Campaigns</MenuItem>
+                {Object.entries(ADMIN_EMAIL_GROUP_LABELS).map(([key, label]) => <MenuItem key={key} value={key}>{label}</MenuItem>)}
               </TextField>
             </div>
+
+            {history.isError && <div role="alert" className="mb-4 text-red-700">
+              {history.error.message} <Button onClick={() => void history.refetch()}>Retry</Button>
+            </div>}
+            {dates.isError && <div role="alert" className="mb-4 text-red-700">
+              {dates.error.message} <Button onClick={() => void dates.refetch()}>Retry date filters</Button>
+            </div>}
+            {history.isPending && <p role="status">Loading sent history...</p>}
+            {history.isFetching && !history.isPending && <p role="status">Refreshing...</p>}
+            {page > 0 && (history.isError || (!history.isPending && page * rowsPerPage >= total)) &&
+              <Button onClick={() => setPage(0)}>Return to first page</Button>}
 
             {/* Sent history table */}
             <TableContainer>
@@ -174,7 +154,7 @@ export default function SentHistoryPage() {
                 <TableHead>
                   <TableRow>
                     <TableCell sx={{ fontWeight: 600 }}>
-                      Sent at
+                      Completed at (UTC)
                     </TableCell>
                     <TableCell sx={{ fontWeight: 600 }}>
                       Subject
@@ -182,11 +162,12 @@ export default function SentHistoryPage() {
                     <TableCell sx={{ fontWeight: 600 }}>
                       Recipients
                     </TableCell>
+                    <TableCell sx={{ fontWeight: 600 }}>Status</TableCell>
                   </TableRow>
                 </TableHead>
 
                 <TableBody>
-                  {visibleEmails.map((email) => (
+                  {!history.isError && visibleEmails.map((email) => (
                     <TableRow key={email.id} hover>
                       <TableCell
                         sx={{
@@ -194,19 +175,21 @@ export default function SentHistoryPage() {
                           color: "#4B5563",
                         }}
                       >
-                        {email.sentAt}
+                        {formatHistoryDate(email.completed_at)}
                       </TableCell>
 
-                      <TableCell sx={{ color: "#1F2937" }}>
-                        {email.subject}
+                      <TableCell sx={{ color: "#1F2937", minWidth: 220, maxWidth: 400, overflowWrap: "anywhere" }}>
+                        <button type="button" onClick={() => setSelectedId(email.id)} className="cursor-pointer text-left font-medium text-[#123A1E] underline decoration-transparent hover:decoration-current">
+                          {email.subject}
+                        </button>
                       </TableCell>
 
                       <TableCell>
                         <div className="flex flex-wrap gap-2">
-                          {email.recipients.map((group) => (
+                          {email.recipient_groups.map((group) => (
                             <Chip
                               key={group}
-                              label={groupLabels[group]}
+                              label={ADMIN_EMAIL_GROUP_LABELS[group] ?? group}
                               size="small"
                               variant="outlined"
                               sx={{
@@ -217,18 +200,20 @@ export default function SentHistoryPage() {
                             />
                           ))}
                         </div>
+                        <span>{email.admin_email_recipients[0]?.count ?? 0} recipients</span>
                       </TableCell>
+                      <TableCell>{EMAIL_HISTORY_LABELS[email.status] ?? email.status}</TableCell>
                     </TableRow>
                   ))}
 
-                  {visibleEmails.length === 0 && (
+                  {!history.isPending && !history.isError && visibleEmails.length === 0 && (
                     <TableRow>
                       <TableCell
-                        colSpan={3}
+                        colSpan={4}
                         align="center"
                         sx={{ py: 6, color: "#8E938E" }}
                       >
-                        {sentEmails.length === 0
+                        {dateFilter === "all" && groupFilter === "any"
                           ? "No emails have been sent yet."
                           : "No emails match the selected filters."}
                       </TableCell>
@@ -239,9 +224,9 @@ export default function SentHistoryPage() {
             </TableContainer>
 
             {/* Pagination */}
-            <TablePagination
+            {!history.isPending && !history.isError && (page === 0 || page * rowsPerPage < total) && <TablePagination
               component="div"
-              count={filteredEmails.length}
+              count={total}
               page={page}
               rowsPerPage={rowsPerPage}
               rowsPerPageOptions={[5, 10, 20]}
@@ -254,10 +239,11 @@ export default function SentHistoryPage() {
                 borderTop: "1px solid #E5E7EB",
                 color: "#6B7280",
               }}
-            />
+            />}
           </section>
         </div>
       </div>
+      <EmailHistoryModal id={selectedId} onClose={() => setSelectedId(null)} />
     </div>
   );
 }

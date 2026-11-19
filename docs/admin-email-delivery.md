@@ -20,11 +20,14 @@ error, and credential errors require correction before resuming.
 No scheduler, cron secret, new environment variables, or additional migration is
 needed for this step. The existing queue migration and deployed `send-admin-emails`
 function are prerequisites. Test sends use a separate server-only mode in that
-function (see `admin-email-test-sends.md`); sent-history integration is a separate
-step. The deployed Edge Function source stays in Supabase.
+function (see `admin-email-test-sends.md`). Sent history reads these saved jobs;
+see `admin-email-history.md`. The deployed Edge Function source stays in Supabase.
 
 Validation: `node --test scripts/test-email-delivery.mjs` covers batching,
 backoff, invalid responses, failures, aborts, and authorized pending-job lookup.
 `scripts/test-email-drafts-browser.mjs` uses local Supabase with mocked Edge
 Function responses, including interrupted delivery and same-job resume. It sends
 no real email.
+
+Multi-campaign URL tokens require the coordinated migration and dashboard update
+in [Campaign URL Tokens](admin-email-campaign-links.md).

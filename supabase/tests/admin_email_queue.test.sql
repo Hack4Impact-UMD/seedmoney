@@ -77,5 +77,23 @@ select is((pg_temp.queue_test(6, 1, (select jsonb_agg(jsonb_build_object('recipi
   '1205', 'RPC inserts the full snapshot beyond the REST row limit');
 select is((select count(*) from public.admin_email_recipients where email_id='ee120000-0000-0000-0000-000000000006'), 1205::bigint, 'All snapshot rows persist together');
 
+select is((select campaign_links from public.admin_email_recipients where email_id='ee120000-0000-0000-0000-000000000001'),
+  null::jsonb, 'Legacy queue callers retain a null campaign-links snapshot');
+select is(pg_temp.queue_test(7, 1, '[{"recipient_email":"multi@example.org","campaign_links":[
+  {"campaignId":1,"name":"One","url":"https://givebutter.com/one"},
+  {"campaignId":2,"name":"Two","url":"https://givebutter.com/two"}]}]')->>'recipient_count',
+  '1', 'Multiple campaign links still queue one recipient');
+select is(jsonb_array_length((select campaign_links from public.admin_email_recipients
+  where email_id='ee120000-0000-0000-0000-000000000007')), 2, 'All campaign links persist');
+select is(pg_temp.queue_test(7)->>'already_queued', 'true', 'Retry preserves the original multi-link snapshot');
+select is(jsonb_array_length((select campaign_links from public.admin_email_recipients
+  where email_id='ee120000-0000-0000-0000-000000000007')), 2, 'A legacy retry cannot overwrite campaign links');
+select throws_ok($$ select pg_temp.queue_test(8, 1,
+  '[{"recipient_email":"bad@example.org","campaign_links":{}}]') $$,
+  '23514', 'new row for relation "admin_email_recipients" violates check constraint "admin_email_recipients_campaign_links_check"',
+  'Non-array campaign-link snapshots fail atomically');
+select is((select status from public.admin_emails where id='ee120000-0000-0000-0000-000000000008'), 'draft',
+  'Invalid link shape leaves the draft editable');
+
 select * from finish();
 rollback;

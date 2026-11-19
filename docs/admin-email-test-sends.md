@@ -2,7 +2,8 @@
 
 The Test send dialog now calls `sendAdminTestEmail`. It reuses
 `prepareAdminEmail` to authorize the admin and validate HTML, placeholders,
-competition, audience, and the test address before any delivery request.
+competition ID format and the test address before any delivery request. It does
+not require a real audience or real campaign URLs, since tokens use examples.
 
 Only the entered test address is forwarded. Personalization uses the same example
 values as Preview (Jane and the example Givebutter URL), not a real recipient's
