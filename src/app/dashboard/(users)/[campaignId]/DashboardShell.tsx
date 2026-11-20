@@ -48,7 +48,11 @@ const USER_DASHBOARD_TABS: readonly (Omit<DashboardTabItem, "href"> & {
   { label: "Donations", sectionId: "dashboard-donations" },
   { label: "Analytics", sectionId: "dashboard-analytics" },
   { label: "Help", sectionId: "dashboard-help" },
-  { label: "Campaign Outreach", sectionId: "dashboard-outreach", path: "outreach" },
+  {
+    label: "Campaign Outreach",
+    sectionId: "dashboard-outreach",
+    path: "outreach",
+  },
 ];
 
 export default function DashboardShell({ children }: { children: ReactNode }) {
@@ -70,6 +74,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
   const {
     data: standing,
+    dataUpdatedAt: standingUpdatedAt,
     isPending: standingPending,
     isLoadingError: standingLoadError,
   } = useCampaignStanding(
@@ -149,7 +154,6 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
         : `/dashboard/${campaignId}#${tab.sectionId}`,
     }),
   );
-
 
   const isViewingPendingApplication = pathname.endsWith("/application");
 
@@ -278,125 +282,133 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
           )}
         </div>
 
-        
         <DashboardTabs tabs={dashboardTabs} showMobileScrollControls />
 
         {!isOutreachPage && (
-        <section id="dashboard-overview" className="scroll-mt-20">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
-            {campaignData.status !== "suspended" && (
-              <>
-                <Button
-                  size="small"
-                  variant="contained"
-                  className="!shrink-0"
-                  onClick={() => setViewCampaignModal(true)}
-                >
-                  View Campaign
-                  <OpenInNew
-                    fontSize="small"
-                    className="text-[#FFFFFF] ml-[5px]"
-                  />
-                </Button>
-                <Button
-                  size="small"
-                  variant="outlined"
-                  className="!shrink-0"
-                  onClick={async () => {
-                    const campaignUrl = campaignData.givebutterlink;
-                    const isMobile =
-                      typeof window !== "undefined" &&
-                      window.matchMedia("(max-width: 767px)").matches;
-
-                    if (isMobile && navigator.share) {
-                      try {
-                        await navigator.share({
-                          title: campaignData.name,
-                          url: campaignUrl,
-                        });
-                        return;
-                      } catch (error) {
-                        if (
-                          error instanceof DOMException &&
-                          error.name === "AbortError"
-                        ) {
-                          return;
-                        }
-                      }
-                    }
-
-                    try {
-                      await navigator.clipboard.writeText(campaignUrl);
-                      setToast(true);
-                    } catch {
-                      return;
-                    }
-                  }}
-                >
-                  <span className="md:hidden">Share campaign</span>
-                  <span className="hidden md:inline">Copy campaign link</span>
-                </Button>
-                {campaignData.givebutterlink && (
+          <section id="dashboard-overview" className="scroll-mt-20">
+            <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
+              {campaignData.status !== "suspended" && (
+                <>
                   <Button
                     size="small"
-                    variant={qrCodeModal ? "contained" : "outlined"}
-                    className="shrink-0!"
-                    startIcon={<QrCode2 fontSize="small" />}
-                    onClick={() => setQrCodeModal(true)}
+                    variant="contained"
+                    className="!shrink-0"
+                    onClick={() => setViewCampaignModal(true)}
                   >
-                    QR Code
+                    View Campaign
+                    <OpenInNew
+                      fontSize="small"
+                      className="text-[#FFFFFF] ml-[5px]"
+                    />
                   </Button>
-                )}
-              </>
-            )}
-            <Button
-              size="small"
-              variant="outlined"
-              className="!shrink-0"
-              onClick={() => router.push("/leaderboard")}
-            >
-              Leaderboard
-              <OpenInNew fontSize="small" className="text-[#123A1E] ml-[5px]" />
-            </Button>
-          </div>
+                  <Button
+                    size="small"
+                    variant="outlined"
+                    className="!shrink-0"
+                    onClick={async () => {
+                      const campaignUrl = campaignData.givebutterlink;
+                      const isMobile =
+                        typeof window !== "undefined" &&
+                        window.matchMedia("(max-width: 767px)").matches;
 
-          <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
-            <TotalRaisedCard
-              totalRaised={campaignData.raised}
-              campaignGoal={campaignData.goal}
-              raisedChangePercent={raisedChangePercent}
-            />
+                      if (isMobile && navigator.share) {
+                        try {
+                          await navigator.share({
+                            title: campaignData.name,
+                            url: campaignUrl,
+                          });
+                          return;
+                        } catch (error) {
+                          if (
+                            error instanceof DOMException &&
+                            error.name === "AbortError"
+                          ) {
+                            return;
+                          }
+                        }
+                      }
 
-            <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-6">
-              <TotalDonorsCard totalDonors={campaignData.donors} />
-
-              <DaysRemainingCard
-                startDate={currentCompetitionData?.start_date ?? null}
-                endDate={currentCompetitionData?.end_date ?? null}
-                is_current={
-                  campaignData.competition_id ===
-                  currentCompetitionData?.competition_id
-                }
-              />
+                      try {
+                        await navigator.clipboard.writeText(campaignUrl);
+                        setToast(true);
+                      } catch {
+                        return;
+                      }
+                    }}
+                  >
+                    <span className="md:hidden">Share campaign</span>
+                    <span className="hidden md:inline">Copy campaign link</span>
+                  </Button>
+                  {campaignData.givebutterlink && (
+                    <Button
+                      size="small"
+                      variant={qrCodeModal ? "contained" : "outlined"}
+                      className="shrink-0!"
+                      startIcon={<QrCode2 fontSize="small" />}
+                      onClick={() => setQrCodeModal(true)}
+                    >
+                      QR Code
+                    </Button>
+                  )}
+                </>
+              )}
+              <Button
+                size="small"
+                variant="outlined"
+                className="!shrink-0"
+                onClick={() => router.push("/leaderboard")}
+              >
+                Leaderboard
+                <OpenInNew
+                  fontSize="small"
+                  className="text-[#123A1E] ml-[5px]"
+                />
+              </Button>
             </div>
-          </div>
-          <div className="mt-6">
-            {hasCompetition && standingPending ? (
-              <div role="status">Loading...</div>
-            ) : standingLoadError ? (
-              <p role="alert">Unable to load Challenge Standing. Retrying shortly.</p>
-            ) : (
-              <ChallengeStandingCard
-                rank={standing?.rank ?? null}
-                totalProjects={standing?.totalProjects ?? 0}
-                projectedGrant={grantTier?.amount ?? null}
-                grantTierMinRank={grantTier?.minRank ?? null}
-                grantTierMaxRank={grantTier?.maxRank ?? null}
-              />
-            )}
-          </div>
-        </section>
 
+            <div className="mt-6 grid grid-cols-1 gap-6 md:grid-cols-2">
+              <TotalRaisedCard
+                totalRaised={campaignData.raised}
+                campaignGoal={campaignData.goal}
+                raisedChangePercent={raisedChangePercent}
+              />
+
+              <div className="grid grid-cols-2 gap-4 md:flex md:flex-col md:gap-6">
+                <TotalDonorsCard totalDonors={campaignData.donors} />
+
+                <DaysRemainingCard
+                  startDate={currentCompetitionData?.start_date ?? null}
+                  endDate={currentCompetitionData?.end_date ?? null}
+                  is_current={
+                    campaignData.competition_id ===
+                    currentCompetitionData?.competition_id
+                  }
+                />
+              </div>
+            </div>
+            <div className="mt-6">
+              {hasCompetition && standingPending ? (
+                <div role="status">Loading...</div>
+              ) : standingLoadError ? (
+                <p role="alert">
+                  Unable to load Challenge Standing. Retrying shortly.
+                </p>
+              ) : (
+                <ChallengeStandingCard
+                  rank={standing?.rank ?? null}
+                  totalProjects={standing?.totalProjects ?? 0}
+                  projectedGrant={grantTier?.amount ?? null}
+                  grantTierMinRank={grantTier?.minRank ?? null}
+                  grantTierMaxRank={grantTier?.maxRank ?? null}
+                  updateTime={
+                    standingUpdatedAt
+                      ? new Date(standingUpdatedAt).toISOString()
+                      : null
+                  }
+                />
+              )}
+            </div>
+          </section>
         )}
 
         <div className="mt-8">{children}</div>
