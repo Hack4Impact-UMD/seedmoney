@@ -353,7 +353,10 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
               size="small"
               variant="outlined"
               className="!shrink-0"
-              onClick={() => router.push("/leaderboard")}
+              component="a"
+              href="https://claude.ai/artifact/GCzbWAYPLWHwT33DZHfAkc"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               Leaderboard
               <OpenInNew fontSize="small" className="text-[#123A1E] ml-[5px]" />

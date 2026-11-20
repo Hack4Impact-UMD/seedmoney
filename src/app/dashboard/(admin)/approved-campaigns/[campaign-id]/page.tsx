@@ -224,7 +224,10 @@ export default function AdminCampaignPage() {
             <Button
               size="small"
               variant="outlined"
-              onClick={() => router.push("/leaderboard")}
+              component="a"
+              href="https://claude.ai/artifact/GCzbWAYPLWHwT33DZHfAkc"
+              target="_blank"
+              rel="noopener noreferrer"
             >
               View Leaderboard
               <OpenInNew fontSize="small" className="ml-[5px]" />
