@@ -283,13 +283,13 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
 
         {!isOutreachPage && (
         <section id="dashboard-overview" className="scroll-mt-20">
-          <div className="flex gap-2 overflow-x-auto pb-1 scrollbar-hide mt-2">
+          <div className="mt-2 flex gap-2 overflow-x-auto pb-1 scrollbar-hide">
             {campaignData.status !== "suspended" && (
               <>
                 <Button
                   size="small"
                   variant="contained"
-                  className="!shrink-0"
+                  className="!shrink-0 order-1"
                   onClick={() => setViewCampaignModal(true)}
                 >
                   View Campaign
@@ -301,7 +301,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                 <Button
                   size="small"
                   variant="outlined"
-                  className="!shrink-0"
+                  className="!shrink-0 order-3 md:order-2"
                   onClick={async () => {
                     const campaignUrl = campaignData.givebutterlink;
                     const isMobile =
@@ -340,7 +340,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
                   <Button
                     size="small"
                     variant={qrCodeModal ? "contained" : "outlined"}
-                    className="shrink-0!"
+                    className="!shrink-0 order-2 md:order-3"
                     startIcon={<QrCode2 fontSize="small" />}
                     onClick={() => setQrCodeModal(true)}
                   >
@@ -352,7 +352,7 @@ export default function DashboardShell({ children }: { children: ReactNode }) {
             <Button
               size="small"
               variant="outlined"
-              className="!shrink-0"
+              className="!shrink-0 order-4"
               onClick={() => router.push("/leaderboard")}
             >
               Leaderboard
